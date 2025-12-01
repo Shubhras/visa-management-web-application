@@ -10,6 +10,7 @@ import AddImportEntranceTestNameModal from './AddImportEntranceTestNameModal';
 import AddEditEntranceTestNameModal from './AddEditEntranceTestNameModal';
 import { formatDateDDMMYYYY, formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
+import ResetButton from '../../../../components/comman/ResetButton';
 const EntranceTestNameList = () => {
     const dispatch = useDispatch();
     const { globalSearch, setGlobalSearch } = useGlobalSearch();
@@ -551,10 +552,11 @@ const EntranceTestNameList = () => {
                                             </button>
                                         </>
                                     )}
-                                    <button
+                                    <ResetButton
                                         onClick={clearAllFilters}
-                                        className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
-                                    >Reset </button>
+                                        tableState={tableState}
+                                        globalSearch={globalSearch}
+                                    />
                                 </div>
                             </div>
                             {/* Right Section: Select / Search / +Add New */}
@@ -868,7 +870,7 @@ const EntranceTestNameList = () => {
                                         aria-label="Close"
                                     />
                                 </div>
-                                <div className="modal-body p-24">
+                                <div className="modal-body p-24 pt-10">
                                     <div className="row">
                                         <div className="col-12 col-md-6">
                                             <h3 className="text-sm font-semibold mb-3 text-gray-700">Available fields</h3>

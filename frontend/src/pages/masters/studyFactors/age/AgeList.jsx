@@ -59,18 +59,18 @@ const AgeList = () => {
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
   const [items] = useState(["Factor For", "Study Age Group", "Minimum Age","Maximum Age","Country", "Course Level", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Country Name", "State Name", "State / Territory"]);
-  const [ItemsRequired] = useState(["Country Name", "State Name", "State / Territory"]);
+  const [selectedItems, setSelectedItems] = useState(["Factor For", "Study Age Group", "Minimum Age","Maximum Age","Country", "Course Level",]);
+  const [ItemsRequired] = useState(["Factor For", "Study Age Group", "Minimum Age","Maximum Age","Country", "Course Level",]);
   const [countryListData, setCountryListData] = useState([]);
   // Table columns configuration
   const [tableColumns] = useState([
       { id: 'factorForName', label: 'Factor For', field: 'factorForName', visible: true, required: false, filterable: false },
       { id: 'studyAgeGroup', label: 'Study Age Group', field: 'studyAgeGroup', visible: true, required: false, filterable: false },
-      { id: 'minimumAge', label: 'Minimum Age', field: 'minimumAge', visible: true, required: false, filterable: false },
-      { id: 'maximumAge', label: 'Maximum Age', field: 'maximumAge', visible: true, required: false, filterable: false },
+      { id: 'minimumAge', label: 'Minimum Age(Months)', field: 'minimumAge', visible: true, required: false, filterable: false },
+      { id: 'maximumAge', label: 'Maximum Age(Months)', field: 'maximumAge', visible: true, required: false, filterable: false },
       { id: 'countryName', label: 'Country', field: 'countryId', visible: true, required: false, filterable: true },
     { id: 'courseLevel', label: 'Course Level', field: 'courseLevel', visible: true, required: false, filterable: false },
-    { id: 'description', label: 'Description', field: 'description', visible: true, required: false, filterable: false },
+    { id: 'description', label: 'Description', field: 'description', visible: false, required: false, filterable: false },
     { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false, filterable: false },
   ]);
 
@@ -597,12 +597,12 @@ const AgeList = () => {
     // Map frontend labels to State field names
 
     const fieldMapping = {
-      "Country": "countryName",
-      "Factor For": "factorForName",
-      "Study Age Group": "studyAgeGroup",
-      "Minimum Age": "minimumAge",
-      "Maximum Age":"maximumAge",
-      "Course Level":"courseLevel",
+      "Country": "country",
+      "Factor For": "factor_for",
+      "Study Age Group": "study_age_group",
+      "Minimum Age": "minimum_age_months",
+      "Maximum Age":"maximum_age_months",
+      "Course Level":"course_level",
       "Description": "description",
       "Modified On": "updated_at",
     };
@@ -634,7 +634,7 @@ const AgeList = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `State.xlsx`;
+          link.download = `Age.xlsx`;
           document.body.appendChild(link);
           link.click();
           link.remove();
@@ -1048,24 +1048,22 @@ const AgeList = () => {
                           </div>
                         </td>
                         {isColumnVisible('factorForName') && (
-                          <td><span>{rowItem.factorForName}</span></td>
+                          <td><span>{rowItem.factor_for_name}</span></td>
                         )}
-
                         {isColumnVisible('studyAgeGroup') && (
-                          <td><span>{rowItem.studyAgeGroup}</span></td>
+                          <td><span>{rowItem.study_age_group_name}</span></td>
                         )}
                         {isColumnVisible('minimumAge') && (
-                          <td><span>{rowItem.minimumAge}</span></td>
+                          <td><span>{rowItem.minimum_age_months}</span></td>
                         )}
                         {isColumnVisible('maximumAge') && (
-                          <td><span>{rowItem.maximumAge}</span></td>
+                          <td><span>{rowItem.maximum_age_months}</span></td>
                         )} {isColumnVisible('countryName') && (
-                          <td><span>{rowItem.countryName}</span></td>
+                            <td><span>{Array.isArray(rowItem.country_names) ? rowItem.country_names.join(", ") : rowItem.countryName}</span></td>
                         )}
                         {isColumnVisible('courseLevel') && (
-                          <td><span>{rowItem.courseLevel}</span></td>
+                          <td><span>{Array.isArray(rowItem.course_level_names) ? rowItem.course_level_names.join(", ") : rowItem.courseLevel}</span></td>
                         )}
-
                         {isColumnVisible('description') && (
                           <td><span>{rowItem.description}</span></td>
                         )}
@@ -1145,7 +1143,7 @@ const AgeList = () => {
             <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                  <h1 className="modal-title fs-5">Export State</h1>
+                  <h1 className="modal-title fs-5">Export Age</h1>
                   <button
                     type="button"
                     className="btn-close"
@@ -1153,7 +1151,7 @@ const AgeList = () => {
                     aria-label="Close"
                   />
                 </div>
-                <div className="modal-body p-24">
+                <div className="modal-body p-24 pt-10">
                   <div className="row">
                     <div className="col-12 col-md-6">
                       <h3 className="text-sm font-semibold mb-3 text-gray-700">Available fields</h3>

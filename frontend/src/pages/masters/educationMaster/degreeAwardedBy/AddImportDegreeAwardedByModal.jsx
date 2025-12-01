@@ -103,7 +103,7 @@ const AddImportDegreeAwardedByModal = ({ show, handleClose }) => {
                     if (response?.skipped_rows?.length > 0) {
                         const prepareData = {
                             data: response.skipped_rows || [],
-                            headers: ["Country", "Education Level", "Degree Awarded By", "Reason"],
+                            headers: ["Country", "Education Level", "Degree Awarded By","Description", "Reason"],
                             sheetName: "DegreeAwardedBy",
                             fileName: "StudySpecialisation",
                         };
@@ -165,7 +165,7 @@ const AddImportDegreeAwardedByModal = ({ show, handleClose }) => {
                             />
                         </div>
 
-                        <div className="modal-body p-24">
+                        <div className="modal-body p-24 pt-10">
                             <div className='text-md-end text-end'>
                                 <button
                                     type="button"
@@ -176,8 +176,8 @@ const AddImportDegreeAwardedByModal = ({ show, handleClose }) => {
                             </div>
                             <form onSubmit={handleSubmit}>
                                 <div className="row">
-                                    <div className="col-12 mb-20">
-                                        <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                    <div className="col-12 mb-10">
+                                        <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                                             Upload file <span className="text-danger">*</span>
                                         </label>
                                         <input
@@ -190,8 +190,8 @@ const AddImportDegreeAwardedByModal = ({ show, handleClose }) => {
                                         {error && !sheetNames.length && <div className="text-danger text-sm mt-1">{error}</div>}
                                     </div>
                                     {sheetNames.length > 0 && (
-                                        <div className="col-12 mb-20">
-                                            <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                        <div className="col-12 mb-10">
+                                            <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                                                 Select name <span className="text-danger">*</span>
                                             </label>
                                             <div className="d-flex flex-column gap-2">

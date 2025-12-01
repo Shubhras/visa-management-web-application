@@ -662,8 +662,8 @@ class ECAAwardingBody(models.Model):
     )
 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    country = models.ForeignKey("Country", on_delete=models.SET_NULL, related_name="ECAAwarding_body", blank=True, null=True)
-    ecafor=models.ForeignKey("ECAFor", on_delete=models.SET_NULL, related_name="ECAAwarding_body", blank=True, null=True)
+    country = models.ForeignKey("Country", on_delete=models.SET_NULL, related_name="Country_ECAAwarding_body", blank=True, null=True)
+    ecafor=models.ForeignKey("ECAFor", to_field="uuid", db_column="ecafor_id", on_delete=models.SET_NULL, related_name="ECAFor_ECAAwarding_body", blank=True, null=True)
     valid_duration_value = models.IntegerField(blank=True, null=True)
     eca_body_full_name = models.CharField(max_length=255,blank=True, null=True)
     description = models.TextField(blank=True, null=True)
@@ -2016,6 +2016,10 @@ class StudyFactorAcademicResult(models.Model):
 
 
 
+
+
+
+
 class StudyFactorBacklogs(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 
@@ -2062,6 +2066,8 @@ class StudyFactorGAP(models.Model):
         return f"{self.factor_for} - GAP Rule"
     
     
+
+
 
 class StudyFactorLanguageAbility(models.Model):
     id = models.AutoField(primary_key=True)

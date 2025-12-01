@@ -52,6 +52,11 @@ const MasterLayout = ({ children }) => {
     "Study : Language Ability Group",
     "Study : Entrance Test Ability Group",
     "Study Factor : Age",
+    "Study Factor : Academic Result",
+    "Study Factor : Backlogs",
+    "Study Factor : Gap",
+    "Study Factor : Language Ability",
+    "Study Factor : Entrance Test Ability",
     "Marital Status",
     "Education Level Code",
     "Education Level",
@@ -88,7 +93,18 @@ const MasterLayout = ({ children }) => {
     "Institute Priority",
     "Institute Department",
     "Bank Account For",
-    "When Commission Issue"
+    "When Commission Issue",
+    "Leads B2C",
+    "ECA For",
+    "Course Level Code",
+    "Course Divided In",
+    "Course Status",
+    "Intake Name",
+    "Course Status for Intake",
+    "Scholorship Based On",
+    "Course Level",
+    "Course Duration",
+    "Visa Main Category"
 
 
   ]);
@@ -105,8 +121,11 @@ const MasterLayout = ({ children }) => {
     },
     {
       name: "Sales",
-      path: "/",
-      submenu: [],
+      submenu: [
+        {  name: "Leads B2C", path: "/leads-B2C"},
+        {  name: "InquiryB2C", path: "/inquiryB2C"},
+      ],
+
     },
     {
       name: "Clients",
@@ -323,6 +342,12 @@ const MasterLayout = ({ children }) => {
             { name: "Study : Language Ability Group", path: "/language-ability-group" },
             { name: "Study : Entrance Test Ability Group", path: "/entrance-test-ability-group" },
             { name: "Study Factor : Age", path: "/age" },
+            { name: "Study Factor : Academic Result", path: "/study-factor-academic-result" },
+            { name: "Study Factor : Backlogs", path: "/study-factor-backlogs" },
+            { name: "Study Factor : Gap", path: "/study-factor-gap" },
+            { name: "Study Factor : Language Ability", path: "/study-factor-language-ability" },
+            { name: "Study Factor : Entrance Test Ability", path: "/study-factor-entrance-test-ability" },
+            
           ],
         },
 

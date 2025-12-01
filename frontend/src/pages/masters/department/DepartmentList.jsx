@@ -13,6 +13,7 @@ import AddImportDepartmentModal from "./AddImportDepartmentModal";
 import AddEditDepartmentModal from "./AddEditDepartmentModal";
 import { formatDateDDMMYYYYTime } from "../../../helper/utils/commanHelper";
 import { useGlobalSearch } from "../../../components/comman/GlobalSearchContext";
+import ResetButton from "../../../components/comman/ResetButton";
 const DepartmentList = () => {
   const dispatch = useDispatch();
   const { globalSearch, setGlobalSearch } = useGlobalSearch();
@@ -264,7 +265,7 @@ const DepartmentList = () => {
     setGlobalSearch("");
     setSelectedRows([]);
   };
-  
+
   const handlePageLengthChange = (value) => {
     setTableState((prev) => ({
       ...prev,
@@ -376,8 +377,14 @@ const DepartmentList = () => {
       toast.error("No department selected for deletion.");
       return;
     }
+    const deleteAll = selectAllOrNot === "all" && Boolean(tableState.search?.trim());
+    const payloadSend = {
+      deleteAll: deleteAll,
+      id: deleteAll == true ? "" : sendPayload,
+      search: tableState.search || '',
+    };
     dispatch(
-      departmentDelete(sendPayload, (response, error) => {
+      departmentDelete(payloadSend, (response, error) => {
         if (error) {
           toast.error(error?.response?.data?.message || "server error");
         } else {
@@ -574,12 +581,12 @@ const DepartmentList = () => {
                         </button>
                       </>
                     )}
-                  <button
+                  <ResetButton
                     onClick={clearAllFilters}
-                    className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
-                  >
-                    Reset{" "}
-                  </button>
+                    tableState={tableState}
+                    globalSearch={globalSearch}
+                    selectedRows={selectedRows}
+                  />
                 </div>
               </div>
 
@@ -1007,7 +1014,7 @@ const DepartmentList = () => {
                     aria-label="Close"
                   />
                 </div>
-                <div className="modal-body p-24">
+                <div className="modal-body p-24 pt-10">
                   <div className="row">
                     <div className="col-12 col-md-6">
                       <h3 className="text-sm font-semibold mb-3 text-gray-700">

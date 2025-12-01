@@ -471,7 +471,13 @@ import EntranceTestAbilityGroupList from "./pages/masters/studyFactors/entranceT
 import LanguageAbilityGroupList from "./pages/masters/studyFactors/languageAbilityGroup/LanguageAbilityGroupList";
 import AgeList from "./pages/masters/studyFactors/age/AgeList";
 
-
+import LeadsB2CList from "./pages/sales/leadsB2C/LeadsB2CList";
+import LeadB2CForm from "./pages/sales/leadsB2C/LeadB2CForm";
+import StudyFactorAcademicResultList from "./pages/masters/studyFactors/academicResult/StudyFactorAcademicResultList";
+import StudyFactorBacklogsList from "./pages/masters/studyFactors/backlogs/StudyFactorBacklogsList";
+import StudyFactorGapList from "./pages/masters/studyFactors/gap/StudyFactorGapList";
+import StudyFactorLanguageAbilityList from "./pages/masters/studyFactors/languageAbility/StudyFactorLanguageAbilityList";
+import StudyFactorEntranceTestAbilityList from "./pages/masters/studyFactors/entranceTestAbility/StudyFactorEntranceTestAbilityList";
 
 
 
@@ -829,6 +835,7 @@ function App() {
           <Route path="/visa-status" element={<ProtectedRoute><VisaStatusList /></ProtectedRoute>}></Route>
           <Route path="/possibility-level" element={<ProtectedRoute><PossibilityLevelList /></ProtectedRoute>}></Route>
           <Route path="/visa-name" element={<ProtectedRoute><VisaNameList /></ProtectedRoute>}></Route>
+
           {/* Study Factors Master */}
           <Route path="/factor-for" element={<ProtectedRoute><FactorForList /></ProtectedRoute>}></Route>
           <Route path="/age-group" element={<ProtectedRoute><AgeGroupList /></ProtectedRoute>}></Route>
@@ -838,6 +845,18 @@ function App() {
           <Route path="/language-ability-group" element={<ProtectedRoute><LanguageAbilityGroupList /></ProtectedRoute>}></Route>
           <Route path="/entrance-test-ability-group" element={<ProtectedRoute><EntranceTestAbilityGroupList /></ProtectedRoute>}></Route>
           <Route path="/age" element={<ProtectedRoute><AgeList /></ProtectedRoute>}></Route>
+          <Route path="/study-factor-academic-result" element={<ProtectedRoute><StudyFactorAcademicResultList /></ProtectedRoute>}></Route>
+          <Route path="/study-factor-backlogs" element={<ProtectedRoute><StudyFactorBacklogsList /></ProtectedRoute>}></Route>
+          <Route path="/study-factor-gap" element={<ProtectedRoute><StudyFactorGapList /></ProtectedRoute>}></Route>
+          <Route path="/study-factor-language-ability" element={<ProtectedRoute><StudyFactorLanguageAbilityList /></ProtectedRoute>}></Route>
+          <Route path="/study-factor-entrance-test-ability" element={<ProtectedRoute><StudyFactorEntranceTestAbilityList /></ProtectedRoute>}></Route>
+          
+
+
+            {/*Sales*/}
+            <Route path="/leads-B2C" element={<ProtectedRoute><LeadsB2CList /></ProtectedRoute>}></Route>
+            <Route path="/leads-form" element={<ProtectedRoute><LeadB2CForm /></ProtectedRoute>}></Route>
+
 
           {/* 404 Error Page */}
           <Route path='*' element={<ErrorPage />} />

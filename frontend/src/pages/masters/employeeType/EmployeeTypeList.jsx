@@ -17,6 +17,7 @@ import {
 import AddImportEmployeeModal from "./AddImportEmployeeModal";
 import { formatDateDDMMYYYYTime } from "../../../helper/utils/commanHelper";
 import { useGlobalSearch } from "../../../components/comman/GlobalSearchContext";
+import ResetButton from "../../../components/comman/ResetButton";
 
 const EmployeeTypeList = () => {
   const dispatch = useDispatch();
@@ -395,9 +396,15 @@ const EmployeeTypeList = () => {
       toast.error("No employee type selected for deletion.");
       return;
     }
+    const deleteAll = selectAllOrNot === "all" && Boolean(tableState.search?.trim());
+    const payloadSend = {
+      deleteAll: deleteAll,
+      id: deleteAll == true ? "" : sendPayload,
+      search: tableState.search || '',
+    };
 
     dispatch(
-      employeeTypeDelete(sendPayload, (response, error) => {
+      employeeTypeDelete(payloadSend, (response, error) => {
         if (error) {
           toast.error(error?.response?.data?.message || "server error");
         } else {
@@ -601,12 +608,12 @@ const EmployeeTypeList = () => {
                       </>
                     )}
 
-                  <button
+                  <ResetButton
                     onClick={clearAllFilters}
-                    className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
-                  >
-                    Reset
-                  </button>
+                    tableState={tableState}
+                    globalSearch={globalSearch}
+                    selectedRows={selectedRows}
+                  />
                 </div>
               </div>
 
@@ -1031,7 +1038,7 @@ const EmployeeTypeList = () => {
                     aria-label="Close"
                   />
                 </div>
-                <div className="modal-body p-24">
+                <div className="modal-body p-24 pt-10">
                   <div className="row">
                     <div className="col-12 col-md-6">
                       <h3 className="text-sm font-semibold mb-3 text-gray-700">

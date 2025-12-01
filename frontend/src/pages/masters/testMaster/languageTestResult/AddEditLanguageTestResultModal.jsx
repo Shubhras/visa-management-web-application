@@ -73,8 +73,8 @@ const AddEditLanguageTestResultModal = ({ show, handleClose, mode = 'add', rowDa
             limit: 2000,
             search: '',
             status: '',
-            sortBy: 'updated_at', // Field to sort by
-            sortOrder: 'desc', // 'asc' or 'desc'
+            sortBy: 'name', // Field to sort by
+            sortOrder: 'asc', // 'asc' or 'desc'
         };
         dispatch(languageNameTestList(params, (response, error) => {
             setLoading(false);
@@ -284,12 +284,12 @@ const AddEditLanguageTestResultModal = ({ show, handleClose, mode = 'add', rowDa
                         />
                     </div>
 
-                    <div className="modal-body p-24">
+                    <div className="modal-body p-24 pt-10">
                         <form onSubmit={handleSubmit}>
                             <div className="row">
                                 {/* Department Name */}
-                                <div className="col-12 mb-20">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                <div className="col-12 mb-10">
+                                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                                         Language Name (Test) <span className="text-danger">*</span>
                                     </label>
                                     <Select
@@ -329,8 +329,8 @@ const AddEditLanguageTestResultModal = ({ show, handleClose, mode = 'add', rowDa
                                         </div>
                                     )}
                                 </div>
-                                <div className="col-12 mb-20">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                <div className="col-12 mb-10">
+                                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                                         Language Test Name <span className="text-danger">*</span>
                                     </label>
                                     <Select
@@ -377,8 +377,8 @@ const AddEditLanguageTestResultModal = ({ show, handleClose, mode = 'add', rowDa
                                         </div>
                                     )}
                                 </div>
-                                <div className="col-12 mb-20">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                <div className="col-12 mb-10">
+                                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                                         Module Name <span className="text-danger">*</span>
                                     </label>
                                     <Select
@@ -417,8 +417,8 @@ const AddEditLanguageTestResultModal = ({ show, handleClose, mode = 'add', rowDa
                                         </div>
                                     )}
                                 </div>
-                                <div className="col-12 mb-20">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                <div className="col-12 mb-10">
+                                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                                         Language Test Result <span className="text-danger">*</span>
                                     </label>
                                     <input
@@ -435,8 +435,8 @@ const AddEditLanguageTestResultModal = ({ show, handleClose, mode = 'add', rowDa
                                         </div>
                                     )}
                                 </div>
-                                <div className="col-12 mb-20">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                <div className="col-12 mb-10">
+                                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                                         Language Banchmark Level
                                     </label>
                                     <Select
@@ -477,10 +477,10 @@ const AddEditLanguageTestResultModal = ({ show, handleClose, mode = 'add', rowDa
                                 </div>
 
                                 {/* Description */}
-                                <div className="col-12 mb-20">
+                                <div className="col-12 mb-10">
                                     <label
                                         htmlFor="desc"
-                                        className="form-label fw-semibold text-primary-light text-sm mb-8"
+                                        className="form-label fw-semibold text-primary-light text-sm mb-0"
                                     >
                                         Description
                                     </label>

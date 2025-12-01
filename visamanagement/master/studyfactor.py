@@ -5,7 +5,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from .serializers import  *
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Q, F
+from django.db.models.functions import Lower, Cast
 import uuid
 from rest_framework.permissions import IsAuthenticated ,AllowAny ,BasePermission 
 from django.shortcuts import get_object_or_404
@@ -2836,6 +2837,138 @@ class StudyFactorAgeListAPIView(APIView):
 
 # -------------------- Age Create API --------------------
 
+# class StudyFactorAgeCreateAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     @transaction.atomic
+#     def post(self, request):
+#         try:
+#             data = request.data
+
+#             # Required fields validation
+#             factor_for_uuid = data.get("factor_for")
+#             age_group_uuid = data.get("study_age_group")
+#             min_age = data.get("minimum_age_months")
+#             max_age = data.get("maximum_age_months")
+#             country_uuids = data.get("country", [])
+#             course_level_uuids = data.get("course_level", [])
+
+#             missing_fields = []
+#             if not factor_for_uuid:
+#                 missing_fields.append("factor_for")
+#             if not age_group_uuid:
+#                 missing_fields.append("study_age_group")
+#             if min_age is None:
+#                 missing_fields.append("minimum_age_months")
+#             if max_age is None:
+#                 missing_fields.append("maximum_age_months")
+
+#             if missing_fields:
+#                 return Response({
+#                     "statusCode": 400,
+#                     "status": False,
+#                     "message": f"Missing required fields: {', '.join(missing_fields)}"
+#                 }, status=400)
+
+#             # Convert ages safely
+#             try:
+#                 min_age = int(min_age)
+#                 max_age = int(max_age)
+#             except ValueError:
+#                 return Response({
+#                     "statusCode": 400,
+#                     "status": False,
+#                     "message": "minimum_age_months and maximum_age_months must be integers."
+#                 }, status=400)
+
+#             # Fetch FK using UUIDs
+#             try:
+#                 factor_for = FactorFor.objects.get(uuid=factor_for_uuid, is_deleted=False)
+#             except FactorFor.DoesNotExist:
+#                 return Response({
+#                     "statusCode": 400,
+#                     "status": False,
+#                     "message": "Invalid factor_for UUID"
+#                 }, status=400)
+
+#             try:
+#                 age_group = AgeGroup.objects.get(uuid=age_group_uuid, is_deleted=False)
+#             except AgeGroup.DoesNotExist:
+#                 return Response({
+#                     "statusCode": 400,
+#                     "status": False,
+#                     "message": "Invalid study_age_group UUID"
+#                 }, status=400)
+
+#             # Duplicate check
+#             if StudyFactorAge.objects.filter(
+#                 factor_for=factor_for,
+#                 study_age_group=age_group,
+#                 minimum_age_months=min_age,
+#                 maximum_age_months=max_age,
+#                 is_deleted=False
+#             ).exists():
+#                 return Response({
+#                     "statusCode": 400,
+#                     "status": False,
+#                     "message": "Age entry already exists with these details."
+#                 }, status=400)
+
+#             # Atomic transaction begins
+#             with transaction.atomic():
+
+#                 obj = StudyFactorAge.objects.create(
+#                     factor_for=factor_for,
+#                     study_age_group=age_group,
+#                     minimum_age_months=min_age,
+#                     maximum_age_months=max_age,
+#                     description=data.get("description", "")
+#                 )
+
+#                 # Assign Countries
+#                 if country_uuids:
+#                     valid_countries = Country.objects.filter(uuid__in=country_uuids)
+#                     if valid_countries.count() != len(country_uuids):
+#                         return Response({
+#                             "statusCode": 400,
+#                             "status": False,
+#                             "message": "One or more country UUIDs are invalid."
+#                         }, status=400)
+#                     obj.country.set(valid_countries)
+
+#                 # Assign Course Levels
+#                 if course_level_uuids:
+#                     valid_levels = CourseLevel.objects.filter(uuid__in=course_level_uuids)
+#                     if valid_levels.count() != len(course_level_uuids):
+#                         return Response({
+#                             "statusCode": 400,
+#                             "status": False,
+#                             "message": "One or more course_level UUIDs are invalid."
+#                         }, status=400)
+#                     obj.course_level.set(valid_levels)
+
+#                 obj.save()
+
+#             # Final response
+#             serializer = StudyFactorAgeSerializer(obj)
+
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": "Age created successfully",
+#                 "data": serializer.data
+#             })
+
+#         except Exception as e:
+#             # Debug-friendly but safe
+#             return Response({
+#                 "statusCode": 500,
+#                 "status": False,
+#                 "message": "Internal server error",
+#                 "error": str(e)  
+#             }, status=500)
+
+
 class StudyFactorAgeCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2967,8 +3100,76 @@ class StudyFactorAgeCreateAPIView(APIView):
                 "error": str(e)  
             }, status=500)
 
-
 # -------------------- Age Retrieve API --------------------
+
+# class StudyFactorAgeRetrieveAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         try:
+#             search = request.GET.get('search', '').strip()
+#             sort_by = request.GET.get('sortBy', 'created_at')
+#             sort_order = request.GET.get('sortOrder', 'desc')
+
+#             # Allowed sort fields
+#             allowed_sort_fields = [
+#                 'minimum_age_months',
+#                 'maximum_age_months',
+#                 'created_at',
+#                 'updated_at',
+#             ]
+
+#             # Validate sortBy
+#             if sort_by not in allowed_sort_fields:
+#                 sort_by = 'created_at'
+
+#             # Apply desc/asc
+#             if sort_order == 'desc':
+#                 sort_by = f'-{sort_by}'
+
+#             # Base queryset
+#             queryset = StudyFactorAge.objects.filter(is_deleted=False)
+
+#             # Search
+#             if search:
+#                 queryset = queryset.filter(
+#                     Q(study_age_group__name__icontains=search) |
+#                     Q(factor_for__name__icontains=search)
+#                 )
+
+#             # Sorting
+#             queryset = queryset.order_by(sort_by)
+
+#             # Pagination
+#             paginator = CustomPagination()
+#             paginated_queryset = paginator.paginate_queryset(queryset, request)
+
+#             # Serialization
+#             serializer = StudyFactorAgeSerializer(paginated_queryset, many=True)
+
+#             return paginator.get_paginated_response(serializer.data)
+
+#         except ValidationError as ve:
+#             return Response({
+#                 "status": False,
+#                 "message": "Validation error",
+#                 "error": str(ve),
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         except DatabaseError as db_err:
+#             return Response({
+#                 "status": False,
+#                 "message": "Database error occurred",
+#                 "error": str(db_err),
+#             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+#         except Exception as e:
+#             # Catch-all for unexpected issues
+#             return Response({
+#                 "status": False,
+#                 "message": "Something went wrong",
+#                 "error": str(e),
+#             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class StudyFactorAgeRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -3007,6 +3208,9 @@ class StudyFactorAgeRetrieveAPIView(APIView):
         serializer = StudyFactorAgeSerializer(paginated_queryset, many=True)
         return paginator.get_paginated_response(serializer.data)
 
+        serializer = StudyFactorAgeSerializer(paginated_queryset, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
 
 # -------------------- Age Update API--------------------
 
@@ -3903,7 +4107,7 @@ class StudyFactorAcademicResultUpdateAPIView(APIView):
                 "status": True,
                 "message": "Study Factor Academic Result updated successfully",
                 "data": serializer.data
-            })
+            }, status=200)
 
         # Collect all error messages
         errors = []
@@ -4608,7 +4812,6 @@ class StudyFactorBacklogsDeleteAPIView(APIView):
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
 
-
 class StudyFactorBacklogsExportAPIView(APIView):
 
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -4743,6 +4946,7 @@ class StudyFactorBacklogsExportAPIView(APIView):
         response = HttpResponse(output, content_type=content_type)
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+
 
 
 class StudyFactorBacklogsImportAPIView(APIView):
@@ -4899,6 +5103,16 @@ class StudyFactorBacklogsImportAPIView(APIView):
         }, status=200)
 
 
+        # # ---------- Final Response ----------
+        # return Response({
+        #     "statusCode": 200,
+        #     "status": True,
+        #     "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+        #     "imported_count": imported_count,
+        #     "duplicates": duplicates,
+        #     "skipped_rows": skipped_rows
+        # }, status=200)
+    
 
 
 
@@ -5051,6 +5265,7 @@ class StudyFactorGAPRetrieveAPIView(APIView):
             "message": "Study Factor GAP retrieved successfully",
             "data": serializer.data
         })
+    
 
 
 # ---------------- UPDATE ----------------
@@ -5092,6 +5307,19 @@ class StudyFactorGAPUpdateAPIView(APIView):
             "data": None
         }, status=status.HTTP_400_BAD_REQUEST)
 
+        # Collect error messages like Department API
+        # errors = serializer.errors
+        # messages = []
+        # for field, msgs in errors.items():
+        #     messages.extend(msgs)
+
+        # return Response({
+        #     "statusCode": 400,
+        #     "status": False,
+        #     "message": " ".join(messages),
+        #     "data": None
+        # }, status=status.HTTP_400_BAD_REQUEST)
+    
 
 # ---------------- DELETE ----------------
 class StudyFactorGAPDeleteAPIView(APIView):
@@ -5198,6 +5426,7 @@ class StudyFactorGAPDeleteAPIView(APIView):
 
 
 # ---------------- EXPORT ----------------
+
 class StudyFactorGAPExportAPIView(APIView):
     """
     Export StudyFactorGAP data to CSV or XLSX with custom sorting.
@@ -5340,8 +5569,10 @@ class StudyFactorGAPExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+    
 
 # ---------------- IMPORT ----------------
+
 class StudyFactorGAPImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -5618,6 +5849,7 @@ class StudyFactorLanguageAbilityCreateAPIView(APIView):
             "status": False,
             "message": " ".join(messages)
         }, status=400)
+    
 
 
 class StudyFactorLanguageAbilityListAPIView(APIView):
@@ -5689,6 +5921,7 @@ class StudyFactorLanguageAbilityListAPIView(APIView):
         serializer = StudyFactorLanguageAbilitySerializer(result_page, many=True)
 
         return paginator.get_paginated_response(serializer.data)
+    
 
 
 class StudyFactorLanguageAbilityRetrieveAPIView(APIView):
@@ -5712,6 +5945,7 @@ class StudyFactorLanguageAbilityRetrieveAPIView(APIView):
             "message": "Study Factor Language Ability retrieved successfully",
             "data": serializer.data
         })
+
 
 class StudyFactorLanguageAbilityUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]

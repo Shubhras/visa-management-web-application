@@ -477,6 +477,8 @@ urlpatterns = [
     path('entrancetestresult/import/', EntranceTestResultImportAPIView.as_view(), name='entrancetestresult-import'),
 
    #----------------------- process.py------------------
+
+
     path("documentcategory/create/", DocumentCategoryCreateAPIView.as_view(), name='DocumentCategory-create'),
     path("documentcategory/", DocumentCategoryListAPIView.as_view(), name='DocumentCategory-list'),
     path("documentcategory/<uuid:uuid>/", DocumentCategoryRetrieveAPIView.as_view(), name='DocumentCategory-detail'),
@@ -484,6 +486,7 @@ urlpatterns = [
     path("documentcategory/delete/", DocumentCategoryDeleteAPIView.as_view(), name='DocumentCategory-delete'),
     path("documentcategory/export/", DocumentCategoryExportAPIView.as_view(), name='DocumentCategory-export'),
     path("documentcategory/import/", DocumentCategoryImportAPIView.as_view(), name='DocumentCategory-import'),
+    
 
     path('documenttype/create/', DocumentTypeCreateAPIView.as_view(), name='document_type_create'),
     path('documenttype/', DocumentTypeListAPIView.as_view(), name='document_type_list'),
@@ -1073,6 +1076,15 @@ urlpatterns = [
     path('children-visacategory/import/', ChildrenVisaCategoryImportAPIView.as_view()),
 
     
+    # path('study-factor-age/create/', StudyFactorAgeCreateAPIView.as_view(),name='age-create'),
+    # path('study-factor-age/list/', StudyFactorAgeListAPIView.as_view(),name='age-list'),
+    # path('study-factor-age/<uuid:uuid>/', StudyFactorAgeRetrieveAPIView.as_view(),name='age-retrieve'),
+    # path('study-factor-age/<uuid:uuid>/update/', StudyFactorAgeUpdateAPIView.as_view(),name='age-update'),
+    # path('study-factor-age/<uuid:uuid>/delete/', StudyFactorAgeDeleteAPIView.as_view(),name='age-delete'),
+    # path('study-factor-age/export/', StudyFactorAgeExportAPIView.as_view(),name='age-export'),
+    # path('study-factor-age/import/', StudyFactorAgeImportAPIView.as_view(),name='age-import'),
+
+
     path('study-factor-age/create/', StudyFactorAgeCreateAPIView.as_view(),name='age-create'),
     path('study-factor-age/', StudyFactorAgeListAPIView.as_view(),name='age-list'),
     path('study-factor-age/<uuid:uuid>/', StudyFactorAgeRetrieveAPIView.as_view(),name='age-retrieve'),
@@ -1080,7 +1092,6 @@ urlpatterns = [
     path('study-factor-age/delete/', StudyFactorAgeDeleteAPIView.as_view(),name='age-delete'),
     path('study-factor-age/export/', StudyFactorAgeExportAPIView.as_view(),name='age-export'),
     path('study-factor-age/import/', StudyFactorAgeImportAPIView.as_view(),name='age-import'),
-
 
 
     path('academic-result/', StudyFactorAcademicResultListAPIView.as_view(), name='academic-result-list'),
@@ -1091,7 +1102,6 @@ urlpatterns = [
     path('academic-result/export/', StudyFactorAcademicResultExportAPIView.as_view(), name='academic-result-export'),
     path('academic-result/import/', StudyFactorAcademicResultImportAPIView.as_view(), name='academic-result-import'),
     
-
 
 
     path('study-factor-backlogs/',StudyFactorBacklogsListAPIView.as_view(),name="study_factor_backlogs_list"),
@@ -1111,6 +1121,7 @@ urlpatterns = [
     path('study-factor-gap/export/', StudyFactorGAPExportAPIView.as_view(), name="study_factor_gap_export"),
     path('study-factor-gap/import/', StudyFactorGAPImportAPIView.as_view(), name="study_factor_gap_import"),
 
+
     path('study-factor-language-ability/', StudyFactorLanguageAbilityListAPIView.as_view()),
     path('study-factor-language-ability/create/', StudyFactorLanguageAbilityCreateAPIView.as_view()),
     path('study-factor-language-ability/<uuid:uuid>/', StudyFactorLanguageAbilityRetrieveAPIView.as_view()),
@@ -1120,6 +1131,7 @@ urlpatterns = [
     path('study-factor-language-ability/import/', StudyFactorLanguageAbilityImportAPIView.as_view(), name='studyfactor-languageability-import'),
 
 
+    
     path('study-factor-entrance-test-ability/', StudyFactorEntranceTestAbilityListAPIView.as_view()),
     path('study-factor-entrance-test-ability/create/', StudyFactorEntranceTestAbilityCreateAPIView.as_view()),
     path('study-factor-entrance-test-ability/<uuid:uuid>/', StudyFactorEntranceTestAbilityRetrieveAPIView.as_view()),
@@ -1127,6 +1139,7 @@ urlpatterns = [
     path('study-factor-entrance-test-ability/delete/', StudyFactorEntranceTestAbilityDeleteAPIView.as_view()),
     path('study-factor-entrance-test-ability/export/', StudyFactorEntranceTestAbilityExportAPIView.as_view()),
     path('study-factor-entrance-test-ability/import/', StudyFactorEntranceTestAbilityImportAPIView.as_view()),
+    
 
 ]
 

@@ -53,8 +53,8 @@ const AddEditCourseDurationModal = ({ show, handleClose, mode = 'add', rowData =
             limit: 2000,
             search: '',
             status: '',
-            sortBy: 'updated_at',
-            sortOrder: 'desc',
+            sortBy: 'name',
+            sortOrder: 'asc',
         };
         dispatch(courseLevelList(params, (response, error) => {
             if (response?.statusCode === 200 && response?.status === true) {
@@ -138,7 +138,7 @@ const AddEditCourseDurationModal = ({ show, handleClose, mode = 'add', rowData =
                     if (response?.statusCode === 200 && response?.status === true) {
                         toast.success(response?.message);
                         resetForm();
-                        handleClose();
+                        handleClose(true);
                     } else {
                         toast.error("Something went wrong.");
                     }
@@ -163,7 +163,7 @@ const AddEditCourseDurationModal = ({ show, handleClose, mode = 'add', rowData =
     const onClose = () => {
         resetForm();
         setLoading(false);
-        handleClose();
+        handleClose(false);
     };
 
     // Conditional return after all hooks
@@ -191,12 +191,12 @@ const AddEditCourseDurationModal = ({ show, handleClose, mode = 'add', rowData =
                         />
                     </div>
 
-                    <div className="modal-body p-24">
+                    <div className="modal-body p-24 pt-10">
                         <form onSubmit={handleSubmit}>
                             <div className="row">
                                 {/* Department Name */}
-                                <div className="col-12 mb-20">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                <div className="col-12 mb-10">
+                                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                                         Course Level <span className="text-danger">*</span>
                                     </label>
                                     <Select
@@ -235,11 +235,11 @@ const AddEditCourseDurationModal = ({ show, handleClose, mode = 'add', rowData =
                                         </div>
                                     )}
                                 </div>
-                                <div className="col-12 mb-20">
+                                <div className="col-12 mb-10">
 
                                     <div className="row gx-2">
                                         <div className="col-6">
-                                            <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                            <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                                                 Course Duration Value <span className="text-danger">*</span>
                                             </label>
                                             <input
@@ -257,7 +257,7 @@ const AddEditCourseDurationModal = ({ show, handleClose, mode = 'add', rowData =
                                             )}
                                         </div>
                                         <div className="col-6">
-                                            <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                            <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                                                 Course Duration Unit <span className="text-danger">*</span>
                                             </label>
                                             <select
@@ -280,10 +280,10 @@ const AddEditCourseDurationModal = ({ show, handleClose, mode = 'add', rowData =
                                     </div>
                                 </div>
                                 {/* Description */}
-                                <div className="col-12 mb-20">
+                                <div className="col-12 mb-10">
                                     <label
                                         htmlFor="desc"
-                                        className="form-label fw-semibold text-primary-light text-sm mb-8"
+                                        className="form-label fw-semibold text-primary-light text-sm mb-0"
                                     >
                                         Description
                                     </label>

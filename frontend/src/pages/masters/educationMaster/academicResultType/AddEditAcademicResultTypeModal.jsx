@@ -11,14 +11,14 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
   const [formData, setFormData] = useState({
     uuid: '',
     departmentName: '',
-    dataType: '',
+    datatype: '',
     description: '',
   });
 
   // Validation errors state
   const [errors, setErrors] = useState({
     departmentName: '',
-    dataType: '',
+    datatype: '',
     description: '',
   });
 
@@ -28,7 +28,7 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
       setFormData({
         uuid: rowData.uuid || '',
         departmentName: rowData.name || '',
-        dataType: rowData.dataType || '',
+        datatype: rowData.datatype || '',
         description: rowData.description || '',
       });
     } else {
@@ -36,7 +36,7 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
       setFormData({
         uuid: '',
         departmentName: '',
-        dataType: '',
+        datatype: '',
         description: '',
       });
     }
@@ -70,9 +70,9 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
       isValid = false;
     }
 
-    // DataType validation
-    if (!formData.dataType) {
-      newErrors.dataType = 'Data type is required';
+    // datatype validation
+    if (!formData.datatype) {
+      newErrors.datatype = 'Data type is required';
       isValid = false;
     }
 
@@ -89,12 +89,12 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
         ? {
           uuid: formData.uuid,
           name: formData.departmentName,
-          datatype: formData.dataType,
+          datatype: formData.datatype,
           description: formData.description,
         }
         : {
           name: formData.departmentName,
-          datatype: formData.dataType,
+          datatype: formData.datatype,
           description: formData.description,
         };
 
@@ -124,7 +124,7 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
     setFormData({
       uuid: '',
       departmentName: '',
-      dataType: '',
+      datatype: '',
       description: '',
     });
     setErrors({});
@@ -162,12 +162,12 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
             />
           </div>
 
-          <div className="modal-body p-24">
+          <div className="modal-body p-24 pt-10">
             <form onSubmit={handleSubmit}>
               <div className="row">
                 {/* Department Name */}
-                <div className="col-12 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-12 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Academic Result Type <span className="text-danger">*</span>
                   </label>
                   <input
@@ -186,8 +186,8 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
                 </div>
 
                 {/* Data Type Dropdown */}
-                <div className="col-12 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-12 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Data Type <span className="text-danger">*</span>
                   </label>
 
@@ -197,17 +197,17 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
                       { value: "Numeric", label: "Numeric" },
                     ]}
                     value={
-                      formData.dataType
+                      formData.datatype
                         ? [
-                          { value: "text", label: "Text" },
-                          { value: "numeric", label: "Numeric" },
-                        ].find((opt) => opt.value === formData.dataType)
+                          { value: "Text", label: "Text" },
+                          { value: "Numeric", label: "Numeric" },
+                        ].find((opt) => opt.value === formData.datatype)
                         : null
                     }
                     onChange={(selectedOption) =>
                       handleChange({
                         target: {
-                          name: "dataType",
+                          name: "datatype",
                           value: selectedOption ? selectedOption.value : "",
                         },
                       })
@@ -215,21 +215,21 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
                     placeholder="Select data type"
                     isClearable
                     isSearchable
-                    className={`custom-select-container ${errors.dataType ? "is-invalid" : ""
-                      }`}
+                    className={`custom-select-container ${errors.datatype ? "is-invalid" : ""}`}
                     classNamePrefix="custom-select"
                   />
 
-                  {errors.dataType && (
-                    <div className="text-danger text-sm mt-1">{errors.dataType}</div>
+
+                  {errors.datatype && (
+                    <div className="text-danger text-sm mt-1">{errors.datatype}</div>
                   )}
                 </div>
 
                 {/* Description */}
-                <div className="col-12 mb-20">
+                <div className="col-12 mb-10">
                   <label
                     htmlFor="desc"
-                    className="form-label fw-semibold text-primary-light text-sm mb-8"
+                    className="form-label fw-semibold text-primary-light text-sm mb-0"
                   >
                     Description
                   </label>

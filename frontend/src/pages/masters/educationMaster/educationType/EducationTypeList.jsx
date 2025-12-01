@@ -10,6 +10,7 @@ import AddImportAcademicResultTypeModal from './AddImportEducationTypeModal';
 import AddEditAcademicResultTypeModal from './AddEditEducationTypeModal';
 import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
+import ResetButton from '../../../../components/comman/ResetButton';
 const EducationTypeList = () => {
     const dispatch = useDispatch();
     const { globalSearch, setGlobalSearch } = useGlobalSearch();
@@ -549,10 +550,15 @@ const EducationTypeList = () => {
                                             </button>
                                         </>
                                     )}
-                                    <button
+                                    {/* <button
                                         onClick={clearAllFilters}
                                         className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
-                                    >Reset </button>
+                                    >Reset </button> */}
+                                    <ResetButton
+                                        onClick={clearAllFilters}
+                                        tableState={tableState}
+                                        globalSearch={globalSearch}
+                                    />
                                 </div>
                             </div>
 
@@ -861,7 +867,7 @@ const EducationTypeList = () => {
                                         aria-label="Close"
                                     />
                                 </div>
-                                <div className="modal-body p-24">
+                                <div className="modal-body p-24 pt-10">
                                     <div className="row">
                                         <div className="col-12 col-md-6">
                                             <h3 className="text-sm font-semibold mb-3 text-gray-700">Available fields</h3>

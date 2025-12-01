@@ -9,6 +9,7 @@ import AddImportEducationLevelCodeModal from './AddImportEducationLevelCodeModal
 import AddEditEducationLevelCodeModal from './AddEditEducationLevelCodeModal';
 import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
+import ResetButton from '../../../../components/comman/ResetButton';
 const EducationLevelCodeList = () => {
     const dispatch = useDispatch();
     const { globalSearch, setGlobalSearch } = useGlobalSearch();
@@ -232,6 +233,7 @@ const EducationLevelCodeList = () => {
         }));
         // Reset Global Search
         setGlobalSearch('');
+        setSelectedRows([]);
     };
 
     const handlePageLengthChange = (value) => {
@@ -339,7 +341,13 @@ const EducationLevelCodeList = () => {
             toast.error("No education level code selected for deletion.");
             return;
         }
-        dispatch(educationLevelCodeDelete(sendPayload, (response, error) => {
+        const deleteAll = tableState.search?.trim() !== "";
+        const payloadSend = {
+            deleteAll: deleteAll,
+            id: deleteAll == true ? "" : sendPayload,
+            search: tableState.search || '',
+        };
+        dispatch(educationLevelCodeDelete(payloadSend, (response, error) => {
             if (error) {
                 toast.error(error?.response?.data?.message || "server error");
             } else {
@@ -519,10 +527,15 @@ const EducationLevelCodeList = () => {
                                             </button>
                                         </>
                                     )}
-                                    <button
+                                    {/* <button
                                         onClick={clearAllFilters}
                                         className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
-                                    >Reset </button>
+                                    >Reset </button> */}
+                                    <ResetButton
+                                        onClick={clearAllFilters}
+                                        tableState={tableState}
+                                        globalSearch={globalSearch}
+                                    />
                                 </div>
                             </div>
 
@@ -833,7 +846,7 @@ const EducationLevelCodeList = () => {
                                         aria-label="Close"
                                     />
                                 </div>
-                                <div className="modal-body p-24">
+                                <div className="modal-body p-24 pt-10">
                                     <div className="row">
                                         <div className="col-12 col-md-6">
                                             <h3 className="text-sm font-semibold mb-3 text-gray-700">Available fields</h3>
@@ -923,6 +936,7 @@ const EducationLevelCodeList = () => {
                     </div>
                 )}
             </MasterLayout>
+
         </>
     );
 };

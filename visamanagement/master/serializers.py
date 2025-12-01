@@ -3,6 +3,7 @@ from rest_framework import serializers
 from .models import *
 from rest_framework_simplejwt.tokens import RefreshToken
 # from .process import*
+from uuid import UUID
 
 User = get_user_model()
 
@@ -769,10 +770,36 @@ class ECAForSerializer(serializers.ModelSerializer):
 
 
 
+# class ECAAwardingBodySerializer(serializers.ModelSerializer):
+#     name = serializers.CharField(source='country.name', read_only=True)
+#     eca_for_name = serializers.CharField(source='ecafor.name', read_only=True)
+#     eca_for_uuid = serializers.CharField(source='ecafor.uuid', read_only=True)
+
+#     country = serializers.SlugRelatedField(
+#         queryset=Country.objects.all(),
+#         slug_field='uuid'
+#     )
+#     ecafor = serializers.SlugRelatedField(
+#         queryset=ECAFor.objects.all(),
+#         slug_field='uuid'
+#     )
+
+#     class Meta:
+#         model = ECAAwardingBody
+#         fields = [
+#             'uuid', 'id', 'country', 'name',
+#             'ecafor', 'eca_for_uuid', 'eca_for_name',
+#             'description', 'valid_duration_value',
+#             'eca_body_full_name', 'eca_body_short_name',
+#             'eca_valid_period', 'created_at', 'updated_at'
+#         ]
+#         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
+
 class ECAAwardingBodySerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='country.name', read_only=True)
     eca_for_name = serializers.CharField(source='ecafor.name', read_only=True)
-    eca_for_uuid = serializers.CharField(source='ecafor.uuid', read_only=True)
+    # eca_for_uuid = serializers.CharField(source='ecafor.uuid', read_only=True)
 
     country = serializers.SlugRelatedField(
         queryset=Country.objects.all(),
@@ -787,12 +814,13 @@ class ECAAwardingBodySerializer(serializers.ModelSerializer):
         model = ECAAwardingBody
         fields = [
             'uuid', 'id', 'country', 'name',
-            'ecafor', 'eca_for_uuid', 'eca_for_name',
+            'ecafor', 'eca_for_name',
             'description', 'valid_duration_value',
             'eca_body_full_name', 'eca_body_short_name',
             'eca_valid_period', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+
 
 class DegreeAwardedBySerializer(serializers.ModelSerializer):
     country = serializers.SlugRelatedField(queryset=Country.objects.all(), slug_field='uuid')
@@ -1584,6 +1612,8 @@ class RepresentingCountrySerializer(serializers.ModelSerializer):
         validated_data['currency_code'] = country.currencyCode
 
         return super().create(validated_data)
+    
+    
 class VisaMainSerializer(serializers.ModelSerializer):
     class Meta:
         model = VisaMain
@@ -2164,6 +2194,7 @@ class EntranceTestAbilityGroupSerializer(serializers.ModelSerializer):
 
 #--------------------------- process master--------------------------
 
+
 class DocumentCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = DocumentCategory
@@ -2177,6 +2208,7 @@ class DocumentCategorySerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["uuid", "created_at", "updated_at"]
+
 
 
 class DocumentTypeSerializer(serializers.ModelSerializer):
@@ -2193,7 +2225,30 @@ class DocumentTypeSerializer(serializers.ModelSerializer):
         read_only_fields = ["uuid", "created_at", "updated_at"]
 
 
+# class DocumentNameSerializer(serializers.ModelSerializer):
+#     document_category_name = serializers.CharField(source="document_category.name", read_only=True)
+#     document_category_uuid = serializers.UUIDField(source="document_category.uuid", read_only=True)
+
+#     class Meta:
+#         model = DocumentName
+#         fields = [
+#             "uuid",
+#             "document_category_uuid",
+#             "document_category_name",
+#             "document_name",
+#             "description",
+#             "is_deleted",
+#             "created_at",
+#             "updated_at",
+#         ]
+#         read_only_fields = ["uuid", "created_at", "updated_at"]
+
+
 class DocumentNameSerializer(serializers.ModelSerializer):
+    # Accept UUID for write
+    document_category = serializers.UUIDField(write_only=True)
+
+    # Read-only for response
     document_category_name = serializers.CharField(source="document_category.name", read_only=True)
     document_category_uuid = serializers.UUIDField(source="document_category.uuid", read_only=True)
 
@@ -2201,8 +2256,9 @@ class DocumentNameSerializer(serializers.ModelSerializer):
         model = DocumentName
         fields = [
             "uuid",
-            "document_category_uuid",
-            "document_category_name",
+            "document_category",          # writable
+            "document_category_uuid",     # read-only
+            "document_category_name",     # read-only
             "document_name",
             "description",
             "is_deleted",
@@ -2210,6 +2266,14 @@ class DocumentNameSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["uuid", "created_at", "updated_at"]
+
+    def create(self, validated_data):
+        # Convert UUID to actual DocumentCategory object
+        doc_cat_uuid = validated_data.pop("document_category")
+        doc_cat_obj = DocumentCategory.objects.get(uuid=doc_cat_uuid)
+        validated_data["document_category"] = doc_cat_obj
+        return super().create(validated_data)
+
 
 
 class PurposeOfVisitSerializer(serializers.ModelSerializer):
@@ -2639,7 +2703,6 @@ class StudyFactorGAPSerializer(serializers.ModelSerializer):
 
         return instance
 
-
 class StudyFactorBacklogsSerializer(serializers.ModelSerializer):
     factor_for_name = serializers.CharField(source="factor_for.name", read_only=True)
     backlog_group_name = serializers.CharField(source="backlog_group.name", read_only=True)
@@ -2670,8 +2733,7 @@ class StudyFactorBacklogsSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ("uuid", "created_at", "updated_at")
-
+        read_only_fields = ["uuid", "created_at", "updated_at"]
 
 class StudyFactorLanguageAbilitySerializer(serializers.ModelSerializer):
 

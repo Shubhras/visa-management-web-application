@@ -17,6 +17,7 @@ import {
   formatDateDDMMYYYYTime,
 } from "../../../../helper/utils/commanHelper";
 import { useGlobalSearch } from "../../../../components/comman/GlobalSearchContext";
+import ResetButton from "../../../../components/comman/ResetButton";
 
 const LicenceNameList = () => {
   const dispatch = useDispatch();
@@ -101,7 +102,7 @@ const LicenceNameList = () => {
       field: "countryId",
       visible: true,
       required: false,
-      filterable: true, 
+      filterable: true,
     },
     {
       id: "full_name",
@@ -355,6 +356,15 @@ const LicenceNameList = () => {
         }
       })
     );
+  };
+
+  const hasActiveFilters = () =>
+    Object.values(columnFilters).some((arr) => arr.length > 0);
+
+  const clearAllOnlyHeaderFilters = () => {
+    setColumnFilters({
+      countryId: [],
+    });
   };
 
   // Sorting
@@ -834,12 +844,22 @@ const LicenceNameList = () => {
                       </>
                     )}
 
-                  <button
+                  {hasActiveFilters() && (
+                    <button
+                      onClick={clearAllOnlyHeaderFilters}
+                      className="btn btn-sm py-1 comman-inactive-btn"
+                    >
+                      <Icon icon="mdi:filter-off" width="16" /> Clear Filters
+                    </button>
+                  )}
+
+                  <ResetButton
                     onClick={clearAllFilters}
-                    className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
-                  >
-                    Reset
-                  </button>
+                    tableState={tableState}
+                    columnFilters={columnFilters}
+                    globalSearch={globalSearch}
+                    selectedRows={selectedRows}
+                  />
                 </div>
               </div>
 
@@ -1487,7 +1507,7 @@ const LicenceNameList = () => {
                     aria-label="Close"
                   />
                 </div>
-                <div className="modal-body p-24">
+                <div className="modal-body p-24 pt-10">
                   <div className="row">
                     <div className="col-12 col-md-6">
                       <h3 className="text-sm font-semibold mb-3 text-gray-700">

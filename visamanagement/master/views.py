@@ -7,6 +7,7 @@ from .serializers import  *
 from django.core.paginator import Paginator
 from django.db.models import Q,F
 import uuid
+from django.db import DatabaseError, transaction, IntegrityError
 from rest_framework.permissions import IsAuthenticated ,AllowAny ,BasePermission 
 from django.shortcuts import get_object_or_404
 from .pagination import  *
@@ -306,51 +307,156 @@ class GenderUpdateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+# class GenderDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request):
+#         ids = request.data.get('id', None)
+
+#         if not ids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide 'id' field (UUID list or 'all').",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # If client requests all records to be deleted
+#         if ids == "all":
+#             genders = Gender.objects.filter(is_deleted=False)
+#             count = genders.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No genders found to delete.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+#             genders.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} gender(s) deleted successfully.",
+#                 "data": None
+#             }, status=status.HTTP_200_OK)
+
+#         # Otherwise, treat it as a list of UUIDs
+#         if not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Validate UUIDs
+#         valid_uuids = []
+#         invalid_uuids = []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         genders = Gender.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+#         count = genders.count()
+
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching genders found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         genders.delete()
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} gender(s) deleted successfully.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         }, status=status.HTTP_200_OK)
+
+
 class GenderDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request):
         ids = request.data.get('id', None)
+        search = request.GET.get("search", "").strip()
 
-        if not ids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Please provide 'id' field (UUID list or 'all').",
-                "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        # If client requests all records to be deleted
+        # ---------------------------------------
+        # DELETE FULL TABLE when id == "all"
+        # ---------------------------------------
         if ids == "all":
-            genders = Gender.objects.filter(is_deleted=False)
-            count = genders.count()
+            count = Gender.objects.count()
+            Gender.objects.all().delete()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} gender(s) deleted from the table.",
+                "data": None
+            }, status=200)
+
+        # ---------------------------------------
+        # Base queryset (soft delete safety)
+        # ---------------------------------------
+        queryset = Gender.objects.filter(is_deleted=False)
+
+        # ---------------------------------------
+        # SEARCH BASED DELETE (ONLY when deleteAll:true)
+        # ---------------------------------------
+        if search:
+            if not request.data.get("deleteAll", False):
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "To delete based on search, please send → 'deleteAll: true' in request body.",
+                    "data": None
+                }, status=400)
+
+            queryset = queryset.filter(Q(name__istartswith=search))
+            count = queryset.count()
+
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No genders found to delete.",
+                    "message": "No matching gender(s) found for this search filter.",
                     "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
-            genders.delete()
+                }, status=404)
+
+            queryset.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} gender(s) deleted successfully.",
+                "message": f"{count} gender(s) deleted based on search filter.",
                 "data": None
-            }, status=status.HTTP_200_OK)
+            }, status=200)
 
-        # Otherwise, treat it as a list of UUIDs
-        if not isinstance(ids, list):
+        # ---------------------------------------
+        # BULK DELETE via UUID LIST
+        # ---------------------------------------
+        if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "message": "Send UUID list in 'id' or send 'id: all'.",
                 "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=400)
 
-        # Validate UUIDs
         valid_uuids = []
         invalid_uuids = []
+
         for u in ids:
             try:
                 valid_uuids.append(UUID(u))
@@ -363,27 +469,28 @@ class GenderDeleteAPIView(APIView):
                 "status": False,
                 "message": "No valid UUIDs provided.",
                 "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=400)
 
-        genders = Gender.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = genders.count()
+        bulk_qs = queryset.filter(uuid__in=valid_uuids)
+        count = bulk_qs.count()
 
         if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "No matching genders found.",
+                "message": "No matching gender(s) found to delete.",
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=status.HTTP_404_NOT_FOUND)
+            }, status=404)
 
-        genders.delete()
+        bulk_qs.delete()
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} gender(s) deleted successfully.",
+            "message": f"{count} gender(s) deleted.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=status.HTTP_200_OK)
+        }, status=200)
+    
 
 
 class GenderExportAPIView(APIView):
@@ -576,6 +683,8 @@ class GenderImportAPIView(APIView):
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Gender": "",
+                        "Description":description,
                         "Reason": "Missing gender name"
                     })
                     continue
@@ -618,8 +727,10 @@ class GenderImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            # "duplicates": duplicates,
+            "duplicates": list(reversed(duplicates)),
+            # "skipped_rows": skipped_rows
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=status.HTTP_200_OK)
 
 
@@ -807,56 +918,158 @@ class MaritalstatusUpdateAPIView(APIView):
             "data": None
         }, status=status.HTTP_400_BAD_REQUEST)
 
+# class MaritalstatusDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request):
+#         ids = request.data.get('id', None)
+
+#         if not ids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide 'id' field (UUID list or 'all').",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Delete all records
+#         if ids == "all":
+#             maritalstatuses = Maritalstatus.objects.filter(is_deleted=False)
+#             count = maritalstatuses.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No marital statuses found to delete.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#             maritalstatuses.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} marital status(es) deleted successfully.",
+#                 "data": None
+#             }, status=status.HTTP_200_OK)
+
+#         # Otherwise, treat as list of UUIDs
+#         if not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Validate UUIDs
+#         valid_uuids = []
+#         invalid_uuids = []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         maritalstatuses = Maritalstatus.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+#         count = maritalstatuses.count()
+
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching marital statuses found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         maritalstatuses.delete()
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} marital status(es) deleted successfully.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         }, status=status.HTTP_200_OK)
+
+
 class MaritalstatusDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request):
         ids = request.data.get('id', None)
+        search = request.GET.get("search", "").strip()
 
-        if not ids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Please provide 'id' field (UUID list or 'all').",
-                "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+        # Base queryset (soft delete safety)
+        queryset = Maritalstatus.objects.filter(is_deleted=False)
 
-        # Delete all records
+        # ----------------------------------
+        # DELETE FULL TABLE when id == "all"
+        # ----------------------------------
         if ids == "all":
-            maritalstatuses = Maritalstatus.objects.filter(is_deleted=False)
-            count = maritalstatuses.count()
+            count = Maritalstatus.objects.count()
+            Maritalstatus.objects.all().delete()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} marital status(es) deleted from the table.",
+                "data": None
+            }, status=200)
+
+        # ----------------------------------
+        # SEARCH BASED DELETE (ONLY when deleteAll:true)
+        # ----------------------------------
+        if search:
+            if not request.data.get("deleteAll", False):
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "To delete based on search filter please send 'deleteAll: true' in body.",
+                    "data": None
+                }, status=400)
+
+            queryset = queryset.filter(Q(name__istartswith=search))
+            count = queryset.count()
+
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No marital statuses found to delete.",
+                    "message": "No marital status(es) found matching search filter.",
                     "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
+                }, status=404)
 
-            maritalstatuses.delete()
+            queryset.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} marital status(es) deleted successfully.",
+                "message": f"{count} marital status(es) deleted based on search filter.",
                 "data": None
-            }, status=status.HTTP_200_OK)
+            }, status=200)
 
-        # Otherwise, treat as list of UUIDs
-        if not isinstance(ids, list):
+        # ----------------------------------
+        # BULK DELETE using UUID list
+        # ----------------------------------
+        if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "message": "Please provide UUID list in 'id' field, or send 'id: all'.",
                 "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=400)
 
-        # Validate UUIDs
         valid_uuids = []
         invalid_uuids = []
         for u in ids:
             try:
                 valid_uuids.append(UUID(u))
-            except ValueError:
+            except:
                 invalid_uuids.append(u)
 
         if not valid_uuids:
@@ -865,27 +1078,29 @@ class MaritalstatusDeleteAPIView(APIView):
                 "status": False,
                 "message": "No valid UUIDs provided.",
                 "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=400)
 
-        maritalstatuses = Maritalstatus.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = maritalstatuses.count()
+        bulk_qs = queryset.filter(uuid__in=valid_uuids)
+        count = bulk_qs.count()
 
         if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "No matching marital statuses found.",
+                "message": "No matching marital status(es) found to delete.",
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=status.HTTP_404_NOT_FOUND)
+            }, status=404)
 
-        maritalstatuses.delete()
+        bulk_qs.delete()
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} marital status(es) deleted successfully.",
+            "message": f"{count} marital status(es) deleted.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=status.HTTP_200_OK)
+        }, status=200)
+
+
 
 class MaritalstatusExportAPIView(APIView):
     """
@@ -1077,6 +1292,8 @@ class MaritalstatusImportAPIView(APIView):
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Marital Status": "",
+                        "Description":description,
                         "Reason": "Missing marital status name"
                     })
                     continue
@@ -1119,8 +1336,10 @@ class MaritalstatusImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            # "duplicates": duplicates,
+            # "skipped_rows": skipped_rows
+            "duplicates": reversed(duplicates),
+            "skipped_rows": reversed(skipped_rows),
         }, status=status.HTTP_200_OK)
 
 
@@ -1243,13 +1462,107 @@ class ContinentUpdateAPIView(APIView):
         return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
 
 
+# class ContinentDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request, uuid=None):
+#         ids = request.data.get('id', None)
+
+#         # Single delete via URL parameter
+#         if uuid:
+#             try:
+#                 continent = Continents.objects.get(uuid=uuid)
+#                 continent.delete()
+#                 return Response({
+#                     "statusCode": 204,
+#                     "status": True,
+#                     "message": "Continent permanently deleted.",
+#                     "data": None
+#                 }, status=status.HTTP_204_NO_CONTENT)
+#             except Continents.DoesNotExist:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "Continent not found.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#         # Delete all continents
+#         if ids == "all":
+#             continents = Continents.objects.all()
+#             count = continents.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No continents found to delete.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+#             continents.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} continent(s) permanently deleted.",
+#                 "data": None
+#             }, status=status.HTTP_200_OK)
+
+#         # Validate bulk UUIDs
+#         if not ids or not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         valid_uuids = []
+#         invalid_uuids = []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Bulk delete
+#         continents = Continents.objects.filter(uuid__in=valid_uuids)
+#         count = continents.count()
+
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching continents found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         continents.delete()
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} continent(s) permanently deleted.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         }, status=status.HTTP_200_OK)
+
+
 class ContinentDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
         ids = request.data.get('id', None)
+        search = request.GET.get("search", "").strip()
 
-        # Single delete via URL parameter
+        # ---------------------------------------
+        # SINGLE DELETE via URL param (no search restriction)
+        # ---------------------------------------
         if uuid:
             try:
                 continent = Continents.objects.get(uuid=uuid)
@@ -1268,36 +1581,64 @@ class ContinentDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-        # Delete all continents
+        # ---------------------------------------
+        # DELETE FULL TABLE when body contains "id": "all"
+        # ---------------------------------------
         if ids == "all":
-            continents = Continents.objects.all()
-            count = continents.count()
-            if count == 0:
-                return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "No continents found to delete.",
-                    "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
-            continents.delete()
+            count = Continents.objects.count()
+            Continents.objects.all().delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
                 "message": f"All {count} continent(s) permanently deleted.",
                 "data": None
-            }, status=status.HTTP_200_OK)
+            }, status=200)
 
-        # Validate bulk UUIDs
+        # ---------------------------------------
+        # SEARCH BASED DELETE (only when deleteAll:true)
+        # ---------------------------------------
+        if search:
+            if not request.data.get("deleteAll", False):
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "To delete based on search filter, you must send → 'deleteAll: true' in request body.",
+                    "data": None
+                }, status=400)
+
+            queryset = Continents.objects.filter(is_deleted=False).filter(Q(name__istartswith=search))
+            count = queryset.count()
+
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No continents found matching this search filter.",
+                    "data": None
+                }, status=404)
+
+            queryset.delete()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"{count} continent(s) deleted based on search filter.",
+                "data": None
+            }, status=200)
+
+        # ---------------------------------------
+        # BULK DELETE via UUID list
+        # ---------------------------------------
         if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "message": "Send UUID list in 'id' field or use 'id: all' for full delete.",
                 "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=400)
 
         valid_uuids = []
         invalid_uuids = []
+
         for u in ids:
             try:
                 valid_uuids.append(UUID(u))
@@ -1310,28 +1651,29 @@ class ContinentDeleteAPIView(APIView):
                 "status": False,
                 "message": "No valid UUIDs provided.",
                 "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=400)
 
-        # Bulk delete
-        continents = Continents.objects.filter(uuid__in=valid_uuids)
-        count = continents.count()
+        bulk_qs = Continents.objects.filter(is_deleted=False, uuid__in=valid_uuids)
+        count = bulk_qs.count()
 
         if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "No matching continents found.",
+                "message": "No matching continents found to delete.",
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=status.HTTP_404_NOT_FOUND)
+            }, status=404)
 
-        continents.delete()
+        bulk_qs.delete()
 
         return Response({
             "statusCode": 200,
             "status": True,
             "message": f"{count} continent(s) permanently deleted.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=status.HTTP_200_OK)
+        }, status=200)
+    
+
 
 
 class ContinentExportAPIView(APIView):
@@ -1525,6 +1867,8 @@ class ContinentImportAPIView(APIView):
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Continent": "",
+                        "Description":description,
                         "Reason": "Missing continent name"
                     })
                     continue
@@ -1563,8 +1907,10 @@ class ContinentImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            # "duplicates": duplicates,
+            # "skipped_rows": skipped_rows
+            "duplicates": reversed(duplicates),
+            "skipped_rows": reversed(skipped_rows),
         }, status=status.HTTP_200_OK)
 
 
@@ -1725,84 +2071,372 @@ class CountryUpdateAPIView(APIView):
         return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
 
 
+
+# class CountryDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request):
+#         try:
+#             ids = request.data.get('id', None)
+#             delete_all = request.data.get("deleteAll", False)
+#             search = request.GET.get("search", "").strip()
+#             raw_continents = request.GET.get("continent", "").strip()
+
+#             # Parse continent UUID list from params
+#             continent_uuids, invalid_continents = [], []
+#             if raw_continents:
+#                 for u in raw_continents.split(','):
+#                     try:
+#                         continent_uuids.append(UUID(u.strip()))
+#                     except:
+#                         invalid_continents.append(u)
+
+#             # ----------------------------------
+#             # If id == "all" → delete entire table
+#             # ----------------------------------
+#             if ids == "all":
+#                 count = Country.objects.count()
+#                 if count == 0:
+#                     return Response({
+#                         "statusCode": 404,
+#                         "status": False,
+#                         "message": "No countries found to delete.",
+#                         "data": None
+#                     }, status=404)
+
+#                 Country.objects.all().delete()
+#                 return Response({
+#                     "statusCode": 200,
+#                     "status": True,
+#                     "message": f"All {count} country(s) deleted from the table.",
+#                     "data": None
+#                 }, status=200)
+
+#             # ----------------------------------
+#             # Base queryset (soft delete safety)
+#             # ----------------------------------
+#             queryset = Country.objects.filter(is_deleted=False)
+#             applied_filters = []
+
+#             # ----------------------------------
+#             # Apply SEARCH filter
+#             # ----------------------------------
+#             if search:
+#                 queryset = queryset.filter(Q(name__istartswith=search))
+#                 applied_filters.append("search")
+
+#             # ----------------------------------
+#             # Apply CONTINENT filter (multiple UUIDs)
+#             # ----------------------------------
+#             if continent_uuids:
+#                 queryset = queryset.filter(continent__uuid__in=continent_uuids)
+#                 applied_filters.append("continent")
+
+#             # ----------------------------------
+#             # DELETE ALL FILTERED RESULTS (only if deleteAll: true)
+#             # ----------------------------------
+#             if delete_all and applied_filters:
+#                 count = queryset.count()
+#                 if count == 0:
+#                     return Response({
+#                         "statusCode": 404,
+#                         "status": False,
+#                         "message": "No country(s) found matching the applied filter(s).",
+#                         "data": {"invalid_continent_uuids": invalid_continents} if invalid_continents else None
+#                     }, status=404)
+
+#                 queryset.delete()
+#                 return Response({
+#                     "statusCode": 200,
+#                     "status": True,
+#                     "message": f"{count} country(s) deleted based on applied search and/or continent filters.",
+#                     "data": {"invalid_continent_uuids": invalid_continents} if invalid_continents else None
+#                 }, status=200)
+
+#             # ----------------------------------
+#             # BULK DELETE BY UUID LIST
+#             # ----------------------------------
+#             if not ids or not isinstance(ids, list):
+#                 return Response({
+#                     "statusCode": 400,
+#                     "status": False,
+#                     "message": "Send UUID list in 'id' or use 'id: all' to delete full table or 'deleteAll: true' for filtered delete.",
+#                     "data": None
+#                 }, status=400)
+
+#             valid_uuids, invalid_uuids = [], []
+#             for u in ids:
+#                 try:
+#                     valid_uuids.append(UUID(u))
+#                 except:
+#                     invalid_uuids.append(u)
+
+#             if not valid_uuids:
+#                 return Response({
+#                     "statusCode": 400,
+#                     "status": False,
+#                     "message": "No valid UUIDs provided.",
+#                     "data": {"invalid_uuids": invalid_uuids}
+#                 }, status=400)
+
+#             bulk_qs = queryset.filter(uuid__in=valid_uuids)
+#             count = bulk_qs.count()
+
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No matching countries found to delete.",
+#                     "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#                 }, status=404)
+
+#             bulk_qs.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"{count} country(s) deleted successfully.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=200)
+
+#         except IntegrityError as ie:
+#             # FK constraint fail message
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "You can't delete this country because it is used in one or more related child tables. Delete operation is not allowed.",
+#                 "data": None
+#             }, status=400)
+
+#         except Exception as e:
+#             return Response({
+#                 "statusCode": 500,
+#                 "status": False,
+#                 "message": f"An unexpected error occurred while deleting country(s): {str(e)}",
+#                 "data": None
+#             }, status=500)
+
+
+
 class CountryDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request):
-        ids = request.data.get('id', None)
+        try:
+            ids = request.data.get('id', None)
+            delete_all = request.data.get("deleteAll", False)
+            search = request.GET.get("search", "").strip()
+            raw_continents = request.GET.get("continent", "").strip()
 
-        if not ids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Please provide 'id' field (UUID list or 'all').",
-                "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+            # ✅ Parse continent UUIDs from params
+            continent_uuids, invalid_continents = [], []
+            if raw_continents:
+                for u in raw_continents.split(','):
+                    try:
+                        continent_uuids.append(UUID(u.strip()))
+                    except ValueError:
+                        invalid_continents.append(u)
 
-        # Delete all
-        if ids == "all":
-            countries = Country.objects.filter(is_deleted=False)
-            count = countries.count()
-            if count == 0:
+            # ---------------------------------------------------
+            # ✅ CASE 1: deleteAll=false + ID LIST → delete only given UUIDs (ignore filters)
+            # ---------------------------------------------------
+            if delete_all is False and isinstance(ids, list):
+                valid_uuids, invalid_uuids = [], []
+                for u in ids:
+                    try:
+                        valid_uuids.append(UUID(u))
+                    except ValueError:
+                        invalid_uuids.append(u)
+
+                if not valid_uuids:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "No valid UUIDs provided.",
+                        "data": {"invalid_uuids": invalid_uuids}
+                    }, status=400)
+
+                bulk_qs = Country.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+                count = bulk_qs.count()
+
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No matching countries found for provided UUID(s).",
+                        "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                    }, status=404)
+
+                # ✅ FK safe delete check
+                with transaction.atomic():
+                    bulk_qs.delete()
+
                 return Response({
-                    "statusCode": 404,
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} country(s) deleted successfully.",
+                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                }, status=200)
+
+            # ---------------------------------------------------
+            # ✅ CASE 2: id="all" + deleteAll=false → full table delete but FK block safe handling
+            # ---------------------------------------------------
+            if ids == "all" and delete_all is False:
+                qs_all = Country.objects.filter(is_deleted=False)
+                count = qs_all.count()
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No countries found to delete.",
+                        "data": None
+                    }, status=404)
+
+                # ✅ FK safe delete	(Only delete if not referenced)
+                not_used = []
+                used = []
+
+                for c in qs_all:
+                    try:
+                        c.delete()
+                        not_used.append(str(c.uuid))
+                    except IntegrityError:
+                        used.append(c.name)  # store country names that failed
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"Delete completed. {len(not_used)} country(s) deleted. {len(used)} country(s) skipped because they are used in child tables.",
+                    "data": {"deleted": not_used, "not_deleted": used}
+                }, status=200)
+
+            # ---------------------------------------------------
+            # Filtered delete start only when deleteAll = true and id empty/None
+            # ---------------------------------------------------
+
+            queryset = Country.objects.filter(is_deleted=False)
+            applied_filters = []
+
+            # ---------------------------------------------------
+            # ✅ CASE 3,5: Search filter
+            # ---------------------------------------------------
+            if search:
+                queryset = queryset.filter(Q(name__istartswith=search))
+                applied_filters.append("search")
+
+            # ---------------------------------------------------
+            # ✅ CASE 4,5: continent filter
+            # ---------------------------------------------------
+            if continent_uuids:
+                queryset = queryset.filter(continent__uuid__in=continent_uuids)
+                applied_filters.append("continent")
+
+            # ---------------------------------------------------
+            # ✅ Filter delete if deleteAll = true (CASES 3,4,5)
+            # ---------------------------------------------------
+            if delete_all and applied_filters:
+                count = queryset.count()
+                if count == 0:
+                    filter_msg = " + ".join(applied_filters)
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": f"No country(s) found matching the applied {filter_msg} filter(s).",
+                        "data": None
+                    }, status=404)
+
+                with transaction.atomic():
+                    queryset.delete()
+
+                if applied_filters == ["search"]:
+                    msg = f"{count} country(s) deleted based on search filter."
+                elif applied_filters == ["continent"]:
+                    msg = f"{count} country(s) deleted based on continent filter."
+                else:
+                    msg = f"{count} country(s) deleted based on search and/or continent filter."
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": msg,
+                    "data": {"invalid_continent_uuids": invalid_continents} if invalid_continents else None
+                }, status=200)
+
+            # ---------------------------------------------------
+            # ✅ CASE 1 already handled above | If no filters & deleteAll=false → fallback to ID delete
+            # ---------------------------------------------------
+            if not ids:
+                return Response({
+                    "statusCode": 400,
                     "status": False,
-                    "message": "No countries found to delete.",
+                    "message": "Invalid delete request format. Provide UUID list or 'all' or use deleteAll:true with filters.",
                     "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
+                }, status=400)
 
-            countries.delete()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": f"All {count} country(s) deleted successfully.",
-                "data": None
-            }, status=status.HTTP_200_OK)
+            if ids == "all":
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "For full table delete set → deleteAll:false with id:'all'",
+                    "data": None
+                }, status=400)
 
-        # Validate list of UUIDs
-        if not isinstance(ids, list):
+            # ---------------------------------------------------
+            # BULK DELETE via ID LIST (fallback)
+            # ---------------------------------------------------
+            if isinstance(ids, list):
+                valid_uuids, invalid_uuids = [], []
+                for u in ids:
+                    try:
+                        valid_uuids.append(UUID(u))
+                    except:
+                        invalid_uuids.append(u)
+
+                bulk_qs = queryset.filter(uuid__in=valid_uuids)
+                count = bulk_qs.count()
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No matching countries found to delete.",
+                        "data": None
+                    }, status=404)
+
+                with transaction.atomic():
+                    bulk_qs.delete()
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} country(s) deleted successfully.",
+                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                }, status=200)
+
+            # ❗ No case matched
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "message": "Invalid delete request format.",
                 "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=400)
 
-        valid_uuids, invalid_uuids = [], []
-        for u in ids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
-
-        if not valid_uuids:
+        except IntegrityError:
+            # ✅ FINAL CLEAN FK ERROR
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_400_BAD_REQUEST)
+                "message": "You can't delete this country data because it is referenced in one or more child tables. Delete operation is not allowed.",
+                "data": None
+            }, status=400)
 
-        countries = Country.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = countries.count()
-
-        if count == 0:
+        except Exception as e:
             return Response({
-                "statusCode": 404,
+                "statusCode": 500,
                 "status": False,
-                "message": "No matching countries found.",
-                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=status.HTTP_404_NOT_FOUND)
+                "message": f"An unexpected error occurred while deleting country(s): {str(e)}",
+                "data": None
+            }, status=500)
 
-        countries.delete()
-
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} country(s) deleted successfully.",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=status.HTTP_200_OK)
-
+            
 
 
 class CountryExportAPIView(APIView):
@@ -2055,14 +2689,34 @@ class CountryImportAPIView(APIView):
             # ---------------- Data Processing ----------------
             imported_count = 0
             for row in reversed(data):
+                # country_name = str(row.get('country name')).strip() if row.get('country name') else None
+                # if not country_name:
+                #     skipped_rows.append({
+                #         "Country Name": "",
+                #         "Reason": "Missing required field: country name"
+                #     })
+                #     continue
+                # continent_name = str(row.get('continent')).strip() if row.get('continent') else ''
                 country_name = str(row.get('country name')).strip() if row.get('country name') else None
+                continent_name = str(row.get('continent')).strip() if row.get('continent') else ''
+
+                # Required: Country Name
                 if not country_name:
                     skipped_rows.append({
-                        "Country Name": "Unknown",
+                        "Country Name": "",
+                        "Continent": continent_name,
                         "Reason": "Missing required field: country name"
                     })
                     continue
-                continent_name = str(row.get('continent')).strip() if row.get('continent') else ''
+
+                # Required: Continent
+                if not continent_name:
+                    skipped_rows.append({
+                        "Country Name": country_name,
+                        "Continent": "",
+                        "Reason": "Missing required field: continent"
+                    })
+                    continue
                 short_name = str(row.get('country short name')).strip() if row.get('country short name') else ''
                 full_name = str(row.get('country full name')).strip() if row.get('country full name') else ''
                 official_name = str(row.get('country official name')).strip() if row.get('country official name') else ''
@@ -2149,8 +2803,10 @@ class CountryImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": duplicate_names,
-            "skipped_rows": skipped_rows,
+            # "duplicates": duplicate_names,
+            # "skipped_rows": skipped_rows,
+            "duplicates": reversed(duplicate_names),
+            "skipped_rows": reversed(skipped_rows),
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=200)
@@ -2353,83 +3009,226 @@ class StateUpdateAPIView(APIView):
         return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
 
 
+# class StateDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request):
+#         ids = request.data.get('id', None)
+
+#         if not ids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide 'id' field (UUID list or 'all').",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Delete all states
+#         if ids == "all":
+#             states = State.objects.filter(is_deleted=False)
+#             count = states.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No states found to delete.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#             states.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} state(s) deleted successfully.",
+#                 "data": None
+#             }, status=status.HTTP_200_OK)
+
+#         # Validate list of UUIDs
+#         if not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         valid_uuids, invalid_uuids = [], []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         states = State.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+#         count = states.count()
+
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching states found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         states.delete()
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} state(s) deleted successfully.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         }, status=status.HTTP_200_OK)
+
+
 class StateDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request):
-        ids = request.data.get('id', None)
+        try:
+            ids = request.data.get("id", None)
+            delete_all = request.data.get("deleteAll", False)
+            search = request.GET.get("search", "").strip()
+            raw_countries = request.GET.get("country", "").strip()
 
-        if not ids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Please provide 'id' field (UUID list or 'all').",
-                "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+            # ✅ Parse multiple country UUIDs from params
+            country_uuids = []
+            if raw_countries:
+                for u in raw_countries.split(","):
+                    try:
+                        country_uuids.append(UUID(u.strip()))
+                    except ValueError:
+                        pass  # silently ignore invalid UUIDs
 
-        # Delete all states
-        if ids == "all":
-            states = State.objects.filter(is_deleted=False)
-            count = states.count()
-            if count == 0:
+            # ✅ CASE 2 & 5: Full table delete if id == "all" and deleteAll=false
+            if ids == "all" and delete_all is False:
+                qs_all = State.objects.filter(is_deleted=False)
+                count = qs_all.count()
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No states found to delete.",
+                        "data": None
+                    }, status=404)
+
+                qs_all.delete()
                 return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "No states found to delete.",
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"All {count} state(s) deleted from the table.",
                     "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
+                }, status=200)
 
-            states.delete()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": f"All {count} state(s) deleted successfully.",
-                "data": None
-            }, status=status.HTTP_200_OK)
+            # ✅ CASE 1: deleteAll=false + id list → only delete those UUID records, ignore filters
+            if delete_all is False and isinstance(ids, list):
+                valid_uuids = []
+                invalid_uuids = []
+                for u in ids:
+                    try:
+                        valid_uuids.append(UUID(u))
+                    except ValueError:
+                        invalid_uuids.append(u)
 
-        # Validate list of UUIDs
-        if not isinstance(ids, list):
+                if not valid_uuids:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "No valid UUIDs provided.",
+                        "data": {"invalid_uuids": invalid_uuids}
+                    }, status=400)
+
+                bulk_qs = State.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+                count = bulk_qs.count()
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No matching states found for provided UUID(s).",
+                        "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                    }, status=404)
+
+                bulk_qs.delete()
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} state(s) deleted successfully.",
+                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                }, status=200)
+
+            # ✅ CASE 3,4,5: deleteAll=true + filters → filtered delete, id must be empty/None
+            if delete_all:
+                queryset = State.objects.filter(is_deleted=False)
+                applied_filters = []
+
+                if search:
+                    queryset = queryset.filter(Q(stateName__istartswith=search))
+                    applied_filters.append("search")
+
+                if country_uuids:
+                    queryset = queryset.filter(countryName__uuid__in=country_uuids)
+                    applied_filters.append("country")
+
+                count = queryset.count()
+                if count == 0:
+                    filter_msg = " + ".join(applied_filters) if applied_filters else "filters"
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": f"No state(s) found matching the applied {filter_msg}.",
+                        "data": None
+                    }, status=404)
+
+                queryset.delete()
+
+                # Smart response message
+                if applied_filters == ["search"]:
+                    msg = f"{count} state(s) deleted based on search filter."
+                elif applied_filters == ["continent"]:
+                    msg = f"{count} state(s) deleted based on continent filter."
+                else:
+                    msg = f"{count} state(s) deleted based on search and/or continent filter."
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": msg,
+                    "data": None
+                }, status=200)
+
+            # ❗ No case matched
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "message": "Invalid delete request format.",
                 "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=400)
 
-        valid_uuids, invalid_uuids = [], []
-        for u in ids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
-
-        if not valid_uuids:
+        except IntegrityError:
+            # ✅ Clean FK error response
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_400_BAD_REQUEST)
+                "message": "You can't delete this state because it is referenced in child tables.",
+                "data": None
+            }, status=400)
 
-        states = State.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = states.count()
-
-        if count == 0:
+        except Exception as e:
+            # ✅ Generic safe exception message
             return Response({
-                "statusCode": 404,
+                "statusCode": 500,
                 "status": False,
-                "message": "No matching states found.",
-                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=status.HTTP_404_NOT_FOUND)
-
-        states.delete()
-
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} state(s) deleted successfully.",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=status.HTTP_200_OK)
+                "message": f"An unexpected error occurred while deleting state(s): {str(e)}",
+                "data": None
+            }, status=500)
+        
 
 
 class StateExportAPIView(APIView):
@@ -2679,9 +3478,10 @@ class StateImportAPIView(APIView):
 
                 if not state_name or not country_name or not state_type:
                     skipped_rows.append({
-                        "State Name": state_name or "Unknown",
-                        "Country Name": country_name or "Unknown",
-                        "State / Territory":state_type or "Unknown",
+                        "State Name": state_name or "",
+                        "Country Name": country_name or "",
+                        "State Short Name":short_name or "",
+                        "State / Territory":state_type or "",
                         "Reason": "Missing required field or Invalid state type: Use (State, Territory)"
                     })
                     continue
@@ -2690,7 +3490,8 @@ class StateImportAPIView(APIView):
                     skipped_rows.append({
                         "State Name": state_name,
                         "Country Name": country_name,
-                        "State / Territory":state_type or "Unknown",
+                        "State Short Name":short_name or "",
+                        "State / Territory":state_type or "",
                         "Reason": f'Invalid state type: Use (State, Territory)'
                     })
                     continue
@@ -2701,7 +3502,8 @@ class StateImportAPIView(APIView):
                     skipped_rows.append({
                         "State Name": state_name,
                         "Country Name": country_name,
-                        "State / Territory":state_type or "Unknown",
+                        "State Short Name":short_name or "",
+                        "State / Territory":state_type or "",
                         "Reason": "Country not found"
                     })
                     continue
@@ -2745,8 +3547,10 @@ class StateImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": duplicate_names,
-            "skipped_rows": skipped_rows,
+            # "duplicates": duplicate_names,
+            # "skipped_rows": skipped_rows,
+            "duplicates": reversed(duplicate_names),
+            "skipped_rows": reversed(skipped_rows),
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=200)
@@ -2811,10 +3615,10 @@ class StateByCountryAPIView(APIView):
         data = [
             {
                 "uuid": str(state.uuid),
-                "name": state.stateName,
-                "shortName": state.stateshortName,
-                "fullName": state.description,
-                "country": state.countryName.name
+                "name": state.stateName if state.stateName else "",
+                "shortName": state.stateshortName if state.stateshortName else "",
+                "fullName": state.description if state.description else "",
+                "country": state.countryName.name if state.countryName else ""
             }
             for state in result_page
         ]
@@ -3002,83 +3806,296 @@ class DistrictUpdateAPIView(APIView):
         return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
 
 
+# class DistrictDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request):
+#         ids = request.data.get('id', None)
+
+#         if not ids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide 'id' field (UUID list or 'all').",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Delete all districts
+#         if ids == "all":
+#             districts = District.objects.filter(is_deleted=False)
+#             count = districts.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No districts found to delete.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#             districts.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} district(s) deleted successfully.",
+#                 "data": None
+#             }, status=status.HTTP_200_OK)
+
+#         # Validate list of UUIDs
+#         if not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         valid_uuids, invalid_uuids = [], []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         districts = District.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+#         count = districts.count()
+
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching districts found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         districts.delete()
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} district(s) deleted successfully.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         }, status=status.HTTP_200_OK)
+
+
 class DistrictDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request):
-        ids = request.data.get('id', None)
+        try:
+            ids = request.data.get('id', None)
+            delete_all = request.data.get("deleteAll", False)
+            search = request.GET.get("search", "").strip()
+            raw_countries = request.GET.get("country", "").strip()
+            raw_states = request.GET.get("state", "").strip()
 
-        if not ids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Please provide 'id' field (UUID list or 'all').",
-                "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+            # ----------------------------------------------------------
+            #  Parse multiple country UUIDs from params (?country=uuid,uuid)
+            # ----------------------------------------------------------
+            country_uuids, invalid_countries = [], []
+            if raw_countries:
+                for u in raw_countries.split(','):
+                    try:
+                        country_uuids.append(UUID(u.strip()))
+                    except ValueError:
+                        invalid_countries.append(u)
 
-        # Delete all districts
-        if ids == "all":
-            districts = District.objects.filter(is_deleted=False)
-            count = districts.count()
-            if count == 0:
+            # ----------------------------------------------------------
+            #  Parse multiple state UUIDs from params (?state=uuid,uuid)
+            # ----------------------------------------------------------
+            state_uuids, invalid_states = [], []
+            if raw_states:
+                for u in raw_states.split(','):
+                    try:
+                        state_uuids.append(UUID(u.strip()))
+                    except ValueError:
+                        invalid_states.append(u)
+
+            # ----------------------------------------------------------
+            #  CASE 1: deleteAll=false + ID LIST → delete only given UUIDs (ignore country/state/search filter)
+            # ----------------------------------------------------------
+            if delete_all is False and isinstance(ids, list):
+                valid_uuids, invalid_uuids = [], []
+                for u in ids:
+                    try:
+                        valid_uuids.append(UUID(u))
+                    except ValueError:
+                        invalid_uuids.append(u)
+
+                if not valid_uuids:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "No valid UUIDs provided.",
+                        "data": {"invalid_uuids": invalid_uuids}
+                    }, status=400)
+
+                bulk_qs = District.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+                count = bulk_qs.count()
+
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No matching district(s) found for provided UUID(s).",
+                        "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                    }, status=404)
+
+                with transaction.atomic():
+                    bulk_qs.delete()
+
                 return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "No districts found to delete.",
-                    "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} district(s) deleted successfully.",
+                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                }, status=200)
 
-            districts.delete()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": f"All {count} district(s) deleted successfully.",
-                "data": None
-            }, status=status.HTTP_200_OK)
+            # ----------------------------------------------------------
+            #  CASE 2: id="all" + deleteAll=false → delete full district table safely (soft delete checked)
+            # ----------------------------------------------------------
+            if ids == "all" and delete_all is False:
+                qs_all = District.objects.filter(is_deleted=False)
+                count = qs_all.count()
 
-        # Validate list of UUIDs
-        if not isinstance(ids, list):
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No districts found to delete.",
+                        "data": None
+                    }, status=404)
+
+                skipped = []
+                deleted = []
+
+                for d in qs_all:
+                    try:
+                        d.delete()
+                        deleted.append(str(d.uuid))
+                    except IntegrityError:
+                        skipped.append(d.name)
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"Delete completed. {len(deleted)} district(s) deleted. {len(skipped)} skipped because they are used in child tables.",
+                    "data": {"deleted": deleted, "skipped": skipped} if skipped else None
+                }, status=200)
+
+            # ----------------------------------------------------------
+            #  Filter based deletion only when deleteAll = true
+            # ----------------------------------------------------------
+            queryset = District.objects.filter(is_deleted=False)
+            applied_filters = []
+
+            # Apply search filter
+            if search:
+                queryset = queryset.filter(Q(districtName__istartswith=search))
+                applied_filters.append("search")
+
+            # Apply country filter
+            if country_uuids:
+                queryset = queryset.filter(countryName__uuid__in=country_uuids)
+                applied_filters.append("country")
+
+            # Apply state filter
+            if state_uuids:
+                queryset = queryset.filter(stateName__uuid__in=state_uuids)
+                applied_filters.append("state")
+
+            #  CASES 3,4,5 → filtered delete
+            if delete_all and applied_filters:
+                count = queryset.count()
+                if count == 0:
+                    filters_msg = " + ".join(applied_filters)
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": f"No district(s) found matching applied {filters_msg} filter(s).",
+                        "data": {
+                            "invalid_country_uuids": invalid_countries,
+                            "invalid_state_uuids": invalid_states
+                        }
+                    }, status=404)
+
+                with transaction.atomic():
+                    queryset.delete()
+
+                filter_msg = " + ".join(applied_filters)
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} district(s) deleted based on applied {filter_msg} filter(s).",
+                    "data": {
+                        "invalid_country_uuids": invalid_countries,
+                        "invalid_state_uuids": invalid_states
+                    } if invalid_countries or invalid_states else None
+                }, status=200)
+
+            # ----------------------------------------------------------
+            #  NORMAL BULK DELETE (deleteAll=false but id list not empty)
+            # ----------------------------------------------------------
+            if isinstance(ids, list):
+                valid_uuids, invalid_uuids = [], []
+                for u in ids:
+                    try:
+                        valid_uuids.append(UUID(u))
+                    except:
+                        invalid_uuids.append(u)
+
+                bulk_qs = queryset.filter(uuid__in=valid_uuids)
+                count = bulk_qs.count()
+
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No matching district(s) found to delete.",
+                        "data": None
+                    }, status=404)
+
+                with transaction.atomic():
+                    bulk_qs.delete()
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} district(s) deleted successfully.",
+                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                }, status=200)
+
+            # ❌ default fallback
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "message": "Invalid delete request format.",
                 "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=400)
 
-        valid_uuids, invalid_uuids = [], []
-        for u in ids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
-
-        if not valid_uuids:
+        except IntegrityError:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_400_BAD_REQUEST)
+                "message": "You can't delete this district because it is referenced in one or more child tables. Delete is not allowed.",
+                "data": None
+            }, status=400)
 
-        districts = District.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = districts.count()
-
-        if count == 0:
+        except Exception as e:
             return Response({
-                "statusCode": 404,
+                "statusCode": 500,
                 "status": False,
-                "message": "No matching districts found.",
-                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=status.HTTP_404_NOT_FOUND)
-
-        districts.delete()
-
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} district(s) deleted successfully.",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=status.HTTP_200_OK)
+                "message": f"An unexpected error occurred: {str(e)}",
+                "data": None
+            }, status=500)
+        
 
 
 class DistrictExportAPIView(APIView):
@@ -3423,8 +4440,10 @@ class DistrictImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": duplicate_names,
-            "skipped_rows": skipped_rows,
+            # "duplicates": duplicate_names,
+            # "skipped_rows": skipped_rows,
+            "duplicates": reversed(duplicate_names),
+            "skipped_rows": reversed(skipped_rows),
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=200)
@@ -3653,83 +4672,319 @@ class CityUpdateAPIView(APIView):
 
 
 
+# class CityDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request):
+#         ids = request.data.get('id', None)
+
+#         if not ids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide 'id' field (UUID list or 'all').",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Delete all cities
+#         if ids == "all":
+#             cities = City.objects.filter(is_deleted=False)
+#             count = cities.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No cities found to delete.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#             cities.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} city(s) deleted successfully.",
+#                 "data": None
+#             }, status=status.HTTP_200_OK)
+
+#         # Validate list of UUIDs
+#         if not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         valid_uuids, invalid_uuids = [], []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         cities = City.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+#         count = cities.count()
+
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching cities found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         cities.delete()
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} city(s) deleted successfully.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         }, status=status.HTTP_200_OK)
+
+
+
 class CityDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request):
-        ids = request.data.get('id', None)
+        try:
+            ids = request.data.get('id', None)
+            delete_all = request.data.get("deleteAll", False)
+            search = request.GET.get("search", "").strip()
+            raw_countries = request.GET.get("country", "").strip()
+            raw_states = request.GET.get("state", "").strip()
+            raw_districts = request.GET.get("district", "").strip()
 
-        if not ids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Please provide 'id' field (UUID list or 'all').",
-                "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+            # ----------------------------------------------------------
+            #  Parse multiple country UUIDs (?country=uuid,uuid)
+            # ----------------------------------------------------------
+            country_uuids, invalid_countries = [], []
+            if raw_countries:
+                for u in raw_countries.split(','):
+                    try:
+                        country_uuids.append(UUID(u.strip()))
+                    except ValueError:
+                        invalid_countries.append(u)
 
-        # Delete all cities
-        if ids == "all":
-            cities = City.objects.filter(is_deleted=False)
-            count = cities.count()
-            if count == 0:
+            # ----------------------------------------------------------
+            #  Parse multiple state UUIDs (?state=uuid,uuid)
+            # ----------------------------------------------------------
+            state_uuids, invalid_states = [], []
+            if raw_states:
+                for u in raw_states.split(','):
+                    try:
+                        state_uuids.append(UUID(u.strip()))
+                    except ValueError:
+                        invalid_states.append(u)
+
+            # ----------------------------------------------------------
+            #  Parse multiple district UUIDs (?district=uuid,uuid)
+            # ----------------------------------------------------------
+            district_uuids, invalid_districts = [], []
+            if raw_districts:
+                for u in raw_districts.split(','):
+                    try:
+                        district_uuids.append(UUID(u.strip()))
+                    except ValueError:
+                        invalid_districts.append(u)
+
+            # ----------------------------------------------------------
+            #  CASE 1: deleteAll=false + ID list → Only delete given UUIDs (ignore filters)
+            # ----------------------------------------------------------
+            if delete_all is False and isinstance(ids, list):
+                valid_uuids, invalid_uuids = [], []
+                for u in ids:
+                    try:
+                        valid_uuids.append(UUID(u))
+                    except ValueError:
+                        invalid_uuids.append(u)
+
+                if not valid_uuids:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "No valid UUIDs provided.",
+                        "data": {"invalid_uuids": invalid_uuids}
+                    }, status=400)
+
+                bulk_qs = City.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+                count = bulk_qs.count()
+
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No matching city(s) found for provided UUID(s).",
+                        "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                    }, status=404)
+
+                with transaction.atomic():
+                    bulk_qs.delete()
+
                 return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "No cities found to delete.",
-                    "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} city(s) deleted successfully.",
+                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                }, status=200)
 
-            cities.delete()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": f"All {count} city(s) deleted successfully.",
-                "data": None
-            }, status=status.HTTP_200_OK)
+            # ----------------------------------------------------------
+            #  CASE 2: id="all" + deleteAll=false → Delete entire City table (skip FK errors)
+            # ----------------------------------------------------------
+            if ids == "all" and delete_all is False:
+                qs_all = City.objects.filter(is_deleted=False)
+                count = qs_all.count()
 
-        # Validate list of UUIDs
-        if not isinstance(ids, list):
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No cities found to delete.",
+                        "data": None
+                    }, status=404)
+
+                skipped = []
+                deleted = []
+
+                for obj in qs_all:
+                    try:
+                        obj.delete()
+                        deleted.append(str(obj.uuid))
+                    except IntegrityError:
+                        skipped.append(obj.name)
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"Delete completed. {len(deleted)} city(s) deleted. {len(skipped)} skipped because they are referenced in child tables.",
+                    "data": {"deleted": deleted, "skipped": skipped} if skipped else None
+                }, status=200)
+
+            # ----------------------------------------------------------
+            #  Apply filters only when deleteAll = true
+            # ----------------------------------------------------------
+            queryset = City.objects.filter(is_deleted=False)
+            applied_filters = []
+
+            if search:
+                queryset = queryset.filter(Q(cityName__istartswith=search))
+                applied_filters.append("search")
+
+            if country_uuids:
+                queryset = queryset.filter(countryName__uuid__in=country_uuids)
+                applied_filters.append("country")
+
+            if state_uuids:
+                queryset = queryset.filter(stateName__uuid__in=state_uuids)
+                applied_filters.append("state")
+
+            if district_uuids:
+                queryset = queryset.filter(districtName__uuid__in=district_uuids)
+                applied_filters.append("district")
+
+            # ----------------------------------------------------------
+            #  CASE 3/4/5: deleteAll=true + filters → delete filtered data
+            # ----------------------------------------------------------
+            if delete_all and applied_filters:
+                count = queryset.count()
+                if count == 0:
+                    filters_msg = " + ".join(applied_filters)
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": f"No city(s) found matching applied {filters_msg} filter(s).",
+                        "data": {
+                            "invalid_country_uuids": invalid_countries,
+                            "invalid_state_uuids": invalid_states,
+                            "invalid_district_uuids": invalid_districts
+                        }
+                    }, status=404)
+
+                with transaction.atomic():
+                    queryset.delete()
+
+                filter_msg = " + ".join(applied_filters)
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} city(s) deleted based on applied {filter_msg} filter(s).",
+                    "data": {
+                        "invalid_country_uuids": invalid_countries,
+                        "invalid_state_uuids": invalid_states,
+                        "invalid_district_uuids": invalid_districts
+                    } if invalid_countries or invalid_states or invalid_districts else None
+                }, status=200)
+
+            # ----------------------------------------------------------
+            #  Normal bulk delete (deleteAll=false but id provided incorrectly)
+            # ----------------------------------------------------------
+            if isinstance(ids, list):
+                valid_uuids, invalid_uuids = [], []
+                for u in ids:
+                    try:
+                        valid_uuids.append(UUID(u))
+                    except:
+                        invalid_uuids.append(u)
+
+                bulk_qs = queryset.filter(uuid__in=valid_uuids)
+                count = bulk_qs.count()
+
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No matching city(s) found to delete.",
+                        "data": None
+                    }, status=404)
+
+                with transaction.atomic():
+                    bulk_qs.delete()
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} city(s) deleted successfully.",
+                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                }, status=200)
+
+            # ❌ fallback
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
-                "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+                "message": "Invalid delete request format.",
+                "data": {
+                    "invalid_country_uuids": invalid_countries,
+                    "invalid_state_uuids": invalid_states,
+                    "invalid_district_uuids": invalid_districts
+                } if applied_filters else None
+            }, status=400)
 
-        valid_uuids, invalid_uuids = [], []
-        for u in ids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
-
-        if not valid_uuids:
+        except IntegrityError:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_400_BAD_REQUEST)
+                "message": "You can't delete this city because it is referenced in one or more child tables. Delete is not allowed.",
+                "data": None
+            }, status=400)
 
-        cities = City.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = cities.count()
-
-        if count == 0:
+        except Exception as e:
             return Response({
-                "statusCode": 404,
+                "statusCode": 500,
                 "status": False,
-                "message": "No matching cities found.",
-                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=status.HTTP_404_NOT_FOUND)
+                "message": f"Unexpected error: {str(e)}",
+                "data": None
+            }, status=500)
 
-        cities.delete()
-
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} city(s) deleted successfully.",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=status.HTTP_200_OK)
+            
 
 class CityExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -4080,113 +5335,89 @@ class CityExportAPIView(APIView):
 #             }, status=400)
 
 
-
 class CityImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
-
+ 
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
-
+ 
         if not file:
             return Response({'error': 'No file uploaded'}, status=400)
-
+ 
         format_type = file.name.split('.')[-1].lower()
         required_headers = {'city name', 'country name'}
         optional_headers = {'state name', 'district name', 'description'}
-
+ 
         try:
             # ------------------ Load file ------------------
             data = []
-
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
-                if not sheet_name or sheet_name not in wb.sheetnames:
+                if sheet_name not in wb.sheetnames:
                     return Response({
-                        "error": f"Invalid sheet_name. Available: {wb.sheetnames}"
+                        "error": f"Invalid sheet_name. Available sheets: {wb.sheetnames}"
                     }, status=400)
-
                 ws = wb[sheet_name]
-                headers = [
-                    str(cell.value).strip().lower() if cell.value else ''
-                    for cell in next(ws.iter_rows(min_row=1, max_row=1))
-                ]
-                if not required_headers.issubset(set(headers)):
-                    return Response({
-                        "error": f"Missing required headers: {required_headers}. Found: {set(headers)}"
-                    }, status=400)
-
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
                 for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
                     row_dict['_row_number'] = idx
                     data.append(row_dict)
-
+ 
             elif format_type == 'csv':
                 decoded = file.read().decode('utf-8')
                 reader = csv.DictReader(io.StringIO(decoded))
                 for idx, row in enumerate(reader, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
                     row_lower['_row_number'] = idx
-                    if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({
-                            "error": f"Missing required headers in CSV. Required: {required_headers}. Found: {set(row_lower.keys())}"
-                        }, status=400)
                     data.append(row_lower)
             else:
                 return Response({'error': 'Unsupported file type. Use .xlsx or .csv'}, status=400)
-
+ 
             # ------------------ Preload related data ------------------
-            countries = {c.name.lower(): c for c in Country.objects.all() if c is not None}
-            states = {
-                (s.stateName.lower(), s.countryName.uuid): s
-                for s in State.objects.all() if s.countryName is not None
-            }
-            districts = {
-                (d.districtName.lower(), d.stateName.uuid, d.countryName.uuid): d
-                for d in District.objects.all() if d.stateName is not None and d.countryName is not None
-            }
-
+            countries = {c.name.strip().lower(): c for c in Country.objects.all()}
+            states = {(s.stateName.strip().lower(), s.countryName.uuid): s for s in State.objects.all() if s.countryName}
+            districts = {(d.districtName.strip().lower(), d.stateName.uuid, d.countryName.uuid): d for d in District.objects.all() if d.stateName and d.countryName}
+ 
             # ------------------ Preload existing cities ------------------
             existing_city_keys = set(
                 (
-                    c.cityName.lower(),
-                    c.districtName_id,
-                    c.stateName_id,
-                    c.countryName_id
+                    (c.cityName or "").strip().lower(),
+                    (c.stateName.stateName.lower() if c.stateName else ""),
+                    (c.countryName.name.lower() if c.countryName else ""),
+                    (c.districtName.districtName.lower() if c.districtName else None)
                 )
                 for c in City.objects.all()
             )
-
+ 
+ 
+ 
             # ------------------ Process rows ------------------
             to_create = []
             duplicates = []
             skipped_rows = []
             existing_in_file = set()
-
-            for row in reversed(data):
+ 
+            for row in data:
                 row_number = row.get('_row_number', 'Unknown')
-                city_name = str(row.get("city name") or "").strip()
-                country_name = str(row.get("country name") or "").strip()
-                state_name = str(row.get("state name") or "").strip()
-                district_name = str(row.get("district name") or "").strip()
-                description = str(row.get("description") or "").strip()
+                city_name = (row.get("city name") or "").strip()
+                country_name = (row.get("country name") or "").strip()
+                state_name = (row.get("state name") or "").strip()
+                district_name = (row.get("district name") or "").strip()
+                description = (row.get("description") or "").strip()
 
-                # ------------------ Check required fields ------------------
-                missing_fields = []
-                if not city_name:
-                    missing_fields.append("city name")
-                if not country_name:
-                    missing_fields.append("country name")
-
+                # ------------------ Skip missing required fields ------------------
+                missing_fields = [f for f, v in [('city name', city_name), ('country name', country_name)] if not v]
                 if missing_fields:
                     skipped_rows.append({
                         "Row": row_number,
-                        "City Name": city_name or "",
+                        "City Name": city_name or "Unknown",
                         "State Name": state_name or "",
                         "District Name": district_name or "",
-                        "Country Name": country_name or "",
+                        "Country Name": country_name or "Unknown",
                         "Reason": f"Missing required fields: {', '.join(missing_fields)}"
                     })
                     continue
@@ -4209,41 +5440,41 @@ class CityImportAPIView(APIView):
                     skipped_rows.append({
                         "Row": row_number,
                         "City Name": city_name,
-                        "State Name": state_name or "",
-                        "District Name": district_name or "",
-                        "Country Name": country_name or "",
+                        "State Name": state_name,
+                        "District Name": district_name,
+                        "Country Name": country_name,
                         "Reason": f"State '{state_name}' not found for country '{country_name}'"
                     })
                     continue
 
                 district_obj = districts.get((district_name.lower(), state_obj.uuid, country_obj.uuid)) if district_name and state_obj else None
-                if district_name and state_obj and not district_obj:
+                if district_name and state_name and not district_obj:
                     skipped_rows.append({
                         "Row": row_number,
                         "City Name": city_name,
-                        "State Name": state_name or "",
-                        "District Name": district_name or "",
-                        "Country Name": country_name or "",
+                        "State Name": state_name,
+                        "District Name": district_name,
+                        "Country Name": country_name,
                         "Reason": f"District '{district_name}' not found for state '{state_name}'"
                     })
                     continue
 
-                # ------------------ Duplicate check (all 4 fields must match) ------------------
+                # ------------------ Exact duplicate check ------------------
                 key = (
                     city_name.lower(),
-                    district_obj.uuid if district_obj else None,
-                    state_obj.uuid if state_obj else None,
-                    country_obj.uuid
+                    state_name.lower() if state_name else "",
+                    country_name.lower(),
+                    district_name.lower() if district_name else None
                 )
 
                 if key in existing_city_keys or key in existing_in_file:
                     duplicates.append({
                         "Row": row_number,
                         "City Name": city_name,
-                        "District Name": district_name if district_obj else "",
-                        "State Name": state_name if state_obj else "",
+                        "District Name": district_name,
+                        "State Name": state_name,
                         "Country Name": country_name,
-                        "Reason": "Duplicate city (all fields match: city, district, state, country)"
+                        "Reason": "Duplicate city (exact match)"
                     })
                     continue
 
@@ -4261,26 +5492,216 @@ class CityImportAPIView(APIView):
                     )
                 )
 
+ 
             # ------------------ Bulk insert ------------------
             with transaction.atomic():
                 City.objects.bulk_create(to_create, ignore_conflicts=True, batch_size=500)
-
+ 
             return Response({
                 "statusCode": 200,
                 "status": True,
                 "imported_count": len(to_create),
                 "duplicates": duplicates,
                 "skipped_rows": skipped_rows,
-                "message": f"Sheet '{sheet_name}' imported successfully" if sheet_name else "Import successful"
+                # "duplicates": list(reversed(duplicates)),
+                # "skipped_rows": list(reversed(skipped_rows)),
+                "message": f"Imported successfully ({len(to_create)} new cities)"
             }, status=200)
-
+ 
         except Exception as e:
             return Response({
                 "statusCode": 400,
                 "status": False,
                 "message": str(e)
             }, status=400)
+        
+
+
+# class CityImportAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
  
+#     def post(self, request):
+#         file = request.FILES.get('file')
+#         sheet_name = request.data.get('sheet_name')
+ 
+#         if not file:
+#             return Response({'error': 'No file uploaded'}, status=400)
+ 
+#         format_type = file.name.split('.')[-1].lower()
+#         required_headers = {'city name', 'country name'}
+#         optional_headers = {'state name', 'district name', 'description'}
+ 
+#         try:
+#             # ------------------ Load file ------------------
+#             data = []
+#             if format_type == 'xlsx':
+#                 wb = openpyxl.load_workbook(file, read_only=True)
+#                 if sheet_name not in wb.sheetnames:
+#                     return Response({
+#                         "error": f"Invalid sheet_name. Available sheets: {wb.sheetnames}"
+#                     }, status=400)
+#                 ws = wb[sheet_name]
+#                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+#                 for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+#                     if not any(row):
+#                         continue
+#                     row_dict = dict(zip(headers, row))
+#                     row_dict['_row_number'] = idx
+#                     data.append(row_dict)
+ 
+#             elif format_type == 'csv':
+#                 decoded = file.read().decode('utf-8')
+#                 reader = csv.DictReader(io.StringIO(decoded))
+#                 for idx, row in enumerate(reader, start=2):
+#                     row_lower = {k.strip().lower(): v for k, v in row.items()}
+#                     row_lower['_row_number'] = idx
+#                     data.append(row_lower)
+#             else:
+#                 return Response({'error': 'Unsupported file type. Use .xlsx or .csv'}, status=400)
+ 
+#             # ------------------ Preload related data ------------------
+#             countries = {c.name.strip().lower(): c for c in Country.objects.all()}
+#             states = {(s.stateName.strip().lower(), s.countryName.uuid): s for s in State.objects.all() if s.countryName}
+#             districts = {(d.districtName.strip().lower(), d.stateName.uuid, d.countryName.uuid): d for d in District.objects.all() if d.stateName and d.countryName}
+ 
+#             # ------------------ Preload existing cities ------------------
+#             existing_city_keys = set(
+#                 (
+#                     (c.cityName or "").strip().lower(),
+#                     (c.stateName.stateName.lower() if c.stateName else ""),
+#                     (c.countryName.name.lower() if c.countryName else ""),
+#                     (c.districtName.districtName.lower() if c.districtName else None)
+#                 )
+#                 for c in City.objects.all()
+#             )
+ 
+ 
+ 
+#             # ------------------ Process rows ------------------
+#             to_create = []
+#             duplicates = []
+#             skipped_rows = []
+#             existing_in_file = set()
+ 
+#             for row in data:
+#                 row_number = row.get('_row_number', 'Unknown')
+#                 city_name = (row.get("city name") or "").strip()
+#                 country_name = (row.get("country name") or "").strip()
+#                 state_name = (row.get("state name") or "").strip()
+#                 district_name = (row.get("district name") or "").strip()
+#                 description = (row.get("description") or "").strip()
+ 
+#                 # ------------------ Skip missing required fields ------------------
+#                 missing_fields = [f for f, v in [('city name', city_name), ('country name', country_name)] if not v]
+#                 if missing_fields:
+#                     skipped_rows.append({
+#                         "Row": row_number,
+#                         "City Name": city_name or "Unknown",
+#                         "State Name": state_name or "",
+#                         "District Name": district_name or "",
+#                         "Country Name": country_name or "Unknown",
+#                         "Reason": f"Missing required fields: {', '.join(missing_fields)}"
+#                     })
+#                     continue
+ 
+#                 # ------------------ Validate related objects ------------------
+#                 country_obj = countries.get(country_name.lower())
+#                 if not country_obj:
+#                     skipped_rows.append({
+#                         "Row": row_number,
+#                         "City Name": city_name,
+#                         "State Name": state_name or "",
+#                         "District Name": district_name or "",
+#                         "Country Name": country_name or "",
+#                         "Reason": f"Country '{country_name}' not found"
+#                     })
+#                     continue
+ 
+#                 state_obj = states.get((state_name.lower(), country_obj.uuid)) if state_name else None
+#                 if state_name and not state_obj:
+#                     skipped_rows.append({
+#                         "Row": row_number,
+#                         "City Name": city_name,
+#                         "State Name": state_name or "",
+#                         "District Name": district_name or "",
+#                         "Country Name": country_name or "",
+#                         "Reason": f"State '{state_name}' not found for country '{country_name}'"
+#                     })
+#                     continue
+ 
+#                 district_obj = districts.get((district_name.lower(), state_obj.uuid, country_obj.uuid)) if district_name and state_obj else None
+#                 if district_name and state_name and not district_obj:
+#                     skipped_rows.append({
+#                         "Row": row_number,
+#                         "City Name": city_name,
+#                         "State Name": state_name or "",
+#                         "District Name": district_name or "",
+#                         "Country Name": country_name or "",
+#                         "Reason": f"District '{district_name}' not found for state '{state_name}'"
+#                     })
+#                     continue
+ 
+#                 # ------------------ Exact duplicate check ------------------
+#                 # ------------------ Exact duplicate check ------------------
+#               # ------------------ Exact duplicate check ------------------
+#                 # Only consider duplicate if city, state, country, and district all match
+#                 key = (
+#                     city_name.lower(),
+#                     state_name.lower() if state_name else "",
+#                     country_name.lower(),
+#                     district_name.lower() if district_name else None
+#                 )
+ 
+#                 if key in existing_city_keys or key in existing_in_file:
+#                     duplicates.append({
+#                         "Row": row_number,
+#                         "City Name": city_name,
+#                         "District Name": district_name,
+#                         "State Name": state_name,
+#                         "Country Name": country_name,
+#                         "Reason": "Duplicate city (exact match)"
+#                     })
+#                     continue
+ 
+#                 existing_in_file.add(key)
+ 
+ 
+ 
+#                 # ------------------ Prepare city object ------------------
+#                 to_create.append(
+#                     City(
+#                         cityName=city_name,
+#                         districtName=district_obj,
+#                         stateName=state_obj,
+#                         countryName=country_obj,
+#                         description=description,
+#                         is_deleted=False
+#                     )
+#                 )
+ 
+#             # ------------------ Bulk insert ------------------
+#             with transaction.atomic():
+#                 City.objects.bulk_create(to_create, ignore_conflicts=True, batch_size=500)
+ 
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "imported_count": len(to_create),
+#                 "duplicates": duplicates,
+#                 "skipped_rows": skipped_rows,
+#                 # "duplicates": list(reversed(duplicates)),
+#                 # "skipped_rows": list(reversed(skipped_rows)),
+#                 "message": f"Imported successfully ({len(to_create)} new cities)"
+#             }, status=200)
+ 
+#         except Exception as e:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": str(e)
+#             }, status=400)
+        
+
 #---------------------------Realtion-----------------------
 class RelationListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -4399,83 +5820,208 @@ class RelationUpdateAPIView(APIView):
         return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
 
 
+# class RelationDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request):
+#         ids = request.data.get('id', None)
+
+#         if not ids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide 'id' field (UUID list or 'all').",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Delete all relations
+#         if ids == "all":
+#             relations = Relation.objects.filter(is_deleted=False)
+#             count = relations.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No relations found to delete.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#             relations.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} relation(s) deleted successfully.",
+#                 "data": None
+#             }, status=status.HTTP_200_OK)
+
+#         # Validate list of UUIDs
+#         if not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         valid_uuids, invalid_uuids = [], []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         relations = Relation.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+#         count = relations.count()
+
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching relations found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         relations.delete()
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} relation(s) deleted successfully.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         }, status=status.HTTP_200_OK)
+
+
 class RelationDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request):
-        ids = request.data.get('id', None)
+        try:
+            ids = request.data.get('id', None)
+            delete_all = request.data.get("deleteAll", False)
+            search = request.GET.get("search", "").strip()
 
-        if not ids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Please provide 'id' field (UUID list or 'all').",
-                "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+            # ---------------------------------------
+            # CASE 2: id = "all" → Delete all rows
+            # ---------------------------------------
+            if ids == "all":
+                queryset = Relation.objects.filter(is_deleted=False)
+                count = queryset.count()
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No relations found to delete.",
+                        "data": None
+                    }, status=404)
 
-        # Delete all relations
-        if ids == "all":
-            relations = Relation.objects.filter(is_deleted=False)
-            count = relations.count()
+                with transaction.atomic():
+                    queryset.delete()
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"All {count} relation(s) deleted successfully.",
+                    "data": None
+                }, status=200)
+
+            # ---------------------------------------
+            # CASE 3: deleteAll=true + search filter → Delete filtered rows
+            # ---------------------------------------
+            if delete_all and not ids and search:
+                queryset = Relation.objects.filter(is_deleted=False, name__istartswith=search)
+                count = queryset.count()
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No relation(s) found matching this search filter.",
+                        "data": None
+                    }, status=404)
+
+                with transaction.atomic():
+                    queryset.delete()
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} relation(s) deleted based on search filter.",
+                    "data": None
+                }, status=200)
+
+            # ---------------------------------------
+            # CASE 1: Bulk delete by UUID list
+            # ---------------------------------------
+            if not ids or not isinstance(ids, list):
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Send UUID list in 'id', 'id: all', or 'deleteAll: true' with search.",
+                    "data": None
+                }, status=400)
+
+            valid_uuids, invalid_uuids = [], []
+            for u in ids:
+                try:
+                    valid_uuids.append(UUID(u))
+                except ValueError:
+                    invalid_uuids.append(u)
+
+            if not valid_uuids:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "No valid UUIDs provided.",
+                    "data": {"invalid_uuids": invalid_uuids}
+                }, status=400)
+
+            queryset = Relation.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+            count = queryset.count()
+
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No relations found to delete.",
-                    "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
+                    "message": "No matching relation(s) found.",
+                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                }, status=404)
 
-            relations.delete()
+            with transaction.atomic():
+                queryset.delete()
+
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} relation(s) deleted successfully.",
-                "data": None
-            }, status=status.HTTP_200_OK)
-
-        # Validate list of UUIDs
-        if not isinstance(ids, list):
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
-                "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        valid_uuids, invalid_uuids = [], []
-        for u in ids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
-
-        if not valid_uuids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        relations = Relation.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = relations.count()
-
-        if count == 0:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "No matching relations found.",
+                "message": f"{count} relation(s) deleted successfully.",
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=status.HTTP_404_NOT_FOUND)
+            }, status=200)
 
-        relations.delete()
+        except IntegrityError:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "You can't delete this relation because it is used in one or more related child tables.",
+                "data": None
+            }, status=400)
 
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} relation(s) deleted successfully.",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({
+                "statusCode": 500,
+                "status": False,
+                "message": f"An unexpected error occurred: {str(e)}",
+                "data": None
+            }, status=500)
+
+
+
+
 
 class RelationExportAPIView(APIView):
     """
@@ -4606,23 +6152,23 @@ class RelationImportAPIView(APIView):
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split('.')[-1].lower()
-        duplicate_names = []
 
-        # Define required and optional headers
-        required_headers = {'relation'}       # must be present
-        optional_headers = {'description'}    # optional
+        duplicates = []
+        skipped_rows = []
+
+        required_headers = {'relation'}
+        optional_headers = {'description'}
 
         try:
             data = []
             headers = []
 
-            # ---------- XLSX Handling ----------
+            # ---------------- XLSX ----------------
             if format_type == 'xlsx':
                 import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
-                # Validate sheet name
                 if not sheet_name:
                     return Response({
                         'error': 'Please provide sheet_name',
@@ -4631,100 +6177,90 @@ class RelationImportAPIView(APIView):
 
                 if sheet_name not in available_sheets:
                     return Response({
-                        'error': f'Sheet "{sheet_name}" not found in uploaded file',
+                        'error': f'Sheet "{sheet_name}" not found',
                         'available_sheets': available_sheets
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 ws = wb[sheet_name]
+
                 if ws.max_row <= 1:
                     return Response({
                         "statusCode": 400,
                         "status": False,
-                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
+                        "message": f'Sheet "{sheet_name}" is empty.'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
-                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                headers = [
+                    str(cell.value).strip().lower() if cell.value else ''
+                    for cell in next(ws.iter_rows(min_row=1, max_row=1))
+                ]
 
-                # Validate required headers
-                if not required_headers.issubset(set(headers)):
-                    return Response({
-                        "statusCode": 400,
-                        "status": True,
-                        'message': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
+                row_num = 1
                 for row in ws.iter_rows(min_row=2, values_only=True):
+                    row_num += 1
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
+                    row_dict["_row_number"] = row_num
                     data.append(row_dict)
 
-                if not data:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": f'The uploaded XLSX file (sheet: "{sheet_name}") is empty. Please provide at least one data row.'
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
-            # ---------- CSV Handling ----------
+            # ---------------- CSV ----------------
             elif format_type == 'csv':
                 from tablib import Dataset
                 decoded_file = file.read().decode('utf-8')
                 dataset = Dataset()
                 dataset.load(decoded_file, format='csv')
 
+                row_num = 1
                 for row in dataset.dict:
+                    row_num += 1
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
-
-                    # Validate required headers
-                    if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({
-                            "statusCode": 400,
-                            "status": True,
-                            "message": (
-                                f'Missing required headers. Required: {", ".join(required_headers)}. '
-                                f'Found headers in the file: {", ".join(row_lower.keys())}.'
-                            )
-                        }, status=status.HTTP_400_BAD_REQUEST)
-
+                    row_lower["_row_number"] = row_num
                     data.append(row_lower)
-
-                if not data:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": "The uploaded CSV file is empty. Please provide at least one data row."
-                    }, status=status.HTTP_400_BAD_REQUEST)
 
             else:
                 return Response({
                     "statusCode": 400,
-                    "status": True,
-                    'error': 'Unsupported file format. Use .xlsx or .csv'
+                    "status": False,
+                    "message": 'Unsupported file format. Use .xlsx or .csv'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
+            # ---------------- Process Rows ----------------
             imported_count = 0
 
-            # ---------- Import Rows ----------
-            for row in  reversed(data):
+            for row in reversed(data):
+                row_number = row.get("_row_number", "Unknown")
                 name = str(row.get('relation')).strip() if row.get('relation') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
+                # Missing Name
                 if not name:
-                    continue  # skip rows without relation name
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Relation": "",
+                        "Description": description,
+                        "Reason": "Missing relation name"
+                    })
+                    continue
 
                 existing = Relation.objects.filter(name__iexact=name).first()
 
                 if existing:
                     if not existing.is_deleted:
-                        duplicate_names.append(name)
+                        duplicates.append({
+                            "Row": row_number,
+                            "Relation": name,
+                            "Description": description,
+                            "Reason": "Already exists in database"
+                        })
                         continue
                     else:
-                        # Reactivate if previously deleted
+                        # Reactivate deleted
                         existing.description = description
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
+
                 else:
                     Relation.objects.create(
                         name=name,
@@ -4736,18 +6272,19 @@ class RelationImportAPIView(APIView):
         except Exception as e:
             return Response({
                 "statusCode": 400,
-                "status": True,
-                'message': str(e)
+                "status": False,
+                "message": str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
 
+        # ---------------- Final Response (100% Gender Format) ----------------
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_names)),
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
-            "imported_count": imported_count
+            "imported_count": imported_count,
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=status.HTTP_200_OK)
-
 
 
 
@@ -4963,83 +6500,268 @@ class TimezoneUpdateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+# class TimezoneDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request, uuid=None):
+#         ids = request.data.get('id', None)
+
+#         if uuid:
+#             try:
+#                 tz = Timezone.objects.get(uuid=uuid)
+#                 tz.delete()
+#                 return Response({
+#                     "statusCode": 204,
+#                     "status": True,
+#                     "message": "Timezone permanently deleted.",
+#                     "data": None
+#                 }, status=status.HTTP_204_NO_CONTENT)
+#             except Timezone.DoesNotExist:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "Timezone not found.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#         if ids == "all":
+#             tzs = Timezone.objects.all()
+#             count = tzs.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No timezones found to delete.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+#             tzs.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} timezone(s) permanently deleted.",
+#                 "data": None
+#             }, status=status.HTTP_200_OK)
+
+#         if not ids or not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         valid_uuids = []
+#         invalid_uuids = []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         tzs = Timezone.objects.filter(uuid__in=valid_uuids)
+#         count = tzs.count()
+
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching timezones found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         tzs.delete()
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} timezone(s) permanently deleted.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         }, status=status.HTTP_200_OK)
+
+
 class TimezoneDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def delete(self, request, uuid=None):
-        ids = request.data.get('id', None)
+    def delete(self, request):
+        try:
+            ids = request.data.get('id', None)
+            delete_all = request.data.get("deleteAll", False)
+            search = request.GET.get("search", "").strip()
+            raw_country = request.GET.get("country", "").strip()
 
-        if uuid:
-            try:
-                tz = Timezone.objects.get(uuid=uuid)
-                tz.delete()
+            # ---------------------------------------
+            #  Parse country UUID list from params
+            # ---------------------------------------
+            country_uuids, invalid_countries = [], []
+            if raw_country:
+                for u in raw_country.split(','):
+                    try:
+                        country_uuids.append(UUID(u.strip()))
+                    except ValueError:
+                        invalid_countries.append(u)
+
+
+            # ---------------------------------------
+            #  CASE 1: deleteAll=false + UUID LIST → only delete given IDs (filters NO error)
+            # ---------------------------------------
+            if delete_all is False and isinstance(ids, list):
+                valid_uuids, invalid_uuids = [], []
+                for u in ids:
+                    try:
+                        valid_uuids.append(UUID(u))
+                    except ValueError:
+                        invalid_uuids.append(u)
+
+                if not valid_uuids:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "No valid UUID(s) provided.",
+                        "data": {"invalid_uuids": invalid_uuids}
+                    }, status=400)
+
+                bulk_qs = Timezone.objects.filter(uuid__in=valid_uuids)
+                count = bulk_qs.count()
+
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No matching timezone(s) found for provided UUID(s).",
+                        "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                    }, status=404)
+
+                with transaction.atomic():
+                    bulk_qs.delete()
+
                 return Response({
-                    "statusCode": 204,
+                    "statusCode": 200,
                     "status": True,
-                    "message": "Timezone permanently deleted.",
-                    "data": None
-                }, status=status.HTTP_204_NO_CONTENT)
-            except Timezone.DoesNotExist:
-                return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "Timezone not found.",
-                    "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
+                    "message": f"{count} timezone(s) permanently deleted.",
+                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                }, status=200)
 
-        if ids == "all":
-            tzs = Timezone.objects.all()
-            count = tzs.count()
-            if count == 0:
-                return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "No timezones found to delete.",
-                    "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
-            tzs.delete()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": f"All {count} timezone(s) permanently deleted.",
-                "data": None
-            }, status=status.HTTP_200_OK)
+            # ---------------------------------------
+            #  CASE 2: id="all" + deleteAll=false → full table delete
+            # ---------------------------------------
+            if ids == "all" and delete_all is False:
+                tzs = Timezone.objects.all()
+                count = tzs.count()
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No timezones found to delete.",
+                        "data": None
+                    }, status=404)
 
-        if not ids or not isinstance(ids, list):
+                with transaction.atomic():
+                    tzs.delete()
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"All {count} timezone(s) permanently deleted from the table.",
+                    "data": None
+                }, status=200)
+
+            # ---------------------------------------
+            #  Apply filters ONLY when deleteAll=true
+            # ---------------------------------------
+            queryset = Timezone.objects.all()
+            applied_filters = []
+
+            if search:
+                queryset = queryset.filter(Q(Timezone__istartswith=search))
+                applied_filters.append("search")
+
+            if country_uuids:
+                queryset = queryset.filter(countryName__uuid__in=country_uuids)
+                applied_filters.append("country")
+
+            # ---------------------------------------
+            #  CASE 3/4/5 → deleteAll=true + filters
+            # ---------------------------------------
+            if delete_all and applied_filters:
+                count = queryset.count()
+                if count == 0:
+                    filter_msg = " + ".join(applied_filters)
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": f"No timezone(s) found matching applied {filter_msg} filter(s).",
+                        "data": {"invalid_country_uuids": invalid_countries} if invalid_countries else None
+                    }, status=404)
+
+                with transaction.atomic():
+                    queryset.delete()
+
+                filter_msg = " + ".join(applied_filters)
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} timezone(s) deleted based on applied {filter_msg} filter(s).",
+                    "data": {"invalid_country_uuids": invalid_countries} if invalid_countries else None
+                }, status=200)
+
+            # ---------------------------------------
+            #  Normal UUID List delete (deleteAll=false but not list)
+            # ---------------------------------------
+            if isinstance(ids, list):
+                valid_uuids, invalid_uuids = [], []
+                for u in ids:
+                    try:
+                        valid_uuids.append(UUID(u))
+                    except:
+                        invalid_uuids.append(u)
+
+                tzs = Timezone.objects.filter(uuid__in=valid_uuids)
+                count = tzs.count()
+
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No matching timezone(s) found to delete.",
+                        "data": None
+                    }, status=404)
+
+                with transaction.atomic():
+                    tzs.delete()
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} timezone(s) deleted successfully.",
+                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                }, status=200)
+
+            # ❌ fallback
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "message": "Invalid delete request format. Use UUID list or id:'all' or deleteAll:true for filters.",
                 "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=400)
 
-        valid_uuids = []
-        invalid_uuids = []
-        for u in ids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
-
-        tzs = Timezone.objects.filter(uuid__in=valid_uuids)
-        count = tzs.count()
-
-        if count == 0:
+        # ---------------------------------------
+        #  FK child constraint friendly message
+        # ---------------------------------------
+        except IntegrityError:
             return Response({
-                "statusCode": 404,
+                "statusCode": 400,
                 "status": False,
-                "message": "No matching timezones found.",
-                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=status.HTTP_404_NOT_FOUND)
+                "message": "You can't delete this timezone because it is being used in one or more child/related tables.",
+                "data": None
+            }, status=400)
 
-        tzs.delete()
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} timezone(s) permanently deleted.",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=status.HTTP_200_OK)
-
+        except Exception as e:
+            return Response({
+                "statusCode": 500,
+                "status": False,
+                "message": f"Unexpected error: {str(e)}",
+                "data": None
+            }, status=500)
+        
 
 
 class TimezoneExportAPIView(APIView):
@@ -5243,6 +6965,7 @@ class TimezoneImportAPIView(APIView):
                     skipped_rows.append({
                         "Row": row_number,
                         "Country": country_name,
+                        "Time Zone": tz_name or "",
                         "Reason": "Missing time zone"
                     })
                     continue
@@ -5251,7 +6974,8 @@ class TimezoneImportAPIView(APIView):
                 if not country_name:
                     skipped_rows.append({
                         "Row": row_number,
-                         "Country": "",
+                        "Time Zone": tz_name or "",
+                        "Country": "",
                         "Reason": "Invalid or missing country"
                     })
                     continue
@@ -5261,7 +6985,7 @@ class TimezoneImportAPIView(APIView):
                 if not country_obj:
                     skipped_rows.append({
                         "Row": row_number,
-                         "Country": country_name,
+                        "Country": country_name,
                         "Time Zone": tz_name,
                         "Reason": "Invalid or missing country"
                     })
@@ -5323,8 +7047,8 @@ class TimezoneImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": reversed(duplicates),
+            "skipped_rows": reversed(skipped_rows),
         }, status=status.HTTP_200_OK)
 
 
@@ -5470,7 +7194,7 @@ class CivilIdNameUpdateAPIView(APIView):
                 "data": None
             }, status=status.HTTP_404_NOT_FOUND)
  
-        serializer = CivilIdNameSerializer(civil, data=request.data, partial=True)   # ✅ FIX HERE
+        serializer = CivilIdNameSerializer(civil, data=request.data, partial=True)   #  FIX HERE
         if serializer.is_valid():
             serializer.save()
             return Response({
@@ -5492,68 +7216,210 @@ class CivilIdNameUpdateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
  
  
+# class CivilIdNameDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+ 
+#     def delete(self, request, uuid=None):
+#         ids = request.data.get("id", None)
+ 
+#         if uuid:
+#             try:
+#                 CivilIdName.objects.get(uuid=uuid).delete()
+#                 return Response({
+#                     "statusCode": 204,
+#                     "status": True,
+#                     "message": "Civil ID deleted successfully",
+#                     "data": None
+#                 }, status=status.HTTP_204_NO_CONTENT)
+ 
+#             except CivilIdName.DoesNotExist:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "Civil ID not found",
+#                     "data": None
+#                 })
+ 
+#         if ids == "all":
+#             count = CivilIdName.objects.count()
+#             CivilIdName.objects.all().delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} Civil ID(s) deleted",
+#                 "data": None
+#             })
+ 
+#         if not ids or not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Provide list of UUIDs in 'id' or use 'all'",
+#                 "data": None
+#             })
+ 
+#         valid = []
+#         invalid = []
+ 
+#         for u in ids:
+#             try:
+#                 valid.append(UUID(u))
+#             except:
+#                 invalid.append(u)
+ 
+#         queryset = CivilIdName.objects.filter(uuid__in=valid)
+#         count = queryset.count()
+#         queryset.delete()
+ 
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} Civil ID(s) deleted",
+#             "data": {"invalid_uuids": invalid} if invalid else None
+#         })
+
+
 class CivilIdNameDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
- 
+
     def delete(self, request, uuid=None):
-        ids = request.data.get("id", None)
- 
-        if uuid:
-            try:
-                CivilIdName.objects.get(uuid=uuid).delete()
+        try:
+            ids = request.data.get("id", None)
+            delete_all = request.data.get("deleteAll", False)
+            search = request.GET.get("search", "").strip()
+
+            # ---------------------------------------
+            # Delete by single UUID (via URL param)
+            # ---------------------------------------
+            if uuid:
+                try:
+                    CivilIdName.objects.get(uuid=uuid).delete()
+                    return Response({
+                        "statusCode": 204,
+                        "status": True,
+                        "message": "Civil ID deleted successfully",
+                        "data": None
+                    }, status=status.HTTP_204_NO_CONTENT)
+                except CivilIdName.DoesNotExist:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "Civil ID not found",
+                        "data": None
+                    }, status=404)
+
+            # ---------------------------------------
+            # Delete all rows
+            # ---------------------------------------
+            if ids == "all":
+                queryset = CivilIdName.objects.filter(is_deleted=False)
+                count = queryset.count()
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No Civil IDs found to delete",
+                        "data": None
+                    }, status=404)
+
+                with transaction.atomic():
+                    queryset.delete()
+
                 return Response({
-                    "statusCode": 204,
+                    "statusCode": 200,
                     "status": True,
-                    "message": "Civil ID deleted successfully",
+                    "message": f"All {count} Civil ID(s) deleted",
                     "data": None
-                }, status=status.HTTP_204_NO_CONTENT)
- 
-            except CivilIdName.DoesNotExist:
+                }, status=200)
+
+            # ---------------------------------------
+            # Delete based on search filter (deleteAll=True)
+            # ---------------------------------------
+            if delete_all and not ids and search:
+                queryset = CivilIdName.objects.filter(is_deleted=False, civil_id_name__istartswith=search)
+                count = queryset.count()
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No Civil ID(s) found matching search filter",
+                        "data": None
+                    }, status=404)
+
+                with transaction.atomic():
+                    queryset.delete()
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} Civil ID(s) deleted based on search filter",
+                    "data": None
+                }, status=200)
+
+            # ---------------------------------------
+            # Bulk delete by UUID list
+            # ---------------------------------------
+            if not ids or not isinstance(ids, list):
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Provide list of UUIDs in 'id', 'id: all', or use 'deleteAll: true' with search",
+                    "data": None
+                }, status=400)
+
+            valid_uuids, invalid_uuids = [], []
+            for u in ids:
+                try:
+                    valid_uuids.append(UUID(u))
+                except ValueError:
+                    invalid_uuids.append(u)
+
+            if not valid_uuids:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "No valid UUIDs provided",
+                    "data": {"invalid_uuids": invalid_uuids}
+                }, status=400)
+
+            queryset = CivilIdName.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+            count = queryset.count()
+
+            if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "Civil ID not found",
-                    "data": None
-                })
- 
-        if ids == "all":
-            count = CivilIdName.objects.count()
-            CivilIdName.objects.all().delete()
+                    "message": "No matching Civil ID(s) found",
+                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                }, status=404)
+
+            with transaction.atomic():
+                queryset.delete()
+
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} Civil ID(s) deleted",
-                "data": None
-            })
- 
-        if not ids or not isinstance(ids, list):
+                "message": f"{count} Civil ID(s) deleted successfully",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+            }, status=200)
+
+        except IntegrityError:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Provide list of UUIDs in 'id' or use 'all'",
+                "message": "This Civil ID cannot be deleted because it is used in related tables",
                 "data": None
-            })
- 
-        valid = []
-        invalid = []
- 
-        for u in ids:
-            try:
-                valid.append(UUID(u))
-            except:
-                invalid.append(u)
- 
-        queryset = CivilIdName.objects.filter(uuid__in=valid)
-        count = queryset.count()
-        queryset.delete()
- 
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} Civil ID(s) deleted",
-            "data": {"invalid_uuids": invalid} if invalid else None
-        })
+            }, status=400)
 
+        except Exception as e:
+            return Response({
+                "statusCode": 500,
+                "status": False,
+                "message": f"An unexpected error occurred: {str(e)}",
+                "data": None
+            }, status=500)
+
+            
  
 class CivilIdNameExportAPIView(APIView):
     """
@@ -5703,16 +7569,242 @@ class CivilIdNameExportAPIView(APIView):
         return response
 
 
+# class CivilIdNameImportAPIView(APIView):
+#     def post(self, request):
+#         file = request.FILES.get("file")
+#         sheet_name = request.data.get("sheet_name")
+ 
+#         if not file:
+#             return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+ 
+#         format_type = file.name.split(".")[-1].lower()
+#         duplicate_names = []
+#         skipped_rows = []
+
+#         required_headers = {"civil id name"}
+#         optional_headers = {
+#             "authority full name",
+#             "authority short name",
+#             "civil id valid type",
+#             "civil id valid date",
+#             "civil id valid duration value",
+#             "civil id valid duration unit",
+#             "description"
+#         }
+
+#         try:
+#             data = []
+#             headers = []
+
+#             # ---------- XLSX ----------
+#             if format_type == "xlsx":
+#                 import openpyxl
+#                 wb = openpyxl.load_workbook(file, read_only=True)
+
+#                 if not sheet_name:
+#                     return Response(
+#                         {"error": "Provide sheet_name", "available_sheets": wb.sheetnames},
+#                         status=status.HTTP_400_BAD_REQUEST,
+#                     )
+
+#                 if sheet_name not in wb.sheetnames:
+#                     return Response(
+#                         {"error": f'Sheet "{sheet_name}" not found', "available_sheets": wb.sheetnames},
+#                         status=status.HTTP_400_BAD_REQUEST,
+#                     )
+
+#                 ws = wb[sheet_name]
+#                 if ws.max_row <= 1:
+#                     return Response(
+#                         {"statusCode": 400, "status": False, "message": "Sheet is empty"},
+#                         status=status.HTTP_400_BAD_REQUEST,
+#                     )
+
+#                 headers = []
+#                 for cell in next(ws.iter_rows(min_row=1, max_row=1)):
+#                     header = str(cell.value).strip().lower().replace("_", " ").replace("-", " ") if cell.value else ""
+#                     headers.append(header)
+#                 if not required_headers.issubset(set(headers)):
+#                     missing = required_headers - set(headers)
+#                     return Response(
+#                         {"statusCode": 400, "status": False, "message": f"Missing required headers: {missing}"},
+#                         status=status.HTTP_400_BAD_REQUEST,
+#                     )
+
+#                 for row in ws.iter_rows(min_row=2, values_only=True):
+#                     if not any(row):
+#                         continue
+#                     row_dict = dict(zip(headers, row))
+#                     data.append(row_dict)
+
+#             # ---------- CSV ----------
+#             elif format_type == "csv":
+#                 decoded_file = file.read().decode("utf-8")
+#                 dataset = Dataset()
+#                 dataset.load(decoded_file, format="csv")
+
+#                 for row in dataset.dict:
+#                     row_lower = {k.strip().lower(): v for k, v in row.items()}
+#                     if not required_headers.issubset(set(row_lower.keys())):
+#                         missing = required_headers - set(row_lower.keys())
+#                         return Response(
+#                             {"statusCode": 400, "status": False, "message": f"Missing required headers: {missing}"},
+#                             status=status.HTTP_400_BAD_REQUEST,
+#                         )
+#                     data.append(row_lower)
+
+#             else:
+#                 return Response(
+#                     {"statusCode": 400, "status": False, "error": "Unsupported file format"},
+#                     status=status.HTTP_400_BAD_REQUEST,
+#                 )
+
+#             # ---------- Import Data ----------
+#             ALLOWED_VALID_TYPES = ["Permanent", "Valid Upto", "Date"]
+#             ALLOWED_VALID_UNITS = ["Months", "Weeks", "Years"]
+#             imported_count = 0
+
+#             for row in data:  # Import in reversed order
+#                 civil_id_name = str(row.get("civil id name")).strip() if row.get("civil id name") else None
+#                 authority_full_name = str(row.get("authority full name")).strip() if row.get("authority full name") else None
+#                 authority_short_name = str(row.get("authority short name")).strip() if row.get("authority short name") else ""
+#                 valid_type = str(row.get("civil id valid upto")).strip() if row.get("civil id valid upto") else None
+#                 valid_duration_value = row.get("civil id valid duration value") or None
+#                 valid_duration_unit = str(row.get("civil id valid duration unit")).strip() if row.get("civil id valid duration unit") else None
+#                 description = str(row.get("description")).strip() if row.get("description") else ""
+#                 valid_date_raw = row.get('civil id valid date')
+#                 valid_date = None
+#                 if valid_date_raw:
+#                     if isinstance(valid_date_raw, datetime):
+#                         valid_date = valid_date_raw.date()
+#                     else:
+#                         date_str = str(valid_date_raw).strip()
+#                         for fmt in ("%d-%m-%Y", "%d/%m/%Y", "%Y-%m-%d"):
+#                             try:
+#                                 valid_date = datetime.strptime(date_str, fmt).date()
+#                                 break
+#                             except ValueError:
+#                                 continue
+#                         if not valid_date:
+#                             skipped_rows.append({
+#                                 "Civil ID Name": civil_id_name or " ",
+#                                 'Reason': f"Invalid date format '{valid_date_raw}'. Expected formats: dd-mm-yyyy, dd/mm/yyyy"
+#                             })
+#                             continue
+#                 if not civil_id_name:
+#                     skipped_rows.append({
+#                         "Civil ID Name": civil_id_name or "",
+#                         "Reason": f"Missing required fields. Required: {', '.join(required_headers)}"
+#                     })
+#                     continue
+
+#                 if valid_type and valid_type not in ALLOWED_VALID_TYPES:
+#                     skipped_rows.append({
+#                         "Civil ID Name": civil_id_name,
+#                         "Reason": f"Invalid valid_type='{valid_type}'. Allowed: {ALLOWED_VALID_TYPES}"
+#                     })
+#                     continue
+
+#                 if valid_type == "Valid Upto":
+#                     # Duration value check
+#                     if valid_duration_value is None:
+#                         skipped_rows.append({
+#                             "Civil ID Name": civil_id_name,
+#                             "Reason": "Valid Upto type requires numeric 'valid duration value' and 'valid duration unit'"
+#                         })
+#                         continue
+#                     try:
+#                         valid_duration_value = int(valid_duration_value)
+#                         if valid_duration_value <= 0:
+#                             raise ValueError
+#                     except (ValueError, TypeError):
+#                         skipped_rows.append({
+#                             "Civil ID Name": civil_id_name,
+#                             "Reason": "Invalid 'valid duration value'. Use positive numeric value."
+#                         })
+#                         continue
+#                     # Unit check
+#                     if not valid_duration_unit or valid_duration_unit not in ALLOWED_VALID_UNITS:
+#                         skipped_rows.append({
+#                             "Civil ID Name": civil_id_name,
+#                             "Reason": f"Invalid 'valid duration unit'. Allowed: {ALLOWED_VALID_UNITS}"
+#                         })
+#                         continue
+#                 elif valid_type == 'Date' and not valid_date:
+#                     skipped_rows.append({
+#                         "Civil ID Name": civil_id_name,
+#                         'Reason': "Civil ID Valid Date  requires valid_date formate DD-MM_YYY"
+#                     })
+#                     continue
+
+#                 if valid_duration_unit and valid_duration_unit not in ALLOWED_VALID_UNITS:
+#                     skipped_rows.append({
+#                         "Civil ID Name": civil_id_name,
+#                         'Reason': f"Invalid 'Civil ID Valid Unit'='{valid_duration_unit}'. Please use one of: Months, Weeks, Years"
+#                     })
+#                     continue
+
+
+#                 existing = CivilIdName.objects.filter(
+#                     civil_id_name__iexact=civil_id_name
+#                 ).first()
+
+#                 if existing:
+#                     if not getattr(existing, "is_deleted", False):
+#                         duplicate_names.append(civil_id_name)
+#                         continue
+#                     else:
+#                         # Restore soft-deleted record
+#                         existing.authority_full_name = authority_full_name
+#                         existing.authority_short_name = authority_short_name
+#                         existing.valid_type = valid_type
+#                         existing.valid_duration_value = valid_duration_value
+#                         existing.valid_duration_unit = valid_duration_unit
+#                         existing.description = description
+#                         existing.is_deleted = False
+#                         existing.save()
+#                         imported_count += 1
+#                         continue
+
+#                 # Create new entry
+#                 try:
+#                     CivilIdName.objects.create(
+#                         civil_id_name=civil_id_name,
+#                         authority_full_name=authority_full_name,
+#                         authority_short_name=authority_short_name,
+#                         valid_type=valid_type,
+#                         valid_duration_value=valid_duration_value,
+#                         valid_duration_unit=valid_duration_unit,
+#                         description=description,
+#                         is_deleted=False
+#                     )
+#                     imported_count += 1
+#                 except IntegrityError:
+#                     duplicate_names.append(civil_id_name)
+
+#         except Exception as e:
+#             return Response({"statusCode": 400, "status": False, "message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "duplicates": list(set(duplicate_names)),
+#             "skipped_rows": skipped_rows,
+#             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+#             "imported_count": imported_count
+#         }, status=status.HTTP_200_OK)
+
+
 class CivilIdNameImportAPIView(APIView):
     def post(self, request):
         file = request.FILES.get("file")
         sheet_name = request.data.get("sheet_name")
- 
+
         if not file:
             return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
- 
+
         format_type = file.name.split(".")[-1].lower()
-        duplicate_names = []
+        duplicates = []
         skipped_rows = []
 
         required_headers = {"civil id name"}
@@ -5754,10 +7846,8 @@ class CivilIdNameImportAPIView(APIView):
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
-                headers = []
-                for cell in next(ws.iter_rows(min_row=1, max_row=1)):
-                    header = str(cell.value).strip().lower().replace("_", " ").replace("-", " ") if cell.value else ""
-                    headers.append(header)
+                headers = [str(cell.value).strip().lower().replace("_", " ").replace("-", " ") if cell.value else "" 
+                           for cell in next(ws.iter_rows(min_row=1, max_row=1))]
                 if not required_headers.issubset(set(headers)):
                     missing = required_headers - set(headers)
                     return Response(
@@ -5765,20 +7855,21 @@ class CivilIdNameImportAPIView(APIView):
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
-                for row in ws.iter_rows(min_row=2, values_only=True):
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
+                    row_dict["_row_number"] = idx
                     data.append(row_dict)
 
             # ---------- CSV ----------
             elif format_type == "csv":
                 decoded_file = file.read().decode("utf-8")
-                dataset = Dataset()
-                dataset.load(decoded_file, format="csv")
-
-                for row in dataset.dict:
+                import csv, io
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                for idx, row in enumerate(reader, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    row_lower["_row_number"] = idx
                     if not required_headers.issubset(set(row_lower.keys())):
                         missing = required_headers - set(row_lower.keys())
                         return Response(
@@ -5786,7 +7877,6 @@ class CivilIdNameImportAPIView(APIView):
                             status=status.HTTP_400_BAD_REQUEST,
                         )
                     data.append(row_lower)
-
             else:
                 return Response(
                     {"statusCode": 400, "status": False, "error": "Unsupported file format"},
@@ -5798,7 +7888,8 @@ class CivilIdNameImportAPIView(APIView):
             ALLOWED_VALID_UNITS = ["Months", "Weeks", "Years"]
             imported_count = 0
 
-            for row in reversed(data):  # Import in reversed order
+            for row in data:  # Preserve original file order
+                row_number = row.get("_row_number", "Unknown")
                 civil_id_name = str(row.get("civil id name")).strip() if row.get("civil id name") else None
                 authority_full_name = str(row.get("authority full name")).strip() if row.get("authority full name") else None
                 authority_short_name = str(row.get("authority short name")).strip() if row.get("authority short name") else ""
@@ -5808,7 +7899,10 @@ class CivilIdNameImportAPIView(APIView):
                 description = str(row.get("description")).strip() if row.get("description") else ""
                 valid_date_raw = row.get('civil id valid date')
                 valid_date = None
+
+                # ---------- Date validation ----------
                 if valid_date_raw:
+                    from datetime import datetime
                     if isinstance(valid_date_raw, datetime):
                         valid_date = valid_date_raw.date()
                     else:
@@ -5821,29 +7915,64 @@ class CivilIdNameImportAPIView(APIView):
                                 continue
                         if not valid_date:
                             skipped_rows.append({
-                                "Civil ID Name": civil_id_name or " ",
-                                'Reason': f"Invalid date format '{valid_date_raw}'. Expected formats: dd-mm-yyyy, dd/mm/yyyy"
+                                'Row': row_number,
+                                'Civil ID Name': civil_id_name or "",
+                                'Authority Full Name': authority_full_name or "",
+                                'Authority Short Name': authority_short_name or "",
+                                'Civil ID Valid Type': valid_type or "",
+                                'Civil ID Valid Duration Value': valid_duration_value or "",
+                                'Civil ID Valid Duration Unit': valid_duration_unit or "",
+                                'Civil ID Valid Date': valid_date_raw or "",
+                                'Description': description or "",
+                                "Reason": f"Invalid date format '{valid_date_raw}'. Expected formats: dd-mm-yyyy, dd/mm/yyyy, yyyy-mm-dd"
                             })
                             continue
+
+                # ---------- Required field check ----------
                 if not civil_id_name:
                     skipped_rows.append({
-                        "Civil ID Name": civil_id_name or "Unknown",
-                        "Reason": f"Missing required fields. Required: {', '.join(required_headers)}"
+                        "Row": row_number,
+                        "Civil ID Name": "",
+                        'Authority Full Name': authority_full_name or "",
+                        'Authority Short Name': authority_short_name or "",
+                        'Civil ID Valid Type': valid_type or "",
+                        'Civil ID Valid Duration Value': valid_duration_value or "",
+                        'Civil ID Valid Duration Unit': valid_duration_unit or "",
+                        'Civil ID Valid Date': valid_date_raw or "",
+                        'Description': description or "",
+                        "Reason": f"Missing required fields: {', '.join(required_headers)}"
                     })
                     continue
 
+                # ---------- Type validation ----------
                 if valid_type and valid_type not in ALLOWED_VALID_TYPES:
                     skipped_rows.append({
-                        "Civil ID Name": civil_id_name,
+                        "Row": row_number,
+                        "Civil ID Name": "",
+                        'Authority Full Name': authority_full_name or "",
+                        'Authority Short Name': authority_short_name or "",
+                        'Civil ID Valid Type': valid_type or "",
+                        'Civil ID Valid Duration Value': valid_duration_value or "",
+                        'Civil ID Valid Duration Unit': valid_duration_unit or "",
+                        'Civil ID Valid Date': valid_date_raw or "",
+                        'Description': description or "",
                         "Reason": f"Invalid valid_type='{valid_type}'. Allowed: {ALLOWED_VALID_TYPES}"
                     })
                     continue
 
+                # ---------- Valid Upto duration checks ----------
                 if valid_type == "Valid Upto":
-                    # Duration value check
                     if valid_duration_value is None:
                         skipped_rows.append({
-                            "Civil ID Name": civil_id_name,
+                            "Row": row_number,
+                            "Civil ID Name": "",
+                            'Authority Full Name': authority_full_name or "",
+                            'Authority Short Name': authority_short_name or "",
+                            'Civil ID Valid Type': valid_type or "",
+                            'Civil ID Valid Duration Value': valid_duration_value or "",
+                            'Civil ID Valid Duration Unit': valid_duration_unit or "",
+                            'Civil ID Valid Date': valid_date_raw or "",
+                            'Description': description or "",
                             "Reason": "Valid Upto type requires numeric 'valid duration value' and 'valid duration unit'"
                         })
                         continue
@@ -5853,39 +7982,64 @@ class CivilIdNameImportAPIView(APIView):
                             raise ValueError
                     except (ValueError, TypeError):
                         skipped_rows.append({
-                            "Civil ID Name": civil_id_name,
+                            "Row": row_number,
+                            "Civil ID Name": "",
+                            'Authority Full Name': authority_full_name or "",
+                            'Authority Short Name': authority_short_name or "",
+                            'Civil ID Valid Type': valid_type or "",
+                            'Civil ID Valid Duration Value': valid_duration_value or "",
+                            'Civil ID Valid Duration Unit': valid_duration_unit or "",
+                            'Civil ID Valid Date': valid_date_raw or "",
+                            'Description': description or "",
                             "Reason": "Invalid 'valid duration value'. Use positive numeric value."
                         })
                         continue
-                    # Unit check
                     if not valid_duration_unit or valid_duration_unit not in ALLOWED_VALID_UNITS:
                         skipped_rows.append({
-                            "Civil ID Name": civil_id_name,
+                            "Row": row_number,
+                            "Civil ID Name": "",
+                            'Authority Full Name': authority_full_name or "",
+                            'Authority Short Name': authority_short_name or "",
+                            'Civil ID Valid Type': valid_type or "",
+                            'Civil ID Valid Duration Value': valid_duration_value or "",
+                            'Civil ID Valid Duration Unit': valid_duration_unit or "",
+                            'Civil ID Valid Date': valid_date_raw or "",
+                            'Description': description or "",
                             "Reason": f"Invalid 'valid duration unit'. Allowed: {ALLOWED_VALID_UNITS}"
                         })
                         continue
-                elif valid_type == 'Date' and not valid_date:
+
+                elif valid_type == "Date" and not valid_date:
                     skipped_rows.append({
-                        "Civil ID Name": civil_id_name,
-                        'Reason': "Civil ID Valid Date  requires valid_date formate DD-MM_YYY"
+                            "Row": row_number,
+                            "Civil ID Name": "",
+                            'Authority Full Name': authority_full_name or "",
+                            'Authority Short Name': authority_short_name or "",
+                            'Civil ID Valid Type': valid_type or "",
+                            'Civil ID Valid Duration Value': valid_duration_value or "",
+                            'Civil ID Valid Duration Unit': valid_duration_unit or "",
+                            'Civil ID Valid Date': valid_date_raw or "",
+                            'Description': description or "",
+                        "Reason": "Civil ID Valid Date requires valid date format"
                     })
                     continue
 
-                if valid_duration_unit and valid_duration_unit not in ALLOWED_VALID_UNITS:
-                    skipped_rows.append({
-                        "Civil ID Name": civil_id_name,
-                        'Reason': f"Invalid 'Civil ID Valid Unit'='{valid_duration_unit}'. Please use one of: Months, Weeks, Years"
-                    })
-                    continue
-
-
-                existing = CivilIdName.objects.filter(
-                    civil_id_name__iexact=civil_id_name
-                ).first()
-
+                # ---------- Check for duplicates ----------
+                existing = CivilIdName.objects.filter(civil_id_name__iexact=civil_id_name).first()
                 if existing:
                     if not getattr(existing, "is_deleted", False):
-                        duplicate_names.append(civil_id_name)
+                        duplicates.append({
+                            "Row": row_number,
+                            "Civil ID Name": "",
+                            'Authority Full Name': authority_full_name or "",
+                            'Authority Short Name': authority_short_name or "",
+                            'Civil ID Valid Type': valid_type or "",
+                            'Civil ID Valid Duration Value': valid_duration_value or "",
+                            'Civil ID Valid Duration Unit': valid_duration_unit or "",
+                            'Civil ID Valid Date': valid_date_raw or "",
+                            'Description': description or "",
+                            "Reason": "Duplicate civil id name (already exists)"
+                        })
                         continue
                     else:
                         # Restore soft-deleted record
@@ -5900,7 +8054,7 @@ class CivilIdNameImportAPIView(APIView):
                         imported_count += 1
                         continue
 
-                # Create new entry
+                # ---------- Create new record ----------
                 try:
                     CivilIdName.objects.create(
                         civil_id_name=civil_id_name,
@@ -5914,7 +8068,18 @@ class CivilIdNameImportAPIView(APIView):
                     )
                     imported_count += 1
                 except IntegrityError:
-                    duplicate_names.append(civil_id_name)
+                    duplicates.append({
+                        "Row": row_number,
+                        "Civil ID Name": "",
+                        'Authority Full Name': authority_full_name or "",
+                        'Authority Short Name': authority_short_name or "",
+                        'Civil ID Valid Type': valid_type or "",
+                        'Civil ID Valid Duration Value': valid_duration_value or "",
+                        'Civil ID Valid Duration Unit': valid_duration_unit or "",
+                        'Civil ID Valid Date': valid_date_raw or "",
+                        'Description': description or "",
+                        "Reason": "Duplicate civil id name (IntegrityError)"
+                    })
 
         except Exception as e:
             return Response({"statusCode": 400, "status": False, "message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -5922,12 +8087,11 @@ class CivilIdNameImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_names)),
+            "imported_count": imported_count,
+            "duplicates": duplicates,
             "skipped_rows": skipped_rows,
-            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
-            "imported_count": imported_count
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
         }, status=status.HTTP_200_OK)
-
 
 
 
@@ -6490,6 +8654,8 @@ class DepartmentImportAPIView(APIView):
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Department": "",
+                        "Description":description,
                         "Reason": "Missing department name"
                     })
                     continue
@@ -6530,8 +8696,10 @@ class DepartmentImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows,
+            # "duplicates": duplicates,
+            # "skipped_rows": skipped_rows,
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=status.HTTP_200_OK)
 
 
@@ -7003,6 +9171,8 @@ class EmployeeTypeImportAPIView(APIView):
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Employee Type": "",
+                        "Description":description,
                         "Reason": "Missing employee type name"
                     })
                     continue
@@ -7043,8 +9213,10 @@ class EmployeeTypeImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows,
+            # "duplicates": duplicates,
+            # "skipped_rows": skipped_rows,
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=status.HTTP_200_OK)
 
 
@@ -7519,6 +9691,8 @@ class CompanyTypeImportAPIView(APIView):
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Company Type": "",
+                        "Description":description,
                         "Reason": "Missing company type name"
                     })
                     continue
@@ -7561,8 +9735,8 @@ class CompanyTypeImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows,
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=status.HTTP_200_OK)
 
 
@@ -8043,6 +10217,8 @@ class OwnershipTypeImportAPIView(APIView):
                 if not ownership_name:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Company Type": company_type_name or " ",
+                        "Ownership Type": "",
                         "Reason": "Missing ownership type name"
                     })
                     continue
@@ -8050,6 +10226,7 @@ class OwnershipTypeImportAPIView(APIView):
                 if not company_type_name:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Company Type":"",
                         "Ownership Type": ownership_name,
                         "Reason": "Missing company type"
                     })
@@ -8060,6 +10237,7 @@ class OwnershipTypeImportAPIView(APIView):
                 if not company_type:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Company Type": company_type_name or " ",
                         "Ownership Type": ownership_name,
                         "Reason": f'Company Type "{company_type_name}" not found'
                     })
@@ -8076,7 +10254,7 @@ class OwnershipTypeImportAPIView(APIView):
                         duplicates.append({
                             "Row": row_number,
                             "Ownership Type": ownership_name,
-                            "Company Type": company_type_name or "N/A",
+                            "Company Type": company_type_name or " ",
                             "Reason": "Already exists in database"
                         })
                         continue
@@ -8109,8 +10287,10 @@ class OwnershipTypeImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows,
+            # "duplicates": duplicates,
+            # "skipped_rows": skipped_rows,
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=status.HTTP_200_OK)
 
 
@@ -8538,7 +10718,7 @@ class StakeholderCategoryImportAPIView(APIView):
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing stakeholder category name"})
+                    skipped_rows.append({"Row": row_number,"Stakeholder Category": "","Description":description, "Reason": "Missing stakeholder category name"})
                     continue
 
                 existing = StakeholderCategory.objects.filter(name__iexact=name).first()
@@ -8571,8 +10751,8 @@ class StakeholderCategoryImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=status.HTTP_200_OK)
 
 
@@ -9063,12 +11243,12 @@ class StakeholderTypeImportAPIView(APIView):
                     continue
 
                 if not category_name:
-                    skipped_rows.append({"Row": row_number, "Stakeholder Type": name, "Reason": "Missing stakeholder category"})
+                    skipped_rows.append({"Row": row_number, "Stakeholder Category": "", "Stakeholder Type": name, "Reason": "Missing stakeholder category"})
                     continue
 
                 category_obj = StakeholderCategory.objects.filter(name__iexact=category_name, is_deleted=False).first()
                 if not category_obj:
-                    skipped_rows.append({"Row": row_number, "Stakeholder Type": name, "Reason": f'Category "{category_name}" not found'})
+                    skipped_rows.append({"Row": row_number,"Stakeholder Category": "", "Stakeholder Type": name, "Reason": f'Category "{category_name}" not found'})
                     continue
 
                 existing = StakeholderType.objects.filter(
@@ -9108,8 +11288,8 @@ class StakeholderTypeImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=status.HTTP_200_OK)
 
 
@@ -9361,7 +11541,7 @@ class AccreditationCategoryExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Accrediation Category',
+            'name': 'Accreditation Category',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
@@ -9469,7 +11649,7 @@ class AccreditationCategoryImportAPIView(APIView):
             return ''.join(c for c in str(h).lower() if c.isalnum())
 
         # Normalize required and optional headers
-        required_headers = {normalize_header('Accreditation Category')}
+        required_headers = {normalize_header('Accreditation Category')} 
         optional_headers = {normalize_header('description')}
 
         try:
@@ -9524,11 +11704,11 @@ class AccreditationCategoryImportAPIView(APIView):
             imported_count = 0
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get('accrediationcategory')).strip() if row.get('accrediationcategory') else None
+                name = str(row.get('accreditationcategory')).strip() if row.get('accreditationcategory') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Accreditation Category": name, "Reason": "Missing accreditation category name"})
+                    skipped_rows.append({"Row": row_number, "Accreditation Category": name, "Description":description, "Reason": "Missing accreditation category name"})
                     continue
 
                 existing = AccreditationCategory.objects.filter(name__iexact=name).first()
@@ -9553,8 +11733,8 @@ class AccreditationCategoryImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=200)  
 
 
@@ -9885,14 +12065,14 @@ class AccreditationNameExportAPIView(APIView):
         # --- Field headers ---
         field_header_map = {
             'uuid': 'UUID',
-            'category': 'Accrediation Category',
-            'full_name': 'Accrediation',
-            'short_name': 'Accrediation Short Name',
-            'issuing_authority': 'Accrediation Issuing Authority Name',
-            'valid_type': 'Accrediation Valid Upto',
-            'valid_duration_value': 'Accrediation Valid Duration Value',
-            'valid_duration_unit': 'Accrediation Valid Duration Unit',
-            'valid_date': 'Accrediation Valid Date',
+            'category': 'Accreditation Category',
+            'full_name': 'Accreditation Full Name',
+            'short_name': 'Accreditation Short Name',
+            'issuing_authority': 'Accreditation Issuing Authority Name',
+            'valid_type': 'Accreditation Valid Upto',
+            'valid_duration_value': 'Accreditation Valid Duration Value',
+            'valid_duration_unit': 'Accreditation Valid Duration Unit',
+            'valid_date': 'Accreditation Valid Date',
             'description': 'Description',
             'created_at': 'Created On',
             'updated_at': 'Modified On'
@@ -10019,15 +12199,16 @@ class AccreditationNameImportAPIView(APIView):
         skipped_rows = []
 
         # required_headers = {'accrediation full name', 'accrediation category'}
-        required_headers = {'Accreditation Category', 'Accreditation Full Name'}
+        # required_headers = {'Accreditation Category', 'Accreditation Full Name'}
+        required_headers = {'accreditation category', 'accreditation full name'}
         # required_headers = {'AccreditationCategory'}
         optional_headers = {
-            'accrediation short name',
-            'accrediation issuing authority name',
-            'accrediation valid upto',
-            'accrediation valid duration value',
-            'accrediation valid duration unit',
-            'accrediation valid date',
+            'accreditation short name',
+            'accreditation issuing authority name',
+            'accreditation valid upto',
+            'accreditation valid duration value',
+            'accreditation valid duration unit',
+            'accreditation valid date',
             'description'
         }
 
@@ -10099,15 +12280,15 @@ class AccreditationNameImportAPIView(APIView):
             imported_count = 0
 
             for row in reversed(data):
-                full_name = str(row.get('accrediation full name')).strip() if row.get('accrediation full name') else None
-                category_name = str(row.get('accrediation category')).strip() if row.get('accrediation category') else None
-                short_name = str(row.get('accrediation short name')).strip() if row.get('accrediation short name') else ''
-                issuing_authority = str(row.get('accrediation issuing authority name')).strip() if row.get('accrediation issuing authority name') else ''
+                full_name = str(row.get('accreditation full name')).strip() if row.get('accreditation full name') else None
+                category_name = str(row.get('accreditation category')).strip() if row.get('accreditation category') else None
+                short_name = str(row.get('accreditation short name')).strip() if row.get('accreditation short name') else ''
+                issuing_authority = str(row.get('accreditation issuing authority name')).strip() if row.get('accreditation issuing authority name') else ''
                 description = str(row.get('description')).strip() if row.get('description') else ''
-                valid_type = str(row.get('accrediation valid upto')).strip() if row.get('accrediation valid upto') else None
-                valid_duration_value = row.get('accrediation valid duration value')
-                valid_duration_unit = str(row.get('accrediation valid duration unit')).strip() if row.get('accrediation valid duration unit') else None
-                valid_date_raw = row.get('accrediation valid date')
+                valid_type = str(row.get('accreditation valid upto')).strip() if row.get('accreditation valid upto') else None
+                valid_duration_value = row.get('accreditation valid duration value')
+                valid_duration_unit = str(row.get('accreditation valid duration unit')).strip() if row.get('accreditation valid duration unit') else None
+                valid_date_raw = row.get('accreditation valid date')
                 valid_date = None
                 if valid_date_raw:
                     if isinstance(valid_date_raw, datetime):
@@ -10122,7 +12303,7 @@ class AccreditationNameImportAPIView(APIView):
                                 continue
                         if not valid_date:
                             skipped_rows.append({
-                                'Accrediation Full Name': full_name,
+                                'Accreditation Full Name': full_name,
                                 'category': category_name,
                                 'Reason': f"Invalid date format '{valid_date_raw}'. Expected formats: dd-mm-yyyy, dd/mm/yyyy "
                             })
@@ -10139,24 +12320,24 @@ class AccreditationNameImportAPIView(APIView):
 
                 if not full_name or not category_name:
                     skipped_rows.append({
-                        'Accrediation Full Name': full_name or 'Unknown',
-                        'Accrediation Category': category_name or 'Unknown',
+                        'Accreditation Full Name': full_name or 'Unknown',
+                        'Accreditation Category': category_name or 'Unknown',
                         'Reason': 'Missing required field(s)'
                     })
                     continue
 
                 if not category:
                     skipped_rows.append({
-                        'Accrediation Full Name': full_name,
-                        'Accrediation Category': category_name,
+                        'Accreditation Full Name': full_name,
+                        'Accreditation Category': category_name,
                         'Reason': f'Invalid country or category: /{category_name}'
                     })
                     continue
 
                 if valid_type and valid_type not in ALLOWED_VALID_TYPES:
                     skipped_rows.append({
-                        'Accrediation Full Name': full_name,
-                        'Accrediation Category': category_name,
+                        'Accreditation Full Name': full_name,
+                        'Accreditation Category': category_name,
                         'Reason': f"Invalid valid_type='{valid_type}'. Allowed: Permanent, Valid Upto, Date"
                     })
                     continue
@@ -10166,9 +12347,9 @@ class AccreditationNameImportAPIView(APIView):
                     # Check duration value
                     if valid_duration_value is None:
                         skipped_rows.append({
-                            'Accrediation Full Name': full_name,
-                            'Accrediation Category': category_name,
-                            'Reason': "Valid Upto type requires 'Accrediation Valid Duration' as numeric and 'Accrediation Valid Unit' as one of: Months, Weeks, Years"
+                            'Accreditation Full Name': full_name,
+                            'Accreditation Category': category_name,
+                            'Reason': "Valid Upto type requires 'Accreditation Valid Duration' as numeric and 'Accreditation Valid Unit' as one of: Months, Weeks, Years"
                         })
                         continue
 
@@ -10179,34 +12360,34 @@ class AccreditationNameImportAPIView(APIView):
                             raise ValueError
                     except (ValueError, TypeError):
                         skipped_rows.append({
-                            'Accrediation Full Name': full_name,
-                            'Accrediation Category': category_name,
-                            'Reason': "Invalid 'Accrediation Valid Duration'. Please use a positive numeric value."
+                            'Accreditation Full Name': full_name,
+                            'Accreditation Category': category_name,
+                            'Reason': "Invalid 'Accreditation Valid Duration'. Please use a positive numeric value."
                         })
                         continue
 
                     # Unit check
                     if not valid_duration_unit or valid_duration_unit not in ALLOWED_VALID_UNITS:
                         skipped_rows.append({
-                            'Accrediation Full Name': full_name,
-                            'Accrediation Category': category_name,
-                            'Reason': f"Invalid 'Accrediation Valid Unit'='{valid_duration_unit}'. Please use one of: Months, Weeks, Years"
+                            'Accreditation Full Name': full_name,
+                            'Accreditation Category': category_name,
+                            'Reason': f"Invalid 'Accreditation Valid Unit'='{valid_duration_unit}'. Please use one of: Months, Weeks, Years"
                         })
                         continue
 
                 elif valid_type == 'Date' and not valid_date:
                     skipped_rows.append({
-                        'Accrediation Full Name': full_name,
-                        'Accrediation Category': category_name,
-                        'Reason': "Accrediation Valid Date  requires valid_date formate DD-MM_YYY"
+                        'Accreditation Full Name': full_name,
+                        'Accreditation Category': category_name,
+                        'Reason': "Accreditation Valid Date  requires valid_date formate DD-MM_YYY"
                     })
                     continue
 
                 if valid_duration_unit and valid_duration_unit not in ALLOWED_VALID_UNITS:
                     skipped_rows.append({
-                        'Accrediation Full Name': full_name,
-                        'Accrediation Category': category_name,
-                        'Reason': f"Invalid 'Accrediation Valid Unit'='{valid_duration_unit}'. Please use one of: Months, Weeks, Years"
+                        'Accreditation Full Name': full_name, 
+                        'Accreditation Category': category_name,
+                        'Reason': f"Invalid 'Accreditation Valid Unit'='{valid_duration_unit}'. Please use one of: Months, Weeks, Years"
                     })
                     continue
 
@@ -10218,8 +12399,8 @@ class AccreditationNameImportAPIView(APIView):
                 if existing:
                     if not existing.is_deleted:
                         duplicate_names.append({
-                            'Accrediation Full Name': full_name,
-                            'Accrediation Category': category_name
+                            'Accreditation Full Name': full_name,
+                            'Accreditation Category': category_name
                         })
                         continue
                     else:
@@ -10253,8 +12434,8 @@ class AccreditationNameImportAPIView(APIView):
                     imported_count += 1
                 except IntegrityError:
                     duplicate_names.append({
-                        'Accrediation Full Name': full_name,
-                        'Accrediation Category': category_name
+                        'Accreditation Full Name': full_name,
+                        'Accreditation Category': category_name
                     })
 
         except Exception as e:
@@ -10263,8 +12444,10 @@ class AccreditationNameImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": duplicate_names,
-            "skipped_rows": skipped_rows,
+            # "duplicates": duplicate_names,
+            # "skipped_rows": skipped_rows,
+            "duplicates": list(reversed(duplicate_names)),
+            "skipped_rows": list(reversed(skipped_rows)),
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=status.HTTP_200_OK)
@@ -10699,7 +12882,7 @@ class BankAccountTypeImportAPIView(APIView):
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing bank account type name"})
+                    skipped_rows.append({"Row": row_number,"Bank Account Type": "","Description":description, "Reason": "Missing bank account type name"})
                     continue
 
                 existing = BankAccountType.objects.filter(name__iexact=name).first()
@@ -10724,8 +12907,8 @@ class BankAccountTypeImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=200)
 
 
@@ -11393,7 +13576,8 @@ class LicenseNameImportAPIView(APIView):
             ALLOWED_VALID_UNITS = ['Months', 'Weeks', 'Years']
             imported_count = 0
 
-            for row in reversed(data):
+            for row in data:
+                row_number = row.get("_row_number", "Unknown")
                 full_name = str(row.get('license full name')).strip() if row.get('license full name') else None
                 country_name = str(row.get('country')).strip() if row.get('country') else None
                 short_name = str(row.get('license short name')).strip() if row.get('license short name') else ''
@@ -11418,16 +13602,32 @@ class LicenseNameImportAPIView(APIView):
                                 continue
                         if not valid_date:
                             skipped_rows.append({
-                                'License Full Name': full_name,
-                                'Country': country_name,
+                                'Row': row_number,
+                                'License Full Name': full_name or '',
+                                'Country': country_name or '',
+                                'License Short Name': short_name or '',
+                                'License Issuing Authority Name': issuing_authority or '',
+                                'Description': description or '',
+                                'License Valid Duration Value': valid_duration_value or '',
+                                'License Valid Duration Unit': valid_duration_unit or '',
+                                'License Valid Date': valid_date_raw or '',
+                                'License Valid Type': valid_type or '',
                                 'Reason': f"Invalid date format '{valid_date_raw}'. Expected formats: dd-mm-yyyy, dd/mm/yyyy "
                             })
                             continue
 
                 if not full_name or not country_name:
                     skipped_rows.append({
-                        'License Full Name': full_name or 'Unknown',
-                        'Country': country_name or 'Unknown',
+                        'Row': row_number,
+                        'License Full Name': full_name or '',
+                        'Country': country_name or '',
+                        'License Short Name': short_name or '',
+                        'License Issuing Authority Name': issuing_authority or '',
+                        'Description': description or '',
+                        'License Valid Duration Value': valid_duration_value or '',
+                        'License Valid Duration Unit': valid_duration_unit or '',
+                        'License Valid Date': valid_date_raw or '',
+                        'License Valid Type': valid_type or '',
                         'Reason': f"Missing required fields. Required: {', '.join(required_headers)}"
                     })
                     continue
@@ -11435,8 +13635,16 @@ class LicenseNameImportAPIView(APIView):
                 country_obj = Country.objects.filter(name__iexact=country_name).first()
                 if not country_obj:
                     skipped_rows.append({
-                        'License Full Name': full_name,
-                        'Country': country_name,
+                        'Row': row_number,
+                        'License Full Name': full_name or '',
+                        'Country': country_name or '',
+                        'License Short Name': short_name or '',
+                        'License Issuing Authority Name': issuing_authority or '',
+                        'Description': description or '',
+                        'License Valid Duration Value': valid_duration_value or '',
+                        'License Valid Duration Unit': valid_duration_unit or '',
+                        'License Valid Date': valid_date_raw or '',
+                        'License Valid Type': valid_type or '',
                         'Reason': 'Invalid country'
                     })
                     continue
@@ -11446,8 +13654,16 @@ class LicenseNameImportAPIView(APIView):
 
                 if valid_type and valid_type not in ALLOWED_VALID_TYPES:
                     skipped_rows.append({
-                        'License Full Name': full_name,
-                        'Country': country_name,
+                        'Row': row_number,
+                        'License Full Name': full_name or '',
+                        'Country': country_name or '',
+                        'License Short Name': short_name or '',
+                        'License Issuing Authority Name': issuing_authority or '',
+                        'Description': description or '',
+                        'License Valid Duration Value': valid_duration_value or '',
+                        'License Valid Duration Unit': valid_duration_unit or '',
+                        'License Valid Date': valid_date_raw or '',
+                        'License Valid Type': valid_type or '',
                         'Reason': f"Invalid valid_type='{valid_type}'. Allowed: {', '.join(ALLOWED_VALID_TYPES)}"
                     })
                     continue
@@ -11456,8 +13672,16 @@ class LicenseNameImportAPIView(APIView):
                 if valid_type == 'Valid Upto':
                     if valid_duration_value is None or not valid_duration_unit:
                         skipped_rows.append({
-                            'License Full Name': full_name,
-                            'Country': country_name,
+                            'Row': row_number,
+                            'License Full Name': full_name or '',
+                            'Country': country_name or '',
+                            'License Short Name': short_name or '',
+                            'License Issuing Authority Name': issuing_authority or '',
+                            'Description': description or '',
+                            'License Valid Duration Value': valid_duration_value or '',
+                            'License Valid Duration Unit': valid_duration_unit or '',
+                            'License Valid Date': valid_date_raw or '',
+                            'License Valid Type': valid_type or '',
                             'Reason': "'Valid Upto' type requires both valid_duration_value and valid_duration_unit"
                         })
                         continue
@@ -11468,24 +13692,48 @@ class LicenseNameImportAPIView(APIView):
                             raise ValueError
                     except (ValueError, TypeError):
                         skipped_rows.append({
-                            'License Full Name': full_name,
-                            'Country': country_name,
+                            'Row': row_number,
+                            'License Full Name': full_name or '',
+                            'Country': country_name or '',
+                            'License Short Name': short_name or '',
+                            'License Issuing Authority Name': issuing_authority or '',
+                            'Description': description or '',
+                            'License Valid Duration Value': valid_duration_value or '',
+                            'License Valid Duration Unit': valid_duration_unit or '',
+                            'License Valid Date': valid_date_raw or '',
+                            'License Valid Type': valid_type or '',
                             'Reason': "Invalid 'valid_duration_value'. Must be a positive number."
                         })
                         continue
 
                     if valid_duration_unit not in ALLOWED_VALID_UNITS:
                         skipped_rows.append({
-                            'License Full Name': full_name,
-                            'Country': country_name,
+                            'Row': row_number,
+                            'License Full Name': full_name or '',
+                            'Country': country_name or '',
+                            'License Short Name': short_name or '',
+                            'License Issuing Authority Name': issuing_authority or '',
+                            'Description': description or '',
+                            'License Valid Duration Value': valid_duration_value or '',
+                            'License Valid Duration Unit': valid_duration_unit or '',
+                            'License Valid Date': valid_date_raw or '',
+                            'License Valid Type': valid_type or '',
                             'Reason': f"Invalid 'valid_duration_unit'='{valid_duration_unit}'. Allowed: {', '.join(ALLOWED_VALID_UNITS)}"
                         })
                         continue
 
                 elif valid_type == 'Date' and not valid_date:
                     skipped_rows.append({
-                        'License Full Name': full_name,
-                        'Country': country_name,
+                        'Row': row_number,
+                        'License Full Name': full_name or '',
+                        'Country': country_name or '',
+                        'License Short Name': short_name or '',
+                        'License Issuing Authority Name': issuing_authority or '',
+                        'Description': description or '',
+                        'License Valid Duration Value': valid_duration_value or '',
+                        'License Valid Duration Unit': valid_duration_unit or '',
+                        'License Valid Date': valid_date_raw or '',
+                        'License Valid Type': valid_type or '',
                         'Reason': "Valid type 'Date' requires a valid 'license valid date'"
                     })
                     continue
@@ -11495,8 +13743,16 @@ class LicenseNameImportAPIView(APIView):
                 if existing:
                     if not existing.is_deleted:
                         duplicate_names.append({
-                            'Country': country_obj.name,
-                            'License Full Name': full_name
+                            'Row': row_number,
+                            'License Full Name': full_name or '',
+                            'Country': country_name or '',
+                            'License Short Name': short_name or '',
+                            'License Issuing Authority Name': issuing_authority or '',
+                            'Description': description or '',
+                            'License Valid Duration Value': valid_duration_value or '',
+                            'License Valid Duration Unit': valid_duration_unit or '',
+                            'License Valid Date': valid_date_raw or '',
+                            'License Valid Type': valid_type or '',
                         })
                         continue
                     else:
@@ -11530,8 +13786,16 @@ class LicenseNameImportAPIView(APIView):
                     imported_count += 1
                 except IntegrityError:
                     duplicate_names.append({
-                        'Country': country_obj.name,
-                        'License Full Name': full_name
+                        'Row': row_number,
+                        'License Full Name': full_name or '',
+                        'Country': country_name or '',
+                        'License Short Name': short_name or '',
+                        'License Issuing Authority Name': issuing_authority or '',
+                        'Description': description or '',
+                        'License Valid Duration Value': valid_duration_value or '',
+                        'License Valid Duration Unit': valid_duration_unit or '',
+                        'License Valid Date': valid_date_raw or '',
+                        'License Valid Type': valid_type or '',
                     })
 
         except Exception as e:
@@ -12034,8 +14298,10 @@ class LeadSourceImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
+            # "duplicates": duplicates,
+            # "skipped_rows": skipped_rows
         }, status=status.HTTP_200_OK)
 
 
@@ -12293,7 +14559,6 @@ class InterestLevelDeleteAPIView(APIView):
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
 
-
 class InterestLevelExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -12320,10 +14585,15 @@ class InterestLevelExportAPIView(APIView):
 
         # --- Fetch queryset ---
         queryset = InterestLevel.objects.filter(is_deleted=False)
+
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
+
         if search:
-            queryset = queryset.filter(Q(name__icontains=search) | Q(description__icontains=search))
+            queryset = queryset.filter(
+                Q(name__istartswith=search)
+                
+            )
 
         # --- Custom sorting ---
         sort_field_map = {
@@ -12335,14 +14605,17 @@ class InterestLevelExportAPIView(APIView):
         }
 
         sort_fields = []
+
         if custom_sort:
             for rule in custom_sort.split(','):
                 try:
                     field, order = rule.split(':')
                     field = field.strip()
                     order = order.strip().lower()
+
                     if field not in sort_field_map:
                         continue
+
                     orm_field = sort_field_map[field]
 
                     # Case-insensitive sorting for string fields
@@ -12351,14 +14624,21 @@ class InterestLevelExportAPIView(APIView):
                     else:
                         f = F(orm_field)
 
-                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+                    if order == 'asc':
+                        sort_fields.append(f.asc(nulls_last=True))
+                    else:
+                        sort_fields.append(f.desc(nulls_last=True))
+
                 except ValueError:
                     continue
+
         else:
             # Default sort: created_at desc
             sort_order = request.GET.get('sortOrder', 'desc')
             f = F('created_at')
-            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
+            sort_fields = [
+                f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)
+            ]
 
         queryset = queryset.order_by(*sort_fields)
 
@@ -12371,11 +14651,15 @@ class InterestLevelExportAPIView(APIView):
             row = []
             for field in field_list:
                 value = getattr(obj, field, '')
+
                 if field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+
                 elif isinstance(value, bool):
                     value = int(value)
+
                 row.append(value if value is not None else '')
+
             dataset.append(row)
 
         # --- Export data ---
@@ -12383,12 +14667,13 @@ class InterestLevelExportAPIView(APIView):
             file_data = dataset.export('csv')
             content_type = 'text/csv; charset=utf-8'
             file_name = 'InterestLevel.csv'
+
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'InterestLevel.xlsx'
 
-        response = HttpResponse(file_data if format_type != 'csv' else file_data, content_type=content_type)
+        response = HttpResponse(file_data, content_type=content_type)
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
@@ -12471,6 +14756,8 @@ class InterestLevelImportAPIView(APIView):
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Interest Level": name or "",
+                        "Description":description or "",
                         "Reason": "Missing interest level name"
                     })
                     continue
@@ -12480,7 +14767,8 @@ class InterestLevelImportAPIView(APIView):
                     if not existing.is_deleted:
                         duplicates.append({
                             "Row": row_number,
-                            "Interest Level": name,
+                            "Interest Level": name or "",
+                            "Description":description or "",
                             "Reason": "Already exists in database"
                         })
                         continue
@@ -12513,8 +14801,10 @@ class InterestLevelImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
+            # "duplicates": duplicates,
+            # "skipped_rows": skipped_rows
         }, status=status.HTTP_200_OK)
 
 
@@ -12719,7 +15009,7 @@ class PriorityDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-        # ✅ Case 2: Delete all
+        #  Case 2: Delete all
         if uuids == "all":
             priorities = Priority.objects.filter(is_deleted=False)
             count = priorities.count()
@@ -12738,7 +15028,7 @@ class PriorityDeleteAPIView(APIView):
                 "data": None
             }, status=status.HTTP_200_OK)
 
-        # ✅ Case 3: Bulk delete via UUIDs list
+        #  Case 3: Bulk delete via UUIDs list
         if not uuids or not isinstance(uuids, list):
             return Response({
                 "statusCode": 400,
@@ -12963,6 +15253,8 @@ class PriorityImportAPIView(APIView):
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Priority":name or "",
+                        "Description":description or "",
                         "Reason": "Missing priority name"
                     })
                     continue
@@ -12972,7 +15264,8 @@ class PriorityImportAPIView(APIView):
                     if not existing.is_deleted:
                         duplicates.append({
                             "Row": row_number,
-                            "Priority": name,
+                            "Priority":name or "",
+                            "Description":description or "",
                             "Reason": "Already exists in database"
                         })
                         continue
@@ -13005,8 +15298,10 @@ class PriorityImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            # "duplicates": duplicates,
+            # "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=status.HTTP_200_OK)
 
 
@@ -13470,6 +15765,8 @@ class TagsImportAPIView(APIView):
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Tags":name or "",
+                        "Description":description or "",
                         "Reason": "Missing tag name"
                     })
                     continue
@@ -13479,7 +15776,8 @@ class TagsImportAPIView(APIView):
                     if not existing.is_deleted:
                         duplicates.append({
                             "Row": row_number,
-                            "Tags": name,
+                            "Tags":name or "",
+                            "Description":description or "",
                             "Reason": "Already exists in database"
                         })
                         continue
@@ -13512,8 +15810,8 @@ class TagsImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=status.HTTP_200_OK)
 
 #-------------------------------------------ActivityType---------------------------------
@@ -13752,7 +16050,7 @@ class ActivityTypeDeleteAPIView(APIView):
                 "data": None
             }, status=status.HTTP_200_OK)
 
-        # ✅ Case 3: Bulk delete via UUIDs list
+        #  Case 3: Bulk delete via UUIDs list
         if not uuids or not isinstance(uuids, list):
             return Response({
                 "statusCode": 400,
@@ -13801,6 +16099,7 @@ class ActivityTypeDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+
 class ActivityTypeExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -13808,12 +16107,11 @@ class ActivityTypeExportAPIView(APIView):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
         uuids_param = request.GET.get('uuids', '')
-        custom_sort = request.GET.get('customSort')  # e.g., name:asc,updated_at:desc
+        custom_sort = request.GET.get('customSort')
         search = request.GET.get('search', '').strip()
 
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
-        # --- Field headers ---
         field_header_map = {
             'uuid': 'UUID',
             'name': 'Activity Type',
@@ -13825,15 +16123,13 @@ class ActivityTypeExportAPIView(APIView):
 
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
-        # --- Fetch queryset ---
         queryset = ActivityType.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        if search:
-            # Case-insensitive search on name and description
-            queryset = queryset.filter(Q(name__icontains=search) | Q(description__icontains=search))
 
-        # --- Custom sorting ---
+        if search:
+            queryset = queryset.filter(Q(name__istartswith=search))
+
         sort_field_map = {
             'name': 'name',
             'description': 'description',
@@ -13849,28 +16145,28 @@ class ActivityTypeExportAPIView(APIView):
                     field, order = rule.split(':')
                     field = field.strip()
                     order = order.strip().lower()
+
                     if field not in sort_field_map:
                         continue
+
                     orm_field = sort_field_map[field]
 
-                    # Case-insensitive sorting for string fields
                     if field in ['name', 'description']:
-                        f = Lower(orm_field)
+                        f = Lower(F(orm_field))  # FIXED
                     else:
                         f = F(orm_field)
 
-                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
                 except ValueError:
                     continue
         else:
-            # Default sort: created_at desc
-            sort_order = request.GET.get('sortOrder', 'desc')
             f = F('created_at')
-            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
+            sort_fields = [f.desc(nulls_last=True)]
 
         queryset = queryset.order_by(*sort_fields)
 
-        # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'ActivityType'
@@ -13879,14 +16175,15 @@ class ActivityTypeExportAPIView(APIView):
             row = []
             for field in field_list:
                 value = getattr(obj, field, '')
+
                 if field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
                     value = int(value)
-                row.append(value if value is not None else '')
+
+                row.append(value if value is not None else "")
             dataset.append(row)
 
-        # --- Export data ---
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
@@ -13898,11 +16195,10 @@ class ActivityTypeExportAPIView(APIView):
 
         response = HttpResponse(
             file_data if format_type == 'csv' else file_data.getvalue(),
-            content_type=content_type
+            content_type=content_type,
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-
 
 class ActivityTypeImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -13987,6 +16283,8 @@ class ActivityTypeImportAPIView(APIView):
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Activity Type":name or "",
+                        "Description":description or "",
                         "Reason": "Missing activity type name"
                     })
                     continue
@@ -13996,7 +16294,8 @@ class ActivityTypeImportAPIView(APIView):
                     if not existing.is_deleted:
                         duplicates.append({
                             "Row": row_number,
-                            "Activity Type": name,
+                            "Activity Type":name or "",
+                            "Description":description or "",
                             "Reason": "Already exists in database"
                         })
                         continue
@@ -14029,8 +16328,8 @@ class ActivityTypeImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=status.HTTP_200_OK)
 
 
@@ -14237,7 +16536,7 @@ class LostReasonDeleteAPIView(APIView):
     def delete(self, request, uuid=None):
         uuids = request.data.get('id', None)
 
-        # ✅ Case 1: Single delete via URL UUID
+        #  Case 1: Single delete via URL UUID
         if uuid:
             try:
                 reason = LostReason.objects.get(uuid=uuid, is_deleted=False)
@@ -14257,7 +16556,7 @@ class LostReasonDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-        # ✅ Case 2: Delete all
+        #  Case 2: Delete all
         if uuids == "all":
             reasons = LostReason.objects.filter(is_deleted=False)
             count = reasons.count()
@@ -14276,7 +16575,7 @@ class LostReasonDeleteAPIView(APIView):
                 "data": None
             }, status=status.HTTP_200_OK)
 
-        # ✅ Case 3: Bulk delete via UUIDs list
+        #  Case 3: Bulk delete via UUIDs list
         if not uuids or not isinstance(uuids, list):
             return Response({
                 "statusCode": 400,
@@ -14504,6 +16803,8 @@ class LostReasonImportAPIView(APIView):
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Lost Reason (B2C)":name or "",
+                        "Description":description or "",
                         "Reason": "Missing lost reason name"
                     })
                     continue
@@ -14514,6 +16815,7 @@ class LostReasonImportAPIView(APIView):
                         duplicates.append({
                             "Row": row_number,
                             "Lost Reason (B2C)": name,
+                            "Description":description or "",
                             "Reason": "Already exists in database"
                         })
                         continue
@@ -14546,8 +16848,8 @@ class LostReasonImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=status.HTTP_200_OK)
 
 
@@ -14727,7 +17029,7 @@ class LostReasonB2BDeleteAPIView(APIView):
     def delete(self, request, uuid=None):
         uuids = request.data.get('id', None)
 
-        # ✅ Case 1: Single delete via URL UUID
+        #  Case 1: Single delete via URL UUID
         if uuid:
             try:
                 reason = LostReasonB2B.objects.get(uuid=uuid, is_deleted=False)
@@ -14747,7 +17049,7 @@ class LostReasonB2BDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-        # ✅ Case 2: Delete all
+        #  Case 2: Delete all
         if uuids == "all":
             reasons = LostReasonB2B.objects.filter(is_deleted=False)
             count = reasons.count()
@@ -14766,7 +17068,7 @@ class LostReasonB2BDeleteAPIView(APIView):
                 "data": None
             }, status=status.HTTP_200_OK)
 
-        # ✅ Case 3: Bulk delete via UUIDs list
+        #  Case 3: Bulk delete via UUIDs list
         if not uuids or not isinstance(uuids, list):
             return Response({
                 "statusCode": 400,
@@ -15002,6 +17304,8 @@ class LostReasonB2BImportAPIView(APIView):
                 if not name:
                     skipped_rows.append({
                         "Row": row_number,
+                        "Lost Reason (B2B)": name or "",
+                        "Description":description or "",
                         "Reason": "Missing lost reason name"
                     })
                     continue
@@ -15012,6 +17316,7 @@ class LostReasonB2BImportAPIView(APIView):
                         duplicates.append({
                             "Row": row_number,
                             "Lost Reason (B2B)": name,
+                            "Description":description or "",
                             "Reason": "Already exists in database"
                         })
                         continue
@@ -15044,8 +17349,8 @@ class LostReasonB2BImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=status.HTTP_200_OK)
 
 

@@ -10,13 +10,14 @@ import {
   accreditationNameExportData,
   accreditationNameList,
   accreditationNameDelete,
-  accreditationCategoryList
+  accreditationCategoryList,
 } from "../../../../store/master/companyMasters/actions";
 import {
   formatDateDDMMYYYY,
   formatDateDDMMYYYYTime,
 } from "../../../../helper/utils/commanHelper";
 import { useGlobalSearch } from "../../../../components/comman/GlobalSearchContext";
+import ResetButton from "../../../../components/comman/ResetButton";
 
 const AccrediationNameList = () => {
   const { globalSearch, setGlobalSearch } = useGlobalSearch();
@@ -270,7 +271,8 @@ const AccrediationNameList = () => {
       sortBy: tableState.sortBy || "",
       sortOrder: tableState.sortOrder || "",
       sort: tableState.sort,
-      category: columnFilters.categoryId.length > 0 ? columnFilters.categoryId : null,
+      category:
+        columnFilters.categoryId.length > 0 ? columnFilters.categoryId : null,
     };
 
     dispatch(
@@ -314,40 +316,46 @@ const AccrediationNameList = () => {
     const params = {
       page: 1,
       limit: 2000,
-      search: '',
-      status: '',
-      sortBy: 'name',
-      sortOrder: 'asc',
+      search: "",
+      status: "",
+      sortBy: "name",
+      sortOrder: "asc",
     };
 
-    dispatch(accreditationCategoryList(params, (response, error) => {
-      if (response?.statusCode === 200 && response?.status === true) {
-        const data = response?.data || [];
-        setFilterDropdownData((prev) => ({
-          ...prev,
-          categoryId: data
-            .map((c) => ({ id: c.uuid || c.id, name: c.name }))
-            .sort((a, b) => a.name.localeCompare(b.name)),
-          __init: true,
-        }));
-      } else {
-        setFilterDropdownData((prev) => ({ ...prev, categoryId: [] }));
-        toast.error("Failed to load accreditation category list");
-      }
-    }));
+    dispatch(
+      accreditationCategoryList(params, (response, error) => {
+        if (response?.statusCode === 200 && response?.status === true) {
+          const data = response?.data || [];
+          setFilterDropdownData((prev) => ({
+            ...prev,
+            categoryId: data
+              .map((c) => ({ id: c.uuid || c.id, name: c.name }))
+              .sort((a, b) => a.name.localeCompare(b.name)),
+            __init: true,
+          }));
+        } else {
+          setFilterDropdownData((prev) => ({ ...prev, categoryId: [] }));
+          toast.error("Failed to load accreditation category list");
+        }
+      })
+    );
   };
 
   // --- Filter functions ---
   const toggleFilterDropdown = (e, columnField) => {
     e.stopPropagation();
-    setActiveFilterColumn((prev) => (prev === columnField ? null : columnField));
+    setActiveFilterColumn((prev) =>
+      prev === columnField ? null : columnField
+    );
     setFilterSearchTerms((prev) => ({ ...prev, [columnField]: "" }));
   };
 
   const handleFilterCheckboxChange = (columnField, value, checked) => {
     setColumnFilters((prev) => {
       const current = prev[columnField] || [];
-      const next = checked ? [...current, value] : current.filter((v) => v !== value);
+      const next = checked
+        ? [...current, value]
+        : current.filter((v) => v !== value);
       return { ...prev, [columnField]: next };
     });
   };
@@ -367,10 +375,13 @@ const AccrediationNameList = () => {
   const getFilteredOptions = (columnField) => {
     const searchTerm = (filterSearchTerms[columnField] || "").toLowerCase();
     const options = filterDropdownData[columnField] || [];
-    return options.filter((option) => option.name.toLowerCase().includes(searchTerm));
+    return options.filter((option) =>
+      option.name.toLowerCase().includes(searchTerm)
+    );
   };
 
-  const hasActiveFilters = () => Object.values(columnFilters).some((arr) => arr.length > 0);
+  const hasActiveFilters = () =>
+    Object.values(columnFilters).some((arr) => arr.length > 0);
 
   const clearAllOnlyHeaderFilters = () => {
     setColumnFilters({
@@ -678,7 +689,8 @@ const AccrediationNameList = () => {
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
       search: tableState.search || "",
       sort: tableState.sort,
-      category: columnFilters.categoryId.length > 0 ? columnFilters.categoryId : null,
+      category:
+        columnFilters.categoryId.length > 0 ? columnFilters.categoryId : null,
     };
 
     setLoadingExport(true);
@@ -759,20 +771,22 @@ const AccrediationNameList = () => {
                       <>
                         <button
                           onClick={() => handleSelectAllOrNot("onlySelected")}
-                          className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "onlySelected"
+                          className={`btn btn-sm py-1 fw-medium ${
+                            selectAllOrNot === "onlySelected"
                               ? "comman-btn-color"
                               : "comman-inactive-btn"
-                            }`}
+                          }`}
                         >
                           {`Select (${selectedRows.length})`}
                         </button>
 
                         <button
                           onClick={() => handleSelectAllOrNot("all")}
-                          className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "all"
+                          className={`btn btn-sm py-1 fw-medium ${
+                            selectAllOrNot === "all"
                               ? "comman-btn-color"
                               : "comman-inactive-btn"
-                            }`}
+                          }`}
                         >
                           {`Select All (${tableState.total})`}
                         </button>
@@ -788,12 +802,13 @@ const AccrediationNameList = () => {
                     </button>
                   )}
 
-                  <button
+                  <ResetButton
                     onClick={clearAllFilters}
-                    className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
-                  >
-                    Reset
-                  </button>
+                    tableState={tableState}
+                    columnFilters={columnFilters}
+                    globalSearch={globalSearch}
+                    selectedRows={selectedRows}
+                  />
                 </div>
               </div>
 
@@ -826,8 +841,9 @@ const AccrediationNameList = () => {
                         <ul className="pagination mb-0" style={{ gap: "4px" }}>
                           {/* First */}
                           <li
-                            className={`page-item ${!tableState.hasPrevious ? "disabled" : ""
-                              }`}
+                            className={`page-item ${
+                              !tableState.hasPrevious ? "disabled" : ""
+                            }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -850,8 +866,9 @@ const AccrediationNameList = () => {
 
                           {/* Prev */}
                           <li
-                            className={`page-item ${!tableState.hasPrevious ? "disabled" : ""
-                              }`}
+                            className={`page-item ${
+                              !tableState.hasPrevious ? "disabled" : ""
+                            }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -920,8 +937,9 @@ const AccrediationNameList = () => {
 
                           {/* Next */}
                           <li
-                            className={`page-item ${!tableState.hasNext ? "disabled" : ""
-                              }`}
+                            className={`page-item ${
+                              !tableState.hasNext ? "disabled" : ""
+                            }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -944,8 +962,9 @@ const AccrediationNameList = () => {
 
                           {/* Last */}
                           <li
-                            className={`page-item ${!tableState.hasNext ? "disabled" : ""
-                              }`}
+                            className={`page-item ${
+                              !tableState.hasNext ? "disabled" : ""
+                            }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -979,153 +998,243 @@ const AccrediationNameList = () => {
                   <tr>
                     <th scope="col" className="sl-numbar-th">
                       <div className="d-flex align-items-center gap-2">
-                        <input className="form-check-input" type="checkbox" checked={isAllSelected} onChange={handleSelectAll} disabled={accrediationNameData.length === 0} />
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          checked={isAllSelected}
+                          onChange={handleSelectAll}
+                          disabled={accrediationNameData.length === 0}
+                        />
                         <span>No.</span>
                       </div>
                     </th>
 
-                    {tableColumns.map((column) => (
-                      isColumnVisible(column.id) && (
-                        <th
-                          key={column.id}
-                          scope="col"
-                          className='sorting-th'
-                        >
-                          <div className="d-flex align-items-center justify-content-between position-relative">
-                            <div
-                              className="d-flex align-items-center flex-grow-1"
-                              onClick={() => handleSort(column.field)}
-                              style={{ cursor: 'pointer' }}
-                            >
-                              {column.label}
-                              {getSortIcon(column.field)}
+                    {tableColumns.map(
+                      (column) =>
+                        isColumnVisible(column.id) && (
+                          <th
+                            key={column.id}
+                            scope="col"
+                            className="sorting-th"
+                          >
+                            <div className="d-flex align-items-center justify-content-between position-relative">
+                              <div
+                                className="d-flex align-items-center flex-grow-1"
+                                onClick={() => handleSort(column.field)}
+                                style={{ cursor: "pointer" }}
+                              >
+                                {column.label}
+                                {getSortIcon(column.field)}
 
-                              {column.filterable && (
-                                <div className="position-relative comman-filtter-all">
-                                  <Icon
-                                    icon={columnFilters[column.field]?.length > 0 ? "mdi:filter" : "mdi:filter-outline"}
-                                    width="18"
-                                    className={`ms-2 ${columnFilters[column.field]?.length > 0 ? 'comman-btn-color' : ''}`}
-                                    style={{ cursor: 'pointer' }}
-                                    onClick={(e) => toggleFilterDropdown(e, column.field)}
-                                  />
+                                {column.filterable && (
+                                  <div className="position-relative comman-filtter-all">
+                                    <Icon
+                                      icon={
+                                        columnFilters[column.field]?.length > 0
+                                          ? "mdi:filter"
+                                          : "mdi:filter-outline"
+                                      }
+                                      width="18"
+                                      className={`ms-2 ${
+                                        columnFilters[column.field]?.length > 0
+                                          ? "comman-btn-color"
+                                          : ""
+                                      }`}
+                                      style={{ cursor: "pointer" }}
+                                      onClick={(e) =>
+                                        toggleFilterDropdown(e, column.field)
+                                      }
+                                    />
 
-                                  {activeFilterColumn === column.field && (
-                                    <div
-                                      ref={filterDropdownRef}
-                                      className="position-absolute bg-white border rounded shadow-sm p-3 main-div-dropdown"
-
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
-                                      {/* Sort Options */}
-                                      <div className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(s => s.field === column.field)?.order === "asc"
-                                        ? "disabled-sort"
-                                        : ""
-                                        }`}
-                                        onClick={() => applySortAsc(column.field)}
+                                    {activeFilterColumn === column.field && (
+                                      <div
+                                        ref={filterDropdownRef}
+                                        className="position-absolute bg-white border rounded shadow-sm p-3 main-div-dropdown"
+                                        onClick={(e) => e.stopPropagation()}
                                       >
-                                        <Icon icon="ri:arrow-up-line" className="me-2 text-muted" width="18" />
-                                        Sort Smallest to Largest
-                                      </div>
-                                      <div className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(s => s.field === column.field)?.order === "desc"
-                                        ? "disabled-sort"
-                                        : ""
-                                        }`}
-                                        onClick={() => applySortDesc(column.field)}
-                                      >
-                                        <Icon icon="ri:arrow-down-line" className="me-2 text-muted" width="18" />
-                                        Sort Largest to Smallest
-                                      </div>
-                                      <div className="mb-2 ">
-                                        <input
-                                          type="text"
-                                          className="form-control form-control-sm input-search"
-                                          placeholder="Search..."
-                                          value={filterSearchTerms[column.field] || ''}
-                                          onChange={(e) => setFilterSearchTerms(prev => ({
-                                            ...prev,
-                                            [column.field]: e.target.value
-                                          }))}
-                                        />
-                                      </div>
-
-                                      <div className="gap-2 mb-2 select-clear-all" >
-                                        <button
-                                          className="btn btn-sm py-1 btn-primary flex-grow-1 comman-btn-color mr-10"
-                                          onClick={() => handleFilterSelectAll(column.field)}>
-                                          Select All
-                                        </button>
-                                        <button
-                                          className="btn btn-sm py-1 btn-secondary flex-grow-1"
-                                          onClick={() => handleFilterClearAll(column.field)}
+                                        {/* Sort Options */}
+                                        <div
+                                          className={`filter-menu-item px-3 py-2 d-flex align-items-center ${
+                                            tableState.sort.find(
+                                              (s) => s.field === column.field
+                                            )?.order === "asc"
+                                              ? "disabled-sort"
+                                              : ""
+                                          }`}
+                                          onClick={() =>
+                                            applySortAsc(column.field)
+                                          }
                                         >
-                                          Clear All
-                                        </button>
-                                      </div>
+                                          <Icon
+                                            icon="ri:arrow-up-line"
+                                            className="me-2 text-muted"
+                                            width="18"
+                                          />
+                                          Sort Smallest to Largest
+                                        </div>
+                                        <div
+                                          className={`filter-menu-item px-3 py-2 d-flex align-items-center ${
+                                            tableState.sort.find(
+                                              (s) => s.field === column.field
+                                            )?.order === "desc"
+                                              ? "disabled-sort"
+                                              : ""
+                                          }`}
+                                          onClick={() =>
+                                            applySortDesc(column.field)
+                                          }
+                                        >
+                                          <Icon
+                                            icon="ri:arrow-down-line"
+                                            className="me-2 text-muted"
+                                            width="18"
+                                          />
+                                          Sort Largest to Smallest
+                                        </div>
+                                        <div className="mb-2 ">
+                                          <input
+                                            type="text"
+                                            className="form-control form-control-sm input-search"
+                                            placeholder="Search..."
+                                            value={
+                                              filterSearchTerms[column.field] ||
+                                              ""
+                                            }
+                                            onChange={(e) =>
+                                              setFilterSearchTerms((prev) => ({
+                                                ...prev,
+                                                [column.field]: e.target.value,
+                                              }))
+                                            }
+                                          />
+                                        </div>
 
-                                      <div className='select-all-dropdown' >
-                                        {/* Country and State filter - show names but store IDs */}
-                                        {getFilteredOptions(column.field).length > 0 ? (
-                                          getFilteredOptions(column.field).map((option, idx) => (
-                                            <>
-                                              <div
-                                                key={idx}
-                                                className="bg-white rounded p-2 mb-2 d-flex align-items-center gap-2 form-check-div"
-                                              >
-                                                <input
-                                                  type="checkbox"
-                                                  id={`filter-${column.field}-${idx}`}
-                                                  checked={columnFilters[column.field]?.includes(option.id)}
-                                                  onChange={(e) => handleFilterCheckboxChange(
-                                                    column.field,
-                                                    option.id,
-                                                    e.target.checked
-                                                  )}
-                                                  className="form-check-input"
-                                                />
-                                                <label htmlFor={`item-${idx}`} className="mb-0 flex-grow-1 form-check-label">
-                                                  {option.name}
-                                                </label>
-                                              </div>
-                                            </>
+                                        <div className="gap-2 mb-2 select-clear-all">
+                                          <button
+                                            className="btn btn-sm py-1 btn-primary flex-grow-1 comman-btn-color mr-10"
+                                            onClick={() =>
+                                              handleFilterSelectAll(
+                                                column.field
+                                              )
+                                            }
+                                          >
+                                            Select All
+                                          </button>
+                                          <button
+                                            className="btn btn-sm py-1 btn-secondary flex-grow-1"
+                                            onClick={() =>
+                                              handleFilterClearAll(column.field)
+                                            }
+                                          >
+                                            Clear All
+                                          </button>
+                                        </div>
 
-                                          ))
-                                        ) : (
-                                          <div className="no-records-found">
-                                            No options available
-                                          </div>
-                                        )}
-                                      </div>
+                                        <div className="select-all-dropdown">
+                                          {/* Country and State filter - show names but store IDs */}
+                                          {getFilteredOptions(column.field)
+                                            .length > 0 ? (
+                                            getFilteredOptions(
+                                              column.field
+                                            ).map((option, idx) => (
+                                              <>
+                                                <div
+                                                  key={idx}
+                                                  className="bg-white rounded p-2 mb-2 d-flex align-items-center gap-2 form-check-div"
+                                                >
+                                                  <input
+                                                    type="checkbox"
+                                                    id={`filter-${column.field}-${idx}`}
+                                                    checked={columnFilters[
+                                                      column.field
+                                                    ]?.includes(option.id)}
+                                                    onChange={(e) =>
+                                                      handleFilterCheckboxChange(
+                                                        column.field,
+                                                        option.id,
+                                                        e.target.checked
+                                                      )
+                                                    }
+                                                    className="form-check-input"
+                                                  />
+                                                  <label
+                                                    htmlFor={`item-${idx}`}
+                                                    className="mb-0 flex-grow-1 form-check-label"
+                                                  >
+                                                    {option.name}
+                                                  </label>
+                                                </div>
+                                              </>
+                                            ))
+                                          ) : (
+                                            <div className="no-records-found">
+                                              No options available
+                                            </div>
+                                          )}
+                                        </div>
 
-                                      <div className="d-flex gap-2 mt-2 pt-2 border-top justify-content-end">
-                                        <button
-                                          className="btn btn-sm  py-1 btn-secondary flex-grow-1  mt-10"
-                                          onClick={() => setActiveFilterColumn(null)}
-                                          style={{ maxWidth: "80px" }} >
-                                          Cancel
-                                        </button>
+                                        <div className="d-flex gap-2 mt-2 pt-2 border-top justify-content-end">
+                                          <button
+                                            className="btn btn-sm  py-1 btn-secondary flex-grow-1  mt-10"
+                                            onClick={() =>
+                                              setActiveFilterColumn(null)
+                                            }
+                                            style={{ maxWidth: "80px" }}
+                                          >
+                                            Cancel
+                                          </button>
+                                        </div>
                                       </div>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
+                                    )}
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        </th>
-                      )
-                    ))}
+                          </th>
+                        )
+                    )}
 
                     <th scope="col" className="action-th">
-                      <div className="position-relative table-header-hide-show" ref={columnDropdownRef}>
-                        <button className="position-relative table-header-hide-show" onClick={() => setShowColumnDropdown(!showColumnDropdown)}>
-                          Action <Icon icon="mdi:table-column" width="20" className='icone' />
+                      <div
+                        className="position-relative table-header-hide-show"
+                        ref={columnDropdownRef}
+                      >
+                        <button
+                          className="position-relative table-header-hide-show"
+                          onClick={() =>
+                            setShowColumnDropdown(!showColumnDropdown)
+                          }
+                        >
+                          Action{" "}
+                          <Icon
+                            icon="mdi:table-column"
+                            width="20"
+                            className="icone"
+                          />
                         </button>
                         {showColumnDropdown && (
                           <div className="position-absolute bg-white border rounded shadow-sm p-2 show-dropdowns-header">
                             {tableColumns.map((column) => (
-                              <div key={column.id} className="bg-white p-2 mb-2 d-flex align-items-center gap-2">
-                                <input type="checkbox" id={`column-${column.id}`} checked={isColumnVisible(column.id)} onChange={() => toggleColumnVisibility(column.id)} disabled={column.required} className="form-check-input" />
-                                <label htmlFor={`column-${column.id}`} className="mb-0 flex-grow-1 form-label">{column.label}</label>
+                              <div
+                                key={column.id}
+                                className="bg-white p-2 mb-2 d-flex align-items-center gap-2"
+                              >
+                                <input
+                                  type="checkbox"
+                                  id={`column-${column.id}`}
+                                  checked={isColumnVisible(column.id)}
+                                  onChange={() =>
+                                    toggleColumnVisibility(column.id)
+                                  }
+                                  disabled={column.required}
+                                  className="form-check-input"
+                                />
+                                <label
+                                  htmlFor={`column-${column.id}`}
+                                  className="mb-0 flex-grow-1 form-label"
+                                >
+                                  {column.label}
+                                </label>
                               </div>
                             ))}
                           </div>
@@ -1138,9 +1247,17 @@ const AccrediationNameList = () => {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={visibleColumns.length + 2} className="loding-data">
+                      <td
+                        colSpan={visibleColumns.length + 2}
+                        className="loding-data"
+                      >
                         <div className="d-flex justify-content-center align-items-center gap-2">
-                          <div className="spinner-border spinner-border-sm" role="status"><span className="visually-hidden">Loading...</span></div>
+                          <div
+                            className="spinner-border spinner-border-sm"
+                            role="status"
+                          >
+                            <span className="visually-hidden">Loading...</span>
+                          </div>
                           Loading...
                         </div>
                       </td>
@@ -1150,12 +1267,19 @@ const AccrediationNameList = () => {
                       <tr key={rowItem.uuid}>
                         <td>
                           <div className="d-flex align-items-center gap-2">
-                            <input className="form-check-input" type="checkbox" checked={selectedRows.includes(rowItem.uuid)} onChange={() => handleRowSelect(rowItem.uuid)} />
-                            <span>{String(startIndex + index + 1).padStart(2, '0')}</span>
+                            <input
+                              className="form-check-input"
+                              type="checkbox"
+                              checked={selectedRows.includes(rowItem.uuid)}
+                              onChange={() => handleRowSelect(rowItem.uuid)}
+                            />
+                            <span>
+                              {String(startIndex + index + 1).padStart(2, "0")}
+                            </span>
                           </div>
                         </td>
 
-                       {isColumnVisible("category_name") && (
+                        {isColumnVisible("category_name") && (
                           <td>
                             <span>{rowItem.category_name}</span>
                           </td>
@@ -1215,11 +1339,29 @@ const AccrediationNameList = () => {
 
                         <td className="action-td">
                           <div className="d-flex align-items-end gap-2">
-                            <Link to="#" className="edit-btn-icone" onClick={(e) => { e.preventDefault(); handleShowEdit(rowItem); }}>
-                              <Icon icon="lucide:edit" width="18" className="icone" />
+                            <Link
+                              to="#"
+                              className="edit-btn-icone"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleShowEdit(rowItem);
+                              }}
+                            >
+                              <Icon
+                                icon="lucide:edit"
+                                width="18"
+                                className="icone"
+                              />
                             </Link>
-                            <button onClick={() => handleDelete(rowItem.uuid)} className="delete-btn-icone">
-                              <Icon icon="mingcute:delete-2-line" width="18" className="icone" />
+                            <button
+                              onClick={() => handleDelete(rowItem.uuid)}
+                              className="delete-btn-icone"
+                            >
+                              <Icon
+                                icon="mingcute:delete-2-line"
+                                width="18"
+                                className="icone"
+                              />
                             </button>
                           </div>
                         </td>
@@ -1227,7 +1369,12 @@ const AccrediationNameList = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={visibleColumns.length + 2} className="no-records-found">No records found</td>
+                      <td
+                        colSpan={visibleColumns.length + 2}
+                        className="no-records-found"
+                      >
+                        No records found
+                      </td>
                     </tr>
                   )}
                 </tbody>
@@ -1312,7 +1459,7 @@ const AccrediationNameList = () => {
                     aria-label="Close"
                   />
                 </div>
-                <div className="modal-body p-24">
+                <div className="modal-body p-24 pt-10">
                   <div className="row">
                     <div className="col-12 col-md-6">
                       <h3 className="text-sm font-semibold mb-3 text-gray-700">
@@ -1426,5 +1573,5 @@ const AccrediationNameList = () => {
       </MasterLayout>
     </>
   );
-}
-  export default AccrediationNameList;
+};
+export default AccrediationNameList;

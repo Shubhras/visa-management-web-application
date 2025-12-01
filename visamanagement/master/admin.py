@@ -1333,10 +1333,64 @@ class StudyFactorAcademicResultAdmin(admin.ModelAdmin):
 
 @admin.register(StudyFactorGAP)
 class StudyFactorGAPAdmin(admin.ModelAdmin):
-    list_display = ("factor_for", "study_gap_group", "maximum_gap_accepted", "is_deleted")
-    search_fields = ("factor_for__name", "study_gap_group")
-    list_filter = ("is_deleted", "created_at")
-    read_only_fields = ('uuid', 'created_at', 'updated_at')
+    list_display = (
+        "factor_for",
+        "study_gap_group",
+        "maximum_gap_accepted",
+        "is_deleted",
+        "created_at",
+        "updated_at",
+    )
+
+    list_filter = (
+        "is_deleted",
+        "factor_for",
+        "study_gap_group",
+        "country_for_admission",
+        "institute_type",
+        "course_level",
+    )
+
+    search_fields = (
+        "factor_for__name",
+        "study_gap_group__name",
+        "description",
+    )
+
+    filter_horizontal = (
+        "country_for_admission",
+        "institute_type",
+        "course_level",
+    )
+
+    readonly_fields = ("uuid", "created_at", "updated_at")
+
+    fieldsets = (
+        ("Main Info", {
+            "fields": (
+                "factor_for",
+                "study_gap_group",
+                "maximum_gap_accepted",
+                "description",
+            )
+        }),
+        ("Related Options", {
+            "fields": (
+                "country_for_admission",
+                "institute_type",
+                "course_level",
+            )
+        }),
+        ("System Fields", {
+            "classes": ("collapse",),
+            "fields": (
+                "uuid",
+                "is_deleted",
+                "created_at",
+                "updated_at",
+            )
+        }),
+    )
     
     
 
@@ -1367,7 +1421,6 @@ class StudyFactorLanguageAbilityAdmin(admin.ModelAdmin):
         'language_ability_group',
         'language_test_name'
     )
-
 
 
 
@@ -1428,3 +1481,108 @@ class StudyFactorAgeAdmin(admin.ModelAdmin):
     filter_horizontal = ("country", "course_level")
 
     readonly_fields = ("uuid", "created_at", "updated_at")
+
+
+@admin.register(ECAFor)
+class ECAForAdmin(admin.ModelAdmin):    
+    list_display = ("uuid",'name', 'description', 'is_deleted', 'created_at', 'updated_at')
+    search_fields = ('name', 'description')
+    list_filter = ('is_deleted', 'created_at')
+    ordering = ('-created_at',)
+    readonly_fields = ('uuid', 'created_at', 'updated_at')
+
+    fieldsets = (
+        ("Basic Information", {
+            "fields": ("name", "description")
+        }),
+        ("Status", {
+            "fields": ("is_deleted",)
+        }),
+        ("System Fields", {
+            "classes": ("collapse",),
+            "fields": ("uuid", "created_at", "updated_at")
+        }),
+    )
+    
+    
+    
+# -------------------------------------------
+# 1. AcademicResultGroup
+# -------------------------------------------
+@admin.register(AcademicResultGroup)
+class AcademicResultGroupAdmin(admin.ModelAdmin):
+    list_display = ("name", "uuid", "is_deleted", "created_at", "updated_at")
+    search_fields = ("name", "uuid")
+    list_filter = ("is_deleted", "created_at")
+    readonly_fields = ("uuid", "created_at", "updated_at")
+
+
+# -------------------------------------------
+# 2. BacklogsGroup
+# -------------------------------------------
+@admin.register(BacklogsGroup)
+class BacklogsGroupAdmin(admin.ModelAdmin):
+    list_display = ("name", "uuid", "description", "is_deleted", "created_at", "updated_at")
+    search_fields = ("name", "uuid")
+    list_filter = ("is_deleted", "created_at")
+    readonly_fields = ("uuid", "created_at", "updated_at")
+
+
+# -------------------------------------------
+# 3. GAPGroup
+# -------------------------------------------
+@admin.register(GAPGroup)
+class GAPGroupAdmin(admin.ModelAdmin):
+    list_display = ("name", "uuid", "description", "is_deleted", "created_at", "updated_at")
+    search_fields = ("name", "uuid")
+    list_filter = ("is_deleted", "created_at")
+    readonly_fields = ("uuid", "created_at", "updated_at")
+
+
+# -------------------------------------------
+# 4. LanguageAbilityGroup
+# -------------------------------------------
+@admin.register(LanguageAbilityGroup)
+class LanguageAbilityGroupAdmin(admin.ModelAdmin):
+    list_display = ("name", "uuid", "description", "is_deleted", "created_at", "updated_at")
+    search_fields = ("name", "uuid")
+    list_filter = ("is_deleted", "created_at")
+    readonly_fields = ("uuid", "created_at", "updated_at")
+
+
+# -------------------------------------------
+# 5. EntranceTestAbilityGroup
+# -------------------------------------------
+@admin.register(EntranceTestAbilityGroup)
+class EntranceTestAbilityGroupAdmin(admin.ModelAdmin):
+    list_display = ("name", "uuid", "description", "is_deleted", "created_at", "updated_at")
+    search_fields = ("name", "uuid")
+    list_filter = ("is_deleted", "created_at")
+    readonly_fields = ("uuid", "created_at", "updated_at")
+
+
+# -------------------------------------------
+# 6. StudyFactorBacklogs
+# -------------------------------------------
+@admin.register(StudyFactorBacklogs)
+class StudyFactorBacklogsAdmin(admin.ModelAdmin):
+    list_display = (
+        "factor_for",
+        "backlog_group",
+        "backlog_accepted",
+        "max_backlogs",
+        "uuid",
+        "is_deleted",
+        "created_at",
+        "updated_at",
+    )
+    search_fields = ("uuid", "factor_for__name", "backlog_group__name")
+    list_filter = ("backlog_accepted", "is_deleted", "created_at")
+    readonly_fields = ("uuid", "created_at", "updated_at")
+    
+    
+    
+    
+    
+    
+    

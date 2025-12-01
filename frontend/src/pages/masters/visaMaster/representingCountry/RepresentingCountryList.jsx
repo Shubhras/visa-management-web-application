@@ -9,9 +9,122 @@ import AddImportRepresentingCountryModal from './AddImportRepresentingCountryMod
 import AddEditRepresentingCountryModal from './AddEditRepresentingCountryModal';
 import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
+import ResetButton from '../../../../components/comman/ResetButton';
+import { countryList } from "../../../../store/master/generalMasters/actions";
 const RepresentingCountryList = () => {
     const dispatch = useDispatch();
     const { globalSearch, setGlobalSearch } = useGlobalSearch();
+    const [columnFilters, setColumnFilters] = useState({
+        country: [],
+
+    });
+    const [activeFilterColumn, setActiveFilterColumn] = useState(null);
+    const [filterDropdownData, setFilterDropdownData] = useState({});
+    const [filterSearchTerms, setFilterSearchTerms] = useState({});
+    const filterDropdownRef = useRef(null);
+    useEffect(() => {
+        fetchCountryDropdown()
+    }, []);
+    const fetchCountryDropdown = () => {
+        const params = {
+            page: 1,
+            limit: 2000,
+            search: "",
+            sortBy: "name",
+            sortOrder: "asc"
+        };
+        dispatch(countryList(params, (response, error) => {
+            if (response?.statusCode === 200 && response?.status === true) {
+                const options = (response.data || []).map(item => ({
+                    id: item.uuid || item.id,
+                    name: String(item.name ?? "")
+                }));
+                const sortedOptions = options.sort((a, b) =>
+                    String(a.name).localeCompare(String(b.name), undefined, { numeric: true })
+                );
+                // Update filter dropdown data
+                setFilterDropdownData(prev => ({
+                    ...prev,
+                    country: sortedOptions
+                }));
+            }
+        }));
+    };
+    const toggleFilterDropdown = (e, columnField) => {
+        e.stopPropagation()
+        setActiveFilterColumn(activeFilterColumn === columnField ? null : columnField)
+        setFilterSearchTerms(prev => ({ ...prev, [columnField]: '' }))
+    }
+    const handleFilterCheckboxChange = (columnField, value, checked) => {
+        setColumnFilters(prev => {
+            const current = prev[columnField] || []
+            const updated = checked ? [...current, value] : current.filter(v => v !== value)
+            return { ...prev, [columnField]: updated }
+        })
+    }
+
+    const handleFilterSelectAll = (columnField) => {
+        const searchTerm = String(filterSearchTerms[columnField] || '').toLowerCase()
+        const available = (filterDropdownData[columnField] || [])
+            .filter(o => String(o.name).toLowerCase().includes(searchTerm))
+            .map(o => o.id)
+        setColumnFilters(prev => ({ ...prev, [columnField]: available }))
+    }
+
+
+    const handleFilterClearAll = (columnField) => {
+        setColumnFilters(prev => ({ ...prev, [columnField]: [] }))
+    }
+
+    const getFilteredOptions = (columnField) => {
+        const searchTerm = String(filterSearchTerms[columnField] || '').toLowerCase()
+        const options = filterDropdownData[columnField] || []
+        return options.filter(o =>
+            String(o.name ?? '').toLowerCase().includes(searchTerm)
+        )
+    }
+
+    const clearAllOnlyHeaderFilters = () => setColumnFilters({ country: [] })
+    const hasActiveFilters = () => Object.values(columnFilters).some(list => list.length > 0)
+    // Close filter when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target)) {
+                setActiveFilterColumn(null);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+    // Sort ascending (Smallest to Largest)
+    const applySortAsc = (field) => {
+        setTableState(prev => {
+            let newSort = [...prev.sort]
+            const existingIndex = newSort.findIndex(s => s.field === field)
+            if (existingIndex === -1) newSort.push({ field, order: 'asc' })
+            else newSort[existingIndex].order = 'asc'
+            return { ...prev, sort: newSort, page: 1 }
+        })
+    }
+
+    // Sort descending (Largest to Smallest)
+    const applySortDesc = (field) => {
+        setTableState(prev => {
+            let newSort = [...prev.sort]
+            const existingIndex = newSort.findIndex(s => s.field === field)
+            if (existingIndex === -1) newSort.push({ field, order: 'desc' })
+            else newSort[existingIndex].order = 'desc'
+            return { ...prev, sort: newSort, page: 1 }
+        })
+    }
+
+
+
+
+
+
+
+
     const [modalState, setModalState] = useState({
         show: false,
         mode: 'add',
@@ -87,7 +200,7 @@ const RepresentingCountryList = () => {
     const [ItemsRequired] = useState(["Country Name", "Country Official Name", "Country Short Name", "Continent", "Capital City", "Calling Code", "Currency Full Name", "Currency Short Name"]);
 
     const [tableColumns] = useState([
-        { id: 'country_name', label: 'Country Name', field: 'country_name', visible: true, required: false },
+        { id: 'country_name', label: 'Country Name', field: 'country', visible: true, required: false, filterable: true },
         { id: 'official_name', label: 'Country Official Name', field: 'official_name', visible: true, required: false },
         { id: 'short_name', label: 'Country Short Name', field: 'short_name', visible: true, required: false },
 
@@ -178,14 +291,18 @@ const RepresentingCountryList = () => {
         limit: 25,
         search: '',
         status: '',
-        sortBy: 'created_at',
-        sortOrder: 'desc',
+        sortBy: '', // Field to sort by
+        sortOrder: '', // 'asc' or 'desc'
+        sort: [
+            { field: "created_at", order: "desc" }
+        ],
         total: 0,
         totalPages: 0,
         currentPage: 1,
         hasNext: false,
         hasPrevious: false
     });
+
     useEffect(() => {
         setTableState(prev => ({ ...prev, search: globalSearch, page: 1 }));
     }, [globalSearch]);
@@ -202,7 +319,7 @@ const RepresentingCountryList = () => {
 
     useEffect(() => {
         fetchDepartmentList();
-    }, [tableState.page, tableState.limit, tableState.status, tableState.sortBy, tableState.sortOrder]);
+    }, [tableState.page, tableState.limit, tableState.status, tableState.sort, columnFilters]);
 
     const fetchDepartmentList = () => {
         setLoading(true);
@@ -212,7 +329,9 @@ const RepresentingCountryList = () => {
             search: tableState.search || '',
             status: tableState.status || '',
             sortBy: tableState.sortBy || '',
-            sortOrder: tableState.sortOrder || ''
+            sortOrder: tableState.sortOrder || '',
+            sort: tableState.sort,
+            country: columnFilters.country.length > 0 ? columnFilters.country : null,
         };
 
         dispatch(representingCountryData(params, (response, error) => {
@@ -252,25 +371,33 @@ const RepresentingCountryList = () => {
 
     const handleSort = (field) => {
         setTableState(prev => {
-            if (prev.sortBy === field) {
-                if (prev.sortOrder === 'asc') {
-                    return { ...prev, sortOrder: 'desc', page: 1 };
-                } else if (prev.sortOrder === 'desc') {
-                    return { ...prev, sortBy: '', sortOrder: '', page: 1 };
+            let newSort = [...prev.sort];
+            const existingIndex = newSort.findIndex(s => s.field === field);
+            if (existingIndex === -1) {
+                newSort.push({ field, order: "asc" });
+            }
+            else {
+                const existing = newSort[existingIndex];
+                if (existing.order === "asc") {
+                    newSort[existingIndex].order = "desc";
+                }
+                else if (existing.order === "desc") {
+                    newSort.splice(existingIndex, 1);
                 }
             }
-            return { ...prev, sortBy: field, sortOrder: 'asc', page: 1 };
+            return { ...prev, sort: newSort, page: 1 };
         });
     };
 
     const getSortIcon = (field) => {
-        if (tableState.sortBy !== field) {
+        const sortObj = tableState.sort.find(s => s.field === field);
+        if (!sortObj) {
             return <Icon icon="ri:menu-line" className="sorting-th-icone" />;
         }
-        if (tableState.sortOrder === 'asc') {
-            return <Icon icon="ri:sort-asc" className='sorting-th-icone' />;
+        if (sortObj.order === "asc") {
+            return <Icon icon="ri:sort-asc" className="sorting-th-icone" />;
         }
-        return <Icon icon="ri:sort-desc" className='sorting-th-icone' />;
+        return <Icon icon="ri:sort-desc" className="sorting-th-icone" />;
     };
 
     // Clear all filters
@@ -281,8 +408,11 @@ const RepresentingCountryList = () => {
             limit: 25,
             search: '',
             status: '',
-            sortBy: 'created_at',
-            sortOrder: 'desc',
+            sortBy: '',
+            sortOrder: '',
+            sort: [
+                { field: "created_at", order: "desc" }   // default sort
+            ],
             total: 0,
             totalPages: 0,
             currentPage: 1,
@@ -291,7 +421,9 @@ const RepresentingCountryList = () => {
         }));
         // Reset Global Search
         setGlobalSearch('');
+        setSelectedRows([]);
     };
+
     const handlePageLengthChange = (value) => {
         setTableState(prev => ({
             ...prev,
@@ -531,6 +663,9 @@ const RepresentingCountryList = () => {
             file: "xlsx",
             fields: fieldsString,
             uuids: selectAllOrNot === "all" ? [] : selectedRows,
+            search: tableState.search || '',
+            sort: tableState.sort,
+            country: columnFilters.country.length > 0 ? columnFilters.country : null,
         };
         setLoadingExport(true);
         dispatch(representingCountryExportData(sendPayload, (response, error) => {
@@ -614,10 +749,18 @@ const RepresentingCountryList = () => {
                                             </button>
                                         </>
                                     )}
-                                    <button
+                                    {hasActiveFilters() && (
+                                        <button onClick={clearAllOnlyHeaderFilters} className="btn btn-sm py-1 comman-inactive-btn">
+                                            <Icon icon="mdi:filter-off" width="16" /> Clear Filters
+                                        </button>
+                                    )}
+                                    <ResetButton
                                         onClick={clearAllFilters}
-                                        className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
-                                    >Reset </button>
+                                        tableState={tableState}
+                                        globalSearch={globalSearch}
+                                        columnFilters={columnFilters}
+                                        selectedRows={selectedRows}
+                                    />
                                 </div>
                             </div>
 
@@ -762,11 +905,7 @@ const RepresentingCountryList = () => {
                                         </th>
                                         {tableColumns.map((column) => (
                                             isColumnVisible(column.id) && (
-                                                <th
-                                                    key={column.id}
-                                                    scope="col"
-                                                    className='sorting-th'
-                                                >
+                                                <th key={column.id} scope="col" className="sorting-th">
                                                     <div className="d-flex align-items-center justify-content-between position-relative">
                                                         <div
                                                             className="d-flex align-items-center flex-grow-1"
@@ -776,6 +915,156 @@ const RepresentingCountryList = () => {
                                                             {column.label}
                                                             {getSortIcon(column.field)}
 
+                                                            {column.filterable && (
+                                                                <div className="position-relative comman-filtter-all">
+                                                                    <Icon
+                                                                        icon={
+                                                                            columnFilters[column.field]?.length > 0
+                                                                                ? 'mdi:filter'
+                                                                                : 'mdi:filter-outline'
+                                                                        }
+                                                                        width="18"
+                                                                        className={`ms-2 ${columnFilters[column.field]?.length > 0 ? 'comman-btn-color' : ''
+                                                                            }`}
+                                                                        style={{ cursor: 'pointer' }}
+                                                                        onClick={(e) => toggleFilterDropdown(e, column.field)}
+                                                                    />
+
+                                                                    {activeFilterColumn === column.field && (
+                                                                        <div
+                                                                            ref={filterDropdownRef}
+                                                                            className="position-absolute bg-white border rounded shadow-sm p-3 main-div-dropdown"
+                                                                            onClick={(e) => e.stopPropagation()}
+                                                                        >
+                                                                            {/* Sort options */}
+                                                                            <div
+                                                                                className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(
+                                                                                    (s) => s.field === column.field && s.order === 'asc'
+                                                                                )
+                                                                                    ? 'disabled-sort'
+                                                                                    : ''
+                                                                                    }`}
+                                                                                onClick={() => applySortAsc(column.field)}
+                                                                            >
+                                                                                <Icon
+                                                                                    icon="ri:arrow-up-line"
+                                                                                    className="me-2 text-muted"
+                                                                                    width="18"
+                                                                                />
+                                                                                Sort Smallest to Largest
+                                                                            </div>
+                                                                            <div
+                                                                                className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(
+                                                                                    (s) => s.field === column.field && s.order === 'desc'
+                                                                                )
+                                                                                    ? 'disabled-sort'
+                                                                                    : ''
+                                                                                    }`}
+                                                                                onClick={() => applySortDesc(column.field)}
+                                                                            >
+                                                                                <Icon
+                                                                                    icon="ri:arrow-down-line"
+                                                                                    className="me-2 text-muted"
+                                                                                    width="18"
+                                                                                />
+                                                                                Sort Largest to Smallest
+                                                                            </div>
+
+                                                                            {/* Search box */}
+                                                                            <div className="mb-2">
+                                                                                <input
+                                                                                    type="text"
+                                                                                    className="form-control form-control-sm input-search"
+                                                                                    placeholder="Search..."
+                                                                                    value={filterSearchTerms[column.field] || ''}
+                                                                                    onChange={(e) =>
+                                                                                        setFilterSearchTerms((prev) => ({
+                                                                                            ...prev,
+                                                                                            [column.field]: e.target.value,
+                                                                                        }))
+                                                                                    }
+                                                                                />
+                                                                            </div>
+
+                                                                            {/* Select/Clear all */}
+                                                                            <div className="gap-2 mb-2 select-clear-all">
+                                                                                <button
+                                                                                    className="btn btn-sm py-1 btn-primary flex-grow-1 comman-btn-color mr-10"
+                                                                                    onClick={() => handleFilterSelectAll(column.field)}
+                                                                                >
+                                                                                    Select All
+                                                                                </button>
+                                                                                <button
+                                                                                    className="btn btn-sm py-1 btn-secondary flex-grow-1"
+                                                                                    onClick={() => handleFilterClearAll(column.field)}
+                                                                                >
+                                                                                    Clear All
+                                                                                </button>
+                                                                            </div>
+
+                                                                            {/* Option list */}
+                                                                            <div className="select-all-dropdown">
+                                                                                {getFilteredOptions(column.field).length > 0 ? (
+                                                                                    getFilteredOptions(column.field).map((option, idx) => (
+                                                                                        <div
+                                                                                            key={idx}
+                                                                                            className="bg-white rounded p-2 mb-2 d-flex align-items-center gap-2 form-check-div"
+
+                                                                                        >
+                                                                                            <input
+                                                                                                type="checkbox"
+                                                                                                id={`filter-${column.field}-${idx}`}
+                                                                                                checked={columnFilters[column.field]?.includes(
+                                                                                                    option.id
+                                                                                                )}
+                                                                                                onChange={(e) =>
+                                                                                                    handleFilterCheckboxChange(
+                                                                                                        column.field,
+                                                                                                        option.id,
+                                                                                                        e.target.checked
+                                                                                                    )
+                                                                                                }
+                                                                                                className="form-check-input"
+                                                                                            />
+                                                                                            <label
+                                                                                                htmlFor={`filter-${column.field}-${idx}`}
+                                                                                                className="mb-0 flex-grow-1 form-check-label"
+                                                                                                title={option.name}
+                                                                                                style={{
+                                                                                                    display: 'block',
+                                                                                                    whiteSpace: 'nowrap',
+                                                                                                    overflow: 'hidden',
+                                                                                                    textOverflow: 'ellipsis',
+                                                                                                    maxWidth: '200px',
+                                                                                                    cursor: 'pointer',
+                                                                                                }}
+
+                                                                                            >
+                                                                                                {option.name}
+                                                                                            </label>
+                                                                                        </div>
+                                                                                    ))
+                                                                                ) : (
+                                                                                    <div className="no-records-found">
+                                                                                        No options available
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+
+                                                                            {/* Footer */}
+                                                                            <div className="d-flex gap-2 mt-2 pt-2 border-top justify-content-end">
+                                                                                <button
+                                                                                    className="btn btn-sm  py-1 btn-secondary flex-grow-1  mt-10"
+                                                                                    onClick={() => setActiveFilterColumn(null)}
+                                                                                    style={{ maxWidth: '80px' }}
+                                                                                >
+                                                                                    Cancel
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </th>
@@ -1052,7 +1341,7 @@ const RepresentingCountryList = () => {
                                         aria-label="Close"
                                     />
                                 </div>
-                                <div className="modal-body p-24">
+                                <div className="modal-body p-24 pt-10">
                                     <div className="row">
                                         <div className="col-12 col-md-6">
                                             <h3 className="text-sm font-semibold mb-3 text-gray-700">Available fields</h3>

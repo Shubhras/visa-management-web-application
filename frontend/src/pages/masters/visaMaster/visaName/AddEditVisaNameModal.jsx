@@ -222,12 +222,12 @@ const AddEditVisaNameModal = ({ show, handleClose, mode = 'add', rowData = null 
                         />
                     </div>
 
-                    <div className="modal-body p-24">
+                    <div className="modal-body p-24 pt-10">
                         <form onSubmit={handleSubmit}>
                             <div className="row">
                                 {/* Gender Name */}
-                                <div className="col-12 mb-20">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                <div className="col-12 mb-10">
+                                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                                         Country Name <span className="text-danger">*</span>
                                     </label>
 
@@ -264,8 +264,8 @@ const AddEditVisaNameModal = ({ show, handleClose, mode = 'add', rowData = null 
 
                                     {errors.country_name && <div className="text-danger text-sm mt-1">{errors.country_name}</div>}
                                 </div>
-                                <div className="col-12 mb-20">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                <div className="col-12 mb-10">
+                                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                                         Visa Main Category <span className="text-danger">*</span>
                                     </label>
 
@@ -301,8 +301,8 @@ const AddEditVisaNameModal = ({ show, handleClose, mode = 'add', rowData = null 
 
                                     {errors.visaMain && <div className="text-danger text-sm mt-1">{errors.visaMain}</div>}
                                 </div>
-                                <div className="col-12 mb-20">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                <div className="col-12 mb-10">
+                                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                                         Visa Major Category <span className="text-danger">*</span>
                                     </label>
                                     <input
@@ -319,8 +319,8 @@ const AddEditVisaNameModal = ({ show, handleClose, mode = 'add', rowData = null 
                                         </div>
                                     )}
                                 </div>
-                                <div className="col-12 mb-20">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                <div className="col-12 mb-10">
+                                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                                         Visa Name <span className="text-danger">*</span>
                                     </label>
                                     <input
@@ -337,8 +337,8 @@ const AddEditVisaNameModal = ({ show, handleClose, mode = 'add', rowData = null 
                                         </div>
                                     )}
                                 </div>
-                                <div className="col-12 mb-20">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                <div className="col-12 mb-10">
+                                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                                         Visa Short Name
                                     </label>
                                     <input
@@ -357,10 +357,10 @@ const AddEditVisaNameModal = ({ show, handleClose, mode = 'add', rowData = null 
                                 </div>
 
                                 {/* Description */}
-                                <div className="col-12 mb-20">
+                                <div className="col-12 mb-10">
                                     <label
                                         htmlFor="desc"
-                                        className="form-label fw-semibold text-primary-light text-sm mb-8"
+                                        className="form-label fw-semibold text-primary-light text-sm mb-0"
                                     >
                                         Description
                                     </label>

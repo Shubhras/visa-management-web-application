@@ -11,6 +11,7 @@ import AddEditECAAwardingBodyModal from './AddEditECAAwardingBodyModal';
 import { countryList } from "../../../../store/master/generalMasters/actions";
 import { formatDateDDMMYYYY, formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
+import ResetButton from '../../../../components/comman/ResetButton';
 const ECAAwardingBodyList = () => {
   const dispatch = useDispatch();
   const { globalSearch, setGlobalSearch } = useGlobalSearch();
@@ -196,7 +197,7 @@ const ECAAwardingBodyList = () => {
   // Table columns configuration
   const [tableColumns] = useState([
     { id: 'country_name', label: 'Country', field: 'country', visible: true, required: false, filterable: true },
-    { id: 'selection_type_display', label: 'ECA For', field: 'ecaFor', visible: true, required: false, filterable: true },
+    { id: 'ecaFor', label: 'ECA For', field: 'ecaFor', visible: true, required: false, filterable: true },
     { id: 'eca_body_full_name', label: 'ECA Body Full Name', field: 'eca_body_full_name', visible: true, required: false, filterable: false },
     { id: 'eca_body_short_name', label: 'ECA Body Short Name', field: 'eca_body_short_name', visible: true, required: false, filterable: false },
     { id: 'eca_valid_period', label: 'ECA Valid Period', field: 'eca_valid_period', visible: true, required: false, filterable: false },
@@ -709,10 +710,12 @@ const ECAAwardingBodyList = () => {
                       <Icon icon="mdi:filter-off" width="16" /> Clear Filters
                     </button>
                   )}
-                  <button
+                  <ResetButton
                     onClick={clearAllFilters}
-                    className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
-                  >Reset </button>
+                    tableState={tableState}
+                    columnFilters={columnFilters}
+                    globalSearch={globalSearch}
+                  />
                 </div>
               </div>
               {/* Right Section: Select / Search / +Add New */}
@@ -1081,10 +1084,10 @@ const ECAAwardingBodyList = () => {
                           </div>
                         </td>
                         {isColumnVisible('country_name') && (
-                          <td><span>{rowItem.country_name}</span></td>
+                          <td><span>{rowItem.name}</span></td>
                         )}
-                        {isColumnVisible('selection_type_display') && (
-                          <td><span>{rowItem.selection_type_display}</span></td>
+                        {isColumnVisible('ecaFor') && (
+                          <td><span>{rowItem.eca_for_name}</span></td>
                         )}
                         {isColumnVisible('eca_body_full_name') && (
                           <td><span>{rowItem.eca_body_full_name}</span></td>
@@ -1185,7 +1188,7 @@ const ECAAwardingBodyList = () => {
                     aria-label="Close"
                   />
                 </div>
-                <div className="modal-body p-24">
+                <div className="modal-body p-24 pt-10">
                   <div className="row">
                     <div className="col-12 col-md-6">
                       <h3 className="text-sm font-semibold mb-3 text-gray-700">Available fields</h3>

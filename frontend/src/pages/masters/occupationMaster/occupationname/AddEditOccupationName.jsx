@@ -315,12 +315,12 @@ const AddEditOccupationName = ({
             />
           </div>
 
-          <div className="modal-body p-24">
+          <div className="modal-body p-24 pt-10">
             <form onSubmit={handleSubmit}>
               <div className="row">
                 {/* Department Name */}
                 <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Country<span className="text-danger">*</span>
                   </label>
                   <Select
@@ -366,7 +366,7 @@ const AddEditOccupationName = ({
                   )}
                 </div>
                 <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Occupation Version<span className="text-danger">*</span>
                   </label>
                   <Select
@@ -409,7 +409,7 @@ const AddEditOccupationName = ({
                   )}
                 </div>
                 <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Occupation Category<span className="text-danger">*</span>
                   </label>
                   <Select
@@ -452,7 +452,7 @@ const AddEditOccupationName = ({
                   )}
                 </div>{" "}
                 <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Occupation Level Code<span className="text-danger">*</span>
                   </label>
                   <Select
@@ -496,7 +496,7 @@ const AddEditOccupationName = ({
                   )}
                 </div>{" "}
                 <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Occupation Level<span className="text-danger">*</span>
                   </label>
                   <Select
@@ -539,7 +539,7 @@ const AddEditOccupationName = ({
                   )}
                 </div>{" "}
                 <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Occupation Code<span className="text-danger">*</span>
                   </label>
                   <Select
@@ -581,8 +581,8 @@ const AddEditOccupationName = ({
                     </div>
                   )}
                 </div>{" "}
-                <div className="col-12 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-12 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Occupation Name <span className="text-danger">*</span>
                   </label>
                   <input
@@ -602,10 +602,10 @@ const AddEditOccupationName = ({
                   )}
                 </div>
                 {/* Description */}
-                <div className="col-12 mb-20">
+                <div className="col-12 mb-10">
                   <label
                     htmlFor="desc"
-                    className="form-label fw-semibold text-primary-light text-sm mb-8"
+                    className="form-label fw-semibold text-primary-light text-sm mb-0"
                   >
                     Main Duties
                   </label>
@@ -622,10 +622,10 @@ const AddEditOccupationName = ({
                     placeholder="Main Duties"
                   />
                 </div>
-                <div className="col-12 mb-20">
+                <div className="col-12 mb-10">
                   <label
                     htmlFor="desc"
-                    className="form-label fw-semibold text-primary-light text-sm mb-8"
+                    className="form-label fw-semibold text-primary-light text-sm mb-0"
                   >
                     Description
                   </label>

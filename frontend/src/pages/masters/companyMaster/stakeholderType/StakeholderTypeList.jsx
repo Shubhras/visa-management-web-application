@@ -15,6 +15,7 @@ import {
 import { formatDateDDMMYYYYTime } from "../../../../helper/utils/commanHelper";
 import { useGlobalSearch } from "../../../../components/comman/GlobalSearchContext";
 import { stakeholderCategoryList } from "../../../../store/master/actions";
+import ResetButton from "../../../../components/comman/ResetButton";
 
 const StakeholderTypeList = () => {
   const dispatch = useDispatch();
@@ -225,7 +226,10 @@ const StakeholderTypeList = () => {
       sortBy: tableState.sortBy || "",
       sortOrder: tableState.sortOrder || "",
       sort: tableState.sort,
-      category:columnFilters.category_name.length > 0? columnFilters.category_name: null,
+      category:
+        columnFilters.category_name.length > 0
+          ? columnFilters.category_name
+          : null,
     };
 
     dispatch(
@@ -279,20 +283,18 @@ const StakeholderTypeList = () => {
 
     dispatch(
       stakeholderCategoryList(params, (response, error) => {
-
-          if (response?.statusCode === 200 && response?.status === true) {
-          const options =
-            (response?.data || [])
-              .map((item) => {
-                return item.uuid
-                  ? {
-                    id: item.uuid,      // ✔️ payload me ID jayegi
-                    name: item.name,    // ✔️ dropdown me name dikhayega
+        if (response?.statusCode === 200 && response?.status === true) {
+          const options = (response?.data || [])
+            .map((item) => {
+              return item.uuid
+                ? {
+                    id: item.uuid, // ✔️ payload me ID jayegi
+                    name: item.name, // ✔️ dropdown me name dikhayega
                   }
-                  : null;
-              })
-              .filter(Boolean)
-              .sort((a, b) => a.name.localeCompare(b.name));
+                : null;
+            })
+            .filter(Boolean)
+            .sort((a, b) => a.name.localeCompare(b.name));
 
           setFilterDropdownData((prev) => ({
             ...prev,
@@ -460,7 +462,6 @@ const StakeholderTypeList = () => {
     setSelectedRows([]);
   };
 
-
   const handlePageLengthChange = (value) => {
     setTableState((prev) => ({
       ...prev,
@@ -468,7 +469,6 @@ const StakeholderTypeList = () => {
       page: 1,
     }));
   };
-
 
   // For checkbox in table header
   const handleSelectAll = (e) => {
@@ -680,7 +680,10 @@ const StakeholderTypeList = () => {
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
       search: tableState.search || "",
       sort: tableState.sort,
-      category:columnFilters.category_name.length > 0? columnFilters.category_name: null,
+      category:
+        columnFilters.category_name.length > 0
+          ? columnFilters.category_name
+          : null,
     };
 
     setLoadingExport(true);
@@ -795,12 +798,13 @@ const StakeholderTypeList = () => {
                     </button>
                   )}
 
-                  <button
+                  <ResetButton
                     onClick={clearAllFilters}
-                    className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
-                  >
-                    Reset
-                  </button>
+                    tableState={tableState}
+                    columnFilters={columnFilters}
+                    globalSearch={globalSearch}
+                    selectedRows={selectedRows}
+                  />
                 </div>
               </div>
 
@@ -1002,7 +1006,11 @@ const StakeholderTypeList = () => {
                     {tableColumns.map(
                       (column) =>
                         isColumnVisible(column.id) && (
-                          <th key={column.id} scope="col" className="sorting-th">
+                          <th
+                            key={column.id}
+                            scope="col"
+                            className="sorting-th"
+                          >
                             <div className="d-flex align-items-center justify-content-between position-relative">
                               <div
                                 className="d-flex align-items-center flex-grow-1"
@@ -1033,8 +1041,7 @@ const StakeholderTypeList = () => {
                                       }
                                     />
 
-                                    {activeFilterColumn ===
-                                      column.field && (
+                                    {activeFilterColumn === column.field && (
                                       <div
                                         ref={filterDropdownRef}
                                         className="position-absolute bg-white border rounded shadow-sm p-3 main-div-dropdown"
@@ -1044,8 +1051,7 @@ const StakeholderTypeList = () => {
                                         <div
                                           className={`filter-menu-item px-3 py-2 d-flex align-items-center ${
                                             tableState.sort.find(
-                                              (s) =>
-                                                s.field === column.field
+                                              (s) => s.field === column.field
                                             )?.order === "asc"
                                               ? "disabled-sort"
                                               : ""
@@ -1064,8 +1070,7 @@ const StakeholderTypeList = () => {
                                         <div
                                           className={`filter-menu-item px-3 py-2 d-flex align-items-center ${
                                             tableState.sort.find(
-                                              (s) =>
-                                                s.field === column.field
+                                              (s) => s.field === column.field
                                             )?.order === "desc"
                                               ? "disabled-sort"
                                               : ""
@@ -1089,18 +1094,14 @@ const StakeholderTypeList = () => {
                                             className="form-control form-control-sm input-search"
                                             placeholder="Search..."
                                             value={
-                                              filterSearchTerms[
-                                                column.field
-                                              ] || ""
+                                              filterSearchTerms[column.field] ||
+                                              ""
                                             }
                                             onChange={(e) =>
-                                              setFilterSearchTerms(
-                                                (prev) => ({
-                                                  ...prev,
-                                                  [column.field]:
-                                                    e.target.value,
-                                                })
-                                              )
+                                              setFilterSearchTerms((prev) => ({
+                                                ...prev,
+                                                [column.field]: e.target.value,
+                                              }))
                                             }
                                           />
                                         </div>
@@ -1120,9 +1121,7 @@ const StakeholderTypeList = () => {
                                           <button
                                             className="btn btn-sm py-1 btn-secondary flex-grow-1"
                                             onClick={() =>
-                                              handleFilterClearAll(
-                                                column.field
-                                              )
+                                              handleFilterClearAll(column.field)
                                             }
                                           >
                                             Clear All
@@ -1131,9 +1130,8 @@ const StakeholderTypeList = () => {
 
                                         {/* Options list */}
                                         <div className="select-all-dropdown">
-                                          {getFilteredOptions(
-                                            column.field
-                                          ).length > 0 ? (
+                                          {getFilteredOptions(column.field)
+                                            .length > 0 ? (
                                             getFilteredOptions(
                                               column.field
                                             ).map((option, idx) => (
@@ -1413,7 +1411,7 @@ const StakeholderTypeList = () => {
                     aria-label="Close"
                   />
                 </div>
-                <div className="modal-body p-24">
+                <div className="modal-body p-24 pt-10">
                   <div className="row">
                     <div className="col-12 col-md-6">
                       <h3 className="text-sm font-semibold mb-3 text-gray-700">

@@ -53,8 +53,8 @@ const AddEditOwnershipTypeModal = ({ show, handleClose, mode = 'add', rowData = 
       limit: 2000,
       search: '',
       status: '',
-      sortBy: 'updated_at',
-      sortOrder: 'desc',
+      sortBy: 'name',
+      sortOrder: 'asc',
     };
 
     dispatch(companyList(params, (response, error) => {
@@ -202,12 +202,12 @@ const AddEditOwnershipTypeModal = ({ show, handleClose, mode = 'add', rowData = 
             />
           </div>
 
-          <div className="modal-body p-24">
+          <div className="modal-body p-24 pt-10">
             <form onSubmit={handleSubmit}>
               <div className="row">
                 {/* Company Type with React-Select */}
-                <div className="col-12 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-12 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Company Type <span className="text-danger">*</span>
                   </label>
                   <Select
@@ -241,8 +241,8 @@ const AddEditOwnershipTypeModal = ({ show, handleClose, mode = 'add', rowData = 
                 </div>
 
                 {/* Ownership Type Name */}
-                <div className="col-12 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                <div className="col-12 mb-10">
+                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Ownership Type <span className="text-danger">*</span>
                   </label>
                   <input
@@ -261,10 +261,10 @@ const AddEditOwnershipTypeModal = ({ show, handleClose, mode = 'add', rowData = 
                 </div>
 
                 {/* Description */}
-                <div className="col-12 mb-20">
+                <div className="col-12 mb-10">
                   <label
                     htmlFor="desc"
-                    className="form-label fw-semibold text-primary-light text-sm mb-8"
+                    className="form-label fw-semibold text-primary-light text-sm mb-0"
                   >
                     Description
                   </label>

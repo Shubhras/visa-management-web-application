@@ -5,7 +5,7 @@ import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
 import { relationImportData } from '../../../../store/master/generalMasters/actions';
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
-import { exportToExcelDuplicate } from '../../../../helper/utils/commanHelper';
+import { exportToExcelDuplicate, exportToExcelWrongData } from '../../../../helper/utils/commanHelper';
 const AddImportRelationModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -86,7 +86,7 @@ const AddImportRelationModal = ({ show, handleClose }) => {
                             autoClose: 10000,
                         }
                     );
-                     if (response?.duplicates?.length > 0) {
+                    if (response?.duplicates?.length > 0) {
                         const prepareData = {
                             data: response.duplicates || [],
                             headers: ["Relation"],
@@ -94,6 +94,20 @@ const AddImportRelationModal = ({ show, handleClose }) => {
                             fileName: "Relation",
                         };
                         exportToExcelDuplicate(
+                            prepareData.data,
+                            prepareData.headers,
+                            prepareData.sheetName,
+                            prepareData.fileName
+                        );
+                    }
+                    if (response?.skipped_rows?.length > 0) {
+                        const prepareData = {
+                            data: response.skipped_rows || [],
+                            headers: ["Relation", "Description", "Reason"],
+                            sheetName: "Relation",
+                            fileName: "Relation",
+                        };
+                        exportToExcelWrongData(
                             prepareData.data,
                             prepareData.headers,
                             prepareData.sheetName,
@@ -151,7 +165,7 @@ const AddImportRelationModal = ({ show, handleClose }) => {
                             />
                         </div>
 
-                        <div className="modal-body p-24">
+                        <div className="modal-body p-24 pt-10">
                             <div className='text-md-end text-end'>
                                 <button
                                     type="button"
@@ -162,8 +176,8 @@ const AddImportRelationModal = ({ show, handleClose }) => {
                             </div>
                             <form onSubmit={handleSubmit}>
                                 <div className="row">
-                                    <div className="col-12 mb-20">
-                                        <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                    <div className="col-12 mb-10">
+                                        <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                                             Upload file <span className="text-danger">*</span>
                                         </label>
                                         <input
@@ -176,8 +190,8 @@ const AddImportRelationModal = ({ show, handleClose }) => {
                                         {error && !sheetNames.length && <div className="text-danger text-sm mt-1">{error}</div>}
                                     </div>
                                     {sheetNames.length > 0 && (
-                                        <div className="col-12 mb-20">
-                                            <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                        <div className="col-12 mb-10">
+                                            <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                                                 Select name <span className="text-danger">*</span>
                                             </label>
                                             <div className="d-flex flex-column gap-2">
