@@ -288,9 +288,9 @@ const StakeholderTypeList = () => {
             .map((item) => {
               return item.uuid
                 ? {
-                    id: item.uuid, // ✔️ payload me ID jayegi
-                    name: item.name, // ✔️ dropdown me name dikhayega
-                  }
+                  id: item.uuid, // ✔️ payload me ID jayegi
+                  name: item.name, // ✔️ dropdown me name dikhayega
+                }
                 : null;
             })
             .filter(Boolean)
@@ -576,8 +576,15 @@ const StakeholderTypeList = () => {
       toast.error("No Stakeholder Type selected for deletion.");
       return;
     }
+    const deleteAll = selectAllOrNot === "all" && ((tableState.search && tableState.search.trim() !== '') || columnFilters.category_name.length > 0);
+    const payloadSend = {
+      deleteAll: deleteAll,
+      category: columnFilters.category_name.length > 0 ? columnFilters.category_name : '',
+      id: deleteAll == true ? "" : sendPayload,
+      search: tableState.search || '',
+    };
     dispatch(
-      stakeholderTypeDelete(sendPayload, (response, error) => {
+      stakeholderTypeDelete(payloadSend, (response, error) => {
         if (error) {
           toast.error(error?.response?.data?.message || "server error");
         } else {
@@ -593,7 +600,8 @@ const StakeholderTypeList = () => {
             setSelectedRows([]);
             setSelectAllOrNot("");
             setDeleteId(null);
-            fetchStakeholderTypeList();
+            //fetchStakeholderTypeList();
+            clearAllFilters();
           } else {
             toast.error("Something went wrong.");
           }
@@ -767,22 +775,20 @@ const StakeholderTypeList = () => {
                       <>
                         <button
                           onClick={() => handleSelectAllOrNot("onlySelected")}
-                          className={`btn btn-sm py-1 fw-medium ${
-                            selectAllOrNot === "onlySelected"
+                          className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "onlySelected"
                               ? "comman-btn-color"
                               : "comman-inactive-btn"
-                          }`}
+                            }`}
                         >
                           {`Select (${selectedRows.length})`}
                         </button>
 
                         <button
                           onClick={() => handleSelectAllOrNot("all")}
-                          className={`btn btn-sm py-1 fw-medium ${
-                            selectAllOrNot === "all"
+                          className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "all"
                               ? "comman-btn-color"
                               : "comman-inactive-btn"
-                          }`}
+                            }`}
                         >
                           {`Select All (${tableState.total})`}
                         </button>
@@ -837,9 +843,8 @@ const StakeholderTypeList = () => {
                         <ul className="pagination mb-0" style={{ gap: "4px" }}>
                           {/* First */}
                           <li
-                            className={`page-item ${
-                              !tableState.hasPrevious ? "disabled" : ""
-                            }`}
+                            className={`page-item ${!tableState.hasPrevious ? "disabled" : ""
+                              }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -862,9 +867,8 @@ const StakeholderTypeList = () => {
 
                           {/* Prev */}
                           <li
-                            className={`page-item ${
-                              !tableState.hasPrevious ? "disabled" : ""
-                            }`}
+                            className={`page-item ${!tableState.hasPrevious ? "disabled" : ""
+                              }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -931,9 +935,8 @@ const StakeholderTypeList = () => {
 
                           {/* Next */}
                           <li
-                            className={`page-item ${
-                              !tableState.hasNext ? "disabled" : ""
-                            }`}
+                            className={`page-item ${!tableState.hasNext ? "disabled" : ""
+                              }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -956,9 +959,8 @@ const StakeholderTypeList = () => {
 
                           {/* Last */}
                           <li
-                            className={`page-item ${
-                              !tableState.hasNext ? "disabled" : ""
-                            }`}
+                            className={`page-item ${!tableState.hasNext ? "disabled" : ""
+                              }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -1030,11 +1032,10 @@ const StakeholderTypeList = () => {
                                           : "mdi:filter-outline"
                                       }
                                       width="18"
-                                      className={`ms-2 ${
-                                        columnFilters[column.field]?.length > 0
+                                      className={`ms-2 ${columnFilters[column.field]?.length > 0
                                           ? "comman-btn-color"
                                           : ""
-                                      }`}
+                                        }`}
                                       style={{ cursor: "pointer" }}
                                       onClick={(e) =>
                                         toggleFilterDropdown(e, column.field)
@@ -1049,13 +1050,12 @@ const StakeholderTypeList = () => {
                                       >
                                         {/* Sort Options */}
                                         <div
-                                          className={`filter-menu-item px-3 py-2 d-flex align-items-center ${
-                                            tableState.sort.find(
-                                              (s) => s.field === column.field
-                                            )?.order === "asc"
+                                          className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(
+                                            (s) => s.field === column.field
+                                          )?.order === "asc"
                                               ? "disabled-sort"
                                               : ""
-                                          }`}
+                                            }`}
                                           onClick={() =>
                                             applySortAsc(column.field)
                                           }
@@ -1068,13 +1068,12 @@ const StakeholderTypeList = () => {
                                           Sort Smallest to Largest
                                         </div>
                                         <div
-                                          className={`filter-menu-item px-3 py-2 d-flex align-items-center ${
-                                            tableState.sort.find(
-                                              (s) => s.field === column.field
-                                            )?.order === "desc"
+                                          className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(
+                                            (s) => s.field === column.field
+                                          )?.order === "desc"
                                               ? "disabled-sort"
                                               : ""
-                                          }`}
+                                            }`}
                                           onClick={() =>
                                             applySortDesc(column.field)
                                           }

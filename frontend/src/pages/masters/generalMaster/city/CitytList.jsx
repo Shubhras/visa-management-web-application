@@ -722,7 +722,7 @@ const CityList = () => {
     const deleteAll = selectAllOrNot === "all" && ((tableState.search && tableState.search.trim() !== '') || columnFilters.countryId.length > 0 || columnFilters.stateId.length > 0 || columnFilters.districtId.length > 0);
     const payloadSend = {
       deleteAll: deleteAll,
-      country: columnFilters.countryId.length > 0 ? columnFilters.countryId.length : '',
+      country: columnFilters.countryId.length > 0 ? columnFilters.countryId : '',
       state: columnFilters.stateId.length > 0 ? columnFilters.stateId : '',
       district: columnFilters.districtId.length > 0 ? columnFilters.districtId : '',
       id: deleteAll == true ? "" : sendPayload,

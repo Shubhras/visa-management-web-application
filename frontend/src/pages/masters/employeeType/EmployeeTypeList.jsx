@@ -420,7 +420,8 @@ const EmployeeTypeList = () => {
             setSelectedRows([]);
             setSelectAllOrNot("");
             setDeleteId(null);
-            fetchEmployeeTypeList();
+            //fetchEmployeeTypeList();
+             clearAllFilters();
           } else {
             toast.error("Something went wrong.");
           }
