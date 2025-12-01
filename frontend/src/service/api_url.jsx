@@ -476,6 +476,23 @@ export const EDIT_RELATED_OCCUPATION_API = "/api/v1/master/related-occupations/"
 export const DELETE_RELATED_OCCUPATION_API = "/api/v1/master/related-occupations/";      // +delete/
 export const EXPORT_RELATED_OCCUPATION_API = "/api/v1/master/related-occupations/export/";
 export const IMPORT_RELATED_OCCUPATION_API = "/api/v1/master/related-occupations/import/";
+
+// Occupation To Occupation – API Endpoints
+export const GET_OCCUPATION_TO_OCCUPATION_LIST ="/api/v1/master/occupation-to-occupation/";
+export const ADD_OCCUPATION_TO_OCCUPATION_API ="/api/v1/master/occupation-to-occupation/create/";
+export const EDIT_OCCUPATION_TO_OCCUPATION_API ="/api/v1/master/occupation-to-occupation/";         // +uuid/update/
+export const DELETE_OCCUPATION_TO_OCCUPATION_API ="/api/v1/master/occupation-to-occupation/";         // +delete/
+export const EXPORT_OCCUPATION_TO_OCCUPATION_API ="/api/v1/master/occupation-to-occupation/export/";
+export const IMPORT_OCCUPATION_TO_OCCUPATION_API ="/api/v1/master/occupation-to-occupation/import/";
+
+// Eligibility for Occupation Name – API Endpoints
+export const GET_ELIGIBILITY_OCCUPATION_NAME_LIST ="/api/v1/master/eligibility-occupation-name/";
+export const ADD_ELIGIBILITY_OCCUPATION_NAME_API ="/api/v1/master/eligibility-occupation-name/create/";
+export const EDIT_ELIGIBILITY_OCCUPATION_NAME_API ="/api/v1/master/eligibility-occupation-name/"; // +uuid/update/
+export const DELETE_ELIGIBILITY_OCCUPATION_NAME_API ="/api/v1/master/eligibility-occupation-name/"; // +delete/
+export const EXPORT_ELIGIBILITY_OCCUPATION_NAME_API ="/api/v1/master/eligibility-occupation-name/export/";
+export const IMPORT_ELIGIBILITY_OCCUPATION_NAME_API ="/api/v1/master/eligibility-occupation-name/import/";
+
 // Institute Type API Endpoints
 export const GET_INSTITUTE_TYPE_LIST = "/api/v1/master/institutetype/";
 export const ADD_INSTITUTE_TYPE_API = "/api/v1/master/institutetype/create/";
@@ -868,7 +885,7 @@ export const DELETE_STUDY_FACTOR_BACKLOGS_API ="/api/v1/master/study-factor-back
 export const EXPORT_STUDY_FACTOR_BACKLOGS_API ="/api/v1/master/study-factor-backlogs/export/";
 export const IMPORT_STUDY_FACTOR_BACKLOGS_API ="/api/v1/master/study-factor-backlogs/import/";
 // Study Factor – GAP API Endpoints
-export const GET_STUDY_FACTOR_GAP_LIST = "/api/v1/master/study-factor-gap/list/";
+export const GET_STUDY_FACTOR_GAP_LIST = "/api/v1/master/study-factor-gap/";
 export const ADD_STUDY_FACTOR_GAP_API ="/api/v1/master/study-factor-gap/create/";
 export const EDIT_STUDY_FACTOR_GAP_API = "/api/v1/master/study-factor-gap/"; // +uuid/update/
 export const DELETE_STUDY_FACTOR_GAP_API = "/api/v1/master/study-factor-gap/"; // +delete/
@@ -876,14 +893,14 @@ export const EXPORT_STUDY_FACTOR_GAP_API ="/api/v1/master/study-factor-gap/expor
 export const IMPORT_STUDY_FACTOR_GAP_API ="/api/v1/master/study-factor-gap/import/";
 
 // Study Factor – Language Ability API Endpoints
-export const GET_STUDY_FACTOR_LANGUAGE_ABILITY_LIST ="/api/v1/master/study-factor-language-ability/list/";
+export const GET_STUDY_FACTOR_LANGUAGE_ABILITY_LIST ="/api/v1/master/study-factor-language-ability/";
 export const ADD_STUDY_FACTOR_LANGUAGE_ABILITY_API ="/api/v1/master/study-factor-language-ability/create/";
 export const EDIT_STUDY_FACTOR_LANGUAGE_ABILITY_API ="/api/v1/master/study-factor-language-ability/"; // +uuid/update/
 export const DELETE_STUDY_FACTOR_LANGUAGE_ABILITY_API ="/api/v1/master/study-factor-language-ability/"; // +delete/
 export const EXPORT_STUDY_FACTOR_LANGUAGE_ABILITY_API ="/api/v1/master/study-factor-language-ability/export/";
 export const IMPORT_STUDY_FACTOR_LANGUAGE_ABILITY_API ="/api/v1/master/study-factor-language-ability/import/";
 // Study Factor – Entrance Test Ability API Endpoints
-export const GET_STUDY_FACTOR_ENTRANCE_TEST_ABILITY_LIST ="/api/v1/master/study-factor-entrance-test-ability/list/";
+export const GET_STUDY_FACTOR_ENTRANCE_TEST_ABILITY_LIST ="/api/v1/master/study-factor-entrance-test-ability/";
 export const ADD_STUDY_FACTOR_ENTRANCE_TEST_ABILITY_API ="/api/v1/master/study-factor-entrance-test-ability/create/";
 export const EDIT_STUDY_FACTOR_ENTRANCE_TEST_ABILITY_API ="/api/v1/master/study-factor-entrance-test-ability/"; // +uuid/update/
 export const DELETE_STUDY_FACTOR_ENTRANCE_TEST_ABILITY_API ="/api/v1/master/study-factor-entrance-test-ability/"; // +delete/

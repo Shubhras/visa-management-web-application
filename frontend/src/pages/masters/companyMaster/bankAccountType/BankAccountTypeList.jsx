@@ -410,8 +410,14 @@ const BankAccountTypeList = () => {
       toast.error("No bank account type selected for deletion.");
       return;
     }
+    const deleteAll = selectAllOrNot === "all" && Boolean(tableState.search?.trim());
+    const payloadSend = {
+      deleteAll: deleteAll,
+      id: deleteAll == true ? "" : sendPayload,
+      search: tableState.search || '',
+    };
     dispatch(
-      bankAccountTypeDelete(sendPayload, (response, error) => {
+      bankAccountTypeDelete(payloadSend, (response, error) => {
         if (error) {
           toast.error(error?.response?.data?.message || "server error");
         } else {
@@ -427,7 +433,8 @@ const BankAccountTypeList = () => {
             setSelectedRows([]);
             setSelectAllOrNot("");
             setDeleteId(null);
-            fetchBankAccountTypeList();
+            //fetchBankAccountTypeList();
+            clearAllFilters();
           } else {
             toast.error("Something went wrong.");
           }

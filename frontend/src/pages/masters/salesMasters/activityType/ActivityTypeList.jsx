@@ -385,9 +385,14 @@ const ActivityTypeList = () => {
       toast.error("No activity selected for deletion.");
       return;
     }
-
+    const deleteAll = selectAllOrNot === "all" && Boolean(tableState.search?.trim());
+    const payloadSend = {
+      deleteAll: deleteAll,
+      id: deleteAll == true ? "" : sendPayload,
+      search: tableState.search || '',
+    };
     dispatch(
-      activityTypeDelete(sendPayload, (response, error) => {
+      activityTypeDelete(payloadSend, (response, error) => {
         if (error) {
           toast.error(error?.response?.data?.message || "server error");
         } else {
@@ -403,7 +408,8 @@ const ActivityTypeList = () => {
             setSelectedRows([]);
             setSelectAllOrNot("");
             setDeleteId(null);
-            fetchActivityTypeList();
+            //fetchActivityTypeList();
+             clearAllFilters();
           } else {
             toast.error("Something went wrong.");
           }

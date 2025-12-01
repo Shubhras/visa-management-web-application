@@ -95,6 +95,7 @@ const MasterLayout = ({ children }) => {
     "Bank Account For",
     "When Commission Issue",
     "Leads B2C",
+    "Compare : Occupation To Occupation",
     "ECA For",
     "Course Level Code",
     "Course Divided In",
@@ -297,9 +298,8 @@ const MasterLayout = ({ children }) => {
             { name: "Occupation Name", path: "/occupation-name" },
             { name: "Designation (Job Title)", path: "/designation" },
             { name: "Job Prospect", path: "/job-prospect" },
-
             { name: "Related Occupation", path: "/related-occupation" },
-
+            { name: "Compare : Occupation To Occupation", path: "/occupation-to-occupation" },
           ],
         },
         {

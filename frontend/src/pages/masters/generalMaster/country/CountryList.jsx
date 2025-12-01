@@ -564,7 +564,8 @@ const CountryList = () => {
             setSelectAllOrNot("");
             setDeleteId(null);
             setShowDeleteConfirm(false);
-            fetchCountryList();
+            //fetchCountryList();
+            clearAllFilters();
           } else toast.error("Something went wrong.");
         }
       })

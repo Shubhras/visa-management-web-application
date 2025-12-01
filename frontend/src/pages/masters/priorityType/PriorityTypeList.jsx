@@ -384,9 +384,14 @@ const PriorityTypeList = () => {
       toast.error("No priority selected for deletion.");
       return;
     }
-
+    const deleteAll = selectAllOrNot === "all" && Boolean(tableState.search?.trim());
+    const payloadSend = {
+      deleteAll: deleteAll,
+      id: deleteAll == true ? "" : sendPayload,
+      search: tableState.search || '',
+    };
     dispatch(
-      priorityTypeDelete(sendPayload, (response, error) => {
+      priorityTypeDelete(payloadSend, (response, error) => {
         if (error) {
           toast.error(error?.response?.data?.message || "server error");
         } else {
@@ -402,7 +407,8 @@ const PriorityTypeList = () => {
             setSelectedRows([]);
             setSelectAllOrNot("");
             setDeleteId(null);
-            fetchPriorityTypeList();
+            //fetchPriorityTypeList();
+            clearAllFilters()
           } else {
             toast.error("Something went wrong.");
           }
@@ -566,21 +572,19 @@ const PriorityTypeList = () => {
                       <>
                         <button
                           onClick={() => handleSelectAllOrNot("onlySelected")}
-                          className={`btn btn-sm py-1 fw-medium ${
-                            selectAllOrNot === "onlySelected"
+                          className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "onlySelected"
                               ? "comman-btn-color"
                               : "comman-inactive-btn"
-                          }`}
+                            }`}
                         >
                           {`Select (${selectedRows.length})`}
                         </button>
                         <button
                           onClick={() => handleSelectAllOrNot("all")}
-                          className={`btn btn-sm py-1 fw-medium ${
-                            selectAllOrNot === "all"
+                          className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "all"
                               ? "comman-btn-color"
                               : "comman-inactive-btn"
-                          }`}
+                            }`}
                         >
                           {`Select All (${tableState.total})`}
                         </button>
@@ -620,9 +624,8 @@ const PriorityTypeList = () => {
                       <nav>
                         <ul className="pagination mb-0 gap-4px">
                           <li
-                            className={`page-item ${
-                              !tableState.hasPrevious ? "disabled" : ""
-                            }`}
+                            className={`page-item ${!tableState.hasPrevious ? "disabled" : ""
+                              }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -643,9 +646,8 @@ const PriorityTypeList = () => {
                             </button>
                           </li>
                           <li
-                            className={`page-item ${
-                              !tableState.hasPrevious ? "disabled" : ""
-                            }`}
+                            className={`page-item ${!tableState.hasPrevious ? "disabled" : ""
+                              }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -710,9 +712,8 @@ const PriorityTypeList = () => {
                             </li>
                           ))}
                           <li
-                            className={`page-item ${
-                              !tableState.hasNext ? "disabled" : ""
-                            }`}
+                            className={`page-item ${!tableState.hasNext ? "disabled" : ""
+                              }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -733,9 +734,8 @@ const PriorityTypeList = () => {
                             </button>
                           </li>
                           <li
-                            className={`page-item ${
-                              !tableState.hasNext ? "disabled" : ""
-                            }`}
+                            className={`page-item ${!tableState.hasNext ? "disabled" : ""
+                              }`}
                           >
                             <button
                               className="border-0 bg-transparent"

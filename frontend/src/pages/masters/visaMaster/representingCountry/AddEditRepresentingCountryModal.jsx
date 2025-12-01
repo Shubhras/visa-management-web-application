@@ -193,7 +193,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
             "short_name",
             "continent",
             "capital_city",
-            "calling_code",
+            // "calling_code",
             "currency_full_name",
             "currency_short_name"
         ];
@@ -221,7 +221,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
             formDataToSend.append('short_name', formData.short_name);
             formDataToSend.append('continent', formData.continent);
             formDataToSend.append('capital_city', formData.capital_city);
-            formDataToSend.append('dial_codes', formData.calling_code);
+            formDataToSend.append('dial_codes', formData.calling_code || [+91]);
             formDataToSend.append('currency_full_name', formData.currency_full_name);
             formDataToSend.append('currency_short_name', formData.currency_short_name);
             formDataToSend.append('currency_code', formData.currency_code);
@@ -236,7 +236,9 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
             formDataToSend.append('total_area_sq_km', formData.total_area);
             formDataToSend.append('population', formData.population);
             formDataToSend.append('religions', formData.religions);
-            formDataToSend.append('largest_state', formData.largest_state);
+            // formDataToSend.append('largest_state', formData.largest_state);
+             formDataToSend.append('largest_state', []);
+            formDataToSend.append('largest_city', []);
             formDataToSend.append('major_cities', formData.major_cities);
             formDataToSend.append('national_animal', formData.national_animal);
             formDataToSend.append('national_bird', formData.national_bird);

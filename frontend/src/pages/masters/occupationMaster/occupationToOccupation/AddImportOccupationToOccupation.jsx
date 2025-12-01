@@ -4,8 +4,8 @@ import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
 import { exportToExcelDuplicate, exportToExcelWrongData } from '../../../../helper/utils/commanHelper';
-import { ageImportData, studyFactorEntranceTestAbilityImportData, studyFactorGapImportData, studyFactorLanguageAbilityImportData } from '../../../../store/actions';
-const AddImportStudyFactorEntranceTestAbilityModal = ({ show, handleClose }) => {
+import { ageImportData, occupationToOccupationImportData, studyFactorGapImportData, studyFactorLanguageAbilityImportData } from '../../../../store/actions';
+const AddImportOccupationToOccupationModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
     const [file, setFile] = useState(null);
@@ -65,7 +65,7 @@ const AddImportStudyFactorEntranceTestAbilityModal = ({ show, handleClose }) => 
             formData.append('sheet_name', selectedSheet);
         }
         setLoading(true);
-        dispatch(studyFactorEntranceTestAbilityImportData(formData, (response, error) => {
+        dispatch(occupationToOccupationImportData(formData, (response, error) => {
             setLoading(false);
             if (error) {
                 toast.error(error?.response?.data?.message || "Server error");
@@ -88,9 +88,9 @@ const AddImportStudyFactorEntranceTestAbilityModal = ({ show, handleClose }) => 
                     if (response?.duplicates?.length > 0) {
                         const prepareData = {
                             data: response.duplicates || [],
-                            headers: ["Factor For", "Entrance Test Ability Group","Entrance Test Name","Minimum Score Required",],
-                            sheetName: "Entrance Test Ability",
-                            fileName: "Entrance Test Ability",
+                            headers: ["Country","Occupation Version","Occupation Name","Occupation Code","Compare : Country","Compare : Occupation Version","Compare : Occupation Name","Compare : Occupation Code",],
+                            sheetName: "Occupation to Occupation",
+                            fileName: "Occupation to Occupation",
                         };
                         exportToExcelDuplicate(
                             prepareData.data,
@@ -102,9 +102,9 @@ const AddImportStudyFactorEntranceTestAbilityModal = ({ show, handleClose }) => 
                      if (response?.skipped_rows?.length > 0) {
                         const prepareData = {
                             data: response.skipped_rows || [],
-                            headers: ["Factor For", "Entrance Test Ability Group","Entrance Test Name","Minimum Score Required","Reason"],
-                            sheetName: "Entrance Test Ability",
-                            fileName: "Entrance Test Ability",
+                            headers: ["Country","Occupation Version","Occupation Name","Occupation Code","Compare : Country","Compare : Occupation Version","Compare : Occupation Name","Compare : Occupation Code","Reason"],
+                            sheetName: "Occupation to Occupation",
+                            fileName: "Occupation to Occupation",
                         };
                         exportToExcelWrongData(
                             prepareData.data,
@@ -154,7 +154,7 @@ const AddImportStudyFactorEntranceTestAbilityModal = ({ show, handleClose }) => 
                     <div className="modal-content radius-16 bg-base">
                         <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                             <h1 className="modal-title fs-5" id="StateModalLabel">
-                                Upload Study Factor Language Ability
+                                Upload Occupation to Occupation
                             </h1>
                             <button
                                 type="button"
@@ -254,10 +254,10 @@ const AddImportStudyFactorEntranceTestAbilityModal = ({ show, handleClose }) => 
             </div>
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                    downloadFileName: "Entrance Test Ability",
-                    items: ["Factor For", "Entrance Test Ability Group","Entrance Test Name","Minimum Score Required", "Description", ],
-                    selectedItems: ["Factor For", "Entrance Test Ability Group","Entrance Test Name","Minimum Score Required",],
-                    ItemsRequired: ["Factor For", "Entrance Test Ability Group","Entrance Test Name","Minimum Score Required",]
+                    downloadFileName: "Occupation to Occupation",
+                    items: ["Country","Occupation Version","Occupation Name","Occupation Code","Compare : Country","Compare : Occupation Version","Compare : Occupation Name","Compare : Occupation Code","Description"],
+                    selectedItems: ["Country","Occupation Version","Occupation Name","Occupation Code","Compare : Country","Compare : Occupation Version","Compare : Occupation Name","Compare : Occupation Code"],
+                    ItemsRequired: ["Country","Occupation Version","Occupation Name","Occupation Code","Compare : Country","Compare : Occupation Version","Compare : Occupation Name","Compare : Occupation Code"]
                 }
                 } />
             )}
@@ -265,4 +265,4 @@ const AddImportStudyFactorEntranceTestAbilityModal = ({ show, handleClose }) => 
     );
 };
 
-export default AddImportStudyFactorEntranceTestAbilityModal;
+export default AddImportOccupationToOccupationModal;

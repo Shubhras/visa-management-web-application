@@ -7,10 +7,11 @@ import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 import { countryDemoList } from '../../../../store/master/companyMasters/actions';
 import { useGlobalSearch, } from '../../../../components/comman/GlobalSearchContext';
 import MasterLayout from '../../../../masterLayout/MasterLayout';
-import {  studyFactorEntranceTestAbilityDelete, studyFactorEntranceTestAbilityExportData, studyFactorEntranceTestAbilityList,  } from '../../../../store/actions';
-import AddEditStudyFactorEntranceTestAbilityModal from './AddEditEntranceTestAbilityModal';
-import AddImportStudyFactorEntranceTestAbilityModal from './AddImportEntranceTestAbilityModal';
-const StudyFactorEntranceTestAbilityList = () => {
+import {  occupationCategoryExportData, occupationToOccupationDelete, occupationToOccupationList, studyFactorLanguageAbilityDelete, studyFactorLanguageAbilityExportData, studyFactorLanguageAbilityList } from '../../../../store/actions';
+import AddEditOccupationToOccupationModal from './AddEditOccupationToOccupationModal';
+import AddImportOccupationToOccupationModal from './AddImportOccupationToOccupation';
+import ResetButton from '../../../../components/comman/ResetButton';
+const OccupationToOccupationList = () => {
   const dispatch = useDispatch();
   const { globalSearch, setGlobalSearch } = useGlobalSearch();
   const [modalState, setModalState] = useState({
@@ -58,19 +59,23 @@ const StudyFactorEntranceTestAbilityList = () => {
   const [stateListData, setStateListData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Factor For", "Study Entrance Test Ability Group","Entrance Test Name","Minimum Score Required", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Factor For", "Study Entrance Test Ability Group","Entrance Test Name","Minimum Score Required",]);
-  const [ItemsRequired] = useState(["Factor For", "Study Entrance Test Ability Group","Entrance Test Name","Minimum Score Required",]);
+const [items] = useState(["Country","Occupation Version","Occupation Name","Occupation Code","Compare : Country","Compare : Occupation Version","Compare : Occupation Name","Compare : Occupation Code","Description","Modified On"]);
+  const [selectedItems, setSelectedItems] = useState([ "Country","Occupation Version","Occupation Name","Occupation Code","Compare : Country","Compare : Occupation Version","Compare : Occupation Name","Compare : Occupation Code",]);
+  const [ItemsRequired] = useState([ "Country","Occupation Version","Occupation Name","Occupation Code","Compare : Country","Compare : Occupation Version","Compare : Occupation Name","Compare : Occupation Code",]);
   const [countryListData, setCountryListData] = useState([]);
   // Table columns configuration
   const [tableColumns] = useState([
-      { id: 'factorForName', label: 'Factor For', field: 'factorForName', visible: true, required: false, filterable: false },
-      { id: 'studyEntranceTestAbilityGroup', label: 'Study Entrance Test Ability Group', field: 'studyEntranceTestAbilityGroup', visible: true, required: false, filterable: false },
-      { id: 'entranceTestName', label: 'Entrance Test Name', field: 'entranceTestName', visible: true, required: false, filterable: false },
-      { id: 'minimumScoreRequired', label: 'Minimum Score Required', field: 'minimumScoreRequired', visible: true, required: false, filterable: false },
-      { id: 'description', label: 'Description', field: 'description', visible: false, required: false, filterable: false },
-      { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false, filterable: false },
-  ]);
+  { id: 'country', label: 'Country', field: 'country', visible: true, required: true, filterable: false },
+  { id: 'occupationVersion', label: 'Occupation Version', field: 'occupationVersion', visible: true, required: true, filterable: false },
+  { id: 'occupationName', label: 'Occupation Name', field: 'occupationName', visible: true, required: true, filterable: false },
+  { id: 'occupationCode', label: 'Occupation Code', field: 'occupationCode', visible: true, required: true, filterable: false },
+  { id: 'compareCountry', label: 'Compare : Country', field: 'compareCountry', visible: true, required: false, filterable: false },
+  { id: 'compareOccupationVersion', label: 'Compare : Occupation Version', field: 'compareOccupationVersion', visible: true, required: false, filterable: false },
+  { id: 'compareOccupationName', label: 'Compare : Occupation Name', field: 'compareOccupationName', visible: true, required: false, filterable: false },
+  { id: 'compareOccupationCode', label: 'Compare : Occupation Code', field: 'compareOccupationCode', visible: true, required: false, filterable: false },
+  { id: 'description', label: 'Description', field: 'description', visible: false, required: false, filterable: false },
+  { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false, filterable: false }
+]);
 
   const [visibleColumns, setVisibleColumns] = useState(
     tableColumns.filter(col => col.visible).map(col => col.id)
@@ -161,7 +166,7 @@ const StudyFactorEntranceTestAbilityList = () => {
       country: columnFilters.countryId.length > 0 ? columnFilters.countryId : null,
     };
 
-    dispatch(studyFactorEntranceTestAbilityList(params, (response, error) => {
+    dispatch(occupationToOccupationList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
         const paginationData = response?.pagination || {};
@@ -512,7 +517,7 @@ const StudyFactorEntranceTestAbilityList = () => {
       toast.error("No gap selected for deletion.");
       return;
     }
-    dispatch(studyFactorEntranceTestAbilityDelete(sendPayload, (response, error) => {
+    dispatch(occupationToOccupationDelete(sendPayload, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
@@ -595,13 +600,18 @@ const StudyFactorEntranceTestAbilityList = () => {
     // Map frontend labels to State field names
 
     const fieldMapping = {
-      "Factor For": "factor_for",
-      "Study Entrance Test Ability Group": "entrance_test_ability_group",
-      "Entrance Test Name":"entrance_test_name",
-      "Minimum Score Required": "minimum_score_required",
-      "Description": "description",
-      "Modified On": "updated_at",
+        "Country": "country",
+        "Occupation Version": "occupation_version",
+        "Occupation Name": "occupation_name",
+        "Occupation Code": "occupation_code",
+        "Compare : Country": "compare_country",
+        "Compare : Occupation Version": "compare_occupation_version",
+        "Compare : Occupation Name": "compare_occupation_name",
+        "Compare : Occupation Code": "compare_occupation_code",
+        "Description": "description",
+        "Modified On": "updated_at",
     };
+
     // Convert selectedItems to State field names
     const mappedFields = selectedItems.map((item) => fieldMapping[item] || item);
     // Convert to comma-separated string
@@ -616,7 +626,7 @@ const StudyFactorEntranceTestAbilityList = () => {
     };
 
     setLoadingExport(true);
-    dispatch(studyFactorEntranceTestAbilityExportData(sendPayload, (response, error) => {
+    dispatch(occupationCategoryExportData(sendPayload, (response, error) => {
       if (error) {
         setLoadingExport(false);
         toast.error(error?.response?.message || "server error");
@@ -630,7 +640,7 @@ const StudyFactorEntranceTestAbilityList = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `Entrance Test Ability.xlsx`;
+          link.download = `Occupation to Occupation.xlsx`;
           document.body.appendChild(link);
           link.click();
           link.remove();
@@ -706,10 +716,11 @@ const StudyFactorEntranceTestAbilityList = () => {
                       <Icon icon="mdi:filter-off" width="16" /> Clear Filters
                     </button>
                   )}
-                  <button
+                 <ResetButton
                     onClick={clearAllFilters}
-                    className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
-                  >Reset</button>
+                    tableState={tableState}
+                    globalSearch={globalSearch}
+                    />
                 </div>
               </div>
 
@@ -1043,24 +1054,46 @@ const StudyFactorEntranceTestAbilityList = () => {
                             <span>{String(startIndex + index + 1).padStart(2, '0')}</span>
                           </div>
                         </td>
-                        {isColumnVisible('factorForName') && (
-                          <td><span>{rowItem.factor_for_name}</span></td>
+                       {isColumnVisible('country') && (
+                        <td><span>{rowItem.country}</span></td>
                         )}
-                        {isColumnVisible('studyEntranceTestAbilityGroup') && (
-                          <td><span>{rowItem.entrance_test_ability_group_name}</span></td>
+
+                        {isColumnVisible('occupationVersion') && (
+                        <td><span>{rowItem.occupation_version}</span></td>
                         )}
-                        {isColumnVisible('entranceTestName') && (
-                          <td><span>{rowItem.entranceTestName}</span></td>
+
+                        {isColumnVisible('occupationName') && (
+                        <td><span>{rowItem.occupation_name}</span></td>
                         )}
-                        {isColumnVisible('minimumScoreRequired') && (
-                          <td><span>{rowItem.minimum_score_required_name}</span></td>
+
+                        {isColumnVisible('occupationCode') && (
+                        <td><span>{rowItem.occupation_code}</span></td>
                         )}
+
+                        {isColumnVisible('compareCountry') && (
+                        <td><span>{rowItem.compare_country}</span></td>
+                        )}
+
+                        {isColumnVisible('compareOccupationVersion') && (
+                        <td><span>{rowItem.compare_occupation_version}</span></td>
+                        )}
+
+                        {isColumnVisible('compareOccupationName') && (
+                        <td><span>{rowItem.compare_occupation_name}</span></td>
+                        )}
+
+                        {isColumnVisible('compareOccupationCode') && (
+                        <td><span>{rowItem.compare_occupation_code}</span></td>
+                        )}
+
                         {isColumnVisible('description') && (
-                          <td><span>{rowItem.description}</span></td>
+                        <td><span>{rowItem.description}</span></td>
                         )}
+
                         {isColumnVisible('updated_at') && (
-                          <td><span>{formatDateDDMMYYYYTime(rowItem.updated_at)}</span></td>
+                        <td><span>{formatDateDDMMYYYYTime(rowItem.updated_at)}</span></td>
                         )}
+
                         <td className='action-td'>
                           <div className="d-flex align-items-end gap-2">
                             <Link to="#" className='edit-btn-icone' onClick={(e) => { e.preventDefault(); handleShowEdit(rowItem); }}>
@@ -1085,14 +1118,14 @@ const StudyFactorEntranceTestAbilityList = () => {
             </div>
           </div>
         </div>
-        <AddEditStudyFactorEntranceTestAbilityModal
+        <AddEditOccupationToOccupationModal
           show={modalState.show}
           handleClose={handleClose}
           mode={modalState.mode}
           rowData={modalState.rowData}
         />
         {showImport && (
-          <AddImportStudyFactorEntranceTestAbilityModal show={showImport} handleClose={handleCloseImport} />)}
+          <AddImportOccupationToOccupationModal show={showImport} handleClose={handleCloseImport} />)}
         {showDeleteConfirm && (
           <div className="modal fade show common-ctl-popup">
             <div className="modal-dialog modal-dialog-centered">
@@ -1134,7 +1167,7 @@ const StudyFactorEntranceTestAbilityList = () => {
             <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                  <h1 className="modal-title fs-5">Export Entrance Test Ability</h1>
+                  <h1 className="modal-title fs-5">Export Language Ability</h1>
                   <button
                     type="button"
                     className="btn-close"
@@ -1239,4 +1272,4 @@ const StudyFactorEntranceTestAbilityList = () => {
   );
 };
 
-export default StudyFactorEntranceTestAbilityList;
+export default OccupationToOccupationList;

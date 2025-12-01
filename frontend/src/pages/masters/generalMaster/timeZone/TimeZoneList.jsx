@@ -584,7 +584,8 @@ const TimeZoneList = () => {
             setSelectedRows([]);
             setSelectAllOrNot("");
             setDeleteId(null);
-            fetchTimeZoneList();
+           // fetchTimeZoneList();
+           clearAllFilters();
           } else {
             toast.error("Something went wrong.");
           }

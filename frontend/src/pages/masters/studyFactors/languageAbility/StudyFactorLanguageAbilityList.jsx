@@ -58,17 +58,17 @@ const StudyFactorLanguageAbilityList = () => {
   const [stateListData, setStateListData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Factor For", "Study Language Ability Group","Language Test Name","Module Name", "Mimimum Overall Score",,"In No. of Modules","Not Less Than", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Factor For",  "Study Language Ability Group","Language Test Name","Module Name", "Mimimum Overall Score",,"In No. of Modules",,]);
-  const [ItemsRequired] = useState(["Factor For", "Study Language Ability Group", "Language Test Name","Module Name","Mimimum Overall Score",,"In No. of Modules",]);
+  const [items] = useState(["Factor For", "Study Language Ability Group","Language Test Name","Module Name", "Minimum Overall Score","In No. of Modules","Not Less Than", "Description", "Modified On"]);
+  const [selectedItems, setSelectedItems] = useState(["Factor For",  "Study Language Ability Group","Language Test Name","Module Name", "Minimum Overall Score","In No. of Modules",]);
+  const [ItemsRequired] = useState(["Factor For", "Study Language Ability Group", "Language Test Name","Module Name","Minimum Overall Score","In No. of Modules",]);
   const [countryListData, setCountryListData] = useState([]);
   // Table columns configuration
   const [tableColumns] = useState([
       { id: 'factorForName', label: 'Factor For', field: 'factorForName', visible: true, required: false, filterable: false },
-      { id: 'studyLanguageAbility', label: 'Study Language Ability', field: 'studyLanguageAbility', visible: true, required: false, filterable: false },
+      { id: 'studyLanguageAbilityGroup', label: 'Study Language Ability Group', field: 'studyLanguageAbilityGroup', visible: true, required: false, filterable: false },
       { id: 'languageTestName', label: 'Language Test Name', field: 'languageTestName', visible: true, required: false, filterable: false },
       { id: 'moduleName', label: 'Module Name', field: 'moduleName', visible: true, required: false, filterable: false },
-      { id: 'minimumOverallScore', label: 'Mimimum Overall Score', field: 'minimumOverallScore', visible: true, required: false, filterable: false },
+      { id: 'minimumOverallScore', label: 'Minimum Overall Score', field: 'minimumOverallScore', visible: true, required: false, filterable: false },
       { id: 'inNoOfModules', label: 'In No. of Modules', field: 'inNoOfModules', visible: true, required: false, filterable: false },
       { id: 'notLessThan', label: 'Not Less Than', field: 'notLessThan', visible: true, required: false, filterable: false },
       { id: 'description', label: 'Description', field: 'description', visible: false, required: false, filterable: false },
@@ -599,12 +599,12 @@ const StudyFactorLanguageAbilityList = () => {
 
     const fieldMapping = {
       "Factor For": "factor_for",
-      "Study Language Ability": "Study_Language_Ability",
+      "Study Language Ability Group": "language_ability_group",
       "Language Test Name":"language_test_name",
       "Module Name":"module_name",
-      "Mimimum Overall Score": "Mimimum_Overall_Score",
+      "Minimum Overall Score": "minimum_overall_score",
       "Maximum Age Accepted(Months)": "maximum_age_accepted",
-      "In No. of Modules":"In_No_of_Modules",
+      "In No. of Modules":"in_no_of_modules",
       "Not Less Than": "not_less_than",
       "Description": "description",
       "Modified On": "updated_at",
@@ -1053,23 +1053,23 @@ const StudyFactorLanguageAbilityList = () => {
                         {isColumnVisible('factorForName') && (
                           <td><span>{rowItem.factor_for_name}</span></td>
                         )}
-                        {isColumnVisible('studyLanguageAbility') && (
-                          <td><span>{rowItem.studyLanguageAbility}</span></td>
+                        {isColumnVisible('studyLanguageAbilityGroup') && (
+                          <td><span>{rowItem.language_ability_group_name}</span></td>
                         )}
                         {isColumnVisible('languageTestName') && (
-                          <td><span>{rowItem.languageTestName}</span></td>
+                          <td><span>{rowItem.language_test_name_name}</span></td>
                         )}
                         {isColumnVisible('moduleName') && (
-                          <td><span>{rowItem.moduleName}</span></td>
+                          <td><span>{rowItem.module_name_name}</span></td>
                         )}
                         {isColumnVisible('minimumOverallScore') && (
-                          <td><span>{rowItem.minimumOverallScore}</span></td>
+                          <td><span>{rowItem.minimum_overall_score}</span></td>
                         )}
                         {isColumnVisible('inNoOfModules') && (
-                          <td><span>{rowItem.inNoOfModules}</span></td>
+                          <td><span>{rowItem.in_no_of_modules}</span></td>
                         )}  
                         {isColumnVisible('notLessThan') && (
-                          <td><span>{rowItem.notLessThan}</span></td>
+                          <td><span>{rowItem.not_less_than}</span></td>
                         )} 
                         {isColumnVisible('description') && (
                           <td><span>{rowItem.description}</span></td>
