@@ -677,28 +677,30 @@ class GenderExportAPIView(APIView):
         return response
 
 
-        
+
 class GenderImportAPIView(APIView):
     """
     Import Gender data from CSV or XLSX with skip and duplicate tracking.
+    Optimized for large datasets using bulk_create and proper duplicate checks.
     """
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
 
         if not file:
-            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'No file uploaded'}, status=400)
 
         format_type = file.name.split('.')[-1].lower()
         duplicates = []
         skipped_rows = []
+        data = []
 
         required_headers = {'gender'}
         optional_headers = {'description', 'is_active'}
 
         try:
-            data = []
-
             # ---------------- XLSX ----------------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
@@ -708,13 +710,13 @@ class GenderImportAPIView(APIView):
                     return Response({
                         'error': 'Please provide sheet_name',
                         'available_sheets': available_sheets
-                    }, status=status.HTTP_400_BAD_REQUEST)
+                    }, status=400)
 
                 if sheet_name not in available_sheets:
                     return Response({
                         'error': f'Sheet "{sheet_name}" not found',
                         'available_sheets': available_sheets
-                    }, status=status.HTTP_400_BAD_REQUEST)
+                    }, status=400)
 
                 ws = wb[sheet_name]
                 if ws.max_row <= 1:
@@ -722,77 +724,117 @@ class GenderImportAPIView(APIView):
                         "statusCode": 400,
                         "status": False,
                         "message": f'Sheet "{sheet_name}" is empty.'
-                    }, status=status.HTTP_400_BAD_REQUEST)
+                    }, status=400)
 
                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
+                    }, status=400)
 
-                for row in ws.iter_rows(min_row=2, values_only=True):
+                for row_no, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
+                    row_dict['_row_number'] = row_no
                     data.append(row_dict)
 
             # ---------------- CSV ----------------
             elif format_type == 'csv':
                 decoded_file = file.read().decode('utf-8')
                 reader = csv.DictReader(io.StringIO(decoded_file))
-                for row in reader:
+                for row_no, row in enumerate(reader, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    row_lower['_row_number'] = row_no
                     data.append(row_lower)
             else:
                 return Response({
                     "statusCode": 400,
                     "status": False,
                     "message": 'Unsupported file format. Use .xlsx or .csv'
-                }, status=status.HTTP_400_BAD_REQUEST)
+                }, status=400)
 
-            # ---------------- Process Data ----------------
+            # ---------------- Process Rows ----------------
+            to_create = []
             imported_count = 0
+            existing_genders = {g.name.lower(): g for g in Gender.objects.all()}
+            seen_in_file = set()
+
             for row in reversed(data):
-                row_number = row.get("_row_number", "Unknown")
+                row_no = row.get('_row_number', 'Unknown')
                 name = str(row.get('gender')).strip() if row.get('gender') else None
                 description = str(row.get('description')).strip() if row.get('description') else ''
-                
+
                 if not name:
                     skipped_rows.append({
-                        "Row": row_number,
+                        "Row": row_no,
                         "Gender": "",
-                        "Description":description,
+                        "Description": description,
                         "Reason": "Missing gender name"
                     })
                     continue
 
-                existing = Gender.objects.filter(name__iexact=name).first()
+                lower_name = name.lower()
+                existing = existing_genders.get(lower_name)
 
-                if existing:
-                    if not existing.is_deleted:
-                        duplicates.append({
-                            "Row": row_number,
-                            "Gender": name,
-                            "Reason": "Already exists in database"
-                        })
-                        continue
-                    else:
-                        # Reactivate deleted
-                        existing.description = description 
-                        existing.is_deleted = False
-                        existing.save()
-                        imported_count += 1
-                else:
-                    Gender.objects.create(
-                        name=name,
-                        description=description,
-                       
-                        is_deleted=False
-                    )
+                # Already exists in DB and not deleted
+                if existing and not existing.is_deleted:
+                    duplicates.append({
+                        "Row": row_no,
+                        "Gender": name,
+                        "Description": description,
+                        "Reason": "Already exists in database"
+                    })
+                    continue
+
+                # Duplicate in uploaded file
+                if lower_name in seen_in_file:
+                    duplicates.append({
+                        "Row": row_no,
+                        "Gender": name,
+                        "Description": description,
+                        "Reason": "Duplicate in uploaded file"
+                    })
+                    continue
+
+                seen_in_file.add(lower_name)
+
+                # Reactivate deleted record
+                if existing and existing.is_deleted:
+                    existing.description = description
+                    existing.is_deleted = False
+                    existing.save()
                     imported_count += 1
+                    continue
 
+                # Prepare for bulk create
+                to_create.append(Gender(
+                    name=name,
+                    description=description,
+                    is_deleted=False
+                ))
+
+            # Bulk insert in batches
+            if to_create:
+                batch_size = 500
+                for i in range(0, len(to_create), batch_size):
+                    Gender.objects.bulk_create(to_create[i:i + batch_size])
+                imported_count += len(to_create)
+
+        except IntegrityError as e:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": f"Database integrity error: {str(e)}"
+            }, status=400)
         except Exception as e:
             return Response({
                 "statusCode": 400,
                 "status": False,
                 "message": str(e)
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=400)
 
         # ---------------- Response ----------------
         return Response({
@@ -800,14 +842,9 @@ class GenderImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            # "duplicates": duplicates,
             "duplicates": list(reversed(duplicates)),
-            # "skipped_rows": skipped_rows
             "skipped_rows": list(reversed(skipped_rows)),
-        }, status=status.HTTP_200_OK)
-
-
-
+        }, status=200)
 
 
 #-------------------------------maritalstatus--------------------------------

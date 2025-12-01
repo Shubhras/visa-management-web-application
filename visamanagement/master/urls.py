@@ -748,7 +748,9 @@ urlpatterns = [
     path('related-occupations/<uuid:uuid>/update/', RelatedOccupationUpdateAPIView.as_view(), name='related-occupation-update'),
     path('related-occupations/delete/', RelatedOccupationDeleteAPIView.as_view(), name='related-occupation-delete'),
     path('related-occupations/export/', RelatedOccupationExportAPIView.as_view(), name='related-occupation-export'),
-    
+    path('related-occupations/import/', RelatedOccupationImportAPIView.as_view(), name='related-occupation-import'),
+
+
     path('designations/', DesignationListAPIView.as_view(), name='designation-list'),
     path('designations/create/', DesignationCreateAPIView.as_view(), name='designation-create'),
     path('designations/<uuid:uuid>/', DesignationRetrieveAPIView.as_view(), name='designation-detail'),
@@ -763,7 +765,7 @@ urlpatterns = [
     path('occupation-to-occupation/<uuid:uuid>/update/', OccupationToOccupationUpdateAPIView.as_view(), name='occupation-to-occupation-update'),
     path('occupation-to-occupation/delete/', OccupationToOccupationDeleteAPIView.as_view(), name='occupation-to-occupation-delete'),
     path('occupation-to-occupation/export/', OccupationToOccupationExportAPIView.as_view(), name='occupation-to-occupation-export'),
-
+    path('occupation-to-occupation/import/', OccupationToOccupationImportAPIView.as_view(), name='occupation-to-occupation-import'),
 
     path('workrights/', WorkRightsListAPIView.as_view(), name='workrights-list'),
     path('workrights/create/', WorkRightsCreateAPIView.as_view(), name='workrights-create'),

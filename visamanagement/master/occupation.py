@@ -296,50 +296,66 @@ class JobTypeImportAPIView(APIView):
         optional_headers = {"description"}
 
         try:
+            # ---------------- XLSX ----------------
             if format_type == "xlsx":
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
+
                 if not sheet_name:
                     return Response({"error": "Please provide sheet_name", "available_sheets": available_sheets}, status=400)
                 if sheet_name not in available_sheets:
                     return Response({"error": f'Sheet "{sheet_name}" not found', "available_sheets": available_sheets}, status=400)
+
                 ws = wb[sheet_name]
                 if ws.max_row <= 1:
                     return Response({"message": f'Sheet "{sheet_name}" is empty.'}, status=400)
+
                 headers = [str(c.value).strip().lower() if c.value else "" for c in next(ws.iter_rows(min_row=1, max_row=1))]
                 if not required_headers.issubset(set(headers)):
                     return Response({"message": f"Missing required headers {required_headers}"}, status=400)
+
                 for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
-                    if not any(row): continue
+                    if not any(row):
+                        skipped_rows.append({"Row": idx, "Reason": "Empty row"})
+                        continue
                     row_dict = dict(zip(headers, row))
                     row_dict["_row_number"] = idx
                     data.append(row_dict)
 
+            # ---------------- CSV ----------------
             elif format_type == "csv":
                 decoded_file = file.read().decode("utf-8")
-                dataset = Dataset()
-                dataset.load(decoded_file, format="csv")
-                for idx, row in enumerate(dataset.dict, start=2):
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                for idx, row in enumerate(reader, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
                     row_lower["_row_number"] = idx
+                    if not any(row_lower.values()):
+                        skipped_rows.append({"Row": idx, "Reason": "Empty row"})
+                        continue
                     data.append(row_lower)
+
             else:
                 return Response({"message": "Unsupported file format"}, status=400)
 
+            # ---------------- Process Rows ----------------
+            to_create = []
             imported_count = 0
+            existing_entries = JobType.objects.all()
+            existing_map = {e.name.lower(): e for e in existing_entries}
+
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
                 name = str(row.get("job type")).strip() if row.get("job type") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing Job Type name"})
+                    skipped_rows.append({"Row": row_number, "Job Type": name or "", "Description":description or "", "Reason": "Missing Job Type name"})
                     continue
 
-                existing = JobType.objects.filter(name__iexact=name).first()
+                existing = existing_map.get(name.lower())
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Job Type": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Job Type": name,"Description":description or "", "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -347,8 +363,14 @@ class JobTypeImportAPIView(APIView):
                         existing.save()
                         imported_count += 1
                 else:
-                    JobType.objects.create(name=name, description=description)
-                    imported_count += 1
+                    to_create.append(JobType(name=name, description=description))
+
+            # Bulk insert
+            if to_create:
+                batch_size = 500
+                for i in range(0, len(to_create), batch_size):
+                    JobType.objects.bulk_create(to_create[i:i + batch_size])
+                imported_count += len(to_create)
 
         except Exception as e:
             return Response({"message": str(e)}, status=400)
@@ -356,12 +378,11 @@ class JobTypeImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": "Import successful",
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=200)
-
 
 
 
@@ -636,13 +657,13 @@ class ModeofSalaryImportAPIView(APIView):
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing name"})
+                    skipped_rows.append({"Row": row_number,"Mode Of Salary": name or "" ,"Description":description or "", "Reason": "Missing name"})
                     continue
 
                 existing = ModeofSalary.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Mode Of Salary": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Mode Of Salary": name,"Description":description or "", "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -661,8 +682,8 @@ class ModeofSalaryImportAPIView(APIView):
             "status": True,
             "message": "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=200)
 
 
@@ -934,13 +955,13 @@ class ITReturnStatusImportAPIView(APIView):
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing name"})
+                    skipped_rows.append({"Row": row_number, "It Return Status": name or "", "Description":description or "", "Reason": "Missing name"})
                     continue
 
                 existing = ITReturnStatus.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "It Return Status": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "It Return Status": name,"Description":description or "", "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -957,10 +978,10 @@ class ITReturnStatusImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": "Import successful",
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=200)
 
 
@@ -1249,6 +1270,7 @@ class OccupationVersionExportAPIView(APIView):
 
 
 # -------------------- Import -------------------- #
+
 class OccupationVersionImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -1262,13 +1284,14 @@ class OccupationVersionImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         duplicate_entries = []
         skipped_rows = []
+
         required_headers = {'country', 'occupation version', 'start date'}
         optional_headers = {'end date', 'description'}
 
         try:
             data = []
 
-            # XLSX
+            # Read XLSX
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
@@ -1289,38 +1312,69 @@ class OccupationVersionImportAPIView(APIView):
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
-                    data.append((idx, row_dict))  # keep row number for skipped rows
+                    row_dict['_row_number'] = idx
+                    data.append(row_dict)
 
-            # CSV
+            # Read CSV
             elif format_type == 'csv':
                 dataset = Dataset()
                 dataset.load(file.read().decode('utf-8'), format='csv')
                 for idx, row in enumerate(dataset.dict, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
-                    if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({'error': f'Missing required headers. Required: {required_headers}'}, status=400)
-                    data.append((idx, row_lower))
+                    row_lower['_row_number'] = idx
+                    data.append(row_lower)
             else:
                 return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
 
             imported_count = 0
-            for row_number, row in data:
-                country_name = str(row.get('country')).strip() if row.get('country') else None
-                occupation_version = str(row.get('occupation version')).strip() if row.get('occupation version') else None
+            bulk_objects = []
+
+            for row in reversed(data):
+                row_number = row.get('_row_number', 'Unknown')
+                country_name = str(row.get('country')).strip() if row.get('country') else ""
+                occupation_version = str(row.get('occupation version')).strip() if row.get('occupation version') else ""
                 effect_from_str = row.get('start date')
                 valid_upto_str = row.get('end date', None)
-                effect_from = datetime.strptime(effect_from_str, '%d-%m-%Y').date()
-                valid_upto = datetime.strptime(valid_upto_str, '%d-%m-%Y').date() if valid_upto_str else None
                 description = row.get('description', '')
 
-                if not country_name or not occupation_version or not effect_from:
-                    skipped_rows.append({'row': row_number, 'Reason': 'Mandatory fields missing'})
+                try:
+                    effect_from = datetime.strptime(effect_from_str, '%d-%m-%Y').date() if effect_from_str else None
+                    valid_upto = datetime.strptime(valid_upto_str, '%d-%m-%Y').date() if valid_upto_str else None
+                except Exception:
+                    skipped_rows.append({
+                        'Row': row_number,
+                        'Country': country_name,
+                        'Occupation Version': occupation_version,
+                        'Start Date': effect_from_str or "",
+                        'End Date': valid_upto_str or "",
+                        'Description': description or "",
+                        'Reason': 'Invalid date format'
+                    })
                     continue
 
-                try:
-                    country_obj = RepresentingCountry.objects.get(full_name__iexact=country_name).first()
-                except RepresentingCountry.DoesNotExist:
-                    skipped_rows.append({'row': row_number, 'Reason': 'Country not found'})
+                if not country_name or not occupation_version or not effect_from:
+                    skipped_rows.append({
+                        'Row': row_number,
+                        'Country': country_name,
+                        'Occupation Version': occupation_version,
+                        'Start Date': effect_from_str or "",
+                        'End Date': valid_upto_str or "",
+                        'Description': description or "",
+                        'Reason': 'Mandatory fields missing'
+                    })
+                    continue
+
+                country_obj = RepresentingCountry.objects.filter(full_name__iexact=country_name).first()
+                if not country_obj:
+                    skipped_rows.append({
+                        'Row': row_number,
+                        'Country': country_name,
+                        'Occupation Version': occupation_version,
+                        'Start Date': effect_from_str or "",
+                        'End Date': valid_upto_str or "",
+                        'Description': description or "",
+                        'Reason': 'Country not found'
+                    })
                     continue
 
                 existing = OccupationVersion.objects.filter(
@@ -1332,11 +1386,14 @@ class OccupationVersionImportAPIView(APIView):
                 if existing:
                     if not existing.is_deleted:
                         duplicate_entries.append({
-            'row': row_number,
-            'Country': country_name,
-            'Occupation Version': occupation_version,
-            'Reason': 'Duplicate entry'
-        })
+                            'Row': row_number,
+                            'Country': country_name,
+                            'Occupation Version': occupation_version,
+                            'Start Date': effect_from_str or "",
+                            'End Date': valid_upto_str or "",
+                            'Description': description or "",
+                            'Reason': 'Duplicate entry'
+                        })
                         continue
                     else:
                         existing.valid_upto = valid_upto
@@ -1345,15 +1402,22 @@ class OccupationVersionImportAPIView(APIView):
                         existing.save()
                         imported_count += 1
                 else:
-                    OccupationVersion.objects.create(
-                        country=country_obj,
-                        occupation_version=occupation_version,
-                        effect_from=effect_from,
-                        valid_upto=valid_upto,
-                        description=description,
-                        is_deleted=False
+                    # Add to bulk insert list
+                    bulk_objects.append(
+                        OccupationVersion(
+                            country=country_obj,
+                            occupation_version=occupation_version,
+                            effect_from=effect_from,
+                            valid_upto=valid_upto,
+                            description=description,
+                            is_deleted=False
+                        )
                     )
-                    imported_count += 1
+
+            # Bulk create all new objects
+            if bulk_objects:
+                OccupationVersion.objects.bulk_create(bulk_objects)
+                imported_count += len(bulk_objects)
 
         except Exception as e:
             return Response({'error': str(e)}, status=400)
@@ -1361,12 +1425,11 @@ class OccupationVersionImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_entries)),
-            "skipped_rows": skipped_rows,
+            "duplicates": list(reversed(duplicate_entries)),
+            "skipped_rows": list(reversed(skipped_rows)),
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=200)
-
 
 
 class OccupationCategoryListAPIView(APIView):
@@ -1613,6 +1676,7 @@ class OccupationCategoryExportAPIView(APIView):
 
 
 # -------------------- Import -------------------- #
+
 class OccupationCategoryImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -1624,18 +1688,17 @@ class OccupationCategoryImportAPIView(APIView):
             return Response({'error': 'No file uploaded'}, status=400)
 
         format_type = file.name.split('.')[-1].lower()
-        duplicate_entries = []
-        skipped_rows = []
+        duplicates, skipped_rows, data = [], [], []
+
         required_headers = {'country', 'occupation version', 'occupation category'}
         optional_headers = {'category code', 'description'}
 
         try:
-            data = []
-
-            # XLSX
+            # ---------------- XLSX ----------------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
+
                 if not sheet_name:
                     return Response({'error': 'Provide sheet_name', 'available_sheets': available_sheets}, status=400)
                 if sheet_name not in available_sheets:
@@ -1643,72 +1706,98 @@ class OccupationCategoryImportAPIView(APIView):
 
                 ws = wb[sheet_name]
                 if ws.max_row <= 1:
-                    return Response({'error': f'Sheet "{sheet_name}" is empty.'}, status=400)
+                    return Response({'statusCode': 400, 'status': False, 'message': f'Sheet "{sheet_name}" is empty.'}, status=400)
 
                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
                 if not required_headers.issubset(set(headers)):
-                    return Response({'error': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'}, status=400)
+                    return Response({'statusCode': 400, 'status': False, 'message': f"Missing required headers. Required: {required_headers}, Found: {set(headers)}"}, status=400)
 
                 for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
+                        skipped_rows.append({"Row": idx, "Reason": "Empty row"})
                         continue
                     row_dict = dict(zip(headers, row))
-                    data.append((idx, row_dict))
+                    row_dict["_row_number"] = idx
+                    data.append(row_dict)
 
-            # CSV
+            # ---------------- CSV ----------------
             elif format_type == 'csv':
-                dataset = Dataset()
-                dataset.load(file.read().decode('utf-8'), format='csv')
-                for idx, row in enumerate(dataset.dict, start=2):
+                decoded_file = file.read().decode("utf-8")
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                for idx, row in enumerate(reader, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
-                    if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({'error': f'Missing required headers. Required: {required_headers}'}, status=400)
-                    data.append((idx, row_lower))
+                    row_lower["_row_number"] = idx
+                    if not any(row_lower.values()):
+                        skipped_rows.append({"Row": idx, "Reason": "Empty row"})
+                        continue
+                    data.append(row_lower)
             else:
-                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
+                return Response({'statusCode': 400, 'status': False, 'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
 
+            # ---------------- Process Rows ----------------
             imported_count = 0
-            for row_number, row in data:
+            to_create = []
+
+            for row in reversed(data):
+                row_number = row.get("_row_number", "Unknown")
                 country_name = str(row.get('country')).strip() if row.get('country') else None
                 occupation_version_name = str(row.get('occupation version')).strip() if row.get('occupation version') else None
-                occupationcategory = str(row.get('occupation category')).strip() if row.get('occupation category') else None
+                occupation_category_name = str(row.get('occupation category')).strip() if row.get('occupation category') else None
                 category_code = row.get('category code', '')
                 description = row.get('description', '')
 
-                if not country_name or not occupation_version_name or not occupationcategory:
-                    skipped_rows.append({'row': row_number, 'Reason': 'Mandatory fields missing'})
+                if not (country_name and occupation_version_name and occupation_category_name):
+                    skipped_rows.append({'Row': row_number, 
+                                         'Country': country_name  or "",
+                                        'Occupation Version': occupation_version_name  or "",
+                                        'Occupation Category': occupation_category_name  or "",
+                                        'category code':category_code or "",
+                                        'Description':description or "", 
+                                        'Reason': 'Mandatory fields missing'})
                     continue
 
-                try:
-                    country_obj = RepresentingCountry.objects.get(full_name__iexact=country_name).first()
-                except RepresentingCountry.DoesNotExist:
-                    skipped_rows.append({'row': row_number, 'Reason': 'Country not found'})
+                country_obj = RepresentingCountry.objects.filter(full_name__iexact=country_name).first()
+                if not country_obj:
+                    skipped_rows.append({'Row': row_number,
+                                        'Country': country_name  or "",
+                                        'Occupation Version': occupation_version_name  or "",
+                                        'Occupation Category': occupation_category_name  or "",
+                                        'category code':category_code or "",
+                                        'Description':description or "", 
+                                        'Reason': 'Country not found'})
                     continue
 
-                try:
-                    occupation_version_obj = OccupationVersion.objects.get(
-                        country=country_obj,
-                        occupation_version__iexact=occupation_version_name
-                    )
-                except OccupationVersion.DoesNotExist:
-                    skipped_rows.append({'row': row_number, 'Reason': 'Occupation version not found'})
+                occupation_version_obj = OccupationVersion.objects.filter(
+                    country=country_obj,
+                    occupation_version__iexact=occupation_version_name
+                ).first()
+                if not occupation_version_obj:
+                    skipped_rows.append({'Row': row_number,
+                                         'Country': country_name  or "",
+                                        'Occupation Version': occupation_version_name  or "",
+                                        'Occupation Category': occupation_category_name  or "",
+                                        'category code':category_code or "",
+                                        'Description':description or "", 
+                                        'Reason': 'Occupation version not found'})
                     continue
 
                 existing = OccupationCategory.objects.filter(
                     country=country_obj,
                     occupation_version=occupation_version_obj,
-                    occupationcategory__iexact=occupationcategory
+                    occupationcategory__iexact=occupation_category_name
                 ).first()
 
                 if existing:
                     if not existing.is_deleted:
-                        duplicate_entries.append({
-            'row': row_number,
-            'country': country_name,
-            'Occupation Version': occupation_version_name,
-            'Occupation Category': occupationcategory,
-            'Reason': 'Duplicate entry'
-        })
+                        duplicates.append({
+                            'Row': row_number,
+                            'Country': country_name  or "",
+                            'Occupation Version': occupation_version_name  or "",
+                            'Occupation Category': occupation_category_name  or "",
+                            'category code':category_code or "",
+                            "Description":description or "",
+                            'Reason': 'Duplicate entry'
+                        })
                         continue
                     else:
                         existing.occupationcategorycode = category_code
@@ -1717,28 +1806,33 @@ class OccupationCategoryImportAPIView(APIView):
                         existing.save()
                         imported_count += 1
                 else:
-                    OccupationCategory.objects.create(
+                    to_create.append(OccupationCategory(
                         country=country_obj,
                         occupation_version=occupation_version_obj,
-                        occupationcategory=occupationcategory,
+                        occupationcategory=occupation_category_name,
                         occupationcategorycode=category_code,
                         description=description,
                         is_deleted=False
-                    )
-                    imported_count += 1
+                    ))
+
+            # Bulk insert
+            if to_create:
+                batch_size = 500
+                for i in range(0, len(to_create), batch_size):
+                    OccupationCategory.objects.bulk_create(to_create[i:i+batch_size])
+                imported_count += len(to_create)
 
         except Exception as e:
-            return Response({'error': str(e)}, status=400)
+            return Response({'statusCode': 400, 'status': False, 'message': str(e)}, status=400)
 
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_entries)),
-            "skipped_rows": skipped_rows,
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=200)
-    
 
 class OccupationLevelCodeListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -1998,67 +2092,112 @@ class OccupationLevelCodeImportAPIView(APIView):
         try:
             data = []
 
-            # XLSX
+            # ------------------------------
+            #  READ FILE
+            # ------------------------------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
+
                 if not sheet_name:
                     return Response({'error': 'Provide sheet_name', 'available_sheets': available_sheets}, status=400)
+
                 if sheet_name not in available_sheets:
                     return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
 
                 ws = wb[sheet_name]
+
                 if ws.max_row <= 1:
                     return Response({'error': f'Sheet "{sheet_name}" is empty.'}, status=400)
 
-                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                headers = [
+                    str(cell.value).strip().lower() if cell.value else ''
+                    for cell in next(ws.iter_rows(min_row=1, max_row=1))
+                ]
+
                 if not required_headers.issubset(set(headers)):
-                    return Response({'error': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'}, status=400)
+                    return Response(
+                        {'error': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'},
+                        status=400
+                    )
 
                 for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
-                    data.append((idx, row_dict))
+                    row_dict["_row_number"] = idx
+                    data.append(row_dict)
 
-            # CSV
             elif format_type == 'csv':
                 dataset = Dataset()
                 dataset.load(file.read().decode('utf-8'), format='csv')
+
                 for idx, row in enumerate(dataset.dict, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
-                    if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({'error': f'Missing required headers. Required: {required_headers}'}, status=400)
-                    data.append((idx, row_lower))
+                    row_lower["_row_number"] = idx
+                    data.append(row_lower)
+
             else:
                 return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
 
+            # ------------------------------
+            #  VALIDATION + BULK LIST
+            # ------------------------------
             imported_count = 0
-            for row_number, row in data:
-                country_name = str(row.get('country')).strip() if row.get('country') else None
-                occupation_version_name = str(row.get('occupation version')).strip() if row.get('occupation version') else None
-                occupationlevelcode = str(row.get('occupation level code')).strip() if row.get('occupation level code') else None
-                description = row.get('description', '')
+            bulk_objects = []   #  added for bulk insert
 
+            for row in reversed(data):
+                row_number = row.get("_row_number", "Unknown")
+
+                # Extract with defaults
+                country_name = str(row.get('country') or "").strip()
+                occupation_version_name = str(row.get('occupation version') or "").strip()
+                occupationlevelcode = str(row.get('occupation level code') or "").strip()
+                description = row.get('description') or ""
+
+                # Mandatory
                 if not country_name or not occupation_version_name or not occupationlevelcode:
-                    skipped_rows.append({'row': row_number, 'Reason': 'Mandatory fields missing'})
+                    skipped_rows.append({
+                        'Row': row_number,
+                        'Country': country_name,
+                        'Occupation Version': occupation_version_name,
+                        'Occupation Level Code': occupationlevelcode,
+                        'Description': description,
+                        'Reason': 'Mandatory fields missing'
+                    })
                     continue
 
-                try:
-                    country_obj = RepresentingCountry.objects.get(full_name__iexact=country_name).first()
-                except RepresentingCountry.DoesNotExist:
-                    skipped_rows.append({'row': row_number, 'Reason': 'Country not found'})
+                # Country
+                country_obj = RepresentingCountry.objects.filter(full_name__iexact=country_name).first()
+                if not country_obj:
+                    skipped_rows.append({
+                        'Row': row_number,
+                        'Country': country_name,
+                        'Occupation Version': occupation_version_name,
+                        'Occupation Level Code': occupationlevelcode,
+                        'Description': description,
+                        'Reason': 'Country not found'
+                    })
                     continue
 
-                try:
-                    occupation_version_obj = OccupationVersion.objects.get(
-                        country=country_obj,
-                        occupation_version__iexact=occupation_version_name
-                    )
-                except OccupationVersion.DoesNotExist:
-                    skipped_rows.append({'row': row_number, 'Reason': 'Occupation version not found'})
+                # Occupation Version
+                occupation_version_obj = OccupationVersion.objects.filter(
+                    country=country_obj,
+                    occupation_version__iexact=occupation_version_name
+                ).first()
+
+                if not occupation_version_obj:
+                    skipped_rows.append({
+                        'Row': row_number,
+                        'Country': country_name,
+                        'Occupation Version': occupation_version_name,
+                        'Occupation Level Code': occupationlevelcode,
+                        'Description': description,
+                        'Reason': 'Occupation version not found'
+                    })
                     continue
 
+                # Existing check
                 existing = OccupationLevelCode.objects.filter(
                     country=country_obj,
                     occupation_version=occupation_version_obj,
@@ -2068,40 +2207,56 @@ class OccupationLevelCodeImportAPIView(APIView):
                 if existing:
                     if not existing.is_deleted:
                         duplicate_entries.append({
-            'row': row_number,
-            'country': country_name,
-            'Occupation Version': occupation_version_name,
-            'Occupation Level Code': occupationlevelcode,
-            'Reason': 'Duplicate entry'
-        })
+                            'Row': row_number,
+                            'Country': country_name,
+                            'Occupation Version': occupation_version_name,
+                            'Occupation Level Code': occupationlevelcode,
+                            'Description': description,
+                            'Reason': 'Duplicate entry'
+                        })
                         continue
                     else:
+                        # revive deleted record
                         existing.description = description
                         existing.is_deleted = False
                         existing.save()
                         imported_count += 1
-                else:
-                    OccupationLevelCode.objects.create(
+                        continue
+
+                # ------------------------------
+                # ⭐ Add NEW row to bulk insert
+                # ------------------------------
+                bulk_objects.append(
+                    OccupationLevelCode(
                         country=country_obj,
                         occupation_version=occupation_version_obj,
                         occupationlevelcode=occupationlevelcode,
                         description=description,
                         is_deleted=False
                     )
-                    imported_count += 1
+                )
+
+            # ------------------------------
+            # 📌 FINAL BULK CREATE
+            # ------------------------------
+            if bulk_objects:
+                OccupationLevelCode.objects.bulk_create(bulk_objects)
+                imported_count += len(bulk_objects)
 
         except Exception as e:
             return Response({'error': str(e)}, status=400)
 
+        # ------------------------------
+        # 📌 RESPONSE (with reversed order)
+        # ------------------------------
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_entries)),
-            "skipped_rows": skipped_rows,
-            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "duplicates": list(reversed(duplicate_entries)),
+            "skipped_rows": list(reversed(skipped_rows)),
+            "message": f'Sheet \"{sheet_name}\" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=200)
-
 
 # -------------------- List -------------------- #
 class OccupationLevelListAPIView(APIView):
@@ -2369,88 +2524,159 @@ class OccupationLevelImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         duplicate_entries = []
         skipped_rows = []
-        required_headers = {'country', 'occupation version', 'occupation category', 'occupation level code', 'occupation level'}
-        optional_headers = {'description'}
+        bulk_new_objects = []
+
+        required_headers = {
+            'country', 'occupation version', 'occupation category',
+            'occupation level code', 'occupation level'
+        }
 
         try:
             data = []
 
-            # XLSX
+            # ---------- XLSX ----------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
+
                 if not sheet_name:
                     return Response({'error': 'Provide sheet_name', 'available_sheets': available_sheets}, status=400)
                 if sheet_name not in available_sheets:
                     return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
 
                 ws = wb[sheet_name]
-                if ws.max_row <= 1:
-                    return Response({'error': f'Sheet "{sheet_name}" is empty.'}, status=400)
 
-                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                if not required_headers.issubset(set(headers)):
-                    return Response({'error': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'}, status=400)
+                headers = [
+                    str(c.value).strip().lower() if c.value else ""
+                    for c in next(ws.iter_rows(min_row=1, max_row=1))
+                ]
+
+                if not required_headers.issubset(headers):
+                    return Response({'error': f'Missing required headers. Required: {required_headers}'}, status=400)
 
                 for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
-                    data.append((idx, row_dict))
+                    row_dict["_row_number"] = idx
+                    data.append(row_dict)
 
-            # CSV
+            # ---------- CSV ----------
             elif format_type == 'csv':
                 dataset = Dataset()
                 dataset.load(file.read().decode('utf-8'), format='csv')
+
                 for idx, row in enumerate(dataset.dict, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
-                    if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({'error': f'Missing required headers. Required: {required_headers}'}, status=400)
-                    data.append((idx, row_lower))
+                    row_lower["_row_number"] = idx
+                    data.append(row_lower)
+
             else:
-                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
+                return Response({'error': 'Unsupported file format'}, status=400)
 
             imported_count = 0
-            for row_number, row in data:
-                country_name = str(row.get('country')).strip() if row.get('country') else None
-                occupation_version_name = str(row.get('occupation version')).strip() if row.get('occupation version') else None
-                occupation_category_name = str(row.get('occupation category')).strip() if row.get('occupation category') else None
-                occupation_level_code_name = str(row.get('occupation level code')).strip() if row.get('occupation level code') else None
-                occupation_level_name = str(row.get('occupation level')).strip() if row.get('occupation level') else None
-                description = row.get('description', '')
 
-                if not country_name or not occupation_version_name or not occupation_category_name or not occupation_level_code_name or not occupation_level_name:
-                    skipped_rows.append({'row': row_number, 'Reason': 'Mandatory fields missing'})
+            # ------------------------------------------------------------------
+            # PROCESS FROM BOTTOM TO TOP
+            # ------------------------------------------------------------------
+            for row in reversed(data):
+
+                row_number = row.get("_row_number", "Unknown")
+
+                # Extract & normalize fields
+                country_name = str(row.get('country') or "").strip()
+                occupation_version_name = str(row.get('occupation version') or "").strip()
+                occupation_category_name = str(row.get('occupation category') or "").strip()
+                occupation_level_code_name = str(row.get('occupation level code') or "").strip()
+                occupation_level_name = str(row.get('occupation level') or "").strip()
+                description = row.get('description') or ""
+
+                # Check mandatory
+                if not (country_name and occupation_version_name and occupation_category_name and occupation_level_code_name and occupation_level_name):
+                    skipped_rows.append({
+                        'Row': row_number,
+                        'Country': country_name,
+                        'Occupation Version': occupation_version_name,
+                        'Occupation Category': occupation_category_name,
+                        'Occupation Level Code': occupation_level_code_name,
+                        'Occupation Level': occupation_level_name,
+                        'Description': description,
+                        'Reason': 'Mandatory fields missing'
+                    })
                     continue
 
-                try:
-                    country_obj = RepresentingCountry.objects.get(full_name__iexact=country_name).first()
-                except RepresentingCountry.DoesNotExist:
-                    skipped_rows.append({'row': row_number, 'Reason': 'Country not found'})
+                # Country
+                country_obj = RepresentingCountry.objects.filter(full_name__iexact=country_name).first()
+                if not country_obj:
+                    skipped_rows.append({
+                        'Row': row_number,
+                        'Country': country_name,
+                        'Occupation Version': occupation_version_name,
+                        'Occupation Category': occupation_category_name,
+                        'Occupation Level Code': occupation_level_code_name,
+                        'Occupation Level': occupation_level_name,
+                        'Description': description,
+                        'Reason': 'Country not found'
+                    })
                     continue
 
-                try:
-                    occupation_version_obj = OccupationVersion.objects.get(country=country_obj, occupation_version__iexact=occupation_version_name)
-                except OccupationVersion.DoesNotExist:
-                    skipped_rows.append({'row': row_number, 'Reason': 'Occupation version not found'})
+                # Version
+                occupation_version_obj = OccupationVersion.objects.filter(
+                    country=country_obj,
+                    occupation_version__iexact=occupation_version_name
+                ).first()
+                if not occupation_version_obj:
+                    skipped_rows.append({
+                        'Row': row_number,
+                        'Country': country_name,
+                        'Occupation Version': occupation_version_name,
+                        'Occupation Category': occupation_category_name,
+                        'Occupation Level Code': occupation_level_code_name,
+                        'Occupation Level': occupation_level_name,
+                        'Description': description,
+                        'Reason': 'Occupation version not found'
+                    })
                     continue
 
-                try:
-                    occupation_category_obj = OccupationCategory.objects.get(country=country_obj, occupation_version=occupation_version_obj, occupationcategory__iexact=occupation_category_name)
-                except OccupationCategory.DoesNotExist:
-                    skipped_rows.append({'row': row_number, 'Reason': 'Occupation category not found'})
+                # Category
+                occupation_category_obj = OccupationCategory.objects.filter(
+                    country=country_obj,
+                    occupation_version=occupation_version_obj,
+                    occupationcategory__iexact=occupation_category_name
+                ).first()
+                if not occupation_category_obj:
+                    skipped_rows.append({
+                        'Row': row_number,
+                        'Country': country_name,
+                        'Occupation Version': occupation_version_name,
+                        'Occupation Category': occupation_category_name,
+                        'Occupation Level Code': occupation_level_code_name,
+                        'Occupation Level': occupation_level_name,
+                        'Description': description,
+                        'Reason': 'Occupation category not found'
+                    })
                     continue
 
-                try:
-                    occupation_level_code_obj = OccupationLevelCode.objects.get(
-                        country=country_obj,
-                        occupation_version=occupation_version_obj,
-                        occupationlevelcode__iexact=occupation_level_code_name
-                    )
-                except OccupationLevelCode.DoesNotExist:
-                    skipped_rows.append({'row': row_number, 'Reason': 'Occupation level code not found'})
+                # Level Code
+                occupation_level_code_obj = OccupationLevelCode.objects.filter(
+                    country=country_obj,
+                    occupation_version=occupation_version_obj,
+                    occupationlevelcode__iexact=occupation_level_code_name
+                ).first()
+                if not occupation_level_code_obj:
+                    skipped_rows.append({
+                        'Row': row_number,
+                        'Country': country_name,
+                        'Occupation Version': occupation_version_name,
+                        'Occupation Category': occupation_category_name,
+                        'Occupation Level Code': occupation_level_code_name,
+                        'Occupation Level': occupation_level_name,
+                        'Description': description,
+                        'Reason': 'Occupation level code not found'
+                    })
                     continue
 
+                # Check existing
                 existing = OccupationLevel.objects.filter(
                     country=country_obj,
                     occupationversion=occupation_version_obj,
@@ -2462,22 +2688,27 @@ class OccupationLevelImportAPIView(APIView):
                 if existing:
                     if not existing.is_deleted:
                         duplicate_entries.append({
-            'row': row_number,
-            'country': country_name,
-            'Occupation Version': occupation_version_name,
-            'Occupation Category': occupation_category_name,
-            'Occupation Level Code': occupation_level_code_name,
-            'Occupation Level': occupation_level_name,
-            'Reason': 'Duplicate entry'
-        })
+                            'Row': row_number,
+                            'Country': country_name,
+                            'Occupation Version': occupation_version_name,
+                            'Occupation Category': occupation_category_name,
+                            'Occupation Level Code': occupation_level_code_name,
+                            'Occupation Level': occupation_level_name,
+                            'Description': description,
+                            'Reason': 'Duplicate entry'
+                        })
                         continue
-                    else:
-                        existing.description = description
-                        existing.is_deleted = False
-                        existing.save()
-                        imported_count += 1
-                else:
-                    OccupationLevel.objects.create(
+
+                    # revive deleted record
+                    existing.description = description
+                    existing.is_deleted = False
+                    existing.save()
+                    imported_count += 1
+                    continue
+
+                # NEW → Add to bulk list
+                bulk_new_objects.append(
+                    OccupationLevel(
                         country=country_obj,
                         occupationversion=occupation_version_obj,
                         occupationcategory=occupation_category_obj,
@@ -2486,7 +2717,14 @@ class OccupationLevelImportAPIView(APIView):
                         description=description,
                         is_deleted=False
                     )
-                    imported_count += 1
+                )
+
+            # -----------------------
+            # BULK CREATE
+            # -----------------------
+            if bulk_new_objects:
+                OccupationLevel.objects.bulk_create(bulk_new_objects)
+                imported_count += len(bulk_new_objects)
 
         except Exception as e:
             return Response({'error': str(e)}, status=400)
@@ -2494,12 +2732,11 @@ class OccupationLevelImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_entries)),
-            "skipped_rows": skipped_rows,
-            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
-            "imported_count": imported_count
+            "duplicates": list(reversed(duplicate_entries)),
+            "skipped_rows": list(reversed(skipped_rows)),
+            "imported_count": imported_count,
+            "message": f'Sheet \"{sheet_name}\" imported successfully'
         }, status=200)
-
 
 
 
@@ -2745,70 +2982,104 @@ class OccupationCodeImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         duplicate_entries = []
         skipped_rows = []
+        bulk_new_objects = []
+
         required_headers = {'country', 'occupation version', 'occupation code'}
-        optional_headers = {'description'}
 
         try:
             data = []
 
-            # XLSX
+            # ---------- XLSX ----------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
+
                 if not sheet_name:
                     return Response({'error': 'Provide sheet_name', 'available_sheets': available_sheets}, status=400)
                 if sheet_name not in available_sheets:
                     return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
 
                 ws = wb[sheet_name]
-                if ws.max_row <= 1:
-                    return Response({'error': f'Sheet "{sheet_name}" is empty.'}, status=400)
+                headers = [str(c.value).strip().lower() if c.value else "" for c in next(ws.iter_rows(min_row=1, max_row=1))]
 
-                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                if not required_headers.issubset(set(headers)):
-                    return Response({'error': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'}, status=400)
+                if not required_headers.issubset(headers):
+                    return Response({'error': f'Missing required headers. Required: {required_headers}'}, status=400)
 
                 for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
-                    data.append((idx, row_dict))
+                    row_dict["_row_number"] = idx
+                    data.append(row_dict)
 
-            # CSV
+            # ---------- CSV ----------
             elif format_type == 'csv':
                 dataset = Dataset()
                 dataset.load(file.read().decode('utf-8'), format='csv')
+
                 for idx, row in enumerate(dataset.dict, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
-                    if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({'error': f'Missing required headers. Required: {required_headers}'}, status=400)
-                    data.append((idx, row_lower))
+                    row_lower["_row_number"] = idx
+                    data.append(row_lower)
+
             else:
-                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
+                return Response({'error': 'Unsupported file format'}, status=400)
 
             imported_count = 0
-            for row_number, row in data:
-                country_name = str(row.get('country')).strip() if row.get('country') else None
-                occupation_version_name = str(row.get('occupation version')).strip() if row.get('occupation version') else None
-                occupation_code_name = str(row.get('occupation code')).strip() if row.get('occupation code') else None
-                description = row.get('description', '')
 
-                if not country_name or not occupation_version_name or not occupation_code_name:
-                    skipped_rows.append({'row': row_number, 'Reason': 'Mandatory fields missing'})
+            # --------------------------
+            # PROCESS FROM BOTTOM TO TOP
+            # --------------------------
+            for row in reversed(data):
+
+                row_number = row.get("_row_number", "Unknown")
+                country_name = str(row.get('country') or "").strip()
+                occupation_version_name = str(row.get('occupation version') or "").strip()
+                occupation_code_name = str(row.get('occupation code') or "").strip()
+                description = row.get('description') or ""
+
+                # Mandatory fields
+                if not (country_name and occupation_version_name and occupation_code_name):
+                    skipped_rows.append({
+                        'Row': row_number,
+                        'Country': country_name,
+                        'Occupation Version': occupation_version_name,
+                        'Occupation Code': occupation_code_name,
+                        'Description': description,
+                        'Reason': 'Mandatory fields missing'
+                    })
                     continue
 
-                try:
-                    country_obj = RepresentingCountry.objects.get(full_name__iexact=country_name)
-                except RepresentingCountry.DoesNotExist:
-                    skipped_rows.append({'row': row_number, 'Reason': 'Country not found'})
+                # Country
+                country_obj = RepresentingCountry.objects.filter(full_name__iexact=country_name).first()
+                if not country_obj:
+                    skipped_rows.append({
+                        'Row': row_number,
+                        'Country': country_name,
+                        'Occupation Version': occupation_version_name,
+                        'Occupation Code': occupation_code_name,
+                        'Description': description,
+                        'Reason': 'Country not found'
+                    })
                     continue
 
-                try:
-                    occupation_version_obj = OccupationVersion.objects.get(country=country_obj, occupation_version__iexact=occupation_version_name)
-                except OccupationVersion.DoesNotExist:
-                    skipped_rows.append({'row': row_number, 'Reason': 'Occupation version not found'})
+                # Occupation Version
+                occupation_version_obj = OccupationVersion.objects.filter(
+                    country=country_obj,
+                    occupation_version__iexact=occupation_version_name
+                ).first()
+                if not occupation_version_obj:
+                    skipped_rows.append({
+                        'Row': row_number,
+                        'Country': country_name,
+                        'Occupation Version': occupation_version_name,
+                        'Occupation Code': occupation_code_name,
+                        'Description': description,
+                        'Reason': 'Occupation version not found'
+                    })
                     continue
 
+                # Check existing
                 existing = OccupationCode.objects.filter(
                     country=country_obj,
                     occupationversion=occupation_version_obj,
@@ -2818,27 +3089,37 @@ class OccupationCodeImportAPIView(APIView):
                 if existing:
                     if not existing.is_deleted:
                         duplicate_entries.append({
-            'row': row_number,
-            'country': country_name,
-            'Occupation Version': occupation_version_name,
-            'Occupation Code': occupation_code_name,
-            'Reason': 'Duplicate entry'
-        })
+                            'Row': row_number,
+                            'Country': country_name,
+                            'Occupation Version': occupation_version_name,
+                            'Occupation Code': occupation_code_name,
+                            'Description': description,
+                            'Reason': 'Duplicate entry'
+                        })
                         continue
-                    else:
-                        existing.description = description
-                        existing.is_deleted = False
-                        existing.save()
-                        imported_count += 1
-                else:
-                    OccupationCode.objects.create(
+
+                    # Revive deleted record
+                    existing.description = description
+                    existing.is_deleted = False
+                    existing.save()
+                    imported_count += 1
+                    continue
+
+                # NEW → Add to bulk list
+                bulk_new_objects.append(
+                    OccupationCode(
                         country=country_obj,
                         occupationversion=occupation_version_obj,
                         occupationcode=occupation_code_name,
                         description=description,
                         is_deleted=False
                     )
-                    imported_count += 1
+                )
+
+            # BULK CREATE
+            if bulk_new_objects:
+                OccupationCode.objects.bulk_create(bulk_new_objects)
+                imported_count += len(bulk_new_objects)
 
         except Exception as e:
             return Response({'error': str(e)}, status=400)
@@ -2846,12 +3127,11 @@ class OccupationCodeImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_entries)),
-            "skipped_rows": skipped_rows,
-            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
-            "imported_count": imported_count
+            "duplicates": list(reversed(duplicate_entries)),
+            "skipped_rows": list(reversed(skipped_rows)),
+            "imported_count": imported_count,
+            "message": f'Sheet "{sheet_name}" imported successfully'
         }, status=200)
-
 
 
 
@@ -3196,13 +3476,13 @@ class OccupationTypeImportAPIView(APIView):
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing occupation type name"})
+                    skipped_rows.append({"Row": row_number, "Occupation Type": name or "", "Description":description or "", "Reason": "Missing occupation type name"})
                     continue
 
                 existing = OccupationType.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Occupation Type": name, "Reason": "Already exists in database"})
+                        duplicates.append({"Row": row_number, "Occupation Type": name, "Description":description or "", "Reason": "Already exists in database"})
                         continue
                     else:
                         existing.description = description
@@ -3221,8 +3501,8 @@ class OccupationTypeImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows,
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=200)
     
 
@@ -3503,25 +3783,25 @@ class OccupationProspectExportAPIView(APIView):
 
 
 # -------------------- IMPORT API --------------------
+
 class OccupationProspectImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
         file = request.FILES.get("file")
         sheet_name = request.data.get("sheet_name")
+
         if not file:
-            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({ "statusCode": 400, "status": False,"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
 
         format_type = file.name.split(".")[-1].lower()
-        duplicates = []
-        skipped_rows = []
+        duplicates, skipped_rows, data = [], [], []
 
         required_headers = {"occupation prospect"}
         optional_headers = {"description"}
 
         try:
-            data = []
-
+            # ---------------- XLSX ----------------
             if format_type == "xlsx":
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
@@ -3535,45 +3815,51 @@ class OccupationProspectImportAPIView(APIView):
                 if ws.max_row <= 1:
                     return Response({"statusCode": 400, "status": False, "message": f'Sheet "{sheet_name}" is empty.'}, status=400)
 
-                headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                headers = [str(c.value).strip().lower() if c.value else "" for c in next(ws.iter_rows(min_row=1, max_row=1))]
                 if not required_headers.issubset(set(headers)):
                     return Response({"statusCode": 400, "status": False, "message": f"Missing required headers. Required: {required_headers}, Found: {set(headers)}"}, status=400)
 
                 for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
+                        skipped_rows.append({"Row": idx, "Reason": "Empty row"})
                         continue
                     row_dict = dict(zip(headers, row))
                     row_dict["_row_number"] = idx
                     data.append(row_dict)
 
+            # ---------------- CSV ----------------
             elif format_type == "csv":
                 decoded_file = file.read().decode("utf-8")
-                dataset = Dataset()
-                dataset.load(decoded_file, format="csv")
-
-                for idx, row in enumerate(dataset.dict, start=2):
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                for idx, row in enumerate(reader, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
                     row_lower["_row_number"] = idx
-                    if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({"statusCode": 400, "status": False, "message": f"Missing required headers. Required: {', '.join(required_headers)}"}, status=400)
+                    if not any(row_lower.values()):
+                        skipped_rows.append({"Row": idx, "Reason": "Empty row"})
+                        continue
                     data.append(row_lower)
             else:
                 return Response({"statusCode": 400, "status": False, "error": "Unsupported file format. Use .xlsx or .csv"}, status=400)
 
+            # ---------------- Process Rows ----------------
+            to_create = []
             imported_count = 0
+            existing_entries = OccupationProspect.objects.all()
+            existing_map = {e.name.lower(): e for e in existing_entries}
+
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
                 name = str(row.get("occupation prospect")).strip() if row.get("occupation prospect") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing occupation prospect name"})
+                    skipped_rows.append({"Row": row_number,"Occupation Prospect": name or "","Description":description or "", "Reason": "Missing occupation prospect name"})
                     continue
 
-                existing = OccupationProspect.objects.filter(name__iexact=name).first()
+                existing = existing_map.get(name.lower())
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Occupation Prospect": name, "Reason": "Already exists in database"})
+                        duplicates.append({"Row": row_number, "Occupation Prospect": name,"Description":description or "", "Reason": "Already exists in database"})
                         continue
                     else:
                         existing.description = description
@@ -3581,8 +3867,14 @@ class OccupationProspectImportAPIView(APIView):
                         existing.save()
                         imported_count += 1
                 else:
-                    OccupationProspect.objects.create(name=name, description=description, is_deleted=False)
-                    imported_count += 1
+                    to_create.append(OccupationProspect(name=name, description=description, is_deleted=False))
+
+            # Bulk insert
+            if to_create:
+                batch_size = 500
+                for i in range(0, len(to_create), batch_size):
+                    OccupationProspect.objects.bulk_create(to_create[i:i + batch_size])
+                imported_count += len(to_create)
 
         except Exception as e:
             return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
@@ -3592,11 +3884,9 @@ class OccupationProspectImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows,
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=200)
-
-
 
 class JobProspectListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -3785,6 +4075,138 @@ class JobProspectExportAPIView(APIView):
 
 
 # -------------------- Import -------------------- #
+# class JobProspectImportAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def post(self, request):
+#         file = request.FILES.get('file')
+#         sheet_name = request.data.get('sheet_name')
+
+#         if not file:
+#             return Response({'error': 'No file uploaded'}, status=400)
+
+#         format_type = file.name.split('.')[-1].lower()
+#         duplicate_entries = []
+#         skipped_rows = []
+#         required_headers = {'country', 'occupation version', 'occupation level code', 'occupation type', 'occupation code', 'occupation prospect', 'occupation name'}
+#         optional_headers = {'salarycurrency', 'salaryamount', 'duration', 'description'}
+
+#         try:
+#             data = []
+
+#             # XLSX
+#             if format_type == 'xlsx':
+#                 wb = openpyxl.load_workbook(file, read_only=True)
+#                 available_sheets = wb.sheetnames
+#                 if not sheet_name:
+#                     return Response({'error': 'Provide sheet_name', 'available_sheets': available_sheets}, status=400)
+#                 if sheet_name not in available_sheets:
+#                     return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
+
+#                 ws = wb[sheet_name]
+#                 if ws.max_row <= 1:
+#                     return Response({'error': f'Sheet "{sheet_name}" is empty.'}, status=400)
+
+#                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+#                 if not required_headers.issubset(set(headers)):
+#                     return Response({'error': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'}, status=400)
+
+#                 for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+#                     if not any(row):
+#                         continue
+#                     row_dict = dict(zip(headers, row))
+#                     data.append((idx, row_dict))
+
+#             # CSV
+#             elif format_type == 'csv':
+#                 dataset = Dataset()
+#                 dataset.load(file.read().decode('utf-8'), format='csv')
+#                 for idx, row in enumerate(dataset.dict, start=2):
+#                     row_lower = {k.strip().lower(): v for k, v in row.items()}
+#                     if not required_headers.issubset(set(row_lower.keys())):
+#                         return Response({'error': f'Missing required headers. Required: {required_headers}'}, status=400)
+#                     data.append((idx, row_lower))
+#             else:
+#                 return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
+
+#             imported_count = 0
+#             VALID_UNIT_CHOICES = ("Hour", "Month", "Year")
+#             for row_number, row in data:
+#                 try:
+#                     country_obj = Country.objects.get(country_name__iexact=row.get('country'))
+#                     occupationversion_obj = OccupationVersion.objects.get(country=country_obj, occupation_version__iexact=row.get('occupation version'))
+#                     occupationlevelcode_obj = OccupationLevelCode.objects.get(country=country_obj, occupationlevelcode__iexact=row.get('occupation level code'))
+#                     occupationtype_obj = OccupationType.objects.get(name__iexact=row.get('occupation type'))
+#                     occupationcode_obj = OccupationCode.objects.get(occupationcode__iexact=row.get('occupation code'))
+#                     occupationprospect_obj = OccupationProspect.objects.get(name__iexact=row.get('occupation prospect'))
+#                 except (Country.DoesNotExist, OccupationVersion.DoesNotExist, OccupationLevelCode.DoesNotExist, OccupationType.DoesNotExist, OccupationCode.DoesNotExist, OccupationProspect.DoesNotExist):
+#                     skipped_rows.append({'row': row_number, 'Reason': 'Foreign key not found'})
+#                     continue
+
+                
+
+#                 occupation_name = row.get('occupation name')
+#                 duration = row.get('duration')
+#                 if not occupation_name:
+#                     skipped_rows.append({'row': row_number, 'Reason': 'Mandatory fields missing'})
+#                     continue
+                
+#                 if duration and duration not in VALID_UNIT_CHOICES:
+#                     skipped_rows.append({'row': row_number, 'Reason': f'Invalid duration: {duration}. Allowed: {VALID_UNIT_CHOICES}'})
+#                     continue
+
+#                 existing = JobProspect.objects.filter(
+#                     country=country_obj,
+#                     occupationversion=occupationversion_obj,
+#                     occupationlevelcode=occupationlevelcode_obj,
+#                     occupationtype=occupationtype_obj,
+#                     occupationcode=occupationcode_obj,
+#                     occupationprospect=occupationprospect_obj,
+#                     occupationname__iexact=occupation_name
+#                 ).first()
+
+#                 if existing:
+#                     if not existing.is_deleted:
+#                         duplicate_entries.append({
+#                             "row": row_number,
+#                             "Occupation Name": occupation_name,
+#                             "Country": country_obj.country_name,
+#                             "Occupation Version": occupationversion_obj.occupation_version
+#                         })
+#                         continue
+#                     else:
+#                         existing.is_deleted = False
+#                         existing.save()
+#                         imported_count += 1
+#                 else:
+#                     JobProspect.objects.create(
+#                         country=country_obj,
+#                         occupationversion=occupationversion_obj,
+#                         occupationlevelcode=occupationlevelcode_obj,
+#                         occupationtype=occupationtype_obj,
+#                         occupationcode=occupationcode_obj,
+#                         occupationprospect=occupationprospect_obj,
+#                         occupationname=occupation_name,
+#                         salarycurrency=row.get('salarycurrency'),
+#                         salaryamount=row.get('salaryamount'),
+#                         duration=row.get('duration'),
+#                         description=row.get('description', ''),
+#                         is_deleted=False
+#                     )
+#                     imported_count += 1
+
+#         except Exception as e:
+#             return Response({'error': str(e)}, status=400)
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "duplicates": list(set(duplicate_entries)),
+#             "skipped_rows": skipped_rows,
+#             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+#             "imported_count": imported_count
+#         }, status=200)
+
 class JobProspectImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -3798,7 +4220,10 @@ class JobProspectImportAPIView(APIView):
         format_type = file.name.split('.')[-1].lower()
         duplicate_entries = []
         skipped_rows = []
-        required_headers = {'country', 'occupation version', 'occupation level code', 'occupation type', 'occupation code', 'occupation prospect', 'occupation name'}
+        required_headers = {
+            'country', 'occupation version', 'occupation level code',
+            'occupation type', 'occupation code', 'occupation prospect', 'occupation name'
+        }
         optional_headers = {'salarycurrency', 'salaryamount', 'duration', 'description'}
 
         try:
@@ -3825,7 +4250,8 @@ class JobProspectImportAPIView(APIView):
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
-                    data.append((idx, row_dict))
+                    row_dict["_row_number"] = idx
+                    data.append(row_dict)
 
             # CSV
             elif format_type == 'csv':
@@ -3835,36 +4261,140 @@ class JobProspectImportAPIView(APIView):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
                     if not required_headers.issubset(set(row_lower.keys())):
                         return Response({'error': f'Missing required headers. Required: {required_headers}'}, status=400)
-                    data.append((idx, row_lower))
+                    row_lower["_row_number"] = idx
+                    data.append(row_lower)
             else:
                 return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
 
             imported_count = 0
             VALID_UNIT_CHOICES = ("Hour", "Month", "Year")
-            for row_number, row in data:
-                try:
-                    country_obj = Country.objects.get(country_name__iexact=row.get('country'))
-                    occupationversion_obj = OccupationVersion.objects.get(country=country_obj, occupation_version__iexact=row.get('occupation version'))
-                    occupationlevelcode_obj = OccupationLevelCode.objects.get(country=country_obj, occupationlevelcode__iexact=row.get('occupation level code'))
-                    occupationtype_obj = OccupationType.objects.get(name__iexact=row.get('occupation type'))
-                    occupationcode_obj = OccupationCode.objects.get(occupationcode__iexact=row.get('occupation code'))
-                    occupationprospect_obj = OccupationProspect.objects.get(name__iexact=row.get('occupation prospect'))
-                except (Country.DoesNotExist, OccupationVersion.DoesNotExist, OccupationLevelCode.DoesNotExist, OccupationType.DoesNotExist, OccupationCode.DoesNotExist, OccupationProspect.DoesNotExist):
-                    skipped_rows.append({'row': row_number, 'Reason': 'Foreign key not found'})
-                    continue
 
-                
-
-                occupation_name = row.get('occupation name')
+            # Process rows from bottom to top
+            for row in reversed(data):
+                row_number = row.get("_row_number", "Unknown")
+                country_name = str(row.get('country') or "").strip()
+                occupation_version_name = str(row.get('occupation version') or "").strip()
+                occupation_level_code_name = str(row.get('occupation level code') or "").strip()
+                occupation_type_name = str(row.get('occupation type') or "").strip()
+                occupation_code_name = str(row.get('occupation code') or "").strip()
+                occupation_prospect_name = str(row.get('occupation prospect') or "").strip()
+                occupation_name = str(row.get('occupation name') or "").strip()
+                salarycurrency = row.get('salarycurrency')
+                salaryamount = row.get('salaryamount')
                 duration = row.get('duration')
-                if not occupation_name:
-                    skipped_rows.append({'row': row_number, 'Reason': 'Mandatory fields missing'})
-                    continue
-                
-                if duration and duration not in VALID_UNIT_CHOICES:
-                    skipped_rows.append({'row': row_number, 'Reason': f'Invalid duration: {duration}. Allowed: {VALID_UNIT_CHOICES}'})
+                description = row.get('description', '')
+
+                # Mandatory check
+                if not (country_name and occupation_version_name and occupation_level_code_name and
+                        occupation_type_name and occupation_code_name and occupation_prospect_name and occupation_name):
+                    skipped_rows.append({
+                        'Row': row_number,
+                        'Country': country_name,
+                        'Occupation Version': occupation_version_name,
+                        'Occupation Level Code': occupation_level_code_name,
+                        'Occupation Type': occupation_type_name,
+                        'Occupation Code': occupation_code_name,
+                        'Occupation Prospect': occupation_prospect_name,
+                        'Occupation Name': occupation_name,
+                        'Reason': 'Mandatory fields missing'
+                    })
                     continue
 
+                # Duration validation
+                if duration and duration not in VALID_UNIT_CHOICES:
+                    skipped_rows.append({
+                        'Row': row_number,
+                        'Country': country_name,
+                        'Occupation Version': occupation_version_name,
+                        'Occupation Level Code': occupation_level_code_name,
+                        'Occupation Type': occupation_type_name,
+                        'Occupation Code': occupation_code_name,
+                        'Occupation Prospect': occupation_prospect_name,
+                        'Occupation Name': occupation_name,
+                        'Reason': f'Invalid duration: {duration}. Allowed: {VALID_UNIT_CHOICES}'
+                    })
+                    continue
+
+                # Foreign key retrieval
+                try:
+                    country_obj = Country.objects.get(country_name__iexact=country_name)
+                except Country.DoesNotExist:
+                    skipped_rows.append({'Row': row_number, 'Country': country_name,
+                        'Occupation Version': occupation_version_name,
+                        'Occupation Level Code': occupation_level_code_name,
+                        'Occupation Type': occupation_type_name,
+                        'Occupation Code': occupation_code_name,
+                        'Occupation Prospect': occupation_prospect_name,
+                        'Occupation Name': occupation_name,
+                          'Reason': 'Country not found'})
+                    continue
+
+                try:
+                    occupationversion_obj = OccupationVersion.objects.get(country=country_obj, occupation_version__iexact=occupation_version_name)
+                except OccupationVersion.DoesNotExist:
+                    skipped_rows.append({'Row': row_number, 'Country': country_name,
+                        'Occupation Version': occupation_version_name,
+                        'Occupation Level Code': occupation_level_code_name,
+                        'Occupation Type': occupation_type_name,
+                        'Occupation Code': occupation_code_name,
+                        'Occupation Prospect': occupation_prospect_name,
+                        'Occupation Name': occupation_name,
+                         'Reason': 'Occupation version not found'})
+                    continue
+
+                try:
+                    occupationlevelcode_obj = OccupationLevelCode.objects.get(country=country_obj, occupationlevelcode__iexact=occupation_level_code_name)
+                except OccupationLevelCode.DoesNotExist:
+                    skipped_rows.append({'Row': row_number, 'Country': country_name,
+                        'Occupation Version': occupation_version_name,
+                        'Occupation Level Code': occupation_level_code_name,
+                        'Occupation Type': occupation_type_name,
+                        'Occupation Code': occupation_code_name,
+                        'Occupation Prospect': occupation_prospect_name,
+                        'Occupation Name': occupation_name,
+                        'Reason': 'Occupation level code not found'})
+                    continue
+
+                try:
+                    occupationtype_obj = OccupationType.objects.get(name__iexact=occupation_type_name)
+                except OccupationType.DoesNotExist:
+                    skipped_rows.append({'Row': row_number,'Country': country_name,
+                        'Occupation Version': occupation_version_name,
+                        'Occupation Level Code': occupation_level_code_name,
+                        'Occupation Type': occupation_type_name,
+                        'Occupation Code': occupation_code_name,
+                        'Occupation Prospect': occupation_prospect_name,
+                        'Occupation Name': occupation_name,
+                          'Reason': 'Occupation type not found'})
+                    continue
+
+                try:
+                    occupationcode_obj = OccupationCode.objects.get(occupationcode__iexact=occupation_code_name)
+                except OccupationCode.DoesNotExist:
+                    skipped_rows.append({'Row': row_number,'Country': country_name,
+                        'Occupation Version': occupation_version_name,
+                        'Occupation Level Code': occupation_level_code_name,
+                        'Occupation Type': occupation_type_name,
+                        'Occupation Code': occupation_code_name,
+                        'Occupation Prospect': occupation_prospect_name,
+                        'Occupation Name': occupation_name,
+                          'Reason': 'Occupation code not found'})
+                    continue
+
+                try:
+                    occupationprospect_obj = OccupationProspect.objects.get(name__iexact=occupation_prospect_name)
+                except OccupationProspect.DoesNotExist:
+                    skipped_rows.append({'Row': row_number, 'Country': country_name,
+                        'Occupation Version': occupation_version_name,
+                        'Occupation Level Code': occupation_level_code_name,
+                        'Occupation Type': occupation_type_name,
+                        'Occupation Code': occupation_code_name,
+                        'Occupation Prospect': occupation_prospect_name,
+                        'Occupation Name': occupation_name,
+                        'Reason': 'Occupation prospect not found'})
+                    continue
+
+                # Duplicate check
                 existing = JobProspect.objects.filter(
                     country=country_obj,
                     occupationversion=occupationversion_obj,
@@ -3878,14 +4408,23 @@ class JobProspectImportAPIView(APIView):
                 if existing:
                     if not existing.is_deleted:
                         duplicate_entries.append({
-                            "row": row_number,
-                            "Occupation Name": occupation_name,
-                            "Country": country_obj.country_name,
-                            "Occupation Version": occupationversion_obj.occupation_version
+                            'Row': row_number,
+                            'Country': country_name,
+                            'Occupation Version': occupation_version_name,
+                            'Occupation Level Code': occupation_level_code_name,
+                            'Occupation Type': occupation_type_name,
+                            'Occupation Code': occupation_code_name,
+                            'Occupation Prospect': occupation_prospect_name,
+                            'Occupation Name': occupation_name,
+                            'Reason': 'Duplicate entry'
                         })
                         continue
                     else:
                         existing.is_deleted = False
+                        existing.salarycurrency = salarycurrency
+                        existing.salaryamount = salaryamount
+                        existing.duration = duration
+                        existing.description = description
                         existing.save()
                         imported_count += 1
                 else:
@@ -3897,10 +4436,10 @@ class JobProspectImportAPIView(APIView):
                         occupationcode=occupationcode_obj,
                         occupationprospect=occupationprospect_obj,
                         occupationname=occupation_name,
-                        salarycurrency=row.get('salarycurrency'),
-                        salaryamount=row.get('salaryamount'),
-                        duration=row.get('duration'),
-                        description=row.get('description', ''),
+                        salarycurrency=salarycurrency,
+                        salaryamount=salaryamount,
+                        duration=duration,
+                        description=description,
                         is_deleted=False
                     )
                     imported_count += 1
@@ -3911,12 +4450,11 @@ class JobProspectImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": list(set(duplicate_entries)),
-            "skipped_rows": skipped_rows,
+            "duplicates": list(reversed(duplicate_entries)),
+            "skipped_rows": list(reversed(skipped_rows)),
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count
         }, status=200)
-
 
 class OccupationNameListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -4201,6 +4739,9 @@ class OccupationNameImportAPIView(APIView):
         optional_headers = {"description", "mainduties"}
 
         parsed_data = []
+        duplicate_entries = []
+        skipped_rows = []
+        bulk_new_objects = []
 
         try:
             # -------- XLSX --------
@@ -4215,9 +4756,10 @@ class OccupationNameImportAPIView(APIView):
                 if not required_headers.issubset(headers):
                     return Response({"error": f"Missing required headers: {required_headers}"}, status=400)
 
-                for index, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     row_dict = dict(zip(headers, row))
-                    parsed_data.append((index, row_dict))
+                    row_dict["_row_number"] = idx
+                    parsed_data.append(row_dict)
 
             # -------- CSV --------
             elif format_type == "csv":
@@ -4225,18 +4767,16 @@ class OccupationNameImportAPIView(APIView):
                 dataset.load(file.read().decode("utf-8"), format="csv")
                 for idx, row in enumerate(dataset.dict, start=2):
                     r = {k.strip().lower(): v for k, v in row.items()}
-                    if not required_headers.issubset(r.keys()):
-                        return Response({"error": f"Missing required headers: {required_headers}"})
-                    parsed_data.append((idx, r))
-
+                    r["_row_number"] = idx
+                    parsed_data.append(r)
             else:
                 return Response({"error": "Only xlsx/csv supported"}, status=400)
 
-            duplicate = []
-            skipped = []
-            imported = 0
+            imported_count = 0
 
-            for row_num, row in parsed_data:
+            # -------- PROCESS BOTTOM TO TOP --------
+            for row in reversed(parsed_data):
+                row_num = row.get("_row_number", "Unknown")
                 country_name = str(row.get("country", "")).strip()
                 version_name = str(row.get("occupation version", "")).strip()
                 category_name = str(row.get("occupation category", "")).strip()
@@ -4244,70 +4784,121 @@ class OccupationNameImportAPIView(APIView):
                 level_code = str(row.get("occupation level code", "")).strip()
                 occ_code = str(row.get("occupation code", "")).strip()
                 occ_name = str(row.get("occupation name", "")).strip()
-
                 desc = row.get("description", "")
                 duties = row.get("mainduties", "")
 
-                # Mandatory
-                if not (country_name and version_name and category_name and level_name and level_code and occ_code and occ_name):
-                    skipped.append({"row": row_num, "Reason": "Mandatory fields missing"})
+                # Mandatory fields
+                if not all([country_name, version_name, category_name, level_name, level_code, occ_code, occ_name]):
+                    skipped_rows.append({"row": row_num,
+                                        "Country": country_name,
+                                        "Occupation Version": version_name,
+                                        "Occupation Category": category_name,
+                                        "Occupation Level": level_name,
+                                        "Occupation Level Code": level_code,
+                                        "Occupation Code": occ_code,
+                                        "Occupation Name": occ_name,
+                                        "Description":desc,
+                                        "Mainduties":duties,
+                                        "Reason": "Mandatory fields missing"})
                     continue
 
-                try:
-                    country_obj = RepresentingCountry.objects.get(full_name__iexact=country_name).first()
-                except:
-                    skipped.append({"row": row_num, "Reason": "Country not found"})
+                # Fetch related objects
+                country_obj = RepresentingCountry.objects.filter(full_name__iexact=country_name).first()
+                if not country_obj:
+                    skipped_rows.append({"row": row_num,"Country": country_name,
+                                        "Occupation Version": version_name,
+                                        "Occupation Category": category_name,
+                                        "Occupation Level": level_name,
+                                        "Occupation Level Code": level_code,
+                                        "Occupation Code": occ_code,
+                                        "Occupation Name": occ_name,
+                                        "Description":desc,
+                                        "Mainduties":duties,
+                                        "Reason": "Country not found"})
                     continue
 
-                try:
-                    version_obj = OccupationVersion.objects.get(country=country_obj, occupation_version__iexact=version_name)
-                except:
-                    skipped.append({"row": row_num, "Reason": "Version not found"})
+                version_obj = OccupationVersion.objects.filter(
+                    country=country_obj, occupation_version__iexact=version_name
+                ).first()
+                if not version_obj:
+                    skipped_rows.append({"row": row_num, "Country": country_name,
+                                        "Occupation Version": version_name,
+                                        "Occupation Category": category_name,
+                                        "Occupation Level": level_name,
+                                        "Occupation Level Code": level_code,
+                                        "Occupation Code": occ_code,
+                                        "Occupation Name": occ_name,
+                                        "Description":desc,
+                                        "Mainduties":duties,
+                                        "Reason": "Version not found"})
                     continue
 
-                try:
-                    category_obj = OccupationCategory.objects.get(
-                        country=country_obj,
-                        occupation_version=version_obj,
-                        occupationcategory__iexact=category_name
-                    )
-                except:
-                    skipped.append({"row": row_num, "Reason": "Category not found"})
+                category_obj = OccupationCategory.objects.filter(
+                    country=country_obj,
+                    occupation_version=version_obj,
+                    occupationcategory__iexact=category_name
+                ).first()
+                if not category_obj:
+                    skipped_rows.append({"row": row_num, 
+                                        "Country": country_name,
+                                        "Occupation Version": version_name,
+                                        "Occupation Category": category_name,
+                                        "Occupation Level": level_name,
+                                        "Occupation Level Code": level_code,
+                                        "Occupation Code": occ_code,
+                                        "Occupation Name": occ_name,
+                                        "Description":desc,
+                                        "Mainduties":duties,"Reason": "Category not found"})
                     continue
 
-                try:
-                    level_obj = OccupationLevel.objects.get(
-                        country=country_obj,
-                        occupationversion=version_obj,
-                        occupationcategory=category_obj,
-                        occupationlevel__iexact=level_name
-                    )
-                except:
-                    skipped.append({"row": row_num, "Reason": "Level not found"})
+                level_obj = OccupationLevel.objects.filter(
+                    country=country_obj,
+                    occupationversion=version_obj,
+                    occupationcategory=category_obj,
+                    occupationlevel__iexact=level_name
+                ).first()
+                if not level_obj:
+                    skipped_rows.append({"row": row_num,"Country": country_name,
+                                        "Occupation Version": version_name,
+                                        "Occupation Category": category_name,
+                                        "Occupation Level": level_name,
+                                        "Occupation Level Code": level_code,
+                                        "Occupation Code": occ_code,
+                                        "Occupation Name": occ_name,
+                                        "Description":desc,
+                                        "Mainduties":duties,
+                                          "Reason": "Level not found"})
                     continue
 
-                try:
-                    level_code_obj = OccupationLevelCode.objects.get(
-                        country=country_obj,
-                        occupation_version=version_obj,
-                        occupationlevelcode__iexact=level_code
-                    )
-                except:
-                    skipped.append({"row": row_num, "Reason": "Level code not found"})
+                level_code_obj = OccupationLevelCode.objects.filter(
+                    country=country_obj,
+                    occupation_version=version_obj,
+                    occupationlevelcode__iexact=level_code
+                ).first()
+                if not level_code_obj:
+                    skipped_rows.append({"row": row_num,"Country": country_name,
+                                        "Occupation Version": version_name,
+                                        "Occupation Category": category_name,
+                                        "Occupation Level": level_name,
+                                        "Occupation Level Code": level_code,
+                                        "Occupation Code": occ_code,
+                                        "Occupation Name": occ_name,
+                                        "Description":desc,
+                                        "Mainduties":duties,
+                                        "Reason": "Level code not found"})
                     continue
 
-                try:
-                    occupation_code_obj = OccupationCode.objects.get(
-                        country=country_obj,
-                        occupationversion=version_obj,
-                        occupationlevelcode=level_code_obj,
-                        occupationcode__iexact=occ_code
-                    )
-                except:
-                    skipped.append({"row": row_num, "Reason": "Occupation code not found"})
+                occupation_code_obj = OccupationCode.objects.filter(
+                    country=country_obj,
+                    occupationversion=version_obj,
+                    occupationlevelcode=level_code_obj,
+                    occupationcode__iexact=occ_code
+                ).first()
+                if not occupation_code_obj:
+                    skipped_rows.append({"row": row_num, "Reason": "Occupation code not found"})
                     continue
 
-                # Duplicate check
+                # Check for duplicates
                 existing = OccupationName.objects.filter(
                     country=country_obj,
                     occupationversion=version_obj,
@@ -4320,22 +4911,32 @@ class OccupationNameImportAPIView(APIView):
 
                 if existing:
                     if not existing.is_deleted:
-                        duplicate.append({
-            'row': row_num,
-            'country': country_name,
-            'Occupation Version': version_name,
-            'Occupation Name': occ_name,
-            'Reason': 'Duplicate entry'
-        })
+                        duplicate_entries.append({
+                            "row": row_num,
+                            "Country": country_name,
+                            "Occupation Version": version_name,
+                            "Occupation Category": category_name,
+                            "Occupation Level": level_name,
+                            "Occupation Level Code": level_code,
+                            "Occupation Code": occ_code,
+                            "Occupation Name": occ_name,
+                            "Description":desc,
+                            "Mainduties":duties,
+                            "Reason": "Duplicate entry"
+                        })
                         continue
-                    else:
-                        existing.description = desc
-                        existing.Mainduties = duties
-                        existing.is_deleted = False
-                        existing.save()
-                        imported += 1
-                else:
-                    OccupationName.objects.create(
+
+                    # Revive deleted record
+                    existing.description = desc
+                    existing.Mainduties = duties
+                    existing.is_deleted = False
+                    existing.save()
+                    imported_count += 1
+                    continue
+
+                # New object → add to bulk list
+                bulk_new_objects.append(
+                    OccupationName(
                         country=country_obj,
                         occupationversion=version_obj,
                         occupationcategory=category_obj,
@@ -4347,7 +4948,12 @@ class OccupationNameImportAPIView(APIView):
                         Mainduties=duties,
                         is_deleted=False
                     )
-                    imported += 1
+                )
+
+            # BULK CREATE
+            if bulk_new_objects:
+                OccupationName.objects.bulk_create(bulk_new_objects)
+                imported_count += len(bulk_new_objects)
 
         except Exception as e:
             return Response({"error": str(e)}, status=400)
@@ -4355,12 +4961,12 @@ class OccupationNameImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "imported_count": imported,
-            "duplicates": list(set(duplicate)),
-            "skipped_rows": skipped,
-            "message": "Import successfully completed"
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count,
+            "duplicates": list(reversed(duplicate_entries)),
+            "skipped_rows": list(reversed(skipped_rows)),
+            
         })
-
 
 
 
@@ -4606,7 +5212,176 @@ class RelatedOccupationExportAPIView(APIView):
         return response
 
 
+class RelatedOccupationImportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
+    def post(self, request):
+        file = request.FILES.get('file')
+        sheet_name = request.data.get('sheet_name')
+
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=400)
+
+        format_type = file.name.split('.')[-1].lower()
+        duplicate_entries = []
+        skipped_rows = []
+        required_headers = {'country', 'occupation version', 'occupation code', 'occupation name', 'related occupation'}
+        optional_headers = {'description'}
+
+        try:
+            data = []
+
+            # -------- XLSX --------
+            if format_type == 'xlsx':
+                wb = openpyxl.load_workbook(file, read_only=True)
+                if not sheet_name:
+                    return Response({'error': 'Provide sheet_name', 'available_sheets': wb.sheetnames}, status=400)
+                if sheet_name not in wb.sheetnames:
+                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': wb.sheetnames}, status=400)
+
+                ws = wb[sheet_name]
+                if ws.max_row <= 1:
+                    return Response({'error': f'Sheet "{sheet_name}" is empty.'}, status=400)
+
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({'error': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'}, status=400)
+
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    row_dict["_row_number"] = idx
+                    data.append(row_dict)
+
+            # -------- CSV --------
+            elif format_type == 'csv':
+                dataset = Dataset()
+                dataset.load(file.read().decode('utf-8'), format='csv')
+                for idx, row in enumerate(dataset.dict, start=2):
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({'error': f'Missing required headers. Required: {required_headers}'}, status=400)
+                    row_lower["_row_number"] = idx
+                    data.append(row_lower)
+            else:
+                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
+
+            # -------- Validate and prepare for bulk create --------
+            bulk_list = []
+            imported_count = 0
+
+            for row in reversed(data):
+                row_number = row.get("_row_number", "Unknown")
+                country_name = str(row.get('country') or "").strip()
+                version_name = str(row.get('occupation version') or "").strip()
+                code_name = str(row.get('occupation code') or "").strip()
+                occ_name = str(row.get('occupation name') or "").strip()
+                related_occ = str(row.get('related occupation') or "").strip()
+                description = row.get('description', '')
+
+                if not (country_name and version_name and code_name and occ_name and related_occ):
+                    skipped_rows.append({
+                        'Row': row_number,
+                        'Country': country_name,
+                        'Occupation Version': version_name,
+                        'Occupation Code': code_name,
+                        'Occupation Name': occ_name,
+                        'Related Occupation': related_occ,
+                        'Reason': 'Mandatory fields missing'
+                    })
+                    continue
+
+                # -------- Foreign keys --------
+                try:
+                    country_obj = Country.objects.get(country_name__iexact=country_name)
+                except Country.DoesNotExist:
+                    skipped_rows.append({'Row': row_number, 'Country': country_name,
+                        'Occupation Version': version_name,
+                        'Occupation Code': code_name,
+                        'Occupation Name': occ_name,
+                        'Related Occupation': related_occ,
+                          'Reason': 'Country not found'})
+                    continue
+                try:
+                    version_obj = OccupationVersion.objects.get(country=country_obj, occupation_version__iexact=version_name)
+                except OccupationVersion.DoesNotExist:
+                    skipped_rows.append({'Row': row_number, 'Country': country_name,
+                        'Occupation Version': version_name,
+                        'Occupation Code': code_name,
+                        'Occupation Name': occ_name,
+                        'Related Occupation': related_occ,
+                          'Reason': 'Occupation version not found'})
+                    continue
+                try:
+                    code_obj = OccupationCode.objects.get(country=country_obj, occupationversion=version_obj, occupationcode__iexact=code_name)
+                except OccupationCode.DoesNotExist:
+                    skipped_rows.append({'Row': row_number, 'Country': country_name,
+                        'Occupation Version': version_name,
+                        'Occupation Code': code_name,
+                        'Occupation Name': occ_name,
+                        'Related Occupation': related_occ,
+                        'Reason': 'Occupation code not found'})
+                    continue
+                try:
+                    occ_obj = OccupationName.objects.get(country=country_obj, occupationversion=version_obj, occupationcode=code_obj, occupationname__iexact=occ_name)
+                except OccupationName.DoesNotExist:
+                    skipped_rows.append({'Row': row_number, 'Country': country_name,
+                        'Occupation Version': version_name,
+                        'Occupation Code': code_name,
+                        'Occupation Name': occ_name,
+                        'Related Occupation': related_occ,
+                          'Reason': 'Occupation name not found'})
+                    continue
+
+                # -------- Duplicate check --------
+                if RelatedOccupation.objects.filter(
+                    country=country_obj,
+                    occupationversion=version_obj,
+                    occupationcode=code_obj,
+                    occupationname=occ_obj,
+                    relatedoccupation__iexact=related_occ
+                ).exists():
+                    duplicate_entries.append({
+                        'Row': row_number,
+                        'Country': country_name,
+                        'Occupation Version': version_name,
+                        'Occupation Code': code_name,
+                        'Occupation Name': occ_name,
+                        'Related Occupation': related_occ,
+                        'Reason': 'Duplicate entry'
+                    })
+                    continue
+
+                # -------- Prepare for bulk --------
+                bulk_list.append(
+                    RelatedOccupation(
+                        country=country_obj,
+                        occupationversion=version_obj,
+                        occupationcode=code_obj,
+                        occupationname=occ_obj,
+                        relatedoccupation=related_occ,
+                        description=description,
+                        is_deleted=False
+                    )
+                )
+                imported_count += 1
+
+            # -------- Bulk create --------
+            if bulk_list:
+                RelatedOccupation.objects.bulk_create(bulk_list)
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=400)
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "duplicates": list(reversed(duplicate_entries)),
+            "skipped_rows": list(reversed(skipped_rows)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=200)
 
 
 class OccupationToOccupationListAPIView(APIView):
@@ -4874,6 +5649,205 @@ class OccupationToOccupationExportAPIView(APIView):
 
 
 
+class OccupationToOccupationImportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        file = request.FILES.get('file')
+        sheet_name = request.data.get('sheet_name')
+
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=400)
+
+        format_type = file.name.split('.')[-1].lower()
+        duplicate_entries = []
+        skipped_rows = []
+        required_headers = {
+            'country', 'occupation version', 'occupation code', 'occupation name',
+            'compare country', 'compare occupation version', 'compare occupation code', 'compare occupation name'
+        }
+        optional_headers = {'description'}
+
+        try:
+            data = []
+
+            # -------- XLSX --------
+            if format_type == 'xlsx':
+                wb = openpyxl.load_workbook(file, read_only=True)
+                if not sheet_name:
+                    return Response({'error': 'Provide sheet_name', 'available_sheets': wb.sheetnames}, status=400)
+                if sheet_name not in wb.sheetnames:
+                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': wb.sheetnames}, status=400)
+
+                ws = wb[sheet_name]
+                if ws.max_row <= 1:
+                    return Response({'error': f'Sheet "{sheet_name}" is empty.'}, status=400)
+
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({'error': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'}, status=400)
+
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    row_dict['_row_number'] = idx
+                    data.append(row_dict)
+
+            # -------- CSV --------
+            elif format_type == 'csv':
+                dataset = Dataset()
+                dataset.load(file.read().decode('utf-8'), format='csv')
+                for idx, row in enumerate(dataset.dict, start=2):
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({'error': f'Missing required headers. Required: {required_headers}'}, status=400)
+                    row_lower['_row_number'] = idx
+                    data.append(row_lower)
+            else:
+                return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
+
+            # -------- Validate and prepare for bulk create --------
+            bulk_list = []
+            imported_count = 0
+
+            for row in reversed(data):
+                row_number = row.get('_row_number', 'Unknown')
+                country_name = str(row.get('country') or '').strip()
+                version_name = str(row.get('occupation version') or '').strip()
+                code_name = str(row.get('occupation code') or '').strip()
+                occ_name = str(row.get('occupation name') or '').strip()
+
+                compare_country_name = str(row.get('compare country') or '').strip()
+                compare_version_name = str(row.get('compare occupation version') or '').strip()
+                compare_code_name = str(row.get('compare occupation code') or '').strip()
+                compare_occ_name = str(row.get('compare occupation name') or '').strip()
+
+                description = row.get('description', '')
+
+                # Mandatory check
+                if not all([country_name, version_name, code_name, occ_name,
+                            compare_country_name, compare_version_name, compare_code_name, compare_occ_name]):
+                    skipped_rows.append({
+                        'Row': row_number,
+                        'Reason': 'Mandatory fields missing',
+                        'Country': country_name,
+                        'Occupation Version': version_name,
+                        'Occupation Code': code_name,
+                        'Occupation Name': occ_name,
+                        'Compare Country': compare_country_name,
+                        'Compare Occupation Version': compare_version_name,
+                        'Compare Occupation Code': compare_code_name,
+                        'Compare Occupation Name': compare_occ_name
+                    })
+                    continue
+
+                # -------- Foreign key retrieval --------
+                try:
+                    country_obj = Country.objects.get(country_name__iexact=country_name)
+                    version_obj = OccupationVersion.objects.get(country=country_obj, occupation_version__iexact=version_name)
+                    code_obj = OccupationCode.objects.get(country=country_obj, occupationversion=version_obj, occupationcode__iexact=code_name)
+                    occ_obj = OccupationName.objects.get(country=country_obj, occupationversion=version_obj, occupationcode=code_obj, occupationname__iexact=occ_name)
+
+                    compare_country_obj = Country.objects.get(country_name__iexact=compare_country_name)
+                    compare_version_obj = OccupationVersion.objects.get(country=compare_country_obj, occupation_version__iexact=compare_version_name)
+                    compare_code_obj = OccupationCode.objects.get(country=compare_country_obj, occupationversion=compare_version_obj, occupationcode__iexact=compare_code_name)
+                    compare_occ_obj = OccupationName.objects.get(country=compare_country_obj, occupationversion=compare_version_obj, occupationcode=compare_code_obj, occupationname__iexact=compare_occ_name)
+                except Country.DoesNotExist:
+                    skipped_rows.append({'Row': row_number,'Country': country_name,
+                        'Occupation Version': version_name,
+                        'Occupation Code': code_name,
+                        'Occupation Name': occ_name,
+                        'Compare Country': compare_country_name,
+                        'Compare Occupation Version': compare_version_name,
+                        'Compare Occupation Code': compare_code_name,
+                        'Compare Occupation Name': compare_occ_name,
+                          'Reason': 'Country not found'})
+                    continue
+                except OccupationVersion.DoesNotExist:
+                    skipped_rows.append({'Row': row_number, 'Country': country_name,
+                        'Occupation Version': version_name,
+                        'Occupation Code': code_name,
+                        'Occupation Name': occ_name,
+                        'Compare Country': compare_country_name,
+                        'Compare Occupation Version': compare_version_name,
+                        'Compare Occupation Code': compare_code_name,
+                        'Compare Occupation Name': compare_occ_name,
+                        'Reason': 'Occupation version not found'})
+                    continue
+                except OccupationCode.DoesNotExist:
+                    skipped_rows.append({'Row': row_number,
+                                          'Reason': 'Occupation code not found'})
+                    continue
+                except OccupationName.DoesNotExist:
+                    skipped_rows.append({'Row': row_number,'Country': country_name,
+                        'Occupation Version': version_name,
+                        'Occupation Code': code_name,
+                        'Occupation Name': occ_name,
+                        'Compare Country': compare_country_name,
+                        'Compare Occupation Version': compare_version_name,
+                        'Compare Occupation Code': compare_code_name,
+                        'Compare Occupation Name': compare_occ_name,
+                          'Reason': 'Occupation name not found'})
+                    continue
+
+                # -------- Duplicate check --------
+                if OccupationToOccupation.objects.filter(
+                    country=country_obj,
+                    occupationversion=version_obj,
+                    occupationcode=code_obj,
+                    occupationname=occ_obj,
+                    comparecountry=compare_country_obj,
+                    compareoccupationversion=compare_version_obj,
+                    compareoccupationcode=compare_code_obj,
+                    compareoccupationname=compare_occ_obj
+                ).exists():
+                    duplicate_entries.append({
+                        'Row': row_number,
+                        'Country': country_name,
+                        'Occupation Version': version_name,
+                        'Occupation Code': code_name,
+                        'Occupation Name': occ_name,
+                        'Compare Country': compare_country_name,
+                        'Compare Occupation Version': compare_version_name,
+                        'Compare Occupation Code': compare_code_name,
+                        'Compare Occupation Name': compare_occ_name,
+                        "Reason": "Already exists in database"
+                    })
+                    continue
+
+                # -------- Prepare for bulk create --------
+                bulk_list.append(
+                    OccupationToOccupation(
+                        country=country_obj,
+                        occupationversion=version_obj,
+                        occupationcode=code_obj,
+                        occupationname=occ_obj,
+                        comparecountry=compare_country_obj,
+                        compareoccupationversion=compare_version_obj,
+                        compareoccupationcode=compare_code_obj,
+                        compareoccupationname=compare_occ_obj,
+                        description=description,
+                        is_deleted=False
+                    )
+                )
+                imported_count += 1
+
+            # -------- Bulk insert --------
+            if bulk_list:
+                OccupationToOccupation.objects.bulk_create(bulk_list)
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=400)
+
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "duplicates": list(reversed(duplicate_entries)),
+            "skipped_rows": list(reversed(skipped_rows)),
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count
+        }, status=200)
 
 
 class DesignationListAPIView(APIView):
@@ -5144,7 +6118,7 @@ class DesignationImportAPIView(APIView):
         parsed_data = []
 
         try:
-            # XLSX
+            # -------- XLSX --------
             if format_type == "xlsx":
                 wb = openpyxl.load_workbook(file, read_only=True)
                 if sheet_name not in wb.sheetnames:
@@ -5156,7 +6130,8 @@ class DesignationImportAPIView(APIView):
                 for index, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     row_dict = dict(zip(headers, row))
                     parsed_data.append((index, row_dict))
-            # CSV
+
+            # -------- CSV --------
             elif format_type == "csv":
                 dataset = Dataset()
                 dataset.load(file.read().decode("utf-8"), format="csv")
@@ -5165,53 +6140,101 @@ class DesignationImportAPIView(APIView):
                     if not required_headers.issubset(r.keys()):
                         return Response({"error": f"Missing required headers: {required_headers}"})
                     parsed_data.append((idx, r))
+
             else:
                 return Response({"error": "Only xlsx/csv supported"}, status=400)
 
             duplicate = []
             skipped = []
-            imported = 0
+            imported_count = 0
+            bulk_objects = []
 
-            for row_num, row in parsed_data:
-                country_name = str(row.get("country", "")).strip()
-                version_name = str(row.get("occupation version", "")).strip()
-                occ_name = str(row.get("occupation name", "")).strip()
-                occ_code = str(row.get("occupation code", "")).strip()
-                designation_name = str(row.get("designation", "")).strip()
+            for row_num, row in reversed(parsed_data):
+                country_name = str(row.get("country", "") or "").strip()
+                version_name = str(row.get("occupation version", "") or "").strip()
+                occ_name = str(row.get("occupation name", "") or "").strip()
+                occ_code = str(row.get("occupation code", "") or "").strip()
+                designation_name = str(row.get("designation", "") or "").strip()
                 desc = row.get("description", "")
 
+                # Mandatory check
                 if not (country_name and version_name and occ_name and occ_code and designation_name):
-                    skipped.append({"row": row_num, "Reason": "Mandatory fields missing"})
+                    skipped.append({
+                        "row": row_num,
+                        "Country": country_name,
+                        "Occupation Version": version_name,
+                        "Occupation Name": occ_name,
+                        "Occupation Code": occ_code,
+                        "Designation": designation_name,
+                        "Description":desc,
+                        "Reason": "Mandatory fields missing"
+                    })
                     continue
 
-                try:
-                    country_obj = RepresentingCountry.objects.get(full_name__iexact=country_name)
-                except:
-                    skipped.append({"row": row_num, "Reason": "Country not found"})
+                # Country lookup
+                country_obj = RepresentingCountry.objects.filter(full_name__iexact=country_name).first()
+                if not country_obj:
+                    skipped.append({
+                        "row": row_num,
+                        "Country": country_name,
+                        "Occupation Version": version_name,
+                        "Occupation Name": occ_name,
+                        "Occupation Code": occ_code,
+                        "Designation": designation_name,
+                        "Description":desc,
+                        "Reason": "Country not found"
+                    })
                     continue
 
-                try:
-                    version_obj = OccupationVersion.objects.get(country=country_obj, occupation_version__iexact=version_name)
-                except:
-                    skipped.append({"row": row_num, "Reason": "Version not found"})
+                # Occupation Version lookup
+                occupation_version_obj = OccupationVersion.objects.filter(country=country_obj, occupation_version__iexact=version_name).first()
+                if not occupation_version_obj:
+                    skipped.append({
+                        "row": row_num,
+                        "Country": country_name,
+                        "Occupation Version": version_name,
+                        "Occupation Name": occ_name,
+                        "Occupation Code": occ_code,
+                        "Designation": designation_name,
+                        "Description":desc,
+                        "Reason": "Version not found"
+                    })
                     continue
 
-                try:
-                    occupation_obj = OccupationName.objects.get(country=country_obj, occupationversion=version_obj, occupationname__iexact=occ_name)
-                except:
-                    skipped.append({"row": row_num, "Reason": "Occupation not found"})
+                # Occupation Name lookup
+                occupation_obj = OccupationName.objects.filter(country=country_obj, occupationversion=occupation_version_obj, occupationname__iexact=occ_name).first()
+                if not occupation_obj:
+                    skipped.append({
+                        "row": row_num,
+                        "Country": country_name,
+                        "Occupation Version": version_name,
+                        "Occupation Name": occ_name,
+                        "Occupation Code": occ_code,
+                        "Designation": designation_name,
+                        "Description":desc,
+                        "Reason": "Occupation not found"
+                    })
                     continue
 
-                try:
-                    occupation_code_obj = OccupationCode.objects.get(country=country_obj, occupationversion=version_obj, occupationcode__iexact=occ_code)
-                except:
-                    skipped.append({"row": row_num, "Reason": "Occupation code not found"})
+                # Occupation Code lookup
+                occupation_code_obj = OccupationCode.objects.filter(country=country_obj, occupationversion=occupation_version_obj, occupationcode__iexact=occ_code).first()
+                if not occupation_code_obj:
+                    skipped.append({
+                        "row": row_num,
+                        "Country": country_name,
+                        "Occupation Version": version_name,
+                        "Occupation Name": occ_name,
+                        "Occupation Code": occ_code,
+                        "Designation": designation_name,
+                        "Description":desc,
+                        "Reason": "Occupation code not found"
+                    })
                     continue
 
                 # Duplicate check
                 existing = Designation.objects.filter(
                     country=country_obj,
-                    occupationversion=version_obj,
+                    occupationversion=occupation_version_obj,
                     occupationname=occupation_obj,
                     occupationcode=occupation_code_obj,
                     designation__iexact=designation_name
@@ -5220,29 +6243,37 @@ class DesignationImportAPIView(APIView):
                 if existing:
                     if not existing.is_deleted:
                         duplicate.append({
-                            'row': row_num,
-                            'country': country_name,
-                            'Occupation Version': version_name,
-                            'Designation': designation_name,
-                            'Reason': 'Duplicate entry'
+                            "row": row_num,
+                            "Country": country_name,
+                            "Occupation Version": version_name,
+                            "Occupation Name": occ_name,
+                            "Occupation Code": occ_code,
+                            "Designation": designation_name,
+                            "Description":desc,
+                            "Reason": "Duplicate entry"
                         })
                         continue
                     else:
                         existing.description = desc
                         existing.is_deleted = False
                         existing.save()
-                        imported += 1
+                        imported_count += 1
                 else:
-                    Designation.objects.create(
+                    # Add to bulk create list
+                    bulk_objects.append(Designation(
                         country=country_obj,
-                        occupationversion=version_obj,
+                        occupationversion=occupation_version_obj,
                         occupationname=occupation_obj,
                         occupationcode=occupation_code_obj,
                         designation=designation_name,
                         description=desc,
                         is_deleted=False
-                    )
-                    imported += 1
+                    ))
+
+            # Bulk create new Designations
+            if bulk_objects:
+                Designation.objects.bulk_create(bulk_objects)
+                imported_count += len(bulk_objects)
 
         except Exception as e:
             return Response({"error": str(e)}, status=400)
@@ -5250,12 +6281,11 @@ class DesignationImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "imported_count": imported,
-            "duplicates": duplicate,
-            "skipped_rows": skipped,
-            "message": "Import successfully completed"
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count,
+            "duplicates": list(reversed(duplicate)),
+            "skipped_rows": list(reversed(skipped)),
         })
-
 
 
 
