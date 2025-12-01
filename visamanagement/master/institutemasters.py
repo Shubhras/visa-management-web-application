@@ -305,17 +305,18 @@ class InstituteTypeImportAPIView(APIView):
         sheet_name = request.data.get("sheet_name")
 
         if not file:
-            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "No file uploaded"}, status=400)
 
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
         skipped_rows = []
-        required_headers = {"institute type"}  # adjust header name exactly as in file
+        required_headers = {"institute type"}
         optional_headers = {"description"}
 
         try:
             data = []
 
+            # -------- XLSX --------
             if format_type == "xlsx":
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
@@ -341,7 +342,6 @@ class InstituteTypeImportAPIView(APIView):
                     }, status=400)
 
                 headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-
                 if not required_headers.issubset(set(headers)):
                     return Response({
                         "statusCode": 400,
@@ -356,6 +356,7 @@ class InstituteTypeImportAPIView(APIView):
                     row_dict["_row_number"] = idx
                     data.append(row_dict)
 
+            # -------- CSV --------
             elif format_type == "csv":
                 decoded_file = file.read().decode("utf-8")
                 dataset = Dataset()
@@ -378,20 +379,23 @@ class InstituteTypeImportAPIView(APIView):
                     "message": "Unsupported file format. Use .xlsx or .csv",
                 }, status=400)
 
+            # -------- Prepare for bulk create --------
+            bulk_list = []
             imported_count = 0
+
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("institute type")) if row.get("institute type") else None
+                name = str(row.get("institute type")).strip() if row.get("institute type") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing InstituteType name"})
+                    skipped_rows.append({"Row": row_number, "Institute Type": name or "", "Description":description or "","Reason": "Missing InstituteType name"})
                     continue
 
                 existing = InstituteType.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Institute Type": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Institute Type": name, "Description":description or "", "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -399,8 +403,12 @@ class InstituteTypeImportAPIView(APIView):
                         existing.save()
                         imported_count += 1
                 else:
-                    InstituteType.objects.create(name=name, description=description, is_deleted=False)
+                    bulk_list.append(InstituteType(name=name, description=description, is_deleted=False))
                     imported_count += 1
+
+            # Bulk insert new records
+            if bulk_list:
+                InstituteType.objects.bulk_create(bulk_list)
 
         except Exception as e:
             return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
@@ -410,10 +418,9 @@ class InstituteTypeImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows))
         }, status=200)
-
 
 
 
@@ -686,17 +693,18 @@ class InstituteGroupNameImportAPIView(APIView):
         sheet_name = request.data.get("sheet_name")
 
         if not file:
-            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "No file uploaded"}, status=400)
 
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
         skipped_rows = []
-        required_headers = {"institute group name"}  # adjust to exact header in file
+        required_headers = {"institute group name"}
         optional_headers = {"description"}
 
         try:
             data = []
 
+            # -------- XLSX --------
             if format_type == "xlsx":
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
@@ -722,7 +730,6 @@ class InstituteGroupNameImportAPIView(APIView):
                     }, status=400)
 
                 headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-
                 if not required_headers.issubset(set(headers)):
                     return Response({
                         "statusCode": 400,
@@ -737,6 +744,7 @@ class InstituteGroupNameImportAPIView(APIView):
                     row_dict["_row_number"] = idx
                     data.append(row_dict)
 
+            # -------- CSV --------
             elif format_type == "csv":
                 decoded_file = file.read().decode("utf-8")
                 dataset = Dataset()
@@ -759,20 +767,23 @@ class InstituteGroupNameImportAPIView(APIView):
                     "message": "Unsupported file format. Use .xlsx or .csv",
                 }, status=400)
 
+            # -------- Prepare for bulk create --------
+            bulk_list = []
             imported_count = 0
+
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("institute group name")) if row.get("institute group name") else None
+                name = str(row.get("institute group name")).strip() if row.get("institute group name") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing Group Name"})
+                    skipped_rows.append({"Row": row_number,"Institute Group Name": name or "", "Description":description or "", "Reason": "Missing Group Name"})
                     continue
 
                 existing = InstituteGroupName.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Institute Group Name": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Institute Group Name": name,"Description":description or "", "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -780,8 +791,12 @@ class InstituteGroupNameImportAPIView(APIView):
                         existing.save()
                         imported_count += 1
                 else:
-                    InstituteGroupName.objects.create(name=name, description=description, is_deleted=False)
+                    bulk_list.append(InstituteGroupName(name=name, description=description, is_deleted=False))
                     imported_count += 1
+
+            # Bulk insert new records
+            if bulk_list:
+                InstituteGroupName.objects.bulk_create(bulk_list)
 
         except Exception as e:
             return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
@@ -791,8 +806,8 @@ class InstituteGroupNameImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows))
         }, status=200)
 
 
@@ -1065,17 +1080,18 @@ class InstituteStatusImportAPIView(APIView):
         sheet_name = request.data.get("sheet_name")
 
         if not file:
-            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "No file uploaded"}, status=400)
 
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
         skipped_rows = []
-        required_headers = {"institute status name"}  # adjust to exact header in file
+        required_headers = {"institute status name"}
         optional_headers = {"description"}
 
         try:
             data = []
 
+            # -------- XLSX --------
             if format_type == "xlsx":
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
@@ -1116,6 +1132,7 @@ class InstituteStatusImportAPIView(APIView):
                     row_dict["_row_number"] = idx
                     data.append(row_dict)
 
+            # -------- CSV --------
             elif format_type == "csv":
                 decoded_file = file.read().decode("utf-8")
                 dataset = Dataset()
@@ -1138,20 +1155,23 @@ class InstituteStatusImportAPIView(APIView):
                     "message": "Unsupported file format. Use .xlsx or .csv",
                 }, status=400)
 
+            # -------- Prepare for bulk_create --------
+            bulk_list = []
             imported_count = 0
+
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("institute status name")) if row.get("institute status name") else None
+                name = str(row.get("institute status name")).strip() if row.get("institute status name") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing Status Name"})
+                    skipped_rows.append({"Row": row_number,"Institute Status Name": name or "", "Description":description or "", "Reason": "Missing Status Name"})
                     continue
 
                 existing = InstituteStatus.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Institute Status Name": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Institute Status Name": name, "Description":description or "", "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -1159,8 +1179,12 @@ class InstituteStatusImportAPIView(APIView):
                         existing.save()
                         imported_count += 1
                 else:
-                    InstituteStatus.objects.create(name=name, description=description, is_deleted=False)
+                    bulk_list.append(InstituteStatus(name=name, description=description, is_deleted=False))
                     imported_count += 1
+
+            # Bulk insert
+            if bulk_list:
+                InstituteStatus.objects.bulk_create(bulk_list)
 
         except Exception as e:
             return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
@@ -1170,10 +1194,9 @@ class InstituteStatusImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows))
         }, status=200)
-
 
 
 class InstitutePriorityListAPIView(APIView):
@@ -1445,17 +1468,18 @@ class InstitutePriorityImportAPIView(APIView):
         sheet_name = request.data.get("sheet_name")
 
         if not file:
-            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "No file uploaded"}, status=400)
 
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
         skipped_rows = []
-        required_headers = {"institute priority name"}  # adjust to match sheet
+        required_headers = {"institute priority name"}
         optional_headers = {"description"}
 
         try:
             data = []
 
+            # -------- XLSX --------
             if format_type == "xlsx":
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
@@ -1496,6 +1520,7 @@ class InstitutePriorityImportAPIView(APIView):
                     row_dict["_row_number"] = idx
                     data.append(row_dict)
 
+            # -------- CSV --------
             elif format_type == "csv":
                 decoded_file = file.read().decode("utf-8")
                 dataset = Dataset()
@@ -1518,20 +1543,23 @@ class InstitutePriorityImportAPIView(APIView):
                     "message": "Unsupported file format. Use .xlsx or .csv",
                 }, status=400)
 
+            # -------- Prepare for bulk_create --------
+            bulk_list = []
             imported_count = 0
+
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("institute priority name")) if row.get("institute priority name") else None
+                name = str(row.get("institute priority name")).strip() if row.get("institute priority name") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing Priority Name"})
+                    skipped_rows.append({"Row": row_number,"Institute Priority Name": name or "","Description":description or "", "Reason": "Missing Priority Name"})
                     continue
 
                 existing = InstitutePriority.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Institute Priority Name": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Institute Priority Name": name,"Description":description or "", "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -1539,8 +1567,12 @@ class InstitutePriorityImportAPIView(APIView):
                         existing.save()
                         imported_count += 1
                 else:
-                    InstitutePriority.objects.create(name=name, description=description, is_deleted=False)
+                    bulk_list.append(InstitutePriority(name=name, description=description, is_deleted=False))
                     imported_count += 1
+
+            # Bulk insert
+            if bulk_list:
+                InstitutePriority.objects.bulk_create(bulk_list)
 
         except Exception as e:
             return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
@@ -1550,8 +1582,8 @@ class InstitutePriorityImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows))
         }, status=200)
 
 
@@ -1824,17 +1856,18 @@ class InstituteDepartmentImportAPIView(APIView):
         sheet_name = request.data.get("sheet_name")
 
         if not file:
-            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "No file uploaded"}, status=400)
 
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
         skipped_rows = []
-        required_headers = {"institute department name"}  # adjust to match sheet
+        required_headers = {"institute department name"}
         optional_headers = {"description"}
 
         try:
             data = []
 
+            # -------- XLSX --------
             if format_type == "xlsx":
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
@@ -1875,6 +1908,7 @@ class InstituteDepartmentImportAPIView(APIView):
                     row_dict["_row_number"] = idx
                     data.append(row_dict)
 
+            # -------- CSV --------
             elif format_type == "csv":
                 decoded_file = file.read().decode("utf-8")
                 dataset = Dataset()
@@ -1897,20 +1931,23 @@ class InstituteDepartmentImportAPIView(APIView):
                     "message": "Unsupported file format. Use .xlsx or .csv",
                 }, status=400)
 
+            # -------- Prepare for bulk_create --------
+            bulk_list = []
             imported_count = 0
+
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("institute department name")) if row.get("institute department name") else None
+                name = str(row.get("institute department name")).strip() if row.get("institute department name") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing Department Name"})
+                    skipped_rows.append({"Row": row_number, "Institute Department Name": name or "","Description":description or "", "Reason": "Missing Department Name"})
                     continue
 
                 existing = InstituteDepartment.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Institute Department Name": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Institute Department Name": name,"Description":description or "", "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -1918,8 +1955,12 @@ class InstituteDepartmentImportAPIView(APIView):
                         existing.save()
                         imported_count += 1
                 else:
-                    InstituteDepartment.objects.create(name=name, description=description, is_deleted=False)
+                    bulk_list.append(InstituteDepartment(name=name, description=description, is_deleted=False))
                     imported_count += 1
+
+            # Bulk insert
+            if bulk_list:
+                InstituteDepartment.objects.bulk_create(bulk_list)
 
         except Exception as e:
             return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
@@ -1929,10 +1970,9 @@ class InstituteDepartmentImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows))
         }, status=200)
-
 
 class BankAccountForListAPIView(APIView):
     def get(self, request):
@@ -2283,13 +2323,13 @@ class BankAccountForImportAPIView(APIView):
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing Name"})
+                    skipped_rows.append({"Row": row_number,"Bank Account ": name or "","Description":description or "", "Reason": "Missing Name"})
                     continue
 
                 existing = BankAccountFor.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Bank Account ": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Bank Account ": name,"Description":description or "", "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -2582,17 +2622,18 @@ class WhenCommissionIssueImportAPIView(APIView):
         sheet_name = request.data.get("sheet_name")
 
         if not file:
-            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "No file uploaded"}, status=400)
 
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
         skipped_rows = []
-        required_headers = {"when commission issue"}  # adjust to match your sheet
+        required_headers = {"when commission issue"}
         optional_headers = {"description"}
 
         try:
             data = []
 
+            # -------- XLSX --------
             if format_type == "xlsx":
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
@@ -2632,6 +2673,7 @@ class WhenCommissionIssueImportAPIView(APIView):
                     row_dict["_row_number"] = idx
                     data.append(row_dict)
 
+            # -------- CSV --------
             elif format_type == "csv":
                 decoded_file = file.read().decode("utf-8")
                 dataset = Dataset()
@@ -2654,20 +2696,23 @@ class WhenCommissionIssueImportAPIView(APIView):
                     "message": "Unsupported file format. Use .xlsx or .csv",
                 }, status=400)
 
+            # -------- Prepare for bulk_create --------
+            bulk_list = []
             imported_count = 0
+
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("when commission issue")) if row.get("when commission issue") else None
+                name = str(row.get("when commission issue")).strip() if row.get("when commission issue") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing Name"})
+                    skipped_rows.append({"Row": row_number, "When Commission Issue": name or "","Description":description or "", "Reason": "Missing Name"})
                     continue
 
                 existing = WhenCommissionIssue.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "When Commission Issue": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "When Commission Issue": name,"Description":description or "", "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -2675,8 +2720,12 @@ class WhenCommissionIssueImportAPIView(APIView):
                         existing.save()
                         imported_count += 1
                 else:
-                    WhenCommissionIssue.objects.create(name=name, description=description, is_deleted=False)
+                    bulk_list.append(WhenCommissionIssue(name=name, description=description, is_deleted=False))
                     imported_count += 1
+
+            # Bulk insert
+            if bulk_list:
+                WhenCommissionIssue.objects.bulk_create(bulk_list)
 
         except Exception as e:
             return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
@@ -2686,8 +2735,8 @@ class WhenCommissionIssueImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows))
         }, status=200)
 
 
@@ -2960,7 +3009,7 @@ class CourseLevelCodeImportAPIView(APIView):
         sheet_name = request.data.get("sheet_name")
 
         if not file:
-            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "No file uploaded"}, status=400)
 
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
@@ -2971,6 +3020,7 @@ class CourseLevelCodeImportAPIView(APIView):
         try:
             data = []
 
+            # -------- XLSX --------
             if format_type == "xlsx":
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
@@ -3010,6 +3060,7 @@ class CourseLevelCodeImportAPIView(APIView):
                     row_dict["_row_number"] = idx
                     data.append(row_dict)
 
+            # -------- CSV --------
             elif format_type == "csv":
                 decoded_file = file.read().decode("utf-8")
                 dataset = Dataset()
@@ -3032,20 +3083,23 @@ class CourseLevelCodeImportAPIView(APIView):
                     "message": "Unsupported file format. Use .xlsx or .csv",
                 }, status=400)
 
+            # -------- Prepare for bulk_create --------
+            bulk_list = []
             imported_count = 0
+
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("course level code")) if row.get("course level code") else None
+                name = str(row.get("course level code")).strip() if row.get("course level code") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing Name"})
+                    skipped_rows.append({"Row": row_number,"Course Level Code": name or "","Description":description or "", "Reason": "Missing Name"})
                     continue
 
                 existing = CourseLevelCode.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Course Level Code": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Course Level Code": name,"Description":description or "", "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -3053,8 +3107,12 @@ class CourseLevelCodeImportAPIView(APIView):
                         existing.save()
                         imported_count += 1
                 else:
-                    CourseLevelCode.objects.create(name=name, description=description, is_deleted=False)
+                    bulk_list.append(CourseLevelCode(name=name, description=description, is_deleted=False))
                     imported_count += 1
+
+            # Bulk insert
+            if bulk_list:
+                CourseLevelCode.objects.bulk_create(bulk_list)
 
         except Exception as e:
             return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
@@ -3064,8 +3122,8 @@ class CourseLevelCodeImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows))
         }, status=200)
 
 
@@ -3339,7 +3397,7 @@ class CourseDividedInImportAPIView(APIView):
         sheet_name = request.data.get("sheet_name")
 
         if not file:
-            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "No file uploaded"}, status=400)
 
         format_type = file.name.split(".")[-1].lower()
         duplicates = []
@@ -3350,6 +3408,7 @@ class CourseDividedInImportAPIView(APIView):
         try:
             data = []
 
+            # -------- XLSX --------
             if format_type == "xlsx":
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
@@ -3389,6 +3448,7 @@ class CourseDividedInImportAPIView(APIView):
                     row_dict["_row_number"] = idx
                     data.append(row_dict)
 
+            # -------- CSV --------
             elif format_type == "csv":
                 decoded_file = file.read().decode("utf-8")
                 dataset = Dataset()
@@ -3411,20 +3471,23 @@ class CourseDividedInImportAPIView(APIView):
                     "message": "Unsupported file format. Use .xlsx or .csv",
                 }, status=400)
 
+            # -------- Prepare for bulk_create --------
+            bulk_list = []
             imported_count = 0
+
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("course divided in")) if row.get("course divided in") else None
+                name = str(row.get("course divided in")).strip() if row.get("course divided in") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing Name"})
+                    skipped_rows.append({"Row": row_number,"Course Divided In": name or "","Description":description or "", "Reason": "Missing Name"})
                     continue
 
                 existing = CourseDividedIn.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Course Divided In": name, "Reason": "Already exists"})
+                        duplicates.append({"Row": row_number, "Course Divided In": name,"Description":description or "", "Reason": "Already exists"})
                         continue
                     else:
                         existing.description = description
@@ -3432,8 +3495,12 @@ class CourseDividedInImportAPIView(APIView):
                         existing.save()
                         imported_count += 1
                 else:
-                    CourseDividedIn.objects.create(name=name, description=description, is_deleted=False)
+                    bulk_list.append(CourseDividedIn(name=name, description=description, is_deleted=False))
                     imported_count += 1
+
+            # Bulk insert
+            if bulk_list:
+                CourseDividedIn.objects.bulk_create(bulk_list)
 
         except Exception as e:
             return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
@@ -3443,10 +3510,9 @@ class CourseDividedInImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows))
         }, status=200)
-
 
 class CourseStatusListAPIView(APIView):
     def get(self, request):
@@ -3728,6 +3794,7 @@ class CourseStatusImportAPIView(APIView):
         try:
             data = []
 
+            # -------- XLSX --------
             if format_type == "xlsx":
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
@@ -3767,6 +3834,7 @@ class CourseStatusImportAPIView(APIView):
                     row_dict["_row_number"] = idx
                     data.append(row_dict)
 
+            # -------- CSV --------
             elif format_type == "csv":
                 decoded_file = file.read().decode("utf-8")
                 dataset = Dataset()
@@ -3790,19 +3858,33 @@ class CourseStatusImportAPIView(APIView):
                 }, status=400)
 
             imported_count = 0
+            bulk_objects = []
+
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("course status")) if row.get("course status") else None
+                name = str(row.get("course status")).strip() if row.get("course status") else ""
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
+                # Validate mandatory field
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing Name"})
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Course Status": name,
+                        "Description": description,
+                        "Reason": "Missing course status name"
+                    })
                     continue
 
+                # Check for existing CourseStatus
                 existing = CourseStatus.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Course Status": name, "Reason": "Already exists"})
+                        duplicates.append({
+                            "Row": row_number,
+                            "Course Status": name,
+                            "Description": description,
+                            "Reason": "Already exists in database"
+                        })
                         continue
                     else:
                         existing.description = description
@@ -3810,21 +3892,34 @@ class CourseStatusImportAPIView(APIView):
                         existing.save()
                         imported_count += 1
                 else:
-                    CourseStatus.objects.create(name=name, description=description, is_deleted=False)
-                    imported_count += 1
+                    bulk_objects.append(
+                        CourseStatus(
+                            name=name,
+                            description=description,
+                            is_deleted=False
+                        )
+                    )
+
+            # Bulk create valid records
+            if bulk_objects:
+                CourseStatus.objects.bulk_create(bulk_objects)
+                imported_count += len(bulk_objects)
 
         except Exception as e:
-            return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": str(e),
+            }, status=400)
 
         return Response({
             "statusCode": 200,
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=200)
-
 
 class IntakeNameListAPIView(APIView):
     def get(self, request):
@@ -4106,6 +4201,7 @@ class IntakeNameImportAPIView(APIView):
         try:
             data = []
 
+            # -------- XLSX --------
             if format_type == "xlsx":
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
@@ -4145,6 +4241,7 @@ class IntakeNameImportAPIView(APIView):
                     row_dict["_row_number"] = idx
                     data.append(row_dict)
 
+            # -------- CSV --------
             elif format_type == "csv":
                 decoded_file = file.read().decode("utf-8")
                 dataset = Dataset()
@@ -4168,19 +4265,32 @@ class IntakeNameImportAPIView(APIView):
                 }, status=400)
 
             imported_count = 0
+            bulk_objects = []
+
+            # -------- Validation & Prepare bulk_objects --------
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("intake name")) if row.get("intake name") else None
+                name = str(row.get("intake name")).strip() if row.get("intake name") else ""
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing Name"})
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Intake Name": name or "",
+                        "Description": description or "",
+                        "Reason": "Missing Intake Name"
+                    })
                     continue
 
                 existing = IntakeName.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Intake Name": name, "Reason": "Already exists"})
+                        duplicates.append({
+                            "Row": row_number,
+                            "Intake Name": name,
+                            "Description": description or "",
+                            "Reason": "Already exists"
+                        })
                         continue
                     else:
                         existing.description = description
@@ -4188,8 +4298,16 @@ class IntakeNameImportAPIView(APIView):
                         existing.save()
                         imported_count += 1
                 else:
-                    IntakeName.objects.create(name=name, description=description, is_deleted=False)
-                    imported_count += 1
+                    bulk_objects.append(IntakeName(
+                        name=name,
+                        description=description,
+                        is_deleted=False
+                    ))
+
+            # -------- Bulk create --------
+            if bulk_objects:
+                IntakeName.objects.bulk_create(bulk_objects)
+                imported_count += len(bulk_objects)
 
         except Exception as e:
             return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
@@ -4199,10 +4317,9 @@ class IntakeNameImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=200)
-
 class CourseStatusIntakeListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
@@ -4483,6 +4600,7 @@ class CourseStatusIntakeImportAPIView(APIView):
         try:
             data = []
 
+            # -------- XLSX --------
             if format_type == "xlsx":
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
@@ -4522,6 +4640,7 @@ class CourseStatusIntakeImportAPIView(APIView):
                     row_dict["_row_number"] = idx
                     data.append(row_dict)
 
+            # -------- CSV --------
             elif format_type == "csv":
                 decoded_file = file.read().decode("utf-8")
                 dataset = Dataset()
@@ -4545,19 +4664,32 @@ class CourseStatusIntakeImportAPIView(APIView):
                 }, status=400)
 
             imported_count = 0
+            bulk_objects = []
+
+            # -------- Validation & Prepare bulk_objects --------
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("course status intake")) if row.get("course status intake") else None
+                name = str(row.get("course status intake")).strip() if row.get("course status intake") else ""
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing Name"})
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Course Status Intake": name or "",
+                        "Description": description or "",
+                        "Reason": "Missing Name"
+                    })
                     continue
 
                 existing = CourseStatusIntake.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Course Status Intake": name, "Reason": "Already exists"})
+                        duplicates.append({
+                            "Row": row_number,
+                            "Course Status Intake": name,
+                            "Description": description or "",
+                            "Reason": "Already exists"
+                        })
                         continue
                     else:
                         existing.description = description
@@ -4565,8 +4697,16 @@ class CourseStatusIntakeImportAPIView(APIView):
                         existing.save()
                         imported_count += 1
                 else:
-                    CourseStatusIntake.objects.create(name=name, description=description, is_deleted=False)
-                    imported_count += 1
+                    bulk_objects.append(CourseStatusIntake(
+                        name=name,
+                        description=description,
+                        is_deleted=False
+                    ))
+
+            # -------- Bulk create --------
+            if bulk_objects:
+                CourseStatusIntake.objects.bulk_create(bulk_objects)
+                imported_count += len(bulk_objects)
 
         except Exception as e:
             return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
@@ -4576,10 +4716,9 @@ class CourseStatusIntakeImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-        "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=200)
-
 
 class ScholorshipBasedOnListAPIView(APIView):
     def get(self, request):
@@ -4861,6 +5000,7 @@ class ScholorshipBasedOnImportAPIView(APIView):
         try:
             data = []
 
+            # -------- XLSX --------
             if format_type == "xlsx":
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
@@ -4900,6 +5040,7 @@ class ScholorshipBasedOnImportAPIView(APIView):
                     row_dict["_row_number"] = idx
                     data.append(row_dict)
 
+            # -------- CSV --------
             elif format_type == "csv":
                 decoded_file = file.read().decode("utf-8")
                 dataset = Dataset()
@@ -4923,19 +5064,32 @@ class ScholorshipBasedOnImportAPIView(APIView):
                 }, status=400)
 
             imported_count = 0
+            bulk_objects = []
+
+            # -------- Validation & prepare bulk_objects --------
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("scholorship based on")) if row.get("scholorship based on") else None
+                name = str(row.get("scholorship based on")).strip() if row.get("scholorship based on") else ""
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing Name"})
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Scholorship Based On": name or "",
+                        "Description": description or "",
+                        "Reason": "Missing Name"
+                    })
                     continue
 
                 existing = ScholorshipBasedOn.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Scholorship Based On": name, "Reason": "Already exists"})
+                        duplicates.append({
+                            "Row": row_number,
+                            "Scholorship Based On": name,
+                            "Description": description or "",
+                            "Reason": "Already exists"
+                        })
                         continue
                     else:
                         existing.description = description
@@ -4943,8 +5097,16 @@ class ScholorshipBasedOnImportAPIView(APIView):
                         existing.save()
                         imported_count += 1
                 else:
-                    ScholorshipBasedOn.objects.create(name=name, description=description, is_deleted=False)
-                    imported_count += 1
+                    bulk_objects.append(ScholorshipBasedOn(
+                        name=name,
+                        description=description,
+                        is_deleted=False
+                    ))
+
+            # -------- Bulk create --------
+            if bulk_objects:
+                ScholorshipBasedOn.objects.bulk_create(bulk_objects)
+                imported_count += len(bulk_objects)
 
         except Exception as e:
             return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
@@ -4954,10 +5116,9 @@ class ScholorshipBasedOnImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=200)
-
 
     
 
@@ -5241,6 +5402,7 @@ class CourseLevelImportAPIView(APIView):
         try:
             data = []
 
+            # -------- XLSX --------
             if format_type == "xlsx":
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
@@ -5263,7 +5425,7 @@ class CourseLevelImportAPIView(APIView):
                         "statusCode": 400,
                         "status": False,
                         "message": f'Sheet "{sheet_name}" is empty.'
-                    }, status=status.HTTP_400_BAD_REQUEST)
+                    }, status=400)
 
                 headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
                 if not required_headers.issubset(set(headers)):
@@ -5271,7 +5433,7 @@ class CourseLevelImportAPIView(APIView):
                         "statusCode": 400,
                         "status": False,
                         "message": f"Missing required headers. Required: {required_headers}, Found: {set(headers)}"
-                    }, status=status.HTTP_400_BAD_REQUEST)
+                    }, status=400)
 
                 for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
@@ -5285,20 +5447,29 @@ class CourseLevelImportAPIView(APIView):
                     "statusCode": 400,
                     "status": False,
                     "error": "Unsupported file format. Use .xlsx",
-                }, status=status.HTTP_400_BAD_REQUEST)
+                }, status=400)
 
             imported_count = 0
+            bulk_objects = []
 
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("course level")).strip() if row.get("course level") else None
+                name = str(row.get("course level")).strip() if row.get("course level") else ""
                 description = str(row.get("description")).strip() if row.get("description") else ""
                 courselevelcode_name = str(row.get("course level code")).strip() if row.get("course level code") else None
 
+                # Validate mandatory field
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing course level name"})
+                    skipped_rows.append({
+                        "Row": row_number,
+                        "Course Level": name,
+                        "Course Level Code": courselevelcode_name or "",
+                        "Description": description,
+                        "Reason": "Missing course level name"
+                    })
                     continue
 
+                # Validate CourseLevelCode
                 courselevelcode = None
                 if courselevelcode_name:
                     courselevelcode = CourseLevelCode.objects.filter(name__iexact=courselevelcode_name).first()
@@ -5306,16 +5477,21 @@ class CourseLevelImportAPIView(APIView):
                         skipped_rows.append({
                             "Row": row_number,
                             "Course Level": name,
+                            "Course Level Code": courselevelcode_name,
+                            "Description": description,
                             "Reason": f'CourseLevelCode "{courselevelcode_name}" not found'
                         })
                         continue
 
+                # Check for existing CourseLevel
                 existing = CourseLevel.objects.filter(name__iexact=name).first()
                 if existing:
                     if not existing.is_deleted:
                         duplicates.append({
                             "Row": row_number,
                             "Course Level": name,
+                            "Course Level Code": courselevelcode_name or "",
+                            "Description": description,
                             "Reason": "Already exists in database"
                         })
                         continue
@@ -5326,31 +5502,36 @@ class CourseLevelImportAPIView(APIView):
                         existing.save()
                         imported_count += 1
                 else:
-                    CourseLevel.objects.create(
-                        name=name,
-                        description=description,
-                        courselevelcode=courselevelcode,
-                        is_deleted=False
+                    # Add to bulk list
+                    bulk_objects.append(
+                        CourseLevel(
+                            name=name,
+                            description=description,
+                            courselevelcode=courselevelcode,
+                            is_deleted=False
+                        )
                     )
-                    imported_count += 1
+
+            # Bulk create valid records
+            if bulk_objects:
+                CourseLevel.objects.bulk_create(bulk_objects)
+                imported_count += len(bulk_objects)
 
         except Exception as e:
             return Response({
                 "statusCode": 400,
                 "status": False,
                 "message": str(e),
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=400)
 
         return Response({
             "statusCode": 200,
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows,
-        }, status=status.HTTP_200_OK)
-
-
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
+        }, status=200)
 
 
 
@@ -5631,7 +5812,7 @@ class CourseDurationImportAPIView(APIView):
             return Response({'error': 'No file uploaded'}, status=400)
 
         format_type = file.name.split('.')[-1].lower()
-        duplicate_entries = []
+        duplicates = []
         skipped_rows = []
         required_headers = {'course level', 'course duration value', 'course duration unit'}
         optional_headers = {'description'}
@@ -5639,7 +5820,7 @@ class CourseDurationImportAPIView(APIView):
         try:
             data = []
 
-            # XLSX
+            # -------- XLSX --------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
@@ -5660,60 +5841,92 @@ class CourseDurationImportAPIView(APIView):
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
-                    data.append((idx, row_dict))  # keep row number for skipped rows
+                    row_dict['_row_number'] = idx
+                    data.append(row_dict)
 
-            # CSV
+            # -------- CSV --------
             elif format_type == 'csv':
                 dataset = Dataset()
                 dataset.load(file.read().decode('utf-8'), format='csv')
                 for idx, row in enumerate(dataset.dict, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    row_lower['_row_number'] = idx
                     if not required_headers.issubset(set(row_lower.keys())):
                         return Response({'error': f'Missing required headers. Required: {required_headers}'}, status=400)
-                    data.append((idx, row_lower))
+                    data.append(row_lower)
             else:
                 return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
 
             imported_count = 0
-            for row_number, row in data:
-                courselevel_name = str(row.get('course level')).strip() if row.get('course level') else None
-                valid_duration_value = row.get('course duration value')
-                valid_duration_unit = row.get('course duration unit')
-                description = row.get('description', '')
+            for row in reversed(data):
+                row_number = row.get('_row_number', 'Unknown')
+                courselevel_name = str(row.get('course level')).strip() if row.get('course level') else ""
+                duration_value = row.get('course duration value')
+                duration_unit = str(row.get('course duration unit')).strip() if row.get('course duration unit') else ""
+                description = str(row.get('description')).strip() if row.get('description') else ""
 
-                if not courselevel_name or valid_duration_value is None or not valid_duration_unit:
-                    skipped_rows.append({'row': row_number, 'Reason': 'Mandatory fields missing'})
+                # Validate mandatory fields
+                if not courselevel_name or duration_value is None or not duration_unit:
+                    skipped_rows.append({
+                        'row': row_number,
+                        "Course Level": courselevel_name,
+                        "Course Duration Value": duration_value,
+                        "Course Duration Unit": duration_unit,
+                        "Description": description,
+                        'Reason': 'Mandatory fields missing'
+                    })
                     continue
 
                 # Validate course level
                 try:
                     courselevel_obj = CourseLevel.objects.get(name__iexact=courselevel_name)
                 except CourseLevel.DoesNotExist:
-                    skipped_rows.append({'row': row_number, 'Reason': 'Course Level not found'})
+                    skipped_rows.append({
+                        'row': row_number,
+                        "Course Level": courselevel_name,
+                        "Course Duration Value": duration_value,
+                        "Course Duration Unit": duration_unit,
+                        "Description": description,
+                        'Reason': 'Course Level not found'
+                    })
                     continue
 
                 # Validate numeric value
                 try:
-                    valid_duration_value = int(valid_duration_value)
+                    duration_value = int(duration_value)
                 except ValueError:
-                    skipped_rows.append({'row': row_number, 'Reason': 'valid_duration_value must be numeric'})
+                    skipped_rows.append({
+                        'row': row_number,
+                        "Course Level": courselevel_name,
+                        "Course Duration Value": duration_value,
+                        "Course Duration Unit": duration_unit,
+                        "Description": description,
+                        'Reason': 'Course Duration Value must be numeric'
+                    })
                     continue
 
-                # Validate valid_duration_unit choices
-                if valid_duration_unit not in dict(CourseDuration.VALID_UNIT_CHOICES):
-                    skipped_rows.append({'row': row_number, 'Reason': 'Invalid valid_duration_unit'})
+                # Validate duration unit
+                if duration_unit not in dict(CourseDuration.VALID_UNIT_CHOICES):
+                    skipped_rows.append({
+                        'row': row_number,
+                        "Course Level": courselevel_name,
+                        "Course Duration Value": duration_value,
+                        "Course Duration Unit": duration_unit,
+                        "Description": description,
+                        'Reason': 'Invalid Course Duration Unit'
+                    })
                     continue
 
                 # Check for existing record
                 existing = CourseDuration.objects.filter(
                     courselevel=courselevel_obj,
-                    valid_duration_value=valid_duration_value,
-                    valid_duration_unit=valid_duration_unit,
+                    valid_duration_value=duration_value,
+                    valid_duration_unit=duration_unit
                 ).first()
 
                 if existing:
                     if not existing.is_deleted:
-                        duplicate_entries.append(f"{courselevel_name} - {valid_duration_value} {valid_duration_unit}")
+                        duplicates.append(f"{courselevel_name} - {duration_value} {duration_unit}")
                         continue
                     else:
                         existing.description = description
@@ -5723,8 +5936,8 @@ class CourseDurationImportAPIView(APIView):
                 else:
                     CourseDuration.objects.create(
                         courselevel=courselevel_obj,
-                        valid_duration_value=valid_duration_value,
-                        valid_duration_unit=valid_duration_unit,
+                        valid_duration_value=duration_value,
+                        valid_duration_unit=duration_unit,
                         description=description,
                         is_deleted=False
                     )
@@ -5734,14 +5947,13 @@ class CourseDurationImportAPIView(APIView):
             return Response({'error': str(e)}, status=400)
 
         return Response({
-            "statusCode": 200,
-            "status": True,
-            "duplicates": list(set(duplicate_entries)),
-            "skipped_rows": skipped_rows,
-            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
-            "imported_count": imported_count
+            'statusCode': 200,
+            'status': True,
+            'message': f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            'imported_count': imported_count,
+            'duplicates': list(reversed(duplicates)),
+            'skipped_rows': list(reversed(skipped_rows))
         }, status=200)
-
 
 
 
