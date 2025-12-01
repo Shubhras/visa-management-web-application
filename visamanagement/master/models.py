@@ -43,7 +43,7 @@ class Continents(models.Model):
 class Country(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255)
-    continent=models.ForeignKey(Continents,on_delete=models.SET_NULL,related_name="countries", blank=True, null=True)
+    continent=models.ForeignKey(Continents,on_delete=models.PROTECT,related_name="countries", blank=True, null=True)
     shortName = models.CharField(max_length=250, blank=True, null=True)
     fullName = models.CharField(max_length=250, blank=True, null=True)
     officialName = models.CharField(max_length=2250, blank=True, null=True)
@@ -74,7 +74,7 @@ class State(models.Model):
         ("TERRITORY","Territory"),
     )
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    countryName=models.ForeignKey(Country,on_delete=models.SET_NULL,related_name="states", blank=True, null=True)
+    countryName=models.ForeignKey(Country,on_delete=models.PROTECT,related_name="states", blank=True, null=True)
     stateName=models.CharField(max_length=255)
     state = models.CharField(max_length=20, choices=STATE_CHOICES)
     stateshortName=models.CharField(max_length=250, blank=True, null=True)
@@ -95,8 +95,8 @@ class State(models.Model):
 
 class District(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    countryName = models.ForeignKey(Country, on_delete=models.SET_NULL, blank=True, null=True)
-    stateName = models.ForeignKey(State, on_delete=models.SET_NULL, blank=True, null=True)
+    countryName = models.ForeignKey(Country, on_delete=models.PROTECT, blank=True, null=True)
+    stateName = models.ForeignKey(State, on_delete=models.PROTECT, blank=True, null=True)
     districtName = models.CharField(max_length=255)
     description = models.TextField(max_length=255,null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)  
@@ -112,9 +112,9 @@ class District(models.Model):
 
 class City(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    countryName=models.ForeignKey(Country,on_delete=models.SET_NULL,  related_name="cities_in_country",  blank=True, null=True)
-    stateName=models.ForeignKey(State,on_delete=models.SET_NULL,related_name="cities_in_state", blank=True, null=True)
-    districtName=models.ForeignKey(District,on_delete=models.SET_NULL,related_name="cities_in_district", blank=True, null=True)
+    countryName=models.ForeignKey(Country,on_delete=models.PROTECT,  related_name="cities_in_country",  blank=True, null=True)
+    stateName=models.ForeignKey(State,on_delete=models.PROTECT,related_name="cities_in_state", blank=True, null=True)
+    districtName=models.ForeignKey(District,on_delete=models.PROTECT,related_name="cities_in_district", blank=True, null=True)
     cityName=models.CharField(max_length=255)
     description = models.TextField(max_length=255,null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -175,8 +175,8 @@ class CivilIdName(models.Model):
 
 class Timezone(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    countryName=models.ForeignKey(Country,on_delete=models.SET_NULL,related_name="timezone", blank=True, null=True)
-    stateName=models.ForeignKey(State,on_delete=models.SET_NULL,related_name="timezone", blank=True, null=True)
+    countryName=models.ForeignKey(Country,on_delete=models.PROTECT,related_name="timezone", blank=True, null=True)
+    stateName=models.ForeignKey(State,on_delete=models.PROTECT,related_name="timezone", blank=True, null=True)
     Timezone =models.CharField(max_length=255)
     description = models.TextField(max_length=255,null=True,blank=True)
     is_deleted = models.BooleanField(default=False)
@@ -232,7 +232,7 @@ class CompanyType(models.Model):
 
 class OwnershipType(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    company_type = models.ForeignKey(CompanyType, on_delete=models.SET_NULL, related_name="ownership_types", blank=True, null=True)
+    company_type = models.ForeignKey(CompanyType, on_delete=models.PROTECT, related_name="ownership_types", blank=True, null=True)
     name = models.CharField(max_length=255)
     description = models.TextField(max_length=255, blank=True)
     is_deleted = models.BooleanField(default=False)
@@ -259,7 +259,7 @@ class StakeholderCategory(models.Model):
 
 class StakeholderType(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    category = models.ForeignKey(StakeholderCategory, on_delete=models.SET_NULL, related_name="types", blank=True, null=True)
+    category = models.ForeignKey(StakeholderCategory, on_delete=models.PROTECT, related_name="types", blank=True, null=True)
     name = models.CharField(max_length=255)
     description = models.TextField(max_length=255, blank=True)
     is_deleted = models.BooleanField(default=False)
@@ -299,7 +299,7 @@ class AccreditationName(models.Model):
         ("Years", "Years"),
     )
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    category = models.ForeignKey(AccreditationCategory, on_delete=models.SET_NULL, related_name="accreditation_names", blank=True, null=True)
+    category = models.ForeignKey(AccreditationCategory, on_delete=models.PROTECT, related_name="accreditation_names", blank=True, null=True)
     full_name = models.CharField(max_length=255)
     short_name = models.CharField(max_length=255, null=True,blank=True)
     issuing_authority = models.CharField(max_length=255,blank=True, null=True)
@@ -348,7 +348,7 @@ class LicenseName(models.Model):
     )
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)  
-    country = models.ForeignKey("Country", on_delete=models.SET_NULL, related_name="license_name", blank=True, null=True)
+    country = models.ForeignKey("Country", on_delete=models.PROTECT, related_name="license_name", blank=True, null=True)
     full_name = models.CharField(max_length=255,blank=True)
     short_name = models.CharField(max_length=255,blank=True, null=True,unique=False)
     issuing_authority= models.CharField(max_length=255,null=True,blank=True)
@@ -477,7 +477,7 @@ class EducationLevel(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     level_code = models.ForeignKey(
         EducationLevelCode,
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         related_name="education_levels",
         blank=True,
         null=True
@@ -502,7 +502,7 @@ class  EducationDuration(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     educationlevel = models.ForeignKey(
         EducationLevel,
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         related_name="Education_duration",
         blank=True,
         null=True
@@ -535,7 +535,7 @@ class Studymainarea(models.Model):
 class Studymajorarea(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    mainarea=models.ForeignKey(Studymainarea, on_delete=models.SET_NULL,
+    mainarea=models.ForeignKey(Studymainarea, on_delete=models.PROTECT,
         related_name="Studymajor_area",
         blank=True,
         null=True)
@@ -555,11 +555,11 @@ class Studymajorarea(models.Model):
 class StudySpecialisation(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    mainarea=models.ForeignKey(Studymainarea, on_delete=models.SET_NULL,
+    mainarea=models.ForeignKey(Studymainarea, on_delete=models.PROTECT,
         related_name="Study_Specialisation",
         blank=True,
         null=True)
-    majorarea=models.ForeignKey(Studymajorarea, on_delete=models.SET_NULL,
+    majorarea=models.ForeignKey(Studymajorarea, on_delete=models.PROTECT,
         related_name="StudySpecialisation",
         blank=True,
         null=True)
@@ -597,7 +597,7 @@ class AcademicResultType(models.Model):
 class AcademicResult(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    AcademicResulttype=models.ForeignKey(AcademicResultType, on_delete=models.SET_NULL,
+    AcademicResulttype=models.ForeignKey(AcademicResultType, on_delete=models.PROTECT,
         related_name="Academic_result",
         blank=True,
         null=True)
@@ -662,8 +662,8 @@ class ECAAwardingBody(models.Model):
     )
 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    country = models.ForeignKey("Country", on_delete=models.SET_NULL, related_name="Country_ECAAwarding_body", blank=True, null=True)
-    ecafor=models.ForeignKey("ECAFor", to_field="uuid", db_column="ecafor_id", on_delete=models.SET_NULL, related_name="ECAFor_ECAAwarding_body", blank=True, null=True)
+    country = models.ForeignKey("Country", on_delete=models.PROTECT, related_name="Country_ECAAwarding_body", blank=True, null=True)
+    ecafor=models.ForeignKey("ECAFor", to_field="uuid", db_column="ecafor_id", on_delete=models.PROTECT, related_name="ECAFor_ECAAwarding_body", blank=True, null=True)
     valid_duration_value = models.IntegerField(blank=True, null=True)
     eca_body_full_name = models.CharField(max_length=255,blank=True, null=True)
     description = models.TextField(blank=True, null=True)
@@ -684,10 +684,10 @@ class ECAAwardingBody(models.Model):
 class AcademicResultComparison(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    original_result_type = models.ForeignKey(AcademicResultType, on_delete=models.CASCADE, related_name='original_comparisons')
-    original_result = models.ForeignKey(AcademicResult, on_delete=models.CASCADE, related_name='original_comparisons')
-    compare_result_type = models.ForeignKey(AcademicResultType, on_delete=models.CASCADE, related_name='compare_comparisons')
-    compare_result = models.ForeignKey(AcademicResult, on_delete=models.CASCADE, related_name='compare_comparisons')
+    original_result_type = models.ForeignKey(AcademicResultType, on_delete=models.PROTECT, related_name='original_comparisons')
+    original_result = models.ForeignKey(AcademicResult, on_delete=models.PROTECT, related_name='original_comparisons')
+    compare_result_type = models.ForeignKey(AcademicResultType, on_delete=models.PROTECT, related_name='compare_comparisons')
+    compare_result = models.ForeignKey(AcademicResult, on_delete=models.PROTECT, related_name='compare_comparisons')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -700,8 +700,8 @@ class AcademicResultComparison(models.Model):
 class DegreeAwardedBy(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)    
-    country = models.ForeignKey("Country", on_delete=models.SET_NULL, blank=True, null=True, related_name="degree_awarded_by_country")
-    education_level = models.ForeignKey("EducationLevel", on_delete=models.SET_NULL, blank=True, null=True, related_name="degree_awarded_by_education_level")
+    country = models.ForeignKey("Country", on_delete=models.PROTECT, blank=True, null=True, related_name="degree_awarded_by_country")
+    education_level = models.ForeignKey("EducationLevel", on_delete=models.PROTECT, blank=True, null=True, related_name="degree_awarded_by_education_level")
     degree_name = models.CharField(max_length=255, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -719,9 +719,9 @@ class DegreeAwardedBy(models.Model):
 class DegreeAwardedInstitute(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    country = models.ForeignKey("Country", on_delete=models.SET_NULL, blank=True, null=True, related_name="degree_by_instuite")
-    state = models.ForeignKey("State", on_delete=models.SET_NULL, blank=True, null=True, related_name="degree_by_state_instituite")
-    education_level = models.ForeignKey("EducationLevel", on_delete=models.SET_NULL, blank=True, null=True, related_name="degree_by_education_level")
+    country = models.ForeignKey("Country", on_delete=models.PROTECT, blank=True, null=True, related_name="degree_by_instuite")
+    state = models.ForeignKey("State", on_delete=models.PROTECT, blank=True, null=True, related_name="degree_by_state_instituite")
+    education_level = models.ForeignKey("EducationLevel", on_delete=models.PROTECT, blank=True, null=True, related_name="degree_by_education_level")
     degree_awarded_by = models.ForeignKey(DegreeAwardedBy, on_delete=models.CASCADE, related_name='institutes')
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
@@ -1378,8 +1378,8 @@ class RepresentingCountry(models.Model):
     independence_day = models.DateField(blank=True, null=True)
     government_type = models.CharField(max_length=255, blank=True, null=True)
     official_language = models.CharField(max_length=255, blank=True, null=True)
-    largest_state = models.ForeignKey('State', on_delete=models.CASCADE, related_name='representations')
-    largest_city = models.ForeignKey('City', on_delete=models.CASCADE, related_name='representations')
+    largest_state = models.ForeignKey('State', on_delete=models.PROTECT, related_name='representations')
+    largest_city = models.ForeignKey('City', on_delete=models.PROTECT, related_name='representations')
     major_cities = models.TextField(blank=True, null=True)
     national_animal = models.CharField(max_length=255, blank=True, null=True)
     national_bird = models.CharField(max_length=255, blank=True, null=True)
