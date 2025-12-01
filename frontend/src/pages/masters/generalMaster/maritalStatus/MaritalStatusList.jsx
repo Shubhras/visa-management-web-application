@@ -398,7 +398,8 @@ const MaritalStatusList = () => {
             setSelectedRows([]);
             setSelectAllOrNot("");
             setDeleteId(null);
-            fetchMaritalStatusList();
+            //fetchMaritalStatusList();
+            clearAllFilters();
           } else {
             toast.error("Something went wrong.");
           }

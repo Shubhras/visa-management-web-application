@@ -1011,10 +1011,11 @@ export const editAccreditationCategoryDataAPI = (payload) => {
 };
 
 export const deleteAccreditationCategoryDataAPI = (payload) => {
-  const prepareDATA = {
-    id: payload,
+    const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
   };
-  const apiUrl = `${url.DELETE_ACCREDITATION_CATEGORY_API}delete/`;
+  const apiUrl = `${url.DELETE_ACCREDITATION_CATEGORY_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
