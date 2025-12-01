@@ -4826,7 +4826,7 @@ class CityDeleteAPIView(APIView):
                         for city in batch:
                             try:
                                 city.delete()
-                                deleted.append(str(city.uuid))
+                                deleted.append(city.uuid)
                             except IntegrityError:
                                 skipped.append(city.name)
                     # Refresh queryset after batch
@@ -4840,7 +4840,6 @@ class CityDeleteAPIView(APIView):
                     "statusCode": 200,
                     "status": True,
                     "message": message,
-                    "data": {"deleted": deleted, "skipped": skipped} if skipped else {"deleted": deleted}
                 }, status=200)
 
             
