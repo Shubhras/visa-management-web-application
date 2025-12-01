@@ -352,7 +352,8 @@ urlpatterns = [
     path('academic-result-comparison/<uuid:uuid>/update/', AcademicResultComparisonUpdateAPIView.as_view(), name='academic-result-comparison-update'),
     path('academic-result-comparison/delete/', AcademicResultComparisonDeleteAPIView.as_view(), name='academic-result-comparison-delete'),
     path('academic-result-comparison/export/', AcademicResultComparisonExportAPIView.as_view(), name='academic-result-comparison-export'),
-
+    path('academic-result-comparison/import/', AcademicResultComparisonImportAPIView.as_view(), name='academic-result-comparison-import'),
+    
 
     path('mediumeducation/',MediumofEducationListAPIView.as_view(), name='educationlevel-list'),
     path('mediumeducation/create/', MediumofEducationCreateAPIView.as_view(), name='mediumeducation-create'),
