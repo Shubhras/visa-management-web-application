@@ -130,7 +130,7 @@ const ReusableTable = ({
   return (
     <div className={`${tableSize}-table-container`}>
       <div className="card-header d-flex justify-content-between align-items-center py-3 px-4 border-bottom">
-        <h6 className="mb-0 fw-semibold" style={{ color: "#5a6c5b" }}>
+        <h6 className="mb-0 fw-semibold fs-5" style={{ color: "#5a6c5b" }}>
           {title}
         </h6>
         <button
@@ -597,7 +597,7 @@ const AdditionalDetails = () => {
               handleInputChange("hasRelatives", e.target.checked ? "yes" : "no")
             }
           />
-          <h6 style={{ color: '#5a6c5b' }} className="mb-0 fw-semibold " >
+          <h6 style={{ color: '#5a6c5b' }} className="mb-0 fw-semibold fs-6 " >
             Have you/spouse's RELATIVE in interested country?
           </h6>
         </div>
@@ -627,7 +627,7 @@ const AdditionalDetails = () => {
               handleInputChange("hasVisited", e.target.checked ? "yes" : "no")
             }
           />
-          <h6 className="mb-0 fw-semibold "style={{ color: '#5a6c5b' }}>
+          <h6 className="mb-0 fw-semibold fs-6"style={{ color: '#5a6c5b' }}>
             Have you/spouse ever VISITED any country?
           </h6>
         </div>
@@ -657,7 +657,7 @@ const AdditionalDetails = () => {
               handleInputChange("hasRefused", e.target.checked ? "yes" : "no")
             }
           />
-          <h6 className="mb-0 fw-semibold "style={{ color: '#5a6c5b' }}>
+          <h6 className="mb-0 fw-semibold fs-6"style={{ color: '#5a6c5b' }}>
             Have you/spouse ever been REFUSED by any country?
           </h6>
         </div>
@@ -690,7 +690,7 @@ const AdditionalDetails = () => {
               )
             }
           />
-          <h6 className="mb-0 fw-semibold "style={{ color: '#5a6c5b' }}>
+          <h6 className="mb-0 fw-semibold fs-6 "style={{ color: '#5a6c5b' }}>
             Do you have experience managing a business?
           </h6>
         </div>
@@ -722,7 +722,7 @@ const AdditionalDetails = () => {
             //   )
             // }
           />
-          <h6 className="mb-0 fw-semibold "style={{ color: '#5a6c5b' }}>
+          <h6 className="mb-0 fw-semibold fs-6 "style={{ color: '#5a6c5b' }}>
             Your Networth & Investment
           </h6>
         </div>

@@ -126,7 +126,7 @@ const ReusableTable = ({
   return (
     <div className={`${tableSize}-table-container`}>
       <div className="card-header d-flex justify-content-between align-items-center py-3 px-4 border-bottom">
-        <h6 className="mb-0 fw-semibold" style={{ color: "#5a6c5b" }}>
+        <h6 className="mb-0 fw-semibold fs-5" style={{ color: "#5a6c5b" }}>
           {title}
         </h6>
         <button

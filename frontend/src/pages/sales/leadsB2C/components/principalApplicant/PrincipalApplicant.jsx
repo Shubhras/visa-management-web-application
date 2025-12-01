@@ -127,7 +127,7 @@ const ReusableTable = ({
     return (
         <div className={`${tableSize}-table-container`}>
             <div className="card-header d-flex justify-content-between align-items-center py-3 px-4 border-bottom">
-                <h6 className="mb-0 fw-semibold" style={{ color: '#5a6c5b' }}>{title}</h6>
+                <h6 className="mb-0 fw-semibold fs-5" style={{ color: '#5a6c5b' }}>{title}</h6>
                 <button
                     onClick={handleAddNew}
                     className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
@@ -477,7 +477,7 @@ const PrincipalApplicantTables = () => {
                 {/* Entrance Test Section */}
                 <div className="mb-4 small-table-container">
                     <div className="card-header py-3 px-4 ">
-                        <h6 className="mb-0 fw-semibold" style={{ color: '#5a6c5b' }}>Entrance Test Ability (PA)</h6>
+                        <h6 className="mb-0 fw-semibold fs-5" style={{ color: '#5a6c5b' }}>Entrance Test Ability (PA)</h6>
                     </div>
                     <div className="mt-1">
                         <div className="row g-3 align-items-end">

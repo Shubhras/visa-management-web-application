@@ -135,8 +135,6 @@ const MasterLayout = ({ children }) => {
     "Occupation Prospect",
     "Occupation Category",
     "Occupation Version"
-
-
   ]);
 
 
@@ -153,7 +151,7 @@ const MasterLayout = ({ children }) => {
       name: "Sales",
       submenu: [
         { name: "Leads B2C", path: "/leads-B2C" },
-        { name: "InquiryB2C", path: "/inquiryB2C" },
+        { name: "Inquiry B2C", path: "/inquiry-B2C" },
       ],
 
     },
