@@ -127,9 +127,7 @@ const MasterLayout = ({ children }) => {
     "Process Sub Status Name",
     "Process Type",
     "Payment To",
-    "Payment Category"
-
-
+    "Payment Category", 
   ]);
 
 
@@ -146,7 +144,7 @@ const MasterLayout = ({ children }) => {
       name: "Sales",
       submenu: [
         { name: "Leads B2C", path: "/leads-B2C" },
-        { name: "InquiryB2C", path: "/inquiryB2C" },
+        { name: "Inquiry B2C", path: "/inquiry-B2C" },
       ],
 
     },
