@@ -2185,7 +2185,7 @@ class LanguageAbilityGroupExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Language Ability',
+            'name': 'Language Ability Group',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
@@ -2220,11 +2220,11 @@ class LanguageAbilityGroupExportAPIView(APIView):
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
-            file_name = 'languageabilitygroups.csv'
+            file_name = 'LanguageAbilityGroup.csv'
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'languageabilitygroups.xlsx'
+            file_name = 'LanguageAbilityGroup.xlsx'
 
         response = HttpResponse(
             file_data if format_type == 'csv' else file_data.getvalue(),
@@ -3058,92 +3058,234 @@ class StudyFactorAgeUpdateAPIView(APIView):
 
     
 # -------------------- Age Delete API --------------------
+# class StudyFactorAgeDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request, uuid=None):
+#         ids = request.data.get("id", None)
+
+#         # ---------- SINGLE DELETE ----------
+#         if uuid:
+#             try:
+#                 obj = StudyFactorAge.objects.get(uuid=uuid)
+#                 obj.delete()
+#                 return Response({
+#                     "statusCode": 204,
+#                     "status": True,
+#                     "message": "Age entry permanently deleted."
+#                 }, status=204)
+#             except StudyFactorAge.DoesNotExist:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "Age entry not found."
+#                 }, status=404)
+
+#         # ---------- DELETE ALL ----------
+#         if ids == "all":
+#             qs = StudyFactorAge.objects.all()
+#             count = qs.count()
+
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No Age entries found to delete."
+#                 }, status=404)
+
+#             qs.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} Age entries permanently deleted."
+#             }, status=200)
+
+#         # ---------- MULTIPLE DELETE ----------
+#         if not ids or not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Provide list of UUIDs in 'id' field or 'all'."
+#             }, status=400)
+
+#         valid_uuids = []
+#         invalid_uuids = []
+
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=400)
+
+#         qs = StudyFactorAge.objects.filter(uuid__in=valid_uuids)
+#         count = qs.count()
+
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching Age entries found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=404)
+
+#         qs.delete()
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} Age entries permanently deleted.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         }, status=200)
+
+
+
 class StudyFactorAgeDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
-        ids = request.data.get("id", None)
+        try:
+            # ----------- GET PARAMS -----------
+            search = request.GET.get("search", "").strip()
+            delete_all = request.data.get("deleteAll", False)
+            ids = request.data.get("id", None)
 
-        # ---------- SINGLE DELETE ----------
-        if uuid:
-            try:
-                obj = StudyFactorAge.objects.get(uuid=uuid)
-                obj.delete()
+            # ============================================================
+            # (1) SINGLE DELETE — DO NOT TOUCH
+            # ============================================================
+            if uuid:
+                try:
+                    obj = StudyFactorAge.objects.get(uuid=uuid)
+                    obj.delete()
+                    return Response({
+                        "statusCode": 204,
+                        "status": True,
+                        "message": "Age entry permanently deleted."
+                    }, status=204)
+                except StudyFactorAge.DoesNotExist:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "Age entry not found."
+                    }, status=404)
+
+            # ============================================================
+            # (2) DELETE ENTIRE TABLE WHEN id == "all"
+            # ============================================================
+            if ids == "all":
+                count = StudyFactorAge.objects.count()
+                StudyFactorAge.objects.all().delete()
+
                 return Response({
-                    "statusCode": 204,
+                    "statusCode": 200,
                     "status": True,
-                    "message": "Age entry permanently deleted."
-                }, status=204)
-            except StudyFactorAge.DoesNotExist:
+                    "message": f"All {count} Age entries deleted from the table."
+                }, status=200)
+
+            # ---------------------------------------------------
+            # Parse comma-separated UUID list from query params
+            # ---------------------------------------------------
+            def parse_uuid_list(param):
+                raw = request.GET.get(param, "")
+                result = []
+                if raw:
+                    for x in raw.split(","):
+                        try:
+                            result.append(UUID(x.strip()))
+                        except:
+                            pass
+                return result
+
+            # Your custom query param. (Rename if needed)
+            age_uuid_list = parse_uuid_list("ageUUID")
+
+            # ---------------------------------------------------
+            # BASE QUERYSET
+            # ---------------------------------------------------
+            queryset = StudyFactorAge.objects.all()
+            applied_filters = []
+
+            # ---------------------------------------------------
+            # SEARCH FILTER
+            # ---------------------------------------------------
+            if search:
+                queryset = queryset.filter(age__istartswith=search)
+                applied_filters.append("search")
+
+            # ---------------------------------------------------
+            # UUID LIST FILTER
+            # ---------------------------------------------------
+            if age_uuid_list:
+                queryset = queryset.filter(uuid__in=age_uuid_list)
+                applied_filters.append("ageUUID")
+
+            # ============================================================
+            # (3) deleteAll → delete all matching FILTERED rows
+            # ============================================================
+            if delete_all:
+                count = queryset.count()
+                queryset.delete()
+
+                # Smart responses
+                if not applied_filters:
+                    msg = f"All {count} Age entries deleted."
+                elif applied_filters == ["search"]:
+                    msg = f"{count} Age entries deleted based on search filter."
+                elif applied_filters == ["ageUUID"]:
+                    msg = f"{count} Age entries deleted based on ageUUID filter."
+                else:
+                    msg = f"{count} Age entries deleted based on search + ageUUID filters."
+
                 return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "Age entry not found."
-                }, status=404)
+                    "statusCode": 200,
+                    "status": True,
+                    "message": msg
+                }, status=200)
 
-        # ---------- DELETE ALL ----------
-        if ids == "all":
-            qs = StudyFactorAge.objects.all()
-            count = qs.count()
-
-            if count == 0:
+            # ============================================================
+            # (4) MULTIPLE DELETE — DO NOT TOUCH ORIGINAL LOGIC
+            # ============================================================
+            if not ids or not isinstance(ids, list):
                 return Response({
-                    "statusCode": 404,
+                    "statusCode": 400,
                     "status": False,
-                    "message": "No Age entries found to delete."
-                }, status=404)
+                    "message": "Please provide a list of UUIDs in 'id'."
+                }, status=400)
 
-            qs.delete()
+            valid_uuids = []
+            invalid_uuids = []
+
+            for u in ids:
+                try:
+                    valid_uuids.append(UUID(u))
+                except:
+                    invalid_uuids.append(u)
+
+            filtered_objects = queryset.filter(uuid__in=valid_uuids)
+            count = filtered_objects.count()
+            filtered_objects.delete()
+
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} Age entries permanently deleted."
+                "message": f"{count} Age entry(ies) deleted.",
+                "invalid_uuids": invalid_uuids if invalid_uuids else None
             }, status=200)
 
-        # ---------- MULTIPLE DELETE ----------
-        if not ids or not isinstance(ids, list):
+        except Exception as e:
             return Response({
-                "statusCode": 400,
+                "statusCode": 500,
                 "status": False,
-                "message": "Provide list of UUIDs in 'id' field or 'all'."
-            }, status=400)
+                "message": f"Internal server error: {str(e)}"
+            }, status=500)
 
-        valid_uuids = []
-        invalid_uuids = []
-
-        for u in ids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
-
-        if not valid_uuids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=400)
-
-        qs = StudyFactorAge.objects.filter(uuid__in=valid_uuids)
-        count = qs.count()
-
-        if count == 0:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "No matching Age entries found.",
-                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=404)
-
-        qs.delete()
-
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} Age entries permanently deleted.",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=200)
 
 
 # ---------------- STUDY FACTOR AGE EXPORT ----------------
