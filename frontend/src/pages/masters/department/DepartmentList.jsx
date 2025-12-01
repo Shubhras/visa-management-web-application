@@ -377,8 +377,14 @@ const DepartmentList = () => {
       toast.error("No department selected for deletion.");
       return;
     }
+    const deleteAll = selectAllOrNot === "all" && Boolean(tableState.search?.trim());
+    const payloadSend = {
+      deleteAll: deleteAll,
+      id: deleteAll == true ? "" : sendPayload,
+      search: tableState.search || '',
+    };
     dispatch(
-      departmentDelete(sendPayload, (response, error) => {
+      departmentDelete(payloadSend, (response, error) => {
         if (error) {
           toast.error(error?.response?.data?.message || "server error");
         } else {
@@ -394,7 +400,8 @@ const DepartmentList = () => {
             setSelectedRows([]);
             setSelectAllOrNot("");
             setDeleteId(null);
-            fetchDepartmentList();
+            //fetchDepartmentList();
+            clearAllFilters();
           } else {
             toast.error("Something went wrong.");
           }

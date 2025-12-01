@@ -104,7 +104,7 @@ const AddImportDegreeAwardedInstituteModal = ({ show, handleClose }) => {
                     if (response?.skipped_rows?.length > 0) {
                         const prepareData = {
                             data: response.skipped_rows || [],
-                            headers: ["Country", "State", "Education Level ", "Degree Awarded By", "Degree Awarded Institute","Reason"],
+                            headers: ["Country", "State", "Education Level ", "Degree Awarded By", "Degree Awarded Institute","Description","Reason"],
                             sheetName: "DegreeAwardedInstitute",
                             fileName: "DegreeAwardedInstitute",
                         };

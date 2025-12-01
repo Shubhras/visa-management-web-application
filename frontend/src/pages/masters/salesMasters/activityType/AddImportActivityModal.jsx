@@ -107,7 +107,7 @@ const AddImportActivityModal = ({ show, handleClose }) => {
             if (response?.skipped_rows?.length > 0) {
               const prepareData = {
                 data: response.skipped_rows || [],
-                headers: ["Activity Type", "Reason"],
+                headers: ["Activity Type", "Description","Reason"],
                 sheetName: "ActivityType",
                 fileName: "ActivityType",
               };

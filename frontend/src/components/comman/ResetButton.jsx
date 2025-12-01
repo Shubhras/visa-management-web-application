@@ -6,12 +6,13 @@ const ResetButton = ({ onClick, tableState, columnFilters, globalSearch, selecte
   return (
     <button
       onClick={onClick}
-      className="btn btn-sm py-1 fw-medium"
-      style={{
-        backgroundColor: active ? "#5a6c5b" : "#fff",
-        color: active ? "#fff" : "#000",
-        border: "1px solid #5a6c5b",
-      }}
+      // className="btn btn-sm py-1 fw-medium"
+       className={`btn btn-sm py-1 fw-medium ${active ? "comman-active-btn-reset": "comman-inactive-btn-reset"}`}
+      // style={{
+      //   backgroundColor: active ? "#5a6c5b" : "#fff",
+      //   color: active ? "#fff" : "#000",
+      //   border: "1px solid #5a6c5b",
+      // }}
     >
       Reset
     </button>

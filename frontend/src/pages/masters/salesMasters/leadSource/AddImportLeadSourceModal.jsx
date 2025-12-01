@@ -109,7 +109,7 @@ const AddImportLeadSourceModal = ({ show, handleClose }) => {
             if (response?.skipped_rows?.length > 0) {
               const prepareData = {
                 data: response.skipped_rows || [],
-                headers: ["Lead Source", "Reason"],
+                headers: ["Lead Source","Description", "Reason"],
                 sheetName: "LeadSource",
                 fileName: "LeadSource",
               };

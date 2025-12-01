@@ -1612,6 +1612,8 @@ class RepresentingCountrySerializer(serializers.ModelSerializer):
         validated_data['currency_code'] = country.currencyCode
 
         return super().create(validated_data)
+    
+    
 class VisaMainSerializer(serializers.ModelSerializer):
     class Meta:
         model = VisaMain
@@ -1663,6 +1665,7 @@ class ApplicantTypeSerializer(serializers.ModelSerializer):
 
 
 
+
 class DocumentCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = DocumentCategory
@@ -1676,6 +1679,7 @@ class DocumentCategorySerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["uuid", "created_at", "updated_at"]
+
 
 
 class DocumentTypeSerializer(serializers.ModelSerializer):
@@ -2531,19 +2535,6 @@ class EntranceTestAbilityGroupSerializer(serializers.ModelSerializer):
 
 #--------------------------------------process master--------------------------
 
-class DocumentCategorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = DocumentCategory
-        fields = [
-            "id",
-            "uuid",
-            "name",
-            "description",
-            "is_deleted",
-            "created_at",
-            "updated_at",
-        ]
-        read_only_fields = ["uuid", "created_at", "updated_at"]
 
 
 class DocumentTypeSerializer(serializers.ModelSerializer):
@@ -2901,6 +2892,12 @@ class StudyFactorAcademicResultSerializer(serializers.ModelSerializer):
     academic_result_group_name = serializers.CharField(source='academic_result_group.name', read_only=True)
     minimum_academic_result_required_name = serializers.CharField(source='minimum_academic_result_required.name', read_only=True)
 
+    # Accept UUID for FK because model uses to_field='uuid'
+    minimum_academic_result_required = serializers.SlugRelatedField(
+        queryset=AcademicResultType.objects.all(),
+        slug_field='uuid'
+    )
+
     class Meta:
         model = StudyFactorAcademicResult
         fields = [
@@ -2909,7 +2906,8 @@ class StudyFactorAcademicResultSerializer(serializers.ModelSerializer):
             'academic_result_group', 'academic_result_group_name',
             'minimum_academic_result_required', 'minimum_academic_result_required_name',
             'description',
-            'is_deleted', 'created_at', 'updated_at',
+            'is_deleted',
+            'created_at', 'updated_at',
         ]
         read_only_fields = ['uuid', 'created_at', 'updated_at']
 
@@ -2950,10 +2948,74 @@ class StudyFactorBacklogsSerializer(serializers.ModelSerializer):
 
 
 class StudyFactorGAPSerializer(serializers.ModelSerializer):
+
+    factor_for = serializers.SlugRelatedField(
+        slug_field="uuid",
+        queryset=FactorFor.objects.all()
+    )
+
+    study_gap_group = serializers.SlugRelatedField(
+        slug_field="uuid",
+        queryset=GAPGroup.objects.all()
+    )
+
+    country_for_admission = serializers.SlugRelatedField(
+        many=True,
+        slug_field="uuid",
+        queryset=RepresentingCountry.objects.all(),
+        required=False
+    )
+
+    institute_type = serializers.SlugRelatedField(
+        many=True,
+        slug_field="uuid",
+        queryset=InstituteType.objects.all(),
+        required=False
+    )
+
+    course_level = serializers.SlugRelatedField(
+        many=True,
+        slug_field="uuid",
+        queryset=CourseLevel.objects.all(),
+        required=False
+    )
+
     class Meta:
         model = StudyFactorGAP
-        fields = "__all__"
-        read_only_fields = ["uuid", "created_at", "updated_at"]
+        fields = [
+            "id",
+            "uuid",
+            "factor_for",
+            "study_gap_group",
+            "maximum_gap_accepted",
+            "country_for_admission",
+            "institute_type",
+            "course_level",
+            "description",
+            "is_deleted",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "uuid", "created_at", "updated_at"]
+
+    def create(self, validated_data):
+        # Pop M2M fields first
+        country_data = validated_data.pop("country_for_admission", [])
+        institute_data = validated_data.pop("institute_type", [])
+        course_data = validated_data.pop("course_level", [])
+
+        # Create main instance
+        instance = StudyFactorGAP.objects.create(**validated_data)
+
+        # Set M2M relationships
+        if country_data:
+            instance.country_for_admission.set(country_data)
+        if institute_data:
+            instance.institute_type.set(institute_data)
+        if course_data:
+            instance.course_level.set(course_data)
+
+        return instance
 
 
 class StudyFactorLanguageAbilitySerializer(serializers.ModelSerializer):

@@ -216,48 +216,51 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
 
         if (validateForm()) {
             const formDataToSend = new FormData();
-            formDataToSend.append('country_name', formData.country_name);
+            formDataToSend.append('country', formData.country_name);
             formDataToSend.append('official_name', formData.official_name);
             formDataToSend.append('short_name', formData.short_name);
             formDataToSend.append('continent', formData.continent);
             formDataToSend.append('capital_city', formData.capital_city);
-            formDataToSend.append('calling_code', formData.calling_code);
+            formDataToSend.append('dial_codes', formData.calling_code);
             formDataToSend.append('currency_full_name', formData.currency_full_name);
             formDataToSend.append('currency_short_name', formData.currency_short_name);
             formDataToSend.append('currency_code', formData.currency_code);
             formDataToSend.append('no_of_states', formData.no_of_states);
             formDataToSend.append('no_of_territories', formData.no_of_territories);
-            formDataToSend.append('total_states_territories', formData.total_states_territories);
+            formDataToSend.append('total_states_and_territories', formData.total_states_territories);
             formDataToSend.append('independence_day', formData.independence_day);
             formDataToSend.append('government_type', formData.government_type);
             formDataToSend.append('official_language', formData.official_language);
-            formDataToSend.append('land_area', formData.land_area);
-            formDataToSend.append('water_area', formData.water_area);
-            formDataToSend.append('total_area', formData.total_area);
+            formDataToSend.append('land_area_sq_km', formData.land_area);
+            formDataToSend.append('water_area_sq_km', formData.water_area);
+            formDataToSend.append('total_area_sq_km', formData.total_area);
             formDataToSend.append('population', formData.population);
             formDataToSend.append('religions', formData.religions);
             formDataToSend.append('largest_state', formData.largest_state);
-            formDataToSend.append('smallest_state', formData.smallest_state);
             formDataToSend.append('major_cities', formData.major_cities);
             formDataToSend.append('national_animal', formData.national_animal);
             formDataToSend.append('national_bird', formData.national_bird);
             formDataToSend.append('national_flower', formData.national_flower);
             formDataToSend.append('unemployment', formData.unemployment);
             formDataToSend.append('skilled_shortages', formData.skilled_shortages);
-            formDataToSend.append('border_countries', formData.border_countries);
+            formDataToSend.append('border_countries_and_oceans', formData.border_countries);
             formDataToSend.append('description', formData.description);
-
-            // Append monthly living cost fields
-            formDataToSend.append('monthly_living_cost_currency', formData.monthly_living_cost_currency);
-            formDataToSend.append('monthly_living_cost_amount', formData.monthly_living_cost_amount);
-
-            // Append files - exactly like you mentioned
             if (files.national_flag) {
                 formDataToSend.append('national_flag', files.national_flag);
             }
             if (files.country_map) {
                 formDataToSend.append('country_map', files.country_map);
             }
+
+
+
+            formDataToSend.append('smallest_state', formData.smallest_state);
+            // Append monthly living cost fields
+            formDataToSend.append('monthly_living_cost_currency', formData.monthly_living_cost_currency);
+            formDataToSend.append('monthly_living_cost_amount', formData.monthly_living_cost_amount);
+
+            // Append files - exactly like you mentioned
+
             if (mode === 'edit') {
                 formDataToSend.append('uuid', formData.uuid);
             }
@@ -401,10 +404,12 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                         />
                     </div>
 
-                    <div className="modal-body">
+                    <div className="modal-body ">
                         <form onSubmit={handleSubmit}>
                             <div className=""  >
-                                <div className="row" style={{ maxHeight: "500px", overflowY: "auto", scrollbarWidth: "none" }}  >
+                                <div className="row modal-scrollable-content" 
+                                // style={{ maxHeight: "500px", overflowY: "auto", scrollbarWidth: "none" }}  
+                                >
                                     {/* Country Name */}
                                     <div className="col-6 mb-20">
                                         <label className="form-label fw-semibold text-sm mb-8">

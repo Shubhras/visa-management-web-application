@@ -337,8 +337,9 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
           <div className="modal-body p-24 pt-10">
             <form onSubmit={handleSubmit}>
               <div className="row">
-                {/* Country */}
-                {/* <div className="col-12 mb-10">
+                <div className='modal-scrollable-content'>
+                  {/* Country */}
+                  {/* <div className="col-12 mb-10">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Country <span className="text-danger">*</span>
                   </label>
@@ -373,190 +374,191 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
                   )}
                 </div> */}
 
-                {/* Category */}
-                <div className="col-12 mb-10">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Accreditation Category <span className="text-danger">*</span>
-                  </label>
-                  <Select
-                    options={acccrediationCategoryListData.map((option) => ({
-                      value: option.uuid,
-                      label: option.name,
-                    }))}
-                    value={
-                      formData.category
-                        ? acccrediationCategoryListData
-                          .map((option) => ({
-                            value: option.uuid,
-                            label: option.name,
-                          }))
-                          .find((opt) => opt.value === formData.category)
-                        : null
-                    }
-                    onChange={handleCategorySelectChange}
-                    filterOption={customFilterOptionCategory}
-                    placeholder="Select accreditation category"
-                    isClearable
-                    isSearchable
-                    className={`custom-select-container ${errors.category ? "is-invalid" : ""
-                      }`}
-                    classNamePrefix="custom-select"
-                  />
-                  {errors.category && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.category}
-                    </div>
-                  )}
-                </div>
-
-                {/* Accreditation Full Name */}
-                <div className="col-12 mb-10">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Accreditation Full Name <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="full_name"
-                    value={formData.full_name}
-                    onChange={handleChange}
-                    className={`form-control radius-8 ${errors.full_name ? 'is-invalid' : ''}`}
-                    placeholder="Enter accrediation full name"
-                  />
-                  {errors.full_name && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.full_name}
-                    </div>
-                  )}
-                </div>
-
-                {/* Accreditation Short Name */}
-                <div className="col-12 mb-10">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Accreditation Short Name
-                  </label>
-                  <input
-                    type="text"
-                    name="short_name"
-                    value={formData.short_name}
-                    onChange={handleChange}
-                    className={`form-control radius-8`}
-                    placeholder="Enter accrediation short name"
-                  />
-                </div>
-
-                {/* Issuing Authority */}
-                <div className="col-12 mb-10">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Accreditation Issuing Authority Name
-                  </label>
-                  <input
-                    type="text"
-                    name="issuing_authority"
-                    value={formData.issuing_authority}
-                    onChange={handleChange}
-                    className={`form-control radius-8`}
-                    placeholder="Enter accrediation issuing authority"
-                  />
-                </div>
-
-                {/* Valid Upto */}
-                <div className="col-12 mb-10">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Accreditation Valid Upto
-                  </label>
-                  <div className="row g-2">
-                    {/* Type Dropdown */}
-                    <div className="col-md-4">
-                      <select
-                        name="valid_upto_type"
-                        value={formData.valid_upto_type}
-                        onChange={handleChange}
-                        className="form-control form-select radius-8"
-                      >
-                        <option value="">Select Type</option>
-                        <option value="Permanent">Permanent</option>
-                        <option value="Date">Date</option>
-                        <option value="Valid Upto">Valid Upto</option>
-                      </select>
-                    </div>
-
-                    {/* Show Date Picker if Date is selected */}
-                    {formData.valid_upto_type === 'Date' && (
-                      <div className="col-md-8">
-                        <input
-                          type="date"
-                          name="valid_upto"
-                          value={formData.valid_upto}
-                          onChange={handleChange}
-                          className={`form-control radius-8 ${errors.valid_upto ? 'is-invalid' : ''}`}
-                        />
-                        {errors.valid_upto && (
-                          <div className="text-danger text-sm mt-1">
-                            {errors.valid_upto}
-                          </div>
-                        )}
+                  {/* Category */}
+                  <div className="col-12 mb-10">
+                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                      Accreditation Category <span className="text-danger">*</span>
+                    </label>
+                    <Select
+                      options={acccrediationCategoryListData.map((option) => ({
+                        value: option.uuid,
+                        label: option.name,
+                      }))}
+                      value={
+                        formData.category
+                          ? acccrediationCategoryListData
+                            .map((option) => ({
+                              value: option.uuid,
+                              label: option.name,
+                            }))
+                            .find((opt) => opt.value === formData.category)
+                          : null
+                      }
+                      onChange={handleCategorySelectChange}
+                      filterOption={customFilterOptionCategory}
+                      placeholder="Select accreditation category"
+                      isClearable
+                      isSearchable
+                      className={`custom-select-container ${errors.category ? "is-invalid" : ""
+                        }`}
+                      classNamePrefix="custom-select"
+                    />
+                    {errors.category && (
+                      <div className="text-danger text-sm mt-1">
+                        {errors.category}
                       </div>
                     )}
+                  </div>
 
-                    {/* Show Numeric and Unit fields if Valid Upto is selected */}
-                    {formData.valid_upto_type === 'Valid Upto' && (
-                      <>
-                        <div className="col-md-4">
-                          <input
-                            type="number"
-                            name="valid_upto_numeric"
-                            value={formData.valid_upto_numeric}
-                            onChange={handleChange}
-                            className={`form-control radius-8 ${errors.valid_upto_numeric ? 'is-invalid' : ''}`}
-                            placeholder="Enter number"
-                          />
-                          {errors.valid_upto_numeric && (
-                            <div className="text-danger text-sm mt-1">
-                              {errors.valid_upto_numeric}
-                            </div>
-                          )}
-                        </div>
-                        <div className="col-md-4">
-                          <select
-                            name="valid_upto_unit"
-                            value={formData.valid_upto_unit}
-                            onChange={handleChange}
-                            className={`form-control form-select radius-8 ${errors.valid_upto_unit ? 'is-invalid' : ''}`}
-                          >
-                            <option value="">Select Period</option>
-                            <option value="Weeks">Weeks</option>
-                            <option value="Months">Months</option>
-                            <option value="Years">Years</option>
-                          </select>
-                          {errors.valid_upto_unit && (
-                            <div className="text-danger text-sm mt-1">
-                              {errors.valid_upto_unit}
-                            </div>
-                          )}
-                        </div>
-                      </>
+                  {/* Accreditation Full Name */}
+                  <div className="col-12 mb-10">
+                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                      Accreditation Full Name <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="full_name"
+                      value={formData.full_name}
+                      onChange={handleChange}
+                      className={`form-control radius-8 ${errors.full_name ? 'is-invalid' : ''}`}
+                      placeholder="Enter accrediation full name"
+                    />
+                    {errors.full_name && (
+                      <div className="text-danger text-sm mt-1">
+                        {errors.full_name}
+                      </div>
                     )}
                   </div>
-                </div>
 
-                {/* Description */}
-                <div className="col-12 mb-10">
-                  <label
-                    htmlFor="desc"
-                    className="form-label fw-semibold text-primary-light text-sm mb-0"
-                  >
-                    Description
-                  </label>
-                  <textarea
-                    className={`form-control ${errors.description ? 'is-invalid' : ''}`}
-                    id="desc"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    rows={4}
-                    cols={50}
-                    placeholder="Description"
-                  />
+                  {/* Accreditation Short Name */}
+                  <div className="col-12 mb-10">
+                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                      Accreditation Short Name
+                    </label>
+                    <input
+                      type="text"
+                      name="short_name"
+                      value={formData.short_name}
+                      onChange={handleChange}
+                      className={`form-control radius-8`}
+                      placeholder="Enter accrediation short name"
+                    />
+                  </div>
+
+                  {/* Issuing Authority */}
+                  <div className="col-12 mb-10">
+                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                      Accreditation Issuing Authority Name
+                    </label>
+                    <input
+                      type="text"
+                      name="issuing_authority"
+                      value={formData.issuing_authority}
+                      onChange={handleChange}
+                      className={`form-control radius-8`}
+                      placeholder="Enter accrediation issuing authority"
+                    />
+                  </div>
+
+                  {/* Valid Upto */}
+                  <div className="col-12 mb-10">
+                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                      Accreditation Valid Upto
+                    </label>
+                    <div className="row g-2">
+                      {/* Type Dropdown */}
+                      <div className="col-md-4">
+                        <select
+                          name="valid_upto_type"
+                          value={formData.valid_upto_type}
+                          onChange={handleChange}
+                          className="form-control form-select radius-8"
+                        >
+                          <option value="">Select Type</option>
+                          <option value="Permanent">Permanent</option>
+                          <option value="Date">Date</option>
+                          <option value="Valid Upto">Valid Upto</option>
+                        </select>
+                      </div>
+
+                      {/* Show Date Picker if Date is selected */}
+                      {formData.valid_upto_type === 'Date' && (
+                        <div className="col-md-8">
+                          <input
+                            type="date"
+                            name="valid_upto"
+                            value={formData.valid_upto}
+                            onChange={handleChange}
+                            className={`form-control radius-8 ${errors.valid_upto ? 'is-invalid' : ''}`}
+                          />
+                          {errors.valid_upto && (
+                            <div className="text-danger text-sm mt-1">
+                              {errors.valid_upto}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Show Numeric and Unit fields if Valid Upto is selected */}
+                      {formData.valid_upto_type === 'Valid Upto' && (
+                        <>
+                          <div className="col-md-4">
+                            <input
+                              type="number"
+                              name="valid_upto_numeric"
+                              value={formData.valid_upto_numeric}
+                              onChange={handleChange}
+                              className={`form-control radius-8 ${errors.valid_upto_numeric ? 'is-invalid' : ''}`}
+                              placeholder="Enter number"
+                            />
+                            {errors.valid_upto_numeric && (
+                              <div className="text-danger text-sm mt-1">
+                                {errors.valid_upto_numeric}
+                              </div>
+                            )}
+                          </div>
+                          <div className="col-md-4">
+                            <select
+                              name="valid_upto_unit"
+                              value={formData.valid_upto_unit}
+                              onChange={handleChange}
+                              className={`form-control form-select radius-8 ${errors.valid_upto_unit ? 'is-invalid' : ''}`}
+                            >
+                              <option value="">Select Period</option>
+                              <option value="Weeks">Weeks</option>
+                              <option value="Months">Months</option>
+                              <option value="Years">Years</option>
+                            </select>
+                            {errors.valid_upto_unit && (
+                              <div className="text-danger text-sm mt-1">
+                                {errors.valid_upto_unit}
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  <div className="col-12 mb-10">
+                    <label
+                      htmlFor="desc"
+                      className="form-label fw-semibold text-primary-light text-sm mb-0"
+                    >
+                      Description
+                    </label>
+                    <textarea
+                      className={`form-control ${errors.description ? 'is-invalid' : ''}`}
+                      id="desc"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      rows={4}
+                      cols={50}
+                      placeholder="Description"
+                    />
+                  </div>
                 </div>
 
                 {/* Buttons */}

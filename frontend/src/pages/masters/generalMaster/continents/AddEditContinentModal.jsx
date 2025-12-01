@@ -153,43 +153,45 @@ const AddEditContinentModel = ({ show, handleClose, mode = 'add', rowData = null
             <form onSubmit={handleSubmit}>
               <div className="row">
                 {/* Continent Name */}
-                <div className="col-12 mb-10">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Continent <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="continentName"
-                    value={formData.continentName}
-                    onChange={handleChange}
-                    className={`form-control radius-8 ${errors.continentName ? 'is-invalid' : ''}`}
-                    placeholder="Enter continent"
-                  />
-                  {errors.continentName && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.continentName}
-                    </div>
-                  )}
-                </div>
+                <div className='modal-scrollable-content'>
+                  <div className="col-12 mb-10">
+                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                      Continent <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="continentName"
+                      value={formData.continentName}
+                      onChange={handleChange}
+                      className={`form-control radius-8 ${errors.continentName ? 'is-invalid' : ''}`}
+                      placeholder="Enter continent"
+                    />
+                    {errors.continentName && (
+                      <div className="text-danger text-sm mt-1">
+                        {errors.continentName}
+                      </div>
+                    )}
+                  </div>
 
-                {/* Description */}
-                <div className="col-12 mb-10">
-                  <label
-                    htmlFor="desc"
-                    className="form-label fw-semibold text-primary-light text-sm mb-0"
-                  >
-                    Description
-                  </label>
-                  <textarea
-                    className={`form-control ${errors.description ? 'is-invalid' : ''}`}
-                    id="desc"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    rows={4}
-                    cols={50}
-                    placeholder="Description"
-                  />
+                  {/* Description */}
+                  <div className="col-12 mb-10">
+                    <label
+                      htmlFor="desc"
+                      className="form-label fw-semibold text-primary-light text-sm mb-0"
+                    >
+                      Description
+                    </label>
+                    <textarea
+                      className={`form-control ${errors.description ? 'is-invalid' : ''}`}
+                      id="desc"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      rows={4}
+                      cols={50}
+                      placeholder="Description"
+                    />
+                  </div>
                 </div>
 
                 {/* Buttons */}

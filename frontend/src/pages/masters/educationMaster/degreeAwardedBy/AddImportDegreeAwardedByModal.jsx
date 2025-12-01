@@ -103,7 +103,7 @@ const AddImportDegreeAwardedByModal = ({ show, handleClose }) => {
                     if (response?.skipped_rows?.length > 0) {
                         const prepareData = {
                             data: response.skipped_rows || [],
-                            headers: ["Country", "Education Level", "Degree Awarded By", "Reason"],
+                            headers: ["Country", "Education Level", "Degree Awarded By","Description", "Reason"],
                             sheetName: "DegreeAwardedBy",
                             fileName: "StudySpecialisation",
                         };

@@ -98,7 +98,7 @@ const AddEditWorkRightsAfterStudyModal = ({ show, handleClose, mode = 'add', row
                     if (response?.statusCode === 200 && response?.status === true) {
                         toast.success(response?.message);
                         resetForm();
-                        handleClose();
+                        handleClose(true);
                     } else {
                         toast.error("Something went wrong.");
                     }
@@ -121,7 +121,7 @@ const AddEditWorkRightsAfterStudyModal = ({ show, handleClose, mode = 'add', row
     const onClose = () => {
         resetForm();
         setLoading(false);
-        handleClose();
+        handleClose(false);
     };
 
     // Conditional return after all hooks

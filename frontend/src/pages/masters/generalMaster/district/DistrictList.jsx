@@ -1504,8 +1504,17 @@ const DistrictList = () => {
       toast.error("No district selected for deletion.");
       return;
     }
+
+    const deleteAll = selectAllOrNot === "all" && ((tableState.search && tableState.search.trim() !== '') || columnFilters.countryId.length > 0 || columnFilters.stateId.length > 0);
+    const payloadSend = {
+      deleteAll: deleteAll,
+      country: columnFilters.countryId.length > 0 ? columnFilters.countryId : '',
+      state: columnFilters.stateId.length > 0 ? columnFilters.stateId : '',
+      id: deleteAll == true ? "" : sendPayload,
+      search: tableState.search || '',
+    };
     dispatch(
-      districtDelete(sendPayload, (response, error) => {
+      districtDelete(payloadSend, (response, error) => {
         if (error)
           toast.error(error?.response?.data?.message || "server error");
         else {
@@ -1657,22 +1666,20 @@ const DistrictList = () => {
                       <>
                         <button
                           onClick={() => handleSelectAllOrNot("onlySelected")}
-                          className={`btn btn-sm py-1 fw-medium ${
-                            selectAllOrNot === "onlySelected"
+                          className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "onlySelected"
                               ? "comman-btn-color"
                               : "comman-inactive-btn"
-                          }`}
+                            }`}
                         >
                           {" "}
                           {`Select (${selectedRows.length})`}{" "}
                         </button>
                         <button
                           onClick={() => handleSelectAllOrNot("all")}
-                          className={`btn btn-sm py-1 fw-medium ${
-                            selectAllOrNot === "all"
+                          className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "all"
                               ? "comman-btn-color"
                               : "comman-inactive-btn"
-                          }`}
+                            }`}
                         >
                           {" "}
                           {`Select All (${tableState.total})`}{" "}
@@ -1724,9 +1731,8 @@ const DistrictList = () => {
                       <nav>
                         <ul className="pagination mb-0 gap-4px">
                           <li
-                            className={`page-item ${
-                              !tableState.hasPrevious ? "disabled" : ""
-                            }`}
+                            className={`page-item ${!tableState.hasPrevious ? "disabled" : ""
+                              }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -1747,9 +1753,8 @@ const DistrictList = () => {
                             </button>
                           </li>
                           <li
-                            className={`page-item ${
-                              !tableState.hasPrevious ? "disabled" : ""
-                            }`}
+                            className={`page-item ${!tableState.hasPrevious ? "disabled" : ""
+                              }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -1814,9 +1819,8 @@ const DistrictList = () => {
                             </li>
                           ))}
                           <li
-                            className={`page-item ${
-                              !tableState.hasNext ? "disabled" : ""
-                            }`}
+                            className={`page-item ${!tableState.hasNext ? "disabled" : ""
+                              }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -1837,9 +1841,8 @@ const DistrictList = () => {
                             </button>
                           </li>
                           <li
-                            className={`page-item ${
-                              !tableState.hasNext ? "disabled" : ""
-                            }`}
+                            className={`page-item ${!tableState.hasNext ? "disabled" : ""
+                              }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -1911,11 +1914,10 @@ const DistrictList = () => {
                                           : "mdi:filter-outline"
                                       }
                                       width="18"
-                                      className={`ms-2 ${
-                                        columnFilters[column.field]?.length > 0
+                                      className={`ms-2 ${columnFilters[column.field]?.length > 0
                                           ? "comman-btn-color"
                                           : ""
-                                      }`}
+                                        }`}
                                       style={{ cursor: "pointer" }}
                                       onClick={(e) =>
                                         toggleFilterDropdown(e, column.field)
@@ -1929,13 +1931,12 @@ const DistrictList = () => {
                                         onClick={(e) => e.stopPropagation()}
                                       >
                                         <div
-                                          className={`filter-menu-item px-3 py-2 d-flex align-items-center ${
-                                            tableState.sort.find(
-                                              (s) => s.field === column.field
-                                            )?.order === "asc"
+                                          className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(
+                                            (s) => s.field === column.field
+                                          )?.order === "asc"
                                               ? "disabled-sort"
                                               : ""
-                                          }`}
+                                            }`}
                                           onClick={() =>
                                             applySortAsc(column.field)
                                           }
@@ -1948,13 +1949,12 @@ const DistrictList = () => {
                                           Sort Smallest to Largest
                                         </div>
                                         <div
-                                          className={`filter-menu-item px-3 py-2 d-flex align-items-center ${
-                                            tableState.sort.find(
-                                              (s) => s.field === column.field
-                                            )?.order === "desc"
+                                          className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(
+                                            (s) => s.field === column.field
+                                          )?.order === "desc"
                                               ? "disabled-sort"
                                               : ""
-                                          }`}
+                                            }`}
                                           onClick={() =>
                                             applySortDesc(column.field)
                                           }

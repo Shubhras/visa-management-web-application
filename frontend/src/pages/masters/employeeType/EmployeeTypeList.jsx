@@ -396,9 +396,15 @@ const EmployeeTypeList = () => {
       toast.error("No employee type selected for deletion.");
       return;
     }
+    const deleteAll = selectAllOrNot === "all" && Boolean(tableState.search?.trim());
+    const payloadSend = {
+      deleteAll: deleteAll,
+      id: deleteAll == true ? "" : sendPayload,
+      search: tableState.search || '',
+    };
 
     dispatch(
-      employeeTypeDelete(sendPayload, (response, error) => {
+      employeeTypeDelete(payloadSend, (response, error) => {
         if (error) {
           toast.error(error?.response?.data?.message || "server error");
         } else {
@@ -414,7 +420,8 @@ const EmployeeTypeList = () => {
             setSelectedRows([]);
             setSelectAllOrNot("");
             setDeleteId(null);
-            fetchEmployeeTypeList();
+            //fetchEmployeeTypeList();
+             clearAllFilters();
           } else {
             toast.error("Something went wrong.");
           }

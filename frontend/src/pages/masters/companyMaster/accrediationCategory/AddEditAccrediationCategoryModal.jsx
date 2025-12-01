@@ -154,43 +154,45 @@ const AddEditAccrediationCategoryModal = ({ show, handleClose, mode = 'add', row
             <form onSubmit={handleSubmit}>
               <div className="row">
                 {/* Accreditation Category  */}
-                <div className="col-12 mb-10">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Accreditation Category <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    className={`form-control radius-8 ${errors.name ? 'is-invalid' : ''}`}
-                    placeholder="Enter accrediation category"
-                  />
-                  {errors.name && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.name}
-                    </div>
-                  )}
-                </div>
+                <div className='modal-scrollable-content'>
+                  <div className="col-12 mb-10">
+                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                      Accreditation Category <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      className={`form-control radius-8 ${errors.name ? 'is-invalid' : ''}`}
+                      placeholder="Enter accrediation category"
+                    />
+                    {errors.name && (
+                      <div className="text-danger text-sm mt-1">
+                        {errors.name}
+                      </div>
+                    )}
+                  </div>
 
-                {/* Description */}
-                <div className="col-12 mb-10">
-                  <label
-                    htmlFor="desc"
-                    className="form-label fw-semibold text-primary-light text-sm mb-0"
-                  >
-                    Description
-                  </label>
-                  <textarea
-                    className={`form-control ${errors.description ? 'is-invalid' : ''}`}
-                    id="desc"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    rows={4}
-                    cols={50}
-                    placeholder="Description"
-                  />
+                  {/* Description */}
+                  <div className="col-12 mb-10">
+                    <label
+                      htmlFor="desc"
+                      className="form-label fw-semibold text-primary-light text-sm mb-0"
+                    >
+                      Description
+                    </label>
+                    <textarea
+                      className={`form-control ${errors.description ? 'is-invalid' : ''}`}
+                      id="desc"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      rows={4}
+                      cols={50}
+                      placeholder="Description"
+                    />
+                  </div>
                 </div>
 
                 {/* Buttons */}

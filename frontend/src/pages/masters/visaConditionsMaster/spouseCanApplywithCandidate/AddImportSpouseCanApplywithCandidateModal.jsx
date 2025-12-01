@@ -117,7 +117,7 @@ const AddImportSpouseCanApplywithCandidateModal = ({ show, handleClose }) => {
                     setFile(null);
                     setSheetNames([]);
                     setSelectedSheet('');
-                    handleClose();
+                    handleClose(true);
                 } else {
                     toast.error("Something went wrong.");
                 }
@@ -131,7 +131,7 @@ const AddImportSpouseCanApplywithCandidateModal = ({ show, handleClose }) => {
         setError('');
         setSheetNames([]);
         setSelectedSheet('');
-        handleClose();
+        handleClose(false);
         setLoading(false);
     };
     const handleDownloadSample = () => {

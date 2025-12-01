@@ -206,78 +206,80 @@ const AddEditOwnershipTypeModal = ({ show, handleClose, mode = 'add', rowData = 
             <form onSubmit={handleSubmit}>
               <div className="row">
                 {/* Company Type with React-Select */}
-                <div className="col-12 mb-10">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Company Type <span className="text-danger">*</span>
-                  </label>
-                  <Select
-                    options={stakeholderListData.map((option) => ({
-                      value: option.uuid,
-                      label: option.name,
-                    }))}
-                    value={
-                      formData.company_type
-                        ? stakeholderListData
-                          .map((option) => ({
-                            value: option.uuid,
-                            label: option.name,
-                          }))
-                          .find((opt) => opt.value === formData.company_type)
-                        : null
-                    }
-                    onChange={handleSelectChange}
-                    filterOption={customFilterOption}
-                    placeholder="Select company type"
-                    isClearable
-                    isSearchable
-                    className={`custom-select-container ${errors.company_type ? "is-invalid" : ""}`}
-                    classNamePrefix="custom-select"
-                  />
-                  {errors.company_type && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.company_type}
-                    </div>
-                  )}
-                </div>
+                <div className='modal-scrollable-content'>
+                  <div className="col-12 mb-10">
+                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                      Company Type <span className="text-danger">*</span>
+                    </label>
+                    <Select
+                      options={stakeholderListData.map((option) => ({
+                        value: option.uuid,
+                        label: option.name,
+                      }))}
+                      value={
+                        formData.company_type
+                          ? stakeholderListData
+                            .map((option) => ({
+                              value: option.uuid,
+                              label: option.name,
+                            }))
+                            .find((opt) => opt.value === formData.company_type)
+                          : null
+                      }
+                      onChange={handleSelectChange}
+                      filterOption={customFilterOption}
+                      placeholder="Select company type"
+                      isClearable
+                      isSearchable
+                      className={`custom-select-container ${errors.company_type ? "is-invalid" : ""}`}
+                      classNamePrefix="custom-select"
+                    />
+                    {errors.company_type && (
+                      <div className="text-danger text-sm mt-1">
+                        {errors.company_type}
+                      </div>
+                    )}
+                  </div>
 
-                {/* Ownership Type Name */}
-                <div className="col-12 mb-10">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Ownership Type <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    className={`form-control radius-8 ${errors.name ? 'is-invalid' : ''}`}
-                    placeholder="Enter ownership type"
-                  />
-                  {errors.name && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.name}
-                    </div>
-                  )}
-                </div>
+                  {/* Ownership Type Name */}
+                  <div className="col-12 mb-10">
+                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                      Ownership Type <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      className={`form-control radius-8 ${errors.name ? 'is-invalid' : ''}`}
+                      placeholder="Enter ownership type"
+                    />
+                    {errors.name && (
+                      <div className="text-danger text-sm mt-1">
+                        {errors.name}
+                      </div>
+                    )}
+                  </div>
 
-                {/* Description */}
-                <div className="col-12 mb-10">
-                  <label
-                    htmlFor="desc"
-                    className="form-label fw-semibold text-primary-light text-sm mb-0"
-                  >
-                    Description
-                  </label>
-                  <textarea
-                    className={`form-control ${errors.description ? 'is-invalid' : ''}`}
-                    id="desc"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    rows={4}
-                    cols={50}
-                    placeholder="Description"
-                  />
+                  {/* Description */}
+                  <div className="col-12 mb-10">
+                    <label
+                      htmlFor="desc"
+                      className="form-label fw-semibold text-primary-light text-sm mb-0"
+                    >
+                      Description
+                    </label>
+                    <textarea
+                      className={`form-control ${errors.description ? 'is-invalid' : ''}`}
+                      id="desc"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      rows={4}
+                      cols={50}
+                      placeholder="Description"
+                    />
+                  </div>
                 </div>
 
                 {/* Buttons */}

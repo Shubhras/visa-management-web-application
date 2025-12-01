@@ -104,7 +104,7 @@ const AddImportEducationLevelModal = ({ show, handleClose }) => {
                     if (response?.skipped_rows?.length > 0) {
                         const prepareData = {
                             data: response.skipped_rows || [],
-                            headers: ["Education Level Code","Education Level","Education Duration (Months)", "Reason"],
+                            headers: ["Education Level Code","Education Level","Education Duration (Months)","Description","Reason"],
                             sheetName: "EducationLevel",
                             fileName: "EducationLevel",
                         };

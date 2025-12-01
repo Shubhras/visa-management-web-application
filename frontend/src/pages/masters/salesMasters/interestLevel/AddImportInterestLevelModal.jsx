@@ -106,7 +106,7 @@ const AddImportInterestLevelModal = ({ show, handleClose }) => {
             if (response?.skipped_rows?.length > 0) {
               const prepareData = {
                 data: response.skipped_rows || [],
-                headers: ["Interest Level", "Reason"],
+                headers: ["Interest Level", "Description","Reason"],
                 sheetName: "InterestLevel",
                 fileName: "InterestLevel",
               };

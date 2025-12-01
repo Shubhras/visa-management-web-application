@@ -371,6 +371,7 @@ const EducationLevelList = () => {
         }));
         // Reset Global Search
         setGlobalSearch('');
+        setSelectedRows([]);
     };
 
 
@@ -488,7 +489,14 @@ const EducationLevelList = () => {
             toast.error("No Education Level selected for deletion.");
             return;
         }
-        dispatch(educationLevelDelete(sendPayload, (response, error) => {
+        const deleteAll = (tableState.search && tableState.search.trim() !== '') || (columnFilters.educationLevelCode.length > 0);
+        const payloadSend = {
+            deleteAll: deleteAll,
+            educationLevelCode: columnFilters.educationLevelCode.length > 0 ? columnFilters.educationLevelCode : '',
+            id: deleteAll == true ? "" : sendPayload,
+            search: tableState.search || '',
+        };
+        dispatch(educationLevelDelete(payloadSend, (response, error) => {
             if (error) {
                 toast.error(error?.response?.data?.message || "server error");
             } else {

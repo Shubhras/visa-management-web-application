@@ -352,7 +352,8 @@ urlpatterns = [
     path('academic-result-comparison/<uuid:uuid>/update/', AcademicResultComparisonUpdateAPIView.as_view(), name='academic-result-comparison-update'),
     path('academic-result-comparison/delete/', AcademicResultComparisonDeleteAPIView.as_view(), name='academic-result-comparison-delete'),
     path('academic-result-comparison/export/', AcademicResultComparisonExportAPIView.as_view(), name='academic-result-comparison-export'),
-
+    path('academic-result-comparison/import/', AcademicResultComparisonImportAPIView.as_view(), name='academic-result-comparison-import'),
+    
 
     path('mediumeducation/',MediumofEducationListAPIView.as_view(), name='educationlevel-list'),
     path('mediumeducation/create/', MediumofEducationCreateAPIView.as_view(), name='mediumeducation-create'),
@@ -475,6 +476,8 @@ urlpatterns = [
     path('entrancetestresult/import/', EntranceTestResultImportAPIView.as_view(), name='entrancetestresult-import'),
 
    #----------------------- process.py------------------
+
+
     path("documentcategory/create/", DocumentCategoryCreateAPIView.as_view(), name='DocumentCategory-create'),
     path("documentcategory/", DocumentCategoryListAPIView.as_view(), name='DocumentCategory-list'),
     path("documentcategory/<uuid:uuid>/", DocumentCategoryRetrieveAPIView.as_view(), name='DocumentCategory-detail'),
@@ -482,6 +485,7 @@ urlpatterns = [
     path("documentcategory/delete/", DocumentCategoryDeleteAPIView.as_view(), name='DocumentCategory-delete'),
     path("documentcategory/export/", DocumentCategoryExportAPIView.as_view(), name='DocumentCategory-export'),
     path("documentcategory/import/", DocumentCategoryImportAPIView.as_view(), name='DocumentCategory-import'),
+    
 
     path('documenttype/create/', DocumentTypeCreateAPIView.as_view(), name='document_type_create'),
     path('documenttype/', DocumentTypeListAPIView.as_view(), name='document_type_list'),
@@ -1086,13 +1090,14 @@ urlpatterns = [
     path('study-factor-age/import/', StudyFactorAgeImportAPIView.as_view(),name='age-import'),
 
 
-    path('academic-result/list/', StudyFactorAcademicResultListAPIView.as_view(), name='academic-result-list'),
+    
+    path('academic-result/', StudyFactorAcademicResultListAPIView.as_view(), name='academic-result-list'),
     path('academic-result/create/', StudyFactorAcademicResultCreateAPIView.as_view(), name='academic-result-create'),
-    path('academic-result/detail/<uuid:uuid>/', StudyFactorAcademicResultRetrieveAPIView.as_view(), name='academic-result-retrieve'),
+    path('academic-result/<uuid:uuid>/', StudyFactorAcademicResultRetrieveAPIView.as_view(), name='academic-result-retrieve'),
     path('academic-result/<uuid:uuid>/update/', StudyFactorAcademicResultUpdateAPIView.as_view(), name='academic-result-update'),
-    path('academic-result/<uuid:uuid>/delete/', StudyFactorAcademicResultDeleteAPIView.as_view(), name='academic-result-delete'),
-    path('academic-result/<uuid:uuid>/export/', StudyFactorAcademicResultExportAPIView.as_view(), name='academic-result-export'),
-    path('academic-result/<uuid:uuid>/import/', StudyFactorAcademicResultImportAPIView.as_view(), name='academic-result-import'),
+    path('academic-result/delete/', StudyFactorAcademicResultDeleteAPIView.as_view(), name='academic-result-delete'),
+    path('academic-result/export/', StudyFactorAcademicResultExportAPIView.as_view(), name='academic-result-export'),
+    path('academic-result/import/', StudyFactorAcademicResultImportAPIView.as_view(), name='academic-result-import'),
     
 
 
@@ -1105,11 +1110,11 @@ urlpatterns = [
     path('study-factor-backlogs/import/', StudyFactorBacklogsImportAPIView.as_view(), name="study_factor_backlogs_import"),
 
 
-    path('study-factor-gap/list/', StudyFactorGAPListAPIView.as_view(), name="study_factor_gap_list"),
+    path('study-factor-gap/', StudyFactorGAPListAPIView.as_view(), name="study_factor_gap_list"),
     path('study-factor-gap/create/', StudyFactorGAPCreateAPIView.as_view(), name="study_factor_gap_create"),
     path('study-factor-gap/<uuid:uuid>/', StudyFactorGAPRetrieveAPIView.as_view(), name="study_factor_gap_retrieve"),
-    path('study-factor-gap/update/<uuid:uuid>/', StudyFactorGAPUpdateAPIView.as_view(), name="study_factor_gap_update"),
-    path('study-factor-gap/delete/<uuid:uuid>/', StudyFactorGAPDeleteAPIView.as_view(), name="study_factor_gap_delete"),
+    path('study-factor-gap/<uuid:uuid>/update/', StudyFactorGAPUpdateAPIView.as_view(), name="study_factor_gap_update"),
+    path('study-factor-gap/delete/', StudyFactorGAPDeleteAPIView.as_view(), name="study_factor_gap_delete"),
     path('study-factor-gap/export/', StudyFactorGAPExportAPIView.as_view(), name="study_factor_gap_export"),
     path('study-factor-gap/import/', StudyFactorGAPImportAPIView.as_view(), name="study_factor_gap_import"),
 

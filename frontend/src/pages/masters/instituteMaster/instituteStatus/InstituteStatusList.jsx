@@ -10,6 +10,7 @@ import AddImportInstituteStatusModal from './AddImportInstituteStatusModal';
 import AddEditInstituteStatusModal from './AddEditInstituteStatusModal';
 import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
+import ResetButton from '../../../../components/comman/ResetButton';
 const InstituteStatusList = () => {
     const dispatch = useDispatch();
     const { globalSearch, setGlobalSearch } = useGlobalSearch();
@@ -235,6 +236,7 @@ const InstituteStatusList = () => {
         }));
         // Reset Global Search
         setGlobalSearch('');
+        setSelectedRows([]);
     };
 
 
@@ -551,10 +553,12 @@ const InstituteStatusList = () => {
                                             </button>
                                         </>
                                     )}
-                                    <button
+                                     <ResetButton
                                         onClick={clearAllFilters}
-                                        className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
-                                    >Reset </button>
+                                        tableState={tableState}
+                                        globalSearch={globalSearch}
+                                        selectedRows={selectedRows}
+                                    />
                                 </div>
                             </div>
                             {/* Right Section: Select / Search / +Add New */}

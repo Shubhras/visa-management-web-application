@@ -103,7 +103,7 @@ const AddImportECAAwardingBodyModal = ({ show, handleClose }) => {
                     if (response?.skipped_rows?.length > 0) {
                         const prepareData = {
                             data: response.skipped_rows || [],
-                            headers: ["Country", "ECA For", "ECA Body Full Name", "ECA Body Short Name", "Reason"],
+                            headers: ["Country", "ECA For", "ECA Body Full Name", "ECA Body Short Name","Description","Reason"],
                             sheetName: "ECAAwardingBody",
                             fileName: "ECAAwardingBody",
                         };

@@ -324,144 +324,146 @@ const AddEditCityModal = ({ show, handleClose, mode = 'add', rowData = null }) =
             <div onSubmit={handleSubmit}>
               <div className="row">
                 {/* Country Dropdown */}
-                <div className="col-12 mb-10">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Country Name <span className="text-danger">*</span>
-                  </label>
-                  <Select
-                    name="country"
-                    options={countryListData.map((option) => ({
-                      value: option.uuid,
-                      label: option.name + " (" + option?.continent?.name + ")",
-                    }))}
-                    value={
-                      formData.country
-                        ? countryListData
-                          .map((option) => ({
-                            value: option.uuid,
-                            label: option.name + " (" + option?.continent?.name + ")",
-                          }))
-                          .find((opt) => opt.value === formData.country)
-                        : null
-                    }
-                    onChange={handleSelectChange}
-                    filterOption={customFilterOptionCountry}
-                    placeholder="Select Country"
-                    isClearable
-                    isSearchable
-                    className={`custom-select-container ${errors.country ? "is-invalid" : ""
-                      }`}
-                    classNamePrefix="custom-select"
-                  />
-                  {errors.country && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.country}
-                    </div>
-                  )}
-                </div>
+                <div className='modal-scrollable-content'>
+                  <div className="col-12 mb-10">
+                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                      Country Name <span className="text-danger">*</span>
+                    </label>
+                    <Select
+                      name="country"
+                      options={countryListData.map((option) => ({
+                        value: option.uuid,
+                        label: option.name + " (" + option?.continent?.name + ")",
+                      }))}
+                      value={
+                        formData.country
+                          ? countryListData
+                            .map((option) => ({
+                              value: option.uuid,
+                              label: option.name + " (" + option?.continent?.name + ")",
+                            }))
+                            .find((opt) => opt.value === formData.country)
+                          : null
+                      }
+                      onChange={handleSelectChange}
+                      filterOption={customFilterOptionCountry}
+                      placeholder="Select Country"
+                      isClearable
+                      isSearchable
+                      className={`custom-select-container ${errors.country ? "is-invalid" : ""
+                        }`}
+                      classNamePrefix="custom-select"
+                    />
+                    {errors.country && (
+                      <div className="text-danger text-sm mt-1">
+                        {errors.country}
+                      </div>
+                    )}
+                  </div>
 
-                {/* State Dropdown */}
-                <div className="col-12 mb-10">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    State Name
-                  </label>
-                  <Select
-                    name="state"
-                    options={stateListData.map((option) => ({
-                      value: option.uuid,
-                      label: option.name + " (" + option?.country + ")",
-                    }))}
-                    value={
-                      formData.state
-                        ? stateListData
-                          .map((option) => ({
-                            value: option.uuid,
-                            label: option.name + " (" + option?.country + ")",
-                          }))
-                          .find((opt) => opt.value === formData.state)
-                        : null
-                    }
-                    onChange={handleSelectChange}
-                    filterOption={customFilterOptionState}
-                    placeholder="Select State"
-                    isClearable
-                    isSearchable
-                    isDisabled={!formData.country}
-                    className="custom-select-container"
-                    classNamePrefix="custom-select"
-                  />
-                </div>
+                  {/* State Dropdown */}
+                  <div className="col-12 mb-10">
+                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                      State Name
+                    </label>
+                    <Select
+                      name="state"
+                      options={stateListData.map((option) => ({
+                        value: option.uuid,
+                        label: option.name + " (" + option?.country + ")",
+                      }))}
+                      value={
+                        formData.state
+                          ? stateListData
+                            .map((option) => ({
+                              value: option.uuid,
+                              label: option.name + " (" + option?.country + ")",
+                            }))
+                            .find((opt) => opt.value === formData.state)
+                          : null
+                      }
+                      onChange={handleSelectChange}
+                      filterOption={customFilterOptionState}
+                      placeholder="Select State"
+                      isClearable
+                      isSearchable
+                      isDisabled={!formData.country}
+                      className="custom-select-container"
+                      classNamePrefix="custom-select"
+                    />
+                  </div>
 
-                {/* District Dropdown */}
-                <div className="col-12 mb-10">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    District Name
-                  </label>
-                  <Select
-                    name="district"
-                    options={districtListData.map((option) => ({
-                      value: option.uuid,
-                      label: option.districtName + " (" + option?.state + ")",
-                    }))}
-                    value={
-                      formData.district
-                        ? districtListData
-                          .map((option) => ({
-                            value: option.uuid,
-                            label: option.districtName + " (" + option?.state + ")",
-                          }))
-                          .find((opt) => opt.value === formData.district)
-                        : null
-                    }
-                    onChange={handleSelectChange}
-                    filterOption={customFilterOptionDistrict}
-                    placeholder="Select District"
-                    isClearable
-                    isSearchable
-                    isDisabled={!formData.state}
-                    className="custom-select-container"
-                    classNamePrefix="custom-select"
-                  />
-                </div>
+                  {/* District Dropdown */}
+                  <div className="col-12 mb-10">
+                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                      District Name
+                    </label>
+                    <Select
+                      name="district"
+                      options={districtListData.map((option) => ({
+                        value: option.uuid,
+                        label: option.districtName + " (" + option?.state + ")",
+                      }))}
+                      value={
+                        formData.district
+                          ? districtListData
+                            .map((option) => ({
+                              value: option.uuid,
+                              label: option.districtName + " (" + option?.state + ")",
+                            }))
+                            .find((opt) => opt.value === formData.district)
+                          : null
+                      }
+                      onChange={handleSelectChange}
+                      filterOption={customFilterOptionDistrict}
+                      placeholder="Select District"
+                      isClearable
+                      isSearchable
+                      isDisabled={!formData.state}
+                      className="custom-select-container"
+                      classNamePrefix="custom-select"
+                    />
+                  </div>
 
-                {/* City Name  */}
-                <div className="col-12 mb-10">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    City Name <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    className={`form-control radius-8 ${errors.name ? 'is-invalid' : ''}`}
-                    placeholder="Enter city name"
-                  />
-                  {errors.name && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.name}
-                    </div>
-                  )}
-                </div>
+                  {/* City Name  */}
+                  <div className="col-12 mb-10">
+                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                      City Name <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      className={`form-control radius-8 ${errors.name ? 'is-invalid' : ''}`}
+                      placeholder="Enter city name"
+                    />
+                    {errors.name && (
+                      <div className="text-danger text-sm mt-1">
+                        {errors.name}
+                      </div>
+                    )}
+                  </div>
 
-                {/* Description */}
-                <div className="col-12 mb-10">
-                  <label
-                    htmlFor="desc"
-                    className="form-label fw-semibold text-primary-light text-sm mb-0"
-                  >
-                    Description
-                  </label>
-                  <textarea
-                    className={`form-control ${errors.description ? 'is-invalid' : ''}`}
-                    id="desc"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    rows={4}
-                    cols={50}
-                    placeholder="Description"
-                  />
+                  {/* Description */}
+                  <div className="col-12 mb-10">
+                    <label
+                      htmlFor="desc"
+                      className="form-label fw-semibold text-primary-light text-sm mb-0"
+                    >
+                      Description
+                    </label>
+                    <textarea
+                      className={`form-control ${errors.description ? 'is-invalid' : ''}`}
+                      id="desc"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      rows={4}
+                      cols={50}
+                      placeholder="Description"
+                    />
+                  </div>
                 </div>
 
                 {/* Buttons */}

@@ -594,8 +594,15 @@ const StateList = () => {
       toast.error("No state selected for deletion.");
       return;
     }
+    const deleteAll = selectAllOrNot === "all" && ((tableState.search && tableState.search.trim() !== '') || columnFilters.countryId.length > 0);
+    const payloadSend = {
+      deleteAll: deleteAll,
+      country: columnFilters.countryId.length > 0 ? columnFilters.countryId : '',
+      id: deleteAll == true ? "" : sendPayload,
+      search: tableState.search || '',
+    };
     dispatch(
-      stateDelete(sendPayload, (response, error) => {
+      stateDelete(payloadSend, (response, error) => {
         if (error) {
           toast.error(error?.response?.data?.message || "server error");
         } else {
@@ -781,21 +788,19 @@ const StateList = () => {
                       <>
                         <button
                           onClick={() => handleSelectAllOrNot("onlySelected")}
-                          className={`btn btn-sm py-1 fw-medium ${
-                            selectAllOrNot === "onlySelected"
-                              ? "comman-btn-color"
-                              : "comman-inactive-btn"
-                          }`}
+                          className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "onlySelected"
+                            ? "comman-btn-color"
+                            : "comman-inactive-btn"
+                            }`}
                         >
                           {`Select (${selectedRows.length})`}
                         </button>
                         <button
                           onClick={() => handleSelectAllOrNot("all")}
-                          className={`btn btn-sm py-1 fw-medium ${
-                            selectAllOrNot === "all"
-                              ? "comman-btn-color"
-                              : "comman-inactive-btn"
-                          }`}
+                          className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "all"
+                            ? "comman-btn-color"
+                            : "comman-inactive-btn"
+                            }`}
                         >
                           {`Select All (${tableState.total})`}
                         </button>
@@ -845,9 +850,8 @@ const StateList = () => {
                       <nav>
                         <ul className="pagination mb-0 gap-4px">
                           <li
-                            className={`page-item ${
-                              !tableState.hasPrevious ? "disabled" : ""
-                            }`}
+                            className={`page-item ${!tableState.hasPrevious ? "disabled" : ""
+                              }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -868,9 +872,8 @@ const StateList = () => {
                             </button>
                           </li>
                           <li
-                            className={`page-item ${
-                              !tableState.hasPrevious ? "disabled" : ""
-                            }`}
+                            className={`page-item ${!tableState.hasPrevious ? "disabled" : ""
+                              }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -935,9 +938,8 @@ const StateList = () => {
                             </li>
                           ))}
                           <li
-                            className={`page-item ${
-                              !tableState.hasNext ? "disabled" : ""
-                            }`}
+                            className={`page-item ${!tableState.hasNext ? "disabled" : ""
+                              }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -958,9 +960,8 @@ const StateList = () => {
                             </button>
                           </li>
                           <li
-                            className={`page-item ${
-                              !tableState.hasNext ? "disabled" : ""
-                            }`}
+                            className={`page-item ${!tableState.hasNext ? "disabled" : ""
+                              }`}
                           >
                             <button
                               className="border-0 bg-transparent"
@@ -1029,11 +1030,10 @@ const StateList = () => {
                                           : "mdi:filter-outline"
                                       }
                                       width="18"
-                                      className={`ms-2 ${
-                                        columnFilters[column.field]?.length > 0
-                                          ? "comman-btn-color"
-                                          : ""
-                                      }`}
+                                      className={`ms-2 ${columnFilters[column.field]?.length > 0
+                                        ? "comman-btn-color"
+                                        : ""
+                                        }`}
                                       style={{ cursor: "pointer" }}
                                       onClick={(e) =>
                                         toggleFilterDropdown(e, column.field)
@@ -1048,13 +1048,12 @@ const StateList = () => {
                                       >
                                         {/* Sort Options */}
                                         <div
-                                          className={`filter-menu-item px-3 py-2 d-flex align-items-center ${
-                                            tableState.sort.find(
-                                              (s) => s.field === column.field
-                                            )?.order === "asc"
-                                              ? "disabled-sort"
-                                              : ""
-                                          }`}
+                                          className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(
+                                            (s) => s.field === column.field
+                                          )?.order === "asc"
+                                            ? "disabled-sort"
+                                            : ""
+                                            }`}
                                           onClick={() =>
                                             applySortAsc(column.field)
                                           }
@@ -1067,13 +1066,12 @@ const StateList = () => {
                                           Sort Smallest to Largest
                                         </div>
                                         <div
-                                          className={`filter-menu-item px-3 py-2 d-flex align-items-center ${
-                                            tableState.sort.find(
-                                              (s) => s.field === column.field
-                                            )?.order === "desc"
-                                              ? "disabled-sort"
-                                              : ""
-                                          }`}
+                                          className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(
+                                            (s) => s.field === column.field
+                                          )?.order === "desc"
+                                            ? "disabled-sort"
+                                            : ""
+                                            }`}
                                           onClick={() =>
                                             applySortDesc(column.field)
                                           }

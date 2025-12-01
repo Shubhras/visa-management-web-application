@@ -2001,9 +2001,9 @@ class StudyFactorAge(models.Model):
 class StudyFactorAcademicResult(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    factor_for = models.ForeignKey(FactorFor, on_delete=models.CASCADE, related_name="academic_results")
-    academic_result_group = models.ForeignKey(AcademicResultGroup, on_delete=models.CASCADE, related_name="academic_results")
-    minimum_academic_result_required = models.ForeignKey(AcademicResultType, on_delete=models.CASCADE, related_name="academic_result_types")
+    factor_for = models.ForeignKey(FactorFor, on_delete=models.CASCADE, related_name="academic_results",to_field='uuid',db_column='factor_for_uuid')
+    academic_result_group = models.ForeignKey(AcademicResultGroup, on_delete=models.CASCADE, related_name="academic_results", to_field='uuid',db_column='academic_result_group_uuid')
+    minimum_academic_result_required = models.ForeignKey(AcademicResultType, on_delete=models.CASCADE, related_name="academic_result_types", to_field='uuid',db_column='minimum_academic_result_required_uuid')
     description = models.TextField(max_length=255,null=True, blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -2012,6 +2012,10 @@ class StudyFactorAcademicResult(models.Model):
     def __str__(self):
         return f"{self.academic_result_group.name} - Academic Result"
     
+
+
+
+
 
 
 
@@ -2040,15 +2044,16 @@ class StudyFactorBacklogs(models.Model):
     
 
 class StudyFactorGAP(models.Model):
+    id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     factor_for = models.ForeignKey("FactorFor", on_delete=models.CASCADE)
-    gap_group = models.ForeignKey("GapGroup", on_delete=models.CASCADE)
+    study_gap_group = models.ForeignKey("GAPGroup", on_delete=models.CASCADE)
 
     maximum_gap_accepted = models.PositiveIntegerField(default=0)
 
-    countries = models.ManyToManyField("Country")               # Multiple
-    institute_types = models.ManyToManyField("InstituteType")   # Multiple
-    course_levels = models.ManyToManyField("CourseLevel")       # Multiple
+    country_for_admission = models.ManyToManyField('RepresentingCountry',related_name="study_factor_gaps")  
+    institute_type = models.ManyToManyField("InstituteType",related_name="study_factor_gaps")   # Multiple
+    course_level = models.ManyToManyField("CourseLevel",related_name="study_factor_gaps")       # Multiple
 
     description = models.TextField(blank=True, null=True)
 
@@ -2060,6 +2065,8 @@ class StudyFactorGAP(models.Model):
         return f"{self.factor_for} - GAP Rule"
     
     
+
+
 
 class StudyFactorLanguageAbility(models.Model):
     id = models.AutoField(primary_key=True)

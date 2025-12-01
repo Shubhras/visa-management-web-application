@@ -183,86 +183,88 @@ const AddEditDocumentNameModal = ({ show, handleClose, mode = 'add', rowData = n
                     <div className="modal-body p-24 pt-10">
                         <form onSubmit={handleSubmit}>
                             <div className="row">
-                                {/* Department Name */}
+                                <div className='modal-scrollable-content'>
+                                    {/* Department Name */}
 
-                                <div className="col-12 mb-10">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                                        Document Category <span className="text-danger">*</span>
-                                    </label>
-                                    <Select
-                                        options={documentCategory.map((option) => ({
-                                            value: option.uuid,
-                                            label: option.name,
-                                        }))}
-                                        value={
-                                            formData.documentCategoryUuid
-                                                ? documentCategory
-                                                    .map((option) => ({
-                                                        value: option.uuid,
-                                                        label: option.name,
-                                                    }))
-                                                    .find((opt) => opt.value === formData.documentCategoryUuid)
-                                                : null
-                                        }
-                                        onChange={(selectedOption) =>
-                                            handleChange({
-                                                target: {
-                                                    name: "documentCategoryUuid",
-                                                    value: selectedOption ? selectedOption.value : "",
-                                                },
-                                            })
-                                        }
-                                        placeholder="Select document category"
-                                        isClearable
-                                        isSearchable
-                                        className={`custom-select-container ${errors.documentCategoryUuid ? "is-invalid" : ""
-                                            }`}
-                                        classNamePrefix="custom-select"
-                                    />
-                                    {errors.documentCategoryUuid && (
-                                        <div className="text-danger text-sm mt-1">
-                                            {errors.documentCategoryUuid}
-                                        </div>
-                                    )}
-                                </div>
+                                    <div className="col-12 mb-10">
+                                        <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                                            Document Category <span className="text-danger">*</span>
+                                        </label>
+                                        <Select
+                                            options={documentCategory.map((option) => ({
+                                                value: option.uuid,
+                                                label: option.name,
+                                            }))}
+                                            value={
+                                                formData.documentCategoryUuid
+                                                    ? documentCategory
+                                                        .map((option) => ({
+                                                            value: option.uuid,
+                                                            label: option.name,
+                                                        }))
+                                                        .find((opt) => opt.value === formData.documentCategoryUuid)
+                                                    : null
+                                            }
+                                            onChange={(selectedOption) =>
+                                                handleChange({
+                                                    target: {
+                                                        name: "documentCategoryUuid",
+                                                        value: selectedOption ? selectedOption.value : "",
+                                                    },
+                                                })
+                                            }
+                                            placeholder="Select document category"
+                                            isClearable
+                                            isSearchable
+                                            className={`custom-select-container ${errors.documentCategoryUuid ? "is-invalid" : ""
+                                                }`}
+                                            classNamePrefix="custom-select"
+                                        />
+                                        {errors.documentCategoryUuid && (
+                                            <div className="text-danger text-sm mt-1">
+                                                {errors.documentCategoryUuid}
+                                            </div>
+                                        )}
+                                    </div>
 
-                                <div className="col-12 mb-10">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                                        Document Name <span className="text-danger">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="departmentName"
-                                        value={formData.departmentName}
-                                        onChange={handleChange}
-                                        className={`form-control radius-8 ${errors.departmentName ? 'is-invalid' : ''}`}
-                                        placeholder="Enter document name"
-                                    />
-                                    {errors.departmentName && (
-                                        <div className="text-danger text-sm mt-1">
-                                            {errors.departmentName}
-                                        </div>
-                                    )}
-                                </div>
+                                    <div className="col-12 mb-10">
+                                        <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                                            Document Name <span className="text-danger">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            name="departmentName"
+                                            value={formData.departmentName}
+                                            onChange={handleChange}
+                                            className={`form-control radius-8 ${errors.departmentName ? 'is-invalid' : ''}`}
+                                            placeholder="Enter document name"
+                                        />
+                                        {errors.departmentName && (
+                                            <div className="text-danger text-sm mt-1">
+                                                {errors.departmentName}
+                                            </div>
+                                        )}
+                                    </div>
 
-                                {/* Description */}
-                                <div className="col-12 mb-10">
-                                    <label
-                                        htmlFor="desc"
-                                        className="form-label fw-semibold text-primary-light text-sm mb-0"
-                                    >
-                                        Description
-                                    </label>
-                                    <textarea
-                                        className={`form-control ${errors.description ? 'is-invalid' : ''}`}
-                                        id="desc"
-                                        name="description"
-                                        value={formData.description}
-                                        onChange={handleChange}
-                                        rows={4}
-                                        cols={50}
-                                        placeholder="Description"
-                                    />
+                                    {/* Description */}
+                                    <div className="col-12 mb-10">
+                                        <label
+                                            htmlFor="desc"
+                                            className="form-label fw-semibold text-primary-light text-sm mb-0"
+                                        >
+                                            Description
+                                        </label>
+                                        <textarea
+                                            className={`form-control ${errors.description ? 'is-invalid' : ''}`}
+                                            id="desc"
+                                            name="description"
+                                            value={formData.description}
+                                            onChange={handleChange}
+                                            rows={4}
+                                            cols={50}
+                                            placeholder="Description"
+                                        />
+                                    </div>
                                 </div>
 
                                 {/* Buttons */}

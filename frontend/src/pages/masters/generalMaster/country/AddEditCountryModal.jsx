@@ -224,210 +224,214 @@ const AddEditCountryModal = ({
             <form onSubmit={handleSubmit}>
               {/* Row 1 */}
               <div className="row">
-                <div className="col-md-6 mb-10">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Country Name <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="countryName"
-                    value={formData.countryName}
-                    onChange={handleChange}
-                    className={`form-control radius-8 ${errors.countryName ? "is-invalid" : ""
-                      }`}
-                    placeholder="Enter country name"
-                  />
-                  {errors.countryName && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.countryName}
+                <div className='modal-scrollable-content'>
+                  <div className="row">
+                    <div className="col-md-6 mb-10">
+                      <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                        Country Name <span className="text-danger">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="countryName"
+                        value={formData.countryName}
+                        onChange={handleChange}
+                        className={`form-control radius-8 ${errors.countryName ? "is-invalid" : ""
+                          }`}
+                        placeholder="Enter country name"
+                      />
+                      {errors.countryName && (
+                        <div className="text-danger text-sm mt-1">
+                          {errors.countryName}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
 
-                <div className="col-md-6 mb-10">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Continent <span className="text-danger">*</span>
-                  </label>
+                    <div className="col-md-6 mb-10">
+                      <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                        Continent <span className="text-danger">*</span>
+                      </label>
 
-                  <Select
-                    options={continentListData.map((option) => ({
-                      value: option.uuid,
-                      label: option.name,
-                    }))}
-                    value={
-                      formData.continent_id
-                        ? continentListData
-                          .map((option) => ({
-                            value: option.uuid,
-                            label: option.name,
-                          }))
-                          .find((opt) => opt.value === formData.continent_id)
-                        : null
-                    }
-                    onChange={handleSelectChange}
-                    filterOption={customFilterOption}
-                    placeholder="Select Continent"
-                    isClearable
-                    isSearchable
-                    className={`custom-select-container ${errors.continent_id ? "is-invalid" : ""
-                      }`}
-                    classNamePrefix="custom-select"
-                  />
-                  {errors.continent_id && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.continent_id}
+                      <Select
+                        options={continentListData.map((option) => ({
+                          value: option.uuid,
+                          label: option.name,
+                        }))}
+                        value={
+                          formData.continent_id
+                            ? continentListData
+                              .map((option) => ({
+                                value: option.uuid,
+                                label: option.name,
+                              }))
+                              .find((opt) => opt.value === formData.continent_id)
+                            : null
+                        }
+                        onChange={handleSelectChange}
+                        filterOption={customFilterOption}
+                        placeholder="Select Continent"
+                        isClearable
+                        isSearchable
+                        className={`custom-select-container ${errors.continent_id ? "is-invalid" : ""
+                          }`}
+                        classNamePrefix="custom-select"
+                      />
+                      {errors.continent_id && (
+                        <div className="text-danger text-sm mt-1">
+                          {errors.continent_id}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              </div>
+                  </div>
 
-              {/* Row 2 */}
-              <div className="row">
-                <div className="col-md-6 mb-10">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Country Official Name
-                  </label>
-                  <input
-                    type="text"
-                    name="officialName"
-                    value={formData.officialName}
-                    onChange={handleChange}
-                    className="form-control radius-8"
-                    placeholder="Enter official name"
-                  />
+                  {/* Row 2 */}
+                  <div className="row">
+                    <div className="col-md-6 mb-10">
+                      <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                        Country Official Name
+                      </label>
+                      <input
+                        type="text"
+                        name="officialName"
+                        value={formData.officialName}
+                        onChange={handleChange}
+                        className="form-control radius-8"
+                        placeholder="Enter official name"
+                      />
+                    </div>
+
+                    <div className="col-md-6 mb-10">
+                      <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                        Country Short Name
+                      </label>
+                      <input
+                        type="text"
+                        name="shortName"
+                        value={formData.shortName}
+                        onChange={handleChange}
+                        className="form-control radius-8"
+                        placeholder="Enter Short name"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Row 3 */}
+                  <div className="row">
+                    <div className="col-md-6 mb-10">
+                      <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                        Capital City
+                      </label>
+                      <input
+                        type="text"
+                        name="capitalCity"
+                        value={formData.capitalCity}
+                        onChange={handleChange}
+                        className="form-control radius-8"
+                        placeholder="Enter capital city"
+                      />
+                    </div>
+
+                    <div className="col-md-6 mb-10">
+                      <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                        Currency Full Name
+                      </label>
+                      <input
+                        type="text"
+                        name="currencyFullName"
+                        value={formData.currencyFullName}
+                        onChange={handleChange}
+                        className="form-control radius-8"
+                        placeholder="Enter currency full name"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Row 4 */}
+                  <div className="row">
+                    <div className="col-md-6 mb-10">
+                      <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                        Currency Short Name
+                      </label>
+                      <input
+                        type="text"
+                        name="currencyShortName"
+                        value={formData.currencyShortName}
+                        onChange={handleChange}
+                        className="form-control radius-8"
+                        placeholder="Enter currency short name"
+                      />
+                    </div>
+
+                    <div className="col-md-6 mb-10">
+                      <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                        Currency Code
+                      </label>
+                      <input
+                        type="text"
+                        name="currencyCode"
+                        value={formData.currencyCode}
+                        onChange={handleChange}
+                        className="form-control radius-8"
+                        placeholder="Enter currency code"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Row 5 */}
+                  <div className="row">
+                    <div className="col-md-6 mb-10">
+                      <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                        Country Calling Code
+                      </label>
+                      <input
+                        type="text"
+                        name="dialCodes"
+                        value={formData.dialCodes}
+                        onChange={handleChange}
+                        className="form-control radius-8"
+                        placeholder="Enter calling code"
+                      />
+                    </div>
+
+                    <div className="col-md-6 mb-10">
+                      <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                        Description
+                      </label>
+                      <textarea
+                        className="form-control radius-8"
+                        name="description"
+                        value={formData.description}
+                        onChange={handleChange}
+                        rows={1}
+                        placeholder="Enter description"
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                <div className="col-md-6 mb-10">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Country Short Name
-                  </label>
-                  <input
-                    type="text"
-                    name="shortName"
-                    value={formData.shortName}
-                    onChange={handleChange}
-                    className="form-control radius-8"
-                    placeholder="Enter Short name"
-                  />
+                {/* Buttons */}
+                <div className="d-flex align-items-center justify-content-center gap-3 mt-24">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-4 radius-6"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Saving...
+                      </>
+                    ) : (
+                      "Save"
+                    )}
+                  </button>
                 </div>
-              </div>
-
-              {/* Row 3 */}
-              <div className="row">
-                <div className="col-md-6 mb-10">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Capital City
-                  </label>
-                  <input
-                    type="text"
-                    name="capitalCity"
-                    value={formData.capitalCity}
-                    onChange={handleChange}
-                    className="form-control radius-8"
-                    placeholder="Enter capital city"
-                  />
-                </div>
-
-                <div className="col-md-6 mb-10">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Currency Full Name
-                  </label>
-                  <input
-                    type="text"
-                    name="currencyFullName"
-                    value={formData.currencyFullName}
-                    onChange={handleChange}
-                    className="form-control radius-8"
-                    placeholder="Enter currency full name"
-                  />
-                </div>
-              </div>
-
-              {/* Row 4 */}
-              <div className="row">
-                <div className="col-md-6 mb-10">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Currency Short Name
-                  </label>
-                  <input
-                    type="text"
-                    name="currencyShortName"
-                    value={formData.currencyShortName}
-                    onChange={handleChange}
-                    className="form-control radius-8"
-                    placeholder="Enter currency short name"
-                  />
-                </div>
-
-                <div className="col-md-6 mb-10">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Currency Code
-                  </label>
-                  <input
-                    type="text"
-                    name="currencyCode"
-                    value={formData.currencyCode}
-                    onChange={handleChange}
-                    className="form-control radius-8"
-                    placeholder="Enter currency code"
-                  />
-                </div>
-              </div>
-
-              {/* Row 5 */}
-              <div className="row">
-                <div className="col-md-6 mb-10">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Country Calling Code
-                  </label>
-                  <input
-                    type="text"
-                    name="dialCodes"
-                    value={formData.dialCodes}
-                    onChange={handleChange}
-                    className="form-control radius-8"
-                    placeholder="Enter calling code"
-                  />
-                </div>
-
-                <div className="col-md-6 mb-10">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Description
-                  </label>
-                  <textarea
-                    className="form-control radius-8"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    rows={1}
-                    placeholder="Enter description"
-                  />
-                </div>
-              </div>
-
-              {/* Buttons */}
-              <div className="d-flex align-items-center justify-content-center gap-3 mt-24">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-4 radius-6"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                      Saving...
-                    </>
-                  ) : (
-                    "Save"
-                  )}
-                </button>
               </div>
             </form>
           </div>
