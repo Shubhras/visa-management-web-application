@@ -422,8 +422,9 @@ const StakeholderTypeList = () => {
     const options = filterDropdownData[columnField] || [];
 
     return options.filter((option) =>
-      option.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+      option.name.toLowerCase().startsWith(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => a.name.localeCompare(b.name));
   };
 
   const clearAllOnlyHeaderFilters = () => {

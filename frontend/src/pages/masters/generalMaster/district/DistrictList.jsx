@@ -1361,8 +1361,9 @@ const DistrictList = () => {
     const searchTerm = (filterSearchTerms[columnField] || "").toLowerCase();
     const options = filterDropdownData[columnField] || [];
     return options.filter((option) =>
-      option.name.toLowerCase().includes(searchTerm)
-    );
+      option.name.toLowerCase().startsWith(searchTerm)
+    )
+    .sort((a, b) => a.name.localeCompare(b.name));
   };
 
   // Sorting (multi-column array)
