@@ -791,14 +791,13 @@ class LanguageTestListAPIView(APIView):
         # ---- SEARCH ----
         if search:
             queryset = queryset.filter(
-                Q(name__istartswith=search) |
-                Q(fullname__istartswith=search) |
-                Q(description__istartswith=search)
+                Q(name__istartswith=search) 
             )
 
         # ---- SORTING ----
         sort_field_map = {
-            'name': 'name',
+            'languageNameTest': 'language__name',
+            'languageTestName': 'name',
             'fullname': 'fullname',
             'description': 'description',
             'created_at': 'created_at',
