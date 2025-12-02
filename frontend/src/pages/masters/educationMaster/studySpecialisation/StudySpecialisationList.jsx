@@ -353,6 +353,12 @@ const StudySpecialisationList = () => {
   };
 
   const clearAllFilters = () => {
+
+    // Reset filter dropdowns
+    setColumnFilters({
+      studyMainArea: [],
+      studyMajorArea: [],
+    });
     setTableState(prev => ({
       ...prev,
       page: 1,
@@ -506,7 +512,15 @@ const StudySpecialisationList = () => {
       toast.error("No Study specialisation selected for deletion.");
       return;
     }
-    dispatch(studySpecialisationDelete(sendPayload, (response, error) => {
+    const deleteAll = selectAllOrNot === "all" && ((tableState.search && tableState.search.trim() !== '') || columnFilters.studyMainArea.length > 0 || columnFilters.studyMajorArea.length > 0);
+    const payloadSend = {
+      deleteAll: deleteAll,
+      studyMainArea: columnFilters.studyMainArea.length > 0 ? columnFilters.studyMainArea : '',
+      studyMajorArea: columnFilters.studyMajorArea.length > 0 ? columnFilters.studyMajorArea : '',
+      id: deleteAll == true ? "" : sendPayload,
+      search: tableState.search || '',
+    };
+    dispatch(studySpecialisationDelete(payloadSend, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
@@ -518,7 +532,8 @@ const StudySpecialisationList = () => {
           setSelectedRows([]);
           setSelectAllOrNot('');
           setDeleteId(null);
-          fetchDepartmentList();
+          //fetchDepartmentList();
+          clearAllFilters();
         } else {
           toast.error("Something went wrong.");
         }

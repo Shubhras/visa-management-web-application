@@ -361,6 +361,11 @@ const DegreeAwardedByList = () => {
   };
 
   const clearAllFilters = () => {
+    // Reset filter dropdowns
+    setColumnFilters({
+      country: [],
+      educationLevel: []
+    });
     setTableState(prev => ({
       ...prev,
       page: 1,
@@ -380,6 +385,7 @@ const DegreeAwardedByList = () => {
     }));
     // Reset Global Search
     setGlobalSearch('');
+    setSelectedRows([]);
   };
 
 
@@ -513,7 +519,17 @@ const DegreeAwardedByList = () => {
       toast.error("No degree awarded by selected for deletion.");
       return;
     }
-    dispatch(degreeAwardedByDelete(sendPayload, (response, error) => {
+
+
+    const deleteAll = selectAllOrNot === "all" && ((tableState.search && tableState.search.trim() !== '') || columnFilters.country.length > 0 || columnFilters.educationLevel.length > 0);
+    const payloadSend = {
+      deleteAll: deleteAll,
+      country: columnFilters.country.length > 0 ? columnFilters.country : '',
+      educationLevel: columnFilters.educationLevel.length > 0 ? columnFilters.educationLevel : '',
+      id: deleteAll == true ? "" : sendPayload,
+      search: tableState.search || '',
+    };
+    dispatch(degreeAwardedByDelete(payloadSend, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
@@ -525,7 +541,8 @@ const DegreeAwardedByList = () => {
           setSelectedRows([]);
           setSelectAllOrNot('');
           setDeleteId(null);
-          fetchDepartmentList();
+          //fetchDepartmentList();
+          clearAllFilters();
         } else {
           toast.error("Something went wrong.");
         }

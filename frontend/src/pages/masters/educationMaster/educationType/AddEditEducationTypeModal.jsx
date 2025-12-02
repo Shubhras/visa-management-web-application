@@ -178,7 +178,7 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
                     htmlFor="desc"
                     className="form-label fw-semibold text-primary-light text-sm mb-0"
                   >
-                    Perticulars
+                    Description
                   </label>
                   <textarea
                     className={`form-control ${errors.description ? 'is-invalid' : ''}`}
@@ -188,7 +188,7 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
                     onChange={handleChange}
                     rows={4}
                     cols={50}
-                    placeholder="Perticular"
+                    placeholder="Description"
                   />
                 </div>
 
