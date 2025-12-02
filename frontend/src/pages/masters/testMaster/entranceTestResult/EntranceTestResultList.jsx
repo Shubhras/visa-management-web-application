@@ -364,6 +364,7 @@ const EntranceTestResultList = () => {
         }));
         // Reset Global Search
         setGlobalSearch('');
+        setSelectedRows([]);
     };
     const handleSearchChange = (value) => {
         setTableState(prev => ({
@@ -692,6 +693,7 @@ const EntranceTestResultList = () => {
                                         tableState={tableState}
                                         columnFilters={columnFilters}
                                         globalSearch={globalSearch}
+                                        selectedRows={selectedRows}
                                     />
                                 </div>
                             </div>

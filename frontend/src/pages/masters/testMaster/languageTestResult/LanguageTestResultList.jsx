@@ -217,18 +217,6 @@ const LanguageTestResultList = () => {
         })
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
     const [modalState, setModalState] = useState({
         show: false,
         mode: 'add', // 'add' or 'edit'
@@ -459,6 +447,7 @@ const LanguageTestResultList = () => {
         }));
         // Reset Global Search
         setGlobalSearch('');
+        setSelectedRows([]);
     };
     const handleSearchChange = (value) => {
         setTableState(prev => ({
@@ -793,6 +782,7 @@ const LanguageTestResultList = () => {
                                         tableState={tableState}
                                         columnFilters={columnFilters}
                                         globalSearch={globalSearch}
+                                        selectedRows={selectedRows}
                                     />
                                 </div>
                             </div>

@@ -238,6 +238,7 @@ const AcademicResultTypeList = () => {
     }));
     // Reset Global Search
     setGlobalSearch('');
+    setSelectedRows([]);
   };
 
   const handleSearchChange = (value) => {
@@ -566,6 +567,7 @@ const AcademicResultTypeList = () => {
                     onClick={clearAllFilters}
                     tableState={tableState}
                     globalSearch={globalSearch}
+                    selectedRows={selectedRows}
                   />
                 </div>
               </div>
