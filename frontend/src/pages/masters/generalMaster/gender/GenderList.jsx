@@ -365,6 +365,12 @@ const GenderList = () => {
       toast.error("No gender selected for deletion.");
       return;
     }
+    // const deleteAll = selectAllOrNot === "all" && Boolean(tableState.search?.trim());
+    // const payloadSend = {
+    //   deleteAll: deleteAll,
+    //   id: deleteAll == true ? "" : sendPayload,
+    //   search: tableState.search || '',
+    // };
     const deleteAll = selectAllOrNot === "all" && Boolean(tableState.search?.trim());
     const payloadSend = {
       deleteAll: deleteAll,
@@ -388,7 +394,8 @@ const GenderList = () => {
             setSelectedRows([]);
             setSelectAllOrNot("");
             setDeleteId(null);
-            fetchDepartmentList();
+            clearAllFilters();
+            // fetchDepartmentList();
           } else {
             toast.error("Something went wrong.");
           }

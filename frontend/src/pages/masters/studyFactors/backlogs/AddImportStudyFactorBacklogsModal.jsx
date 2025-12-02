@@ -9,7 +9,7 @@ import {
   exportToExcelDuplicate,
   exportToExcelWrongData,
 } from "../../../../helper/utils/commanHelper";
-import { studyFactorAcademicResultImportData } from "../../../../store/actions";
+import { studyFactorAcademicResultImportData, studyFactorBacklogsImportData } from "../../../../store/actions";
 const AddImportStudyFactorBacklogsModal = ({ show, handleClose }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
@@ -71,7 +71,7 @@ const AddImportStudyFactorBacklogsModal = ({ show, handleClose }) => {
     }
     setLoading(true);
     dispatch(
-      studyFactorAcademicResultImportData(formData, (response, error) => {
+      studyFactorBacklogsImportData(formData, (response, error) => {
         setLoading(false);
         if (error) {
           toast.error(error?.response?.data?.message || "Server error");

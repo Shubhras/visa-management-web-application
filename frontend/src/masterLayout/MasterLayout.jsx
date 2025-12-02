@@ -95,6 +95,7 @@ const MasterLayout = ({ children }) => {
     "Bank Account For",
     "When Commission Issue",
     "Leads B2C",
+    "Compare : Occupation To Occupation",
     "ECA For",
     "Course Level Code",
     "Course Divided In",
@@ -104,9 +105,36 @@ const MasterLayout = ({ children }) => {
     "Scholorship Based On",
     "Course Level",
     "Course Duration",
-    "Visa Main Category"
-
-
+    "Visa Main Category",
+    "Work Rights",
+    "Work Rights During Study",
+    "Work Rights During Vacation",
+    "Work Rights After Study",
+    "PR Possibility",
+    "Spouse Can Apply with Candidate?",
+    "Spouse Visa Category",
+    "Spouse Work Rights",
+    "Children Can Apply with Candidate?",
+    "Children Visa Category",
+    "Children Study / Work Rights",
+    "Document Category",
+    "Document Name",
+    "Document Type",
+    "Purpose of Visit",
+    "Documents For",
+    "Required Documents (General)",
+    "Process Status Name",
+    "Process Sub Status Name",
+    "Process Type",
+    "Payment To",
+    "Payment Category",
+    "Job Type",
+    "Mode of Salary",
+    "IT Return Status",
+    "Occupation Type",
+    "Occupation Prospect",
+    "Occupation Category",
+    "Occupation Version"
   ]);
 
 
@@ -122,8 +150,8 @@ const MasterLayout = ({ children }) => {
     {
       name: "Sales",
       submenu: [
-        {  name: "Leads B2C", path: "/leads-B2C"},
-        {  name: "InquiryB2C", path: "/inquiryB2C"},
+        { name: "Leads B2C", path: "/leads-B2C" },
+        { name: "Inquiry B2C", path: "/inquiry-B2C" },
       ],
 
     },
@@ -268,9 +296,8 @@ const MasterLayout = ({ children }) => {
             { name: "Occupation Name", path: "/occupation-name" },
             { name: "Designation (Job Title)", path: "/designation" },
             { name: "Job Prospect", path: "/job-prospect" },
-
             { name: "Related Occupation", path: "/related-occupation" },
-
+            { name: "Compare : Occupation To Occupation", path: "/occupation-to-occupation" },
           ],
         },
         {
@@ -294,6 +321,20 @@ const MasterLayout = ({ children }) => {
             { name: "Scholorship Based On", path: "/scholorship-based-on" },
             { name: "Course Level", path: "/course-level" },
             { name: "Course Duration", path: "/course-duration" },
+          ],
+        },
+        {
+          name: "Visa",
+          children: [
+            { name: "Representing Country", path: "/representing-country" },
+            { name: "Visa Main Category", path: "/visa-main-category" },
+            { name: "Visa Major Category", path: "/visa-major-category" },
+            { name: "Applicant Type", path: "/applicant-type" },
+            { name: "Visa Eligibility Type", path: "/visa-eligibility-type" },
+            { name: "Visa Status", path: "/visa-status" },
+            { name: "Possibility Level", path: "/possibility-level" },
+            { name: "Visa Name", path: "/visa-name" }
+
           ],
         },
         {
@@ -347,24 +388,24 @@ const MasterLayout = ({ children }) => {
             { name: "Study Factor : Gap", path: "/study-factor-gap" },
             { name: "Study Factor : Language Ability", path: "/study-factor-language-ability" },
             { name: "Study Factor : Entrance Test Ability", path: "/study-factor-entrance-test-ability" },
-            
-          ],
-        },
-
-        {
-          name: "Visa",
-          children: [
-            { name: "Representing Country", path: "/representing-country" },
-            { name: "Visa Main Category", path: "/visa-main-category" },
-            { name: "Visa Major Category", path: "/visa-major-category" },
-            { name: "Applicant Type", path: "/applicant-type" },
-            { name: "Visa Eligibility Type", path: "/visa-eligibility-type" },
-            { name: "Visa Status", path: "/visa-status" },
-            { name: "Possibility Level", path: "/possibility-level" },
-            { name: "Visa Name", path: "/visa-name" }
 
           ],
         },
+
+        // {
+        //   name: "Visa",
+        //   children: [
+        //     { name: "Representing Country", path: "/representing-country" },
+        //     { name: "Visa Main Category", path: "/visa-main-category" },
+        //     { name: "Visa Major Category", path: "/visa-major-category" },
+        //     { name: "Applicant Type", path: "/applicant-type" },
+        //     { name: "Visa Eligibility Type", path: "/visa-eligibility-type" },
+        //     { name: "Visa Status", path: "/visa-status" },
+        //     { name: "Possibility Level", path: "/possibility-level" },
+        //     { name: "Visa Name", path: "/visa-name" }
+
+        //   ],
+        // },
 
 
         // { name: 'Education', path: '/' },

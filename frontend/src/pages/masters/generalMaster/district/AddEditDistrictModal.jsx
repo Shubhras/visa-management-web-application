@@ -269,6 +269,7 @@ const AddEditDistrictModal = ({ show, handleClose, mode = 'add', rowData = null 
             <div onSubmit={handleSubmit}>
               <div className="row">
                 {/* Country Dropdown */}
+                <div className='modal-scrollable-content'>
                 <div className="col-12 mb-10">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Country Name <span className="text-danger">*</span>
@@ -375,6 +376,7 @@ const AddEditDistrictModal = ({ show, handleClose, mode = 'add', rowData = null 
                     cols={50}
                     placeholder="Description"
                   />
+                </div>
                 </div>
 
                 {/* Buttons */}

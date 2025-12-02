@@ -16025,6 +16025,13 @@ td.fc-header-center {
   display: block;
   background-color: rgba(0, 0, 0, 0.5);
 }
+ .modal-scrollable-content {
+  /* max-height: 260px; */
+    max-height: 65vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* scrollbar-width: none;  */
+} 
 
 .common-ctl-popup .export-file {
   cursor: grab;

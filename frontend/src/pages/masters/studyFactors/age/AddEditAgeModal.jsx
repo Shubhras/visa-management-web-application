@@ -49,22 +49,34 @@ const AddEditAgeModal = ({
 
   // Populate form data when in edit mode
   useEffect(() => {
-    if (mode === "edit" && rowData) {
-      setFormData({
-        uuid: rowData.uuid || "",
-        factorForName: rowData.factor_for_uuid || "",
-        studyAgeGroup: rowData.study_age_group_uuid || "",
-        minimumAge: rowData.minimum_age_months || "",
-        maximumAge: rowData.maximum_age_months || "", //formData.state === "STATE" ? "State" : "Territory" || '',
-        countryName: rowData.countryName || "",
-        courseLevel: rowData.courseLevel || "",
-        description: rowData.description || "",
-      });
-    } else {
-      resetForm();
-    }
-    fetchCountryList();
-  }, [mode, rowData, show]);
+  if (mode === "edit" && rowData) {
+    setFormData({
+      uuid: rowData.uuid || "",
+      factorForName: rowData.factor_for_uuid || "",
+      studyAgeGroup: rowData.study_age_group_uuid || "",
+      minimumAge: rowData.minimum_age_months || "",
+      maximumAge: rowData.maximum_age_months || "",
+      // 🔹 Convert UUID arrays → react-select format
+      countryName: Array.isArray(rowData.country_list_uuid)
+        ? rowData.country_list_uuid.map((uuid, i) => ({
+            value: uuid,
+            label: rowData.country_names[i],
+          }))
+        : [],
+      courseLevel: Array.isArray(rowData.course_level_list_uuid)
+        ? rowData.course_level_list_uuid.map((uuid, i) => ({
+            value: uuid,
+            label: rowData.course_level_names[i],
+          }))
+        : [],
+      description: rowData.description || "",
+    });
+  } else {
+    resetForm();
+  }
+  fetchCountryList();
+}, [mode, rowData, show]);
+
 
   // Fetch country list
   const fetchCountryList = () => {
@@ -172,13 +184,13 @@ const AddEditAgeModal = ({
       isValid = false;
     }
 
-    if (!formData.minimumAge.trim()) {
+    if (!formData.minimumAge) {
       newErrors.minimumAge = "Minimum Age is required";
       isValid = false;
     }
 
     // State name validation
-    if (!formData.maximumAge.trim()) {
+    if (!formData.maximumAge) {
       newErrors.maximumAge = "Maximum Age is required";
       isValid = false;
     }
@@ -200,8 +212,8 @@ const AddEditAgeModal = ({
               study_age_group: formData.studyAgeGroup,
               minimum_age_months: formData.minimumAge,
               maximum_age_months: formData.maximumAge,
-              country: formData.countryName,
-              course_level: formData.courseLevel,
+               country: formData.countryName.map((item) => item.value),
+        course_level: formData.courseLevel.map((item) => item.value),
               description: formData.description.trim(),
             }
           : {
@@ -466,43 +478,25 @@ const AddEditAgeModal = ({
                     Country Name <span className="text-danger">*</span>
                   </label>
                   <Select
-                    options={countryListData.map((option) => ({
-                      value: option.uuid,
-                      label: option.name,
-                    }))}
-                    isMulti // ⬅ MULTI SELECT ADDED
-                    value={
-                      Array.isArray(formData.countryName)
-                        ? countryListData
-                            .map((option) => ({
-                              value: option.uuid,
-                              label: option.name,
-                            }))
-                            .filter((opt) =>
-                              formData.countryName.includes(opt.value)
-                            )
-                        : []
-                    }
-                    onChange={(selectedOptions) =>
-                      handleChange({
-                        target: {
-                          name: "countryName",
-                          value: selectedOptions
-                            ? selectedOptions.map((opt) => opt.value)
-                            : [],
-                        },
-                      })
-                    }
-                    filterOption={customFilterOption}
-                    placeholder="Select Country Name"
-                    isClearable
-                    isSearchable
-                    className={`custom-select-container ${
-                      errors.countryName ? "is-invalid" : ""
-                    }`}
-                    classNamePrefix="custom-select"
-                  />
-
+                      options={countryListData.map((option) => ({
+                        value: option.uuid,
+                        label: option.name,
+                      }))}
+                      isMulti
+                      value={formData.countryName}
+                      onChange={(selectedOptions) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          countryName: selectedOptions || [],
+                        }))
+                      }
+                      filterOption={customFilterOption}
+                      placeholder="Select Country Name"
+                      isClearable
+                      isSearchable
+                      className={`custom-select-container ${errors.countryName ? "is-invalid" : ""}`}
+                      classNamePrefix="custom-select"
+                    />
                   {errors.countryName && (
                     <div className="text-danger text-sm mt-1">
                       {errors.countryName}
@@ -515,42 +509,26 @@ const AddEditAgeModal = ({
                     Course Level <span className="text-danger">*</span>
                   </label>
                   <Select
-                    options={courseLevelData.map((option) => ({
-                      value: option.uuid,
-                      label: option.name,
-                    }))}
-                    isMulti // ⬅ MULTI SELECT ADDED
-                    value={
-                      Array.isArray(formData.courseLevel)
-                        ? courseLevelData
-                            .map((option) => ({
-                              value: option.uuid,
-                              label: option.name,
-                            }))
-                            .filter((opt) =>
-                              formData.courseLevel.includes(opt.value)
-                            )
-                        : []
-                    }
-                    onChange={(selectedOptions) =>
-                      handleChange({
-                        target: {
-                          name: "courseLevel",
-                          value: selectedOptions
-                            ? selectedOptions.map((opt) => opt.value)
-                            : [],
-                        },
-                      })
-                    }
-                    filterOption={customFilterOption}
-                    placeholder="Select Course Level"
-                    isClearable
-                    isSearchable
-                    className={`custom-select-container ${
-                      errors.courseLevel ? "is-invalid" : ""
-                    }`}
-                    classNamePrefix="custom-select"
-                  />
+                        options={courseLevelData.map((option) => ({
+                          value: option.uuid,
+                          label: option.name,
+                        }))}
+                        isMulti
+                        value={formData.courseLevel}
+                        onChange={(selectedOptions) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            courseLevel: selectedOptions || [],
+                          }))
+                        }
+                        filterOption={customFilterOption}
+                        placeholder="Select Course Level"
+                        isClearable
+                        isSearchable
+                        className={`custom-select-container ${errors.courseLevel ? "is-invalid" : ""}`}
+                        classNamePrefix="custom-select"
+                      />
+
 
                   {errors.courseLevel && (
                     <div className="text-danger text-sm mt-1">

@@ -574,8 +574,15 @@ const AccrediationNameList = () => {
       toast.error("No accrediation name selected for deletion.");
       return;
     }
+    const deleteAll = selectAllOrNot === "all" && ((tableState.search && tableState.search.trim() !== '') || columnFilters.categoryId.length > 0);
+    const payloadSend = {
+      deleteAll: deleteAll,
+      category: columnFilters.categoryId.length > 0 ? columnFilters.categoryId : '',
+      id: deleteAll == true ? "" : sendPayload,
+      search: tableState.search || '',
+    };
     dispatch(
-      accreditationNameDelete(sendPayload, (response, error) => {
+      accreditationNameDelete(payloadSend, (response, error) => {
         if (error) {
           toast.error(error?.response?.data?.message || "server error");
         } else {
@@ -591,7 +598,8 @@ const AccrediationNameList = () => {
             setSelectedRows([]);
             setSelectAllOrNot("");
             setDeleteId(null);
-            fetchAccrediationNameList();
+            //fetchAccrediationNameList();
+             clearAllFilters();
           } else {
             toast.error("Something went wrong.");
           }

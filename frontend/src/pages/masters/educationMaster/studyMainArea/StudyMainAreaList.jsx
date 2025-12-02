@@ -236,6 +236,7 @@ const StudyMainAreaList = () => {
     }));
     // Reset Global Search
     setGlobalSearch('');
+    setSelectedRows([]);
   };
 
 
@@ -354,7 +355,13 @@ const StudyMainAreaList = () => {
       toast.error("No department selected for deletion.");
       return;
     }
-    dispatch(studyMainAreaDelete(sendPayload, (response, error) => {
+    const deleteAll = selectAllOrNot === "all" && Boolean(tableState.search?.trim());
+    const payloadSend = {
+      deleteAll: deleteAll,
+      id: deleteAll == true ? "" : sendPayload,
+      search: tableState.search || '',
+    };
+    dispatch(studyMainAreaDelete(payloadSend, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
@@ -366,7 +373,8 @@ const StudyMainAreaList = () => {
           setSelectedRows([]);
           setSelectAllOrNot('');
           setDeleteId(null);
-          fetchDepartmentList();
+          //fetchDepartmentList();
+           clearAllFilters();
         } else {
           toast.error("Something went wrong.");
         }
@@ -537,14 +545,11 @@ const StudyMainAreaList = () => {
                       </button>
                     </>
                   )}
-                  {/* <button
-                    onClick={clearAllFilters}
-                    className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
-                  >Reset </button> */}
                   <ResetButton
                     onClick={clearAllFilters}
                     tableState={tableState}
                     globalSearch={globalSearch}
+                    selectedRows={selectedRows}
                   />
                 </div>
               </div>

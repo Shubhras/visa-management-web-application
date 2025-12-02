@@ -1,0 +1,423 @@
+#urls.py
+
+
+
+
+    path("documentcategory/create/", DocumentCategoryCreateAPIView.as_view(), name='DocumentCategory-create'),
+    path("documentcategory/", DocumentCategoryListAPIView.as_view(), name='DocumentCategory-list'),
+    path("documentcategory/<uuid:uuid>/", DocumentCategoryRetrieveAPIView.as_view(), name='DocumentCategory-detail'),
+    path("documentcategory/<uuid:uuid>/update/", DocumentCategoryUpdateAPIView.as_view(), name='DocumentCategory-update'),
+    path("documentcategory/delete/", DocumentCategoryDeleteAPIView.as_view(), name='DocumentCategory-delete'),
+    path("documentcategory/export/", DocumentCategoryExportAPIView.as_view(), name='DocumentCategory-export'),
+    path("documentcategory/import/", DocumentCategoryImportAPIView.as_view(), name='DocumentCategory-import'),
+    
+
+    path('documenttype/create/', DocumentTypeCreateAPIView.as_view(), name='document_type_create'),
+    path('documenttype/', DocumentTypeListAPIView.as_view(), name='document_type_list'),
+    path('documenttype/<uuid:uuid>/', DocumentTypeRetrieveAPIView.as_view(), name='document_type_retrieve'),
+    path('documenttype/<uuid:uuid>/update/', DocumentTypeUpdateAPIView.as_view(), name='document_type_update'),
+    path('documenttype/delete/', DocumentTypeDeleteAPIView.as_view(), name='document_type_delete'),
+    path('documenttype/export/', DocumentTypeExportAPIView.as_view(), name='document-type-export'),
+    path('documenttype/import/', DocumentTypeImportAPIView.as_view(), name='document-type-import'),
+
+    path('documentname/create/',DocumentNameCreateAPIView.as_view(), name='document_name_create'),
+    path('documentname/', DocumentNameListAPIView.as_view(), name='document_name_list'),
+    path('documentname/<uuid:uuid>/', DocumentNameRetrieveAPIView.as_view(), name='document_name_retrieve'),
+    path('documentname/<uuid:uuid>/update/', DocumentNameUpdateAPIView.as_view(), name='document_name_update'),
+    path('documentname/delete/', DocumentNameDeleteAPIView.as_view(), name='document_name_delete'),
+    path('documentname/export/', DocumentNameExportAPIView.as_view(), name='document_name_export'),
+    path('documentname/import/', DocumentNameImportAPIView.as_view(), name='document_name_import'),
+
+    path('purpose-of-visit/create/',PurposeOfVisitCreateAPIView.as_view(), name='purpose_create'),
+    path('purpose-of-visit/', PurposeOfVisitListAPIView.as_view(), name='purpose_list'),
+    path('purpose-of-visit/<uuid:uuid>/', PurposeOfVisitRetrieveAPIView.as_view(), name='purpose_retrieve'),
+    path('purpose-of-visit/<uuid:uuid>/update/', PurposeOfVisitUpdateAPIView.as_view(), name='purpose_update'),
+    path('purpose-of-visit/delete/', PurposeOfVisitDeleteAPIView.as_view(), name='purpose_delete'),
+    path('purpose-of-visit/export/', PurposeOfVisitExportAPIView.as_view(), name='purpose_export'),
+    path('purpose-of-visit/import/', PurposeOfVisitImportAPIView.as_view(), name='purpose_import'),
+
+
+    path("documentsfor/", DocumentsForListAPIView.as_view(), name='DocumentsFor-list'),
+    path("documentsfor/create/", DocumentsForCreateAPIView.as_view(), name='DocumentsFor-create'),
+    path("documentsfor/<uuid:uuid>/", DocumentsForRetrieveAPIView.as_view(), name='DocumentsFor-detail'),
+    path("documentsfor/<uuid:uuid>/update/", DocumentsForUpdateAPIView.as_view(), name='DocumentsFor-update'),
+    path("documentsfor/delete/", DocumentsForDeleteAPIView.as_view(), name='DocumentsFor-delete'),
+    path("documentsfor/export/", DocumentsForExportAPIView.as_view(), name='DocumentsFor-export'),
+    path("documentsfor/import/", DocumentsForImportAPIView.as_view(), name='DocumentsFor-import'),
+
+
+    path('requireddocument/create/', RequiredDocumentCreateAPIView.as_view(), name='required_document_create'),
+    path('requireddocument/', RequiredDocumentListAPIView.as_view(), name='required_document_list'),   
+    path("requireddocument/visa-major/by-country/<uuid:representing_country_uuid>/",VisaMajorByCountryListAPIView.as_view(),name="visa_major_by_country"),
+    path('requireddocument/<uuid:uuid>/', RequiredDocumentRetrieveAPIView.as_view(), name='required_document_retrieve'),
+    path('requireddocument/<uuid:uuid>/update/', RequiredDocumentUpdateAPIView.as_view(), name='required_document_update'),
+    path('requireddocument/delete/', RequiredDocumentDeleteAPIView.as_view(), name='required_document_delete'),
+    path('requireddocument/export/', RequiredDocumentExportAPIView.as_view(), name='required_document_export'),
+    path('requireddocument/import/', RequiredDocumentImportAPIView.as_view(), name='required_document_import'),
+
+
+    path('process-status-name/create/', ProcessStatusCreateAPIView.as_view(), name='process_status_create'),
+    path('process-status-name/', ProcessStatusListAPIView.as_view(), name='process_status_list'),
+    path('process-status-name/<uuid:uuid>/', ProcessStatusRetrieveAPIView.as_view(), name='process_status_retrieve'),
+    path('process-status-name/<uuid:uuid>/update/', ProcessStatusUpdateAPIView.as_view(), name='process_status_update'),
+    path('process-status-name/delete/', ProcessStatusDeleteAPIView.as_view(), name='process_status_delete'),
+    path('process-status-name/export/', ProcessStatusExportAPIView.as_view(), name='process_status_export'),
+    path('process-status-name/import/', ProcessStatusImportAPIView.as_view(), name='process_status_import'),
+
+    path('process-substatus-name/create/', ProcessSubStatusCreateAPIView.as_view(), name='process_sub_status_create'),
+    path('process-substatus-name/', ProcessSubStatusListAPIView.as_view(), name='process_sub_status_list'),
+    path('process-substatus-name/<uuid:uuid>/', ProcessSubStatusRetrieveAPIView.as_view(), name='process_sub_status_retrieve'),    
+    path("process-substatus-name/by-country/<uuid:representing_country_uuid>/",ProcessSubStatusByCountryAPIView.as_view(),name="process_sub_status_by_country"),
+    path('process-substatus-name/<uuid:uuid>/update/', ProcessSubStatusUpdateAPIView.as_view(), name='process_sub_status_update'),
+    path('process-substatus-name/delete/', ProcessSubStatusDeleteAPIView.as_view(), name='process_sub_status_delete'),
+    path('process-substatus-name/export/', ProcessSubStatusExportAPIView.as_view(), name='process_sub_status_export'),
+    path('process-substatus-name/import/', ProcessSubStatusImportAPIView.as_view(), name='process_sub_status_import'),
+
+    path("process-type/create/", ProcessTypeCreateAPIView.as_view(), name="process_type_create"),
+    path("process-type/", ProcessTypeListAPIView.as_view(), name="process_type_list"),
+    path("process-type/<uuid:uuid>/", ProcessTypeRetrieveAPIView.as_view(), name="process_type_retrieve"),
+    path("process-type/<uuid:uuid>/update/", ProcessTypeUpdateAPIView.as_view(), name="process_type_update"),
+    path("process-type/delete/", ProcessTypeDeleteAPIView.as_view(), name="process_type_delete"),
+    path("process-type/export/", ProcessTypeExportAPIView.as_view(), name="process_type_export"),
+    path("process-type/import/", ProcessTypeImportAPIView.as_view(), name="process_type_import"),
+
+    path("payment-to/create/", PaymentToCreateAPIView.as_view(), name="payment_to_create"),
+    path("payment-to/", PaymentToListAPIView.as_view(), name="payment_to_list"),
+    path("payment-to/<uuid:uuid>/", PaymentToRetrieveAPIView.as_view(), name="payment_to_retrieve"),
+    path("payment-to/<uuid:uuid>/update/", PaymentToUpdateAPIView.as_view(), name="payment_to_update"),
+    path("payment-to/delete/", PaymentToDeleteAPIView.as_view(), name="payment_to_delete"),
+    path("payment-to/export/", PaymentToExportAPIView.as_view(), name="payment_to_export"),
+    path("payment-to/import/", PaymentToImportAPIView.as_view(), name="payment_to_import"),
+
+    path("paymentcategory/create/", PaymentCategoryCreateAPIView.as_view(), name="payment_category_create"),
+    path("paymentcategory/", PaymentCategoryListAPIView.as_view(), name="payment_category_list"),
+    path("paymentcategory/<uuid:uuid>/", PaymentCategoryRetrieveAPIView.as_view(), name="payment_category_retrieve"),
+    path("paymentcategory/<uuid:uuid>/update/", PaymentCategoryUpdateAPIView.as_view(), name="payment_category_update"),
+    path("paymentcategory/delete/", PaymentCategoryDeleteAPIView.as_view(), name="payment_category_delete"),
+    path("paymentcategory/export/", PaymentCategoryExportAPIView.as_view(), name="payment_category_export"),
+    path("paymentcategory/import/", PaymentCategoryImportAPIView.as_view(), name="payment_category_import"),
+
+#------------------------------------------------------------------------------
+
+
+#serilzers
+
+class DocumentCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DocumentCategory
+        fields = [
+            "id",
+            "uuid",
+            "name",
+            "description",
+            "is_deleted",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["uuid", "created_at", "updated_at"]
+
+
+
+
+class DocumentNameSerializer(serializers.ModelSerializer):
+    # Accept UUID for write
+    document_category = serializers.UUIDField(write_only=True)
+
+    # Read-only for response
+    document_category_name = serializers.CharField(source="document_category.name", read_only=True)
+    document_category_uuid = serializers.UUIDField(source="document_category.uuid", read_only=True)
+
+    class Meta:
+        model = DocumentName
+        fields = [
+            "uuid",
+            "document_category",          # writable
+            "document_category_uuid",     # read-only
+            "document_category_name",     # read-only
+            "document_name",
+            "description",
+            "is_deleted",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["uuid", "created_at", "updated_at"]
+
+    def create(self, validated_data):
+        # Convert UUID to actual DocumentCategory object
+        doc_cat_uuid = validated_data.pop("document_category")
+        doc_cat_obj = DocumentCategory.objects.get(uuid=doc_cat_uuid)
+        validated_data["document_category"] = doc_cat_obj
+        return super().create(validated_data)
+
+
+
+class DocumentTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DocumentType
+        fields = [
+            "uuid",
+            "name",
+            "description",
+            "is_deleted",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["uuid", "created_at", "updated_at"]
+
+
+
+
+
+
+
+class PurposeOfVisitSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PurposeOfVisit
+        fields = [
+            "id",
+            "uuid",
+            "name",
+            "description",
+            "is_deleted",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "uuid", "created_at", "updated_at"]
+
+
+class DocumentsForSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DocumentsFor
+        fields = [
+            "uuid",
+            "name",
+            "description",
+            "is_deleted",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["uuid", "created_at", "updated_at"]
+
+
+class RequiredDocumentSerializer(serializers.ModelSerializer):
+    # Read-only human-readable fields
+    name = serializers.CharField(source='country.name', read_only=True)
+    visa_main_category_name = serializers.CharField(source='visa_main_category.name', read_only=True)
+    visa_major_category_name = serializers.CharField(source='visa_major_category.name', read_only=True)
+    visa_name_name = serializers.CharField(source='visa_name.name', read_only=True)
+    document_category_name = serializers.CharField(source='document_category.name', read_only=True)
+    document_name_name = serializers.CharField(source='document_name.document_name', read_only=True)
+
+    # Accept UUIDs for foreign keys in write operations
+    country = serializers.UUIDField(write_only=True)
+    visa_main_category = serializers.UUIDField(write_only=True)
+    visa_major_category = serializers.UUIDField(write_only=True)
+    visa_name = serializers.UUIDField(write_only=True)
+    document_category = serializers.UUIDField(write_only=True)
+    document_name = serializers.UUIDField(write_only=True)
+
+    class Meta:
+        model = RequiredDocument
+        fields = [
+            "id",
+            "uuid",
+            "country",
+            "name",
+            "visa_main_category",
+            "visa_main_category_name",
+            "visa_major_category",
+            "visa_major_category_name",
+            "visa_name",
+            "visa_name_name",
+            "document_category",
+            "document_category_name",
+            "document_name",
+            "document_name_name",
+            "description",
+            "is_deleted",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "uuid", "created_at", "updated_at"]
+
+    # Validate-and-convert helper: convert incoming UUID -> model instance
+    def _get_instance_by_uuid(self, model_class, value, field_label):
+        try:
+            return model_class.objects.get(uuid=value, is_deleted=False)
+        except model_class.DoesNotExist:
+            raise serializers.ValidationError({field_label: f"Invalid {field_label} UUID."})
+
+    def validate_country(self, value):
+        return self._get_instance_by_uuid(Country, value, 'country')
+
+    def validate_visa_main_category(self, value):
+        return self._get_instance_by_uuid(VisaMain, value, 'visa_main_category')
+
+    def validate_visa_major_category(self, value):
+        return self._get_instance_by_uuid(VisaMajor, value, 'visa_major_category')
+
+    def validate_visa_name(self, value):
+        return self._get_instance_by_uuid(VisaName, value, 'visa_name')
+
+    def validate_document_category(self, value):
+        return self._get_instance_by_uuid(DocumentCategory, value, 'document_category')
+
+    def validate_document_name(self, value):
+        return self._get_instance_by_uuid(DocumentName, value, 'document_name')
+
+
+class ProcessStatusSerializer(serializers.ModelSerializer):
+    # Read-only names for related models
+    country_name = serializers.CharField(source='country.name', read_only=True)
+    visa_main_category_name = serializers.CharField(source='visa_main_category.name', read_only=True)
+
+    # Accept UUIDs for foreign-key fields
+    country = serializers.UUIDField(write_only=True)
+    visa_main_category = serializers.UUIDField(write_only=True)
+
+    # Now process_status_name is a TEXT field, so:
+    process_status_name = serializers.CharField()
+
+    class Meta:
+        model = ProcessStatusName
+        fields = [
+            "id",
+            "uuid",
+            "country",
+            "country_name",
+            "visa_main_category",
+            "visa_main_category_name",
+            "process_status_name",
+            "description",
+            "is_deleted",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "uuid", "created_at", "updated_at"]
+
+    def _get_instance(self, model_class, value, label):
+        try:
+            return model_class.objects.get(uuid=value, is_deleted=False)
+        except model_class.DoesNotExist:
+            raise serializers.ValidationError({label: f"Invalid {label} UUID."})
+
+    def validate_country(self, value):
+        return self._get_instance(Country, value, "country")
+
+    def validate_visa_main_category(self, value):
+        return self._get_instance(VisaMain, value, "visa_main_category")
+
+
+class ProcessSubStatusSerializer(serializers.ModelSerializer):
+    country_name = serializers.CharField(source='country.name', read_only=True)
+    visa_main_category_name = serializers.CharField(source='visa_main_category.name', read_only=True)
+    process_status_name_value = serializers.CharField(source='process_status_name.name', read_only=True)
+
+    country = serializers.UUIDField(write_only=True)
+    visa_main_category = serializers.UUIDField(write_only=True)
+    process_status_name = serializers.UUIDField(write_only=True)
+
+    class Meta:
+        model = ProcessSubStatusName
+        fields = [
+            "id",
+            "uuid",
+            "country",
+            "country_name",
+            "visa_main_category",
+            "visa_main_category_name",
+            "process_status_name",
+            "process_status_name_value",
+            "process_sub_status_name",
+            "description",
+            "is_deleted",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "uuid", "created_at", "updated_at"]
+
+    def _get_instance(self, model_class, value, label):
+        try:
+            return model_class.objects.get(uuid=value, is_deleted=False)
+        except model_class.DoesNotExist:
+            raise serializers.ValidationError({label: f"Invalid {label} UUID."})
+
+    def validate_country(self, value):
+        return self._get_instance(Country, value, "country")
+
+    def validate_visa_main_category(self, value):
+        return self._get_instance(VisaMain, value, "visa_main_category")
+
+    def validate_process_status_name(self, value):
+        return self._get_instance(ProcessStatusName, value, "process_status_name")
+
+    
+class ProcessTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProcessType
+        fields = [
+            "id",
+            "uuid",
+            "name",
+            "description",
+            "is_deleted",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "uuid", "created_at", "updated_at"]
+
+
+class PaymentToSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PaymentTo
+        fields = [
+            "id",
+            "uuid",
+            "name",
+            "description",
+            "is_deleted",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "uuid", "created_at", "updated_at"]
+
+
+class PaymentCategorySerializer(serializers.ModelSerializer):
+    payment_to_uuid = serializers.UUIDField(source='payment_to.uuid', read_only=True)
+    payment_to_name = serializers.CharField(source='payment_to.name', read_only=True)
+
+    # Accept UUID from request
+    payment_to = serializers.UUIDField(write_only=True)
+
+    class Meta:
+        model = PaymentCategory
+        fields = [
+            "id",
+            "uuid",
+
+            "payment_to",          # write-only
+            "payment_to_uuid",     # read-only
+            "payment_to_name",     # read-only
+
+            "payment_category",
+            "description",
+            "is_deleted",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "uuid", "created_at", "updated_at"]
+
+    def validate_payment_to(self, value):
+        try:
+            return PaymentTo.objects.get(uuid=value, is_deleted=False)
+        except PaymentTo.DoesNotExist:
+            raise serializers.ValidationError("Invalid or deleted Payment To UUID.")
+
+    def create(self, validated_data):
+        # Replace UUID with actual PaymentTo object
+        payment_to_obj = validated_data.pop("payment_to")
+        return PaymentCategory.objects.create(payment_to=payment_to_obj, **validated_data)
+
+
+
+

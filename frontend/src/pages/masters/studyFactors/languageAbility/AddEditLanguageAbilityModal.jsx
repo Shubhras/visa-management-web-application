@@ -60,12 +60,12 @@ const AddEditStudyFactorLanguageAbilityModal = ({
       setFormData({
         uuid: rowData.uuid || "",
         factorForName: rowData.factor_for_uuid || "",
-        studyLanguageAbilityGroup: rowData.studyLanguageAbilityGroup || "",
-        languageTestName: rowData.languageTestName || "",
-        moduleName: rowData.moduleName || "",
-        minimumOverallScore: rowData.minimumOverallScore || "",
-        notMoreThan: rowData.notMoreThan || "", //formData.state === "STATE" ? "State" : "Territory" || '',
-        inNoOfModules: rowData.inNoOfModules || "",
+        studyLanguageAbilityGroup: rowData.language_ability_group_name || "",
+        languageTestName: rowData.language_test_name_name || "",
+        moduleName: rowData.module_name_name || "",
+        minimumOverallScore: rowData.minimum_overall_score || "",
+        notMoreThan: rowData.not_less_than || "", //formData.state === "STATE" ? "State" : "Territory" || '',
+        inNoOfModules: rowData.in_no_of_modules || "",
         description: rowData.description || "",
       });
     } else {
@@ -167,26 +167,26 @@ const AddEditStudyFactorLanguageAbilityModal = ({
     const newErrors = {};
     let isValid = true;
 
-    if (!formData.factorForName.trim()) {
+    if (!formData.factorForName) {
       newErrors.factorForName = "Factor For name is required";
       isValid = false;
     }
 
-    if (!formData.studyLanguageAbilityGroup.trim()) {
+    if (!formData.studyLanguageAbilityGroup) {
       newErrors.studyLanguageAbilityGroup =
         "Study Language Ability Group is required";
       isValid = false;
     }
 
-    if (!formData.languageTestName.trim()) {
+    if (!formData.languageTestName) {
       newErrors.languageTestName = "Language Test Name is required";
       isValid = false;
     }
-    if (!formData.moduleName.trim()) {
+    if (!formData.moduleName) {
       newErrors.moduleName = "Modules Name is required";
       isValid = false;
     }
-    if (!formData.minimumOverallScore.trim()) {
+    if (!formData.minimumOverallScore) {
       newErrors.minimumOverallScore = "Minimum Overall Score is required";
       isValid = false;
     }
@@ -210,25 +210,25 @@ const AddEditStudyFactorLanguageAbilityModal = ({
         mode === "edit"
           ? {
               uuid: formData.uuid,
-              factor_for: formData.factorForName.trim(),
+              factor_for: formData.factorForName,
               language_ability_group:
-                formData.studyLanguageAbilityGroup.trim(),
-              language_test_name: formData.languageTestName.trim(),
-              module_name: formData.moduleName.trim(),
-              minimum_overall_score: formData.minimumOverallScore.trim(),
+                formData.studyLanguageAbilityGroup,
+              language_test_name: formData.languageTestName,
+              module_name: formData.moduleName,
+              minimum_overall_score: formData.minimumOverallScore,
               not_less_than: formData.notMoreThan.trim(),
-              in_no_of_modules: formData.inNoOfModules.trim(),
+              in_no_of_modules: formData.inNoOfModules,
               description: formData.description.trim(),
             }
           : {
-            factor_for: formData.factorForName.trim(),
+            factor_for: formData.factorForName,
               language_ability_group:
-                formData.studyLanguageAbilityGroup.trim(),
-              language_test_name: formData.languageTestName.trim(),
-              module_name: formData.moduleName.trim(),
-              minimum_overall_score: formData.minimumOverallScore.trim(),
-              not_less_than: formData.notMoreThan.trim(),
-              in_no_of_modules: formData.inNoOfModules.trim(),
+                formData.studyLanguageAbilityGroup,
+              language_test_name: formData.languageTestName,
+              module_name: formData.moduleName,
+              minimum_overall_score: formData.minimumOverallScore,
+              not_less_than: formData.notMoreThan,
+              in_no_of_modules: formData.inNoOfModules,
               description: formData.description.trim(),
             };
 

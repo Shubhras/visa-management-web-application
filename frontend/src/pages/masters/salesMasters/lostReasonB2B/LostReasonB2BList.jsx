@@ -385,9 +385,14 @@ const LostReasonB2BList = () => {
       toast.error("No lost reason (B2B) selected for deletion.");
       return;
     }
-
+ const deleteAll = selectAllOrNot === "all" && Boolean(tableState.search?.trim());
+    const payloadSend = {
+      deleteAll: deleteAll,
+      id: deleteAll == true ? "" : sendPayload,
+      search: tableState.search || '',
+    };
     dispatch(
-      lostReasonB2BDelete(sendPayload, (response, error) => {
+      lostReasonB2BDelete(payloadSend, (response, error) => {
         if (error) {
           toast.error(error?.response?.data?.message || "server error");
         } else {
@@ -403,7 +408,8 @@ const LostReasonB2BList = () => {
             setSelectedRows([]);
             setSelectAllOrNot("");
             setDeleteId(null);
-            fetchLostReasonB2BList();
+            //fetchLostReasonB2BList();
+             clearAllFilters();
           } else {
             toast.error("Something went wrong.");
           }

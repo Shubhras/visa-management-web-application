@@ -85,6 +85,18 @@ import {
   EDIT_RELATED_OCCUPATION,
   ADD_RELATED_OCCUPATION,
   RELATED_OCCUPATION_LIST,
+  IMPORT_ELIGIBILITY_OCCUPATION_NAME,
+  EXPORT_ELIGIBILITY_OCCUPATION_NAME,
+  DELETE_ELIGIBILITY_OCCUPATION_NAME,
+  EDIT_ELIGIBILITY_OCCUPATION_NAME,
+  ADD_ELIGIBILITY_OCCUPATION_NAME,
+  ELIGIBILITY_OCCUPATION_NAME_LIST,
+  IMPORT_OCCUPATION_TO_OCCUPATION,
+  EXPORT_OCCUPATION_TO_OCCUPATION,
+  DELETE_OCCUPATION_TO_OCCUPATION,
+  EDIT_OCCUPATION_TO_OCCUPATION,
+  ADD_OCCUPATION_TO_OCCUPATION,
+  OCCUPATION_TO_OCCUPATION_LIST,
 } from "./actionType";
 
 import {
@@ -173,6 +185,18 @@ import {
   editRelatedOccupationAPI,
   addRelatedOccupationAPI,
   getRelatedOccupationListAPI,
+  getOccupationToOccupationListAPI,
+  addOccupationToOccupationAPI,
+  editOccupationToOccupationAPI,
+  deleteOccupationToOccupationAPI,
+  exportOccupationToOccupationAPI,
+  importOccupationToOccupationAPI,
+  getEligibilityOccupationNameListAPI,
+  addEligibilityOccupationNameAPI,
+  editEligibilityOccupationNameAPI,
+  deleteEligibilityOccupationNameAPI,
+  exportEligibilityOccupationNameAPI,
+  importEligibilityOccupationNameAPI,
 } from "../../../service/api_helper";
 
 // --- JOB TYPE SAGAS ---
@@ -949,6 +973,115 @@ function* relatedOccupationImportSaga(action) {
   }
 }
 
+function* occupationToOccupationListSaga(action) {
+  try {
+    const response = yield call(getOccupationToOccupationListAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* occupationToOccupationAddSaga(action) {
+  try {
+    const response = yield call(addOccupationToOccupationAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* occupationToOccupationEditSaga(action) {
+  try {
+    const response = yield call(editOccupationToOccupationAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* occupationToOccupationDeleteSaga(action) {
+  try {
+    const response = yield call(deleteOccupationToOccupationAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* occupationToOccupationExportSaga(action) {
+  try {
+    const response = yield call(exportOccupationToOccupationAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* occupationToOccupationImportSaga(action) {
+  try {
+    const response = yield call(importOccupationToOccupationAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* eligibilityOccupationNameListSaga(action) {
+  try {
+    const response = yield call(getEligibilityOccupationNameListAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* eligibilityOccupationNameAddSaga(action) {
+  try {
+    const response = yield call(addEligibilityOccupationNameAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* eligibilityOccupationNameEditSaga(action) {
+  try {
+    const response = yield call(editEligibilityOccupationNameAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* eligibilityOccupationNameDeleteSaga(action) {
+  try {
+    const response = yield call(deleteEligibilityOccupationNameAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* eligibilityOccupationNameExportSaga(action) {
+  try {
+    const response = yield call(exportEligibilityOccupationNameAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+function* eligibilityOccupationNameImportSaga(action) {
+  try {
+    const response = yield call(importEligibilityOccupationNameAPI, action?.data);
+    action.callback?.(response);
+  } catch (error) {
+    action.callback?.(null, error);
+  }
+}
+
+
 // Root Saga
 function* occupationMasterSaga() {
   yield takeEvery(JOB_TYPE_LIST, jobTypeListSaga);
@@ -1038,5 +1171,17 @@ function* occupationMasterSaga() {
   yield takeEvery(DELETE_RELATED_OCCUPATION, relatedOccupationDeleteSaga);
   yield takeEvery(EXPORT_RELATED_OCCUPATION, relatedOccupationExportSaga);
   yield takeEvery(IMPORT_RELATED_OCCUPATION, relatedOccupationImportSaga);
+  yield takeEvery(OCCUPATION_TO_OCCUPATION_LIST, occupationToOccupationListSaga);
+  yield takeEvery(ADD_OCCUPATION_TO_OCCUPATION, occupationToOccupationAddSaga);
+  yield takeEvery(EDIT_OCCUPATION_TO_OCCUPATION, occupationToOccupationEditSaga);
+  yield takeEvery(DELETE_OCCUPATION_TO_OCCUPATION, occupationToOccupationDeleteSaga);
+  yield takeEvery(EXPORT_OCCUPATION_TO_OCCUPATION, occupationToOccupationExportSaga);
+  yield takeEvery(IMPORT_OCCUPATION_TO_OCCUPATION, occupationToOccupationImportSaga);
+  yield takeEvery(ELIGIBILITY_OCCUPATION_NAME_LIST, eligibilityOccupationNameListSaga);
+  yield takeEvery(ADD_ELIGIBILITY_OCCUPATION_NAME, eligibilityOccupationNameAddSaga);
+  yield takeEvery(EDIT_ELIGIBILITY_OCCUPATION_NAME, eligibilityOccupationNameEditSaga);
+  yield takeEvery(DELETE_ELIGIBILITY_OCCUPATION_NAME, eligibilityOccupationNameDeleteSaga);
+  yield takeEvery(EXPORT_ELIGIBILITY_OCCUPATION_NAME, eligibilityOccupationNameExportSaga);
+  yield takeEvery(IMPORT_ELIGIBILITY_OCCUPATION_NAME, eligibilityOccupationNameImportSaga);
 }
 export default occupationMasterSaga;

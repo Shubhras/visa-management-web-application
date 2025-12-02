@@ -1595,7 +1595,7 @@ class AcademicResultGroupImportAPIView(APIView):
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing name"})
+                    skipped_rows.append({"Row": row_number,"Academic Result": name or "","Description":description, "Reason": "Missing name"})
                     continue
 
                 existing = AcademicResultGroup.objects.filter(name__iexact=name).first()
@@ -1620,8 +1620,8 @@ class AcademicResultGroupImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": reversed(duplicates),
-            "skipped_rows": reversed(skipped_rows)
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows))
         }, status=200)
 
 
@@ -2726,91 +2726,91 @@ class LanguageAbilityGroupUpdateAPIView(APIView):
 
 
 # -------------------- Delete API --------------------
-# class LanguageAbilityGroupDeleteAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
+class LanguageAbilityGroupDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
-#     def delete(self, request, uuid=None):
-#         ids = request.data.get('id', None)
+    def delete(self, request, uuid=None):
+        ids = request.data.get('id', None)
 
-#         if uuid:
-#             try:
-#                 group = LanguageAbilityGroup.objects.get(uuid=uuid)
-#                 group.delete()
-#                 return Response({
-#                     "statusCode": 204,
-#                     "status": True,
-#                     "message": "LanguageAbilityGroup permanently deleted.",
-#                     "data": None
-#                 }, status=status.HTTP_204_NO_CONTENT)
-#             except LanguageAbilityGroup.DoesNotExist:
-#                 return Response({
-#                     "statusCode": 404,
-#                     "status": False,
-#                     "message": "LanguageAbilityGroup not found.",
-#                     "data": None
-#                 }, status=status.HTTP_404_NOT_FOUND)
+        if uuid:
+            try:
+                group = LanguageAbilityGroup.objects.get(uuid=uuid)
+                group.delete()
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "LanguageAbilityGroup permanently deleted.",
+                    "data": None
+                }, status=status.HTTP_204_NO_CONTENT)
+            except LanguageAbilityGroup.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "LanguageAbilityGroup not found.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
 
-#         if ids == "all":
-#             groups = LanguageAbilityGroup.objects.all()
-#             count = groups.count()
-#             if count == 0:
-#                 return Response({
-#                     "statusCode": 404,
-#                     "status": False,
-#                     "message": "No LanguageAbilityGroups found to delete.",
-#                     "data": None
-#                 }, status=status.HTTP_404_NOT_FOUND)
-#             groups.delete()
-#             return Response({
-#                 "statusCode": 200,
-#                 "status": True,
-#                 "message": f"All {count} LanguageAbilityGroups permanently deleted.",
-#                 "data": None
-#             })
+        if ids == "all":
+            groups = LanguageAbilityGroup.objects.all()
+            count = groups.count()
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No LanguageAbilityGroups found to delete.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+            groups.delete()
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"All {count} LanguageAbilityGroups permanently deleted.",
+                "data": None
+            })
 
-#         if not ids or not isinstance(ids, list):
-#             return Response({
-#                 "statusCode": 400,
-#                 "status": False,
-#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
-#                 "data": None
-#             }, status=status.HTTP_400_BAD_REQUEST)
+        if not ids or not isinstance(ids, list):
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-#         valid_uuids = []
-#         invalid_uuids = []
-#         for u in ids:
-#             try:
-#                 valid_uuids.append(UUID(u))
-#             except ValueError:
-#                 invalid_uuids.append(u)
+        valid_uuids = []
+        invalid_uuids = []
+        for u in ids:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(u)
 
-#         if not valid_uuids:
-#             return Response({
-#                 "statusCode": 400,
-#                 "status": False,
-#                 "message": "No valid UUIDs provided.",
-#                 "data": {"invalid_uuids": invalid_uuids}
-#             }, status=status.HTTP_400_BAD_REQUEST)
+        if not valid_uuids:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No valid UUIDs provided.",
+                "data": {"invalid_uuids": invalid_uuids}
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-#         groups = LanguageAbilityGroup.objects.filter(uuid__in=valid_uuids)
-#         count = groups.count()
+        groups = LanguageAbilityGroup.objects.filter(uuid__in=valid_uuids)
+        count = groups.count()
 
-#         if count == 0:
-#             return Response({
-#                 "statusCode": 404,
-#                 "status": False,
-#                 "message": "No matching LanguageAbilityGroups found.",
-#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-#             }, status=status.HTTP_404_NOT_FOUND)
+        if count == 0:
+            return Response({
+                "statusCode": 404,
+                "status": False,
+                "message": "No matching LanguageAbilityGroups found.",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+            }, status=status.HTTP_404_NOT_FOUND)
 
-#         groups.delete()
+        groups.delete()
 
-#         return Response({
-#             "statusCode": 200,
-#             "status": True,
-#             "message": f"{count} LanguageAbilityGroup(s) permanently deleted.",
-#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-#         })
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": f"{count} LanguageAbilityGroup(s) permanently deleted.",
+            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        })
 
 
 
@@ -3118,12 +3118,105 @@ class EntranceTestAbilityGroupUpdateAPIView(APIView):
 
 
 # -------------------- Delete API --------------------
+# class EntranceTestAbilityGroupDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request, uuid=None):
+#         ids = request.data.get('id', None)
+
+#         if uuid:
+#             try:
+#                 group = EntranceTestAbilityGroup.objects.get(uuid=uuid)
+#                 group.delete()
+#                 return Response({
+#                     "statusCode": 204,
+#                     "status": True,
+#                     "message": "EntranceTestAbilityGroup permanently deleted.",
+#                     "data": None
+#                 }, status=status.HTTP_204_NO_CONTENT)
+#             except EntranceTestAbilityGroup.DoesNotExist:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "EntranceTestAbilityGroup not found.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#         if ids == "all":
+#             groups = EntranceTestAbilityGroup.objects.all()
+#             count = groups.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No EntranceTestAbilityGroups found to delete.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+#             groups.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} EntranceTestAbilityGroups permanently deleted.",
+#                 "data": None
+#             })
+
+#         if not ids or not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         valid_uuids = []
+#         invalid_uuids = []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         groups = EntranceTestAbilityGroup.objects.filter(uuid__in=valid_uuids)
+#         count = groups.count()
+
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching EntranceTestAbilityGroups found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         groups.delete()
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} EntranceTestAbilityGroup(s) permanently deleted.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         })
+
+
+
+
 class EntranceTestAbilityGroupDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
+        search = request.GET.get("search", "").strip()  # SEARCH ONLY on 'name'
         ids = request.data.get('id', None)
 
+        # -------------------------
+        #  SINGLE DELETE
+        # -------------------------
         if uuid:
             try:
                 group = EntranceTestAbilityGroup.objects.get(uuid=uuid)
@@ -3142,8 +3235,15 @@ class EntranceTestAbilityGroupDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
+        # -------------------------
+        #  BULK DELETE (ALL) — APPLY SEARCH FILTER
+        # -------------------------
         if ids == "all":
             groups = EntranceTestAbilityGroup.objects.all()
+
+            if search:
+                groups = groups.filter(name__icontains=search)
+
             count = groups.count()
             if count == 0:
                 return Response({
@@ -3152,6 +3252,7 @@ class EntranceTestAbilityGroupDeleteAPIView(APIView):
                     "message": "No EntranceTestAbilityGroups found to delete.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
+
             groups.delete()
             return Response({
                 "statusCode": 200,
@@ -3160,6 +3261,9 @@ class EntranceTestAbilityGroupDeleteAPIView(APIView):
                 "data": None
             })
 
+        # -------------------------
+        #  MULTIPLE DELETE (Selected UUIDs)
+        # -------------------------
         if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
@@ -3185,6 +3289,11 @@ class EntranceTestAbilityGroupDeleteAPIView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         groups = EntranceTestAbilityGroup.objects.filter(uuid__in=valid_uuids)
+
+        # APPLY SEARCH FILTER HERE TOO
+        if search:
+            groups = groups.filter(name__icontains=search)
+
         count = groups.count()
 
         if count == 0:
@@ -3203,6 +3312,7 @@ class EntranceTestAbilityGroupDeleteAPIView(APIView):
             "message": f"{count} EntranceTestAbilityGroup(s) permanently deleted.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         })
+
 
 
 # -------------------- Export API --------------------
@@ -3994,6 +4104,147 @@ class StudyFactorAgeUpdateAPIView(APIView):
 
 
 
+# class StudyFactorAgeDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request, uuid=None):
+#         try:
+#             # ----------- GET PARAMS -----------
+#             search = request.GET.get("search", "").strip()
+#             delete_all = request.data.get("deleteAll", False)
+#             ids = request.data.get("id", None)
+
+#             # ============================================================
+#             # (1) SINGLE DELETE — DO NOT TOUCH
+#             # ============================================================
+#             if uuid:
+#                 try:
+#                     obj = StudyFactorAge.objects.get(uuid=uuid)
+#                     obj.delete()
+#                     return Response({
+#                         "statusCode": 204,
+#                         "status": True,
+#                         "message": "Age entry permanently deleted."
+#                     }, status=204)
+#                 except StudyFactorAge.DoesNotExist:
+#                     return Response({
+#                         "statusCode": 404,
+#                         "status": False,
+#                         "message": "Age entry not found."
+#                     }, status=404)
+
+#             # ============================================================
+#             # (2) DELETE ENTIRE TABLE WHEN id == "all"
+#             # ============================================================
+#             if ids == "all":
+#                 count = StudyFactorAge.objects.count()
+#                 StudyFactorAge.objects.all().delete()
+
+#                 return Response({
+#                     "statusCode": 200,
+#                     "status": True,
+#                     "message": f"All {count} Age entries deleted from the table."
+#                 }, status=200)
+
+#             # ---------------------------------------------------
+#             # Parse comma-separated UUID list from query params
+#             # ---------------------------------------------------
+#             def parse_uuid_list(param):
+#                 raw = request.GET.get(param, "")
+#                 result = []
+#                 if raw:
+#                     for x in raw.split(","):
+#                         try:
+#                             result.append(UUID(x.strip()))
+#                         except:
+#                             pass
+#                 return result
+
+#             # Your custom query param. (Rename if needed)
+#             age_uuid_list = parse_uuid_list("ageUUID")
+
+#             # ---------------------------------------------------
+#             # BASE QUERYSET
+#             # ---------------------------------------------------
+#             queryset = StudyFactorAge.objects.all()
+#             applied_filters = []
+
+#             # ---------------------------------------------------
+#             # SEARCH FILTER
+#             # ---------------------------------------------------
+#             if search:
+#                 queryset = queryset.filter(age__istartswith=search)
+#                 applied_filters.append("search")
+
+#             # ---------------------------------------------------
+#             # UUID LIST FILTER
+#             # ---------------------------------------------------
+#             if age_uuid_list:
+#                 queryset = queryset.filter(uuid__in=age_uuid_list)
+#                 applied_filters.append("ageUUID")
+
+#             # ============================================================
+#             # (3) deleteAll → delete all matching FILTERED rows
+#             # ============================================================
+#             if delete_all:
+#                 count = queryset.count()
+#                 queryset.delete()
+
+#                 # Smart responses
+#                 if not applied_filters:
+#                     msg = f"All {count} Age entries deleted."
+#                 elif applied_filters == ["search"]:
+#                     msg = f"{count} Age entries deleted based on search filter."
+#                 elif applied_filters == ["ageUUID"]:
+#                     msg = f"{count} Age entries deleted based on ageUUID filter."
+#                 else:
+#                     msg = f"{count} Age entries deleted based on search + ageUUID filters."
+
+#                 return Response({
+#                     "statusCode": 200,
+#                     "status": True,
+#                     "message": msg
+#                 }, status=200)
+
+#             # ============================================================
+#             # (4) MULTIPLE DELETE — DO NOT TOUCH ORIGINAL LOGIC
+#             # ============================================================
+#             if not ids or not isinstance(ids, list):
+#                 return Response({
+#                     "statusCode": 400,
+#                     "status": False,
+#                     "message": "Please provide a list of UUIDs in 'id'."
+#                 }, status=400)
+
+#             valid_uuids = []
+#             invalid_uuids = []
+
+#             for u in ids:
+#                 try:
+#                     valid_uuids.append(UUID(u))
+#                 except:
+#                     invalid_uuids.append(u)
+
+#             filtered_objects = queryset.filter(uuid__in=valid_uuids)
+#             count = filtered_objects.count()
+#             filtered_objects.delete()
+
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"{count} Age entry(ies) deleted.",
+#                 "invalid_uuids": invalid_uuids if invalid_uuids else None
+#             }, status=200)
+
+#         except Exception as e:
+#             return Response({
+#                 "statusCode": 500,
+#                 "status": False,
+#                 "message": f"Internal server error: {str(e)}"
+#             }, status=500)
+
+
+
 class StudyFactorAgeDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -4050,8 +4301,15 @@ class StudyFactorAgeDeleteAPIView(APIView):
                             pass
                 return result
 
-            # Your custom query param. (Rename if needed)
             age_uuid_list = parse_uuid_list("ageUUID")
+
+            # ---------------------------------------------------
+            # NEW FILTER PARAMS (YOUR REQUIREMENT)
+            # ---------------------------------------------------
+            factor_for_list = parse_uuid_list("factorFor")
+            age_group_list = parse_uuid_list("studyAgeGroup")
+            country_list = parse_uuid_list("country")
+            course_level_list = parse_uuid_list("courseLevel")
 
             # ---------------------------------------------------
             # BASE QUERYSET
@@ -4060,18 +4318,46 @@ class StudyFactorAgeDeleteAPIView(APIView):
             applied_filters = []
 
             # ---------------------------------------------------
-            # SEARCH FILTER
+            # SEARCH FILTER (keep original)
             # ---------------------------------------------------
             if search:
                 queryset = queryset.filter(age__istartswith=search)
                 applied_filters.append("search")
 
             # ---------------------------------------------------
-            # UUID LIST FILTER
+            # UUID LIST FILTER (keep original)
             # ---------------------------------------------------
             if age_uuid_list:
                 queryset = queryset.filter(uuid__in=age_uuid_list)
                 applied_filters.append("ageUUID")
+
+            # ---------------------------------------------------
+            # FILTER: FACTOR FOR
+            # ---------------------------------------------------
+            if factor_for_list:
+                queryset = queryset.filter(factor_for__uuid__in=factor_for_list)
+                applied_filters.append("factorFor")
+
+            # ---------------------------------------------------
+            # FILTER: STUDY AGE GROUP
+            # ---------------------------------------------------
+            if age_group_list:
+                queryset = queryset.filter(study_age_group__uuid__in=age_group_list)
+                applied_filters.append("studyAgeGroup")
+
+            # ---------------------------------------------------
+            # FILTER: COUNTRY
+            # ---------------------------------------------------
+            if country_list:
+                queryset = queryset.filter(country__uuid__in=country_list)
+                applied_filters.append("country")
+
+            # ---------------------------------------------------
+            # FILTER: COURSE LEVEL
+            # ---------------------------------------------------
+            if course_level_list:
+                queryset = queryset.filter(course_level__uuid__in=course_level_list)
+                applied_filters.append("courseLevel")
 
             # ============================================================
             # (3) deleteAll → delete all matching FILTERED rows
@@ -4080,15 +4366,10 @@ class StudyFactorAgeDeleteAPIView(APIView):
                 count = queryset.count()
                 queryset.delete()
 
-                # Smart responses
-                if not applied_filters:
-                    msg = f"All {count} Age entries deleted."
-                elif applied_filters == ["search"]:
-                    msg = f"{count} Age entries deleted based on search filter."
-                elif applied_filters == ["ageUUID"]:
-                    msg = f"{count} Age entries deleted based on ageUUID filter."
+                if applied_filters:
+                    msg = f"{count} Age entries deleted based on filters: {', '.join(applied_filters)}"
                 else:
-                    msg = f"{count} Age entries deleted based on search + ageUUID filters."
+                    msg = f"All {count} Age entries deleted."
 
                 return Response({
                     "statusCode": 200,
@@ -4115,6 +4396,7 @@ class StudyFactorAgeDeleteAPIView(APIView):
                 except:
                     invalid_uuids.append(u)
 
+            # Only delete from FILTERED queryset
             filtered_objects = queryset.filter(uuid__in=valid_uuids)
             count = filtered_objects.count()
             filtered_objects.delete()
@@ -4123,7 +4405,7 @@ class StudyFactorAgeDeleteAPIView(APIView):
                 "statusCode": 200,
                 "status": True,
                 "message": f"{count} Age entry(ies) deleted.",
-                "invalid_uuids": invalid_uuids if invalid_uuids else None
+                "invalid_uuids": invalid_uuids or None
             }, status=200)
 
         except Exception as e:
@@ -4132,6 +4414,7 @@ class StudyFactorAgeDeleteAPIView(APIView):
                 "status": False,
                 "message": f"Internal server error: {str(e)}"
             }, status=500)
+
 
 
 
@@ -4563,7 +4846,7 @@ class StudyFactorAcademicResultListAPIView(APIView):
         # Allowed sort fields mapping
         sort_field_map = {
             'factor_for_name': 'factor_for__name',
-            'academic_result_group_name': 'academic_result_group__name',
+            'study_academic_result_group': 'study_academic_result_group',
             'minimum_academic_result_required_name': 'minimum_academic_result_required__name',
             'description': 'description',
             'created_at': 'created_at',
@@ -4577,7 +4860,7 @@ class StudyFactorAcademicResultListAPIView(APIView):
         # --------------------------
         if search:
             queryset = queryset.filter(
-                Q(academic_result_group__name__istartswith=search)
+                Q(study_academic_result_group__name__istartswith=search)
             )
 
         # --------------------------
@@ -4598,7 +4881,7 @@ class StudyFactorAcademicResultListAPIView(APIView):
                     orm_field = sort_field_map[field]
 
                     # Case-insensitive for string fields
-                    if field in ['factor_for_name', 'academic_result_group_name', 'minimum_academic_result_required_name', 'description']:
+                    if field in ['factor_for_name', 'study_academic_result_group_name', 'minimum_academic_result_required_name', 'description']:
                         f = Lower(orm_field)
                     else:
                         f = F(orm_field)
@@ -4636,7 +4919,7 @@ class StudyFactorAcademicResultCreateAPIView(APIView):
     def post(self, request):
 
         factor_for = request.data.get("factor_for")
-        academic_result_group = request.data.get("academic_result_group")
+        study_academic_result_group = request.data.get("study_academic_result_group")
         minimum_academic_result_required = request.data.get("minimum_academic_result_required")
 
         # ---------- 1. Basic Required Validations ----------
@@ -4648,11 +4931,11 @@ class StudyFactorAcademicResultCreateAPIView(APIView):
                 "message": "factor_for is required."
             }, status=400)
 
-        if not academic_result_group:
+        if not study_academic_result_group:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "academic_result_group is required."
+                "message": "study_academic_result_group is required."
             }, status=400)
 
         if not minimum_academic_result_required:
@@ -4666,7 +4949,7 @@ class StudyFactorAcademicResultCreateAPIView(APIView):
         # ---------- 2. Duplicate Check (Like Department API) ----------
         existing = StudyFactorAcademicResult.objects.filter(
             factor_for_id=factor_for,
-            academic_result_group_id=academic_result_group,
+            study_academic_result_group_id=study_academic_result_group,
             minimum_academic_result_required__uuid=minimum_academic_result_required,
             is_deleted=False
         ).first()
@@ -4766,13 +5049,141 @@ class StudyFactorAcademicResultUpdateAPIView(APIView):
 
 
 # ---------------- DELETE ----------------
+# class StudyFactorAcademicResultDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request, uuid=None):
+#         ids = request.data.get("id", None)
+
+#         # ---- SINGLE DELETE ----
+#         if uuid:
+#             try:
+#                 obj = StudyFactorAcademicResult.objects.get(uuid=uuid)
+#                 obj.delete()
+#                 return Response({
+#                     "statusCode": 204,
+#                     "status": True,
+#                     "message": "Study Factor Academic Result permanently deleted.",
+#                     "data": None
+#                 }, status=status.HTTP_204_NO_CONTENT)
+#             except StudyFactorAcademicResult.DoesNotExist:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "Study Factor Academic Result not found.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#         # ---- DELETE ALL ----
+#         if ids == "all":
+#             objs = StudyFactorAcademicResult.objects.all()
+#             count = objs.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No Study Factor Academic Results found to delete.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+#             objs.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} Study Factor Academic Result(s) permanently deleted.",
+#                 "data": None
+#             }, status=status.HTTP_200_OK)
+
+#         # ---- MULTIPLE DELETE ----
+#         if not ids or not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         valid_uuids = []
+#         invalid_uuids = []
+
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         objs = StudyFactorAcademicResult.objects.filter(uuid__in=valid_uuids)
+#         count = objs.count()
+
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching Study Factor Academic Results found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         objs.delete()
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} Study Factor Academic Result(s) permanently deleted.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         }, status=status.HTTP_200_OK)
+
+
+
 class StudyFactorAcademicResultDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
         ids = request.data.get("id", None)
 
-        # ---- SINGLE DELETE ----
+        # -------------------------------
+        # PARSE FILTER QUERY PARAMS
+        # -------------------------------
+        def parse_uuid_list(param):
+            """Parse comma-separated UUIDs safely."""
+            raw = request.GET.get(param, "")
+            result = []
+            if raw:
+                for val in raw.split(","):
+                    try:
+                        result.append(UUID(val.strip()))
+                    except:
+                        pass
+            return result
+
+        factor_for_list = parse_uuid_list("factorFor")
+        academic_result_group_list = parse_uuid_list("academicResultGroup")
+
+        # -------------------------------
+        # BASE QUERYSET WITH FILTERS
+        # -------------------------------
+        queryset = StudyFactorAcademicResult.objects.all()
+
+        applied_filters = []
+
+        if factor_for_list:
+            queryset = queryset.filter(factor_for__uuid__in=factor_for_list)
+            applied_filters.append("factorFor")
+
+        if academic_result_group_list:
+            queryset = queryset.filter(
+                study_academic_result_group__uuid__in=academic_result_group_list
+            )
+            applied_filters.append("academicResultGroup")
+
+        # ============================================================
+        # (1) SINGLE DELETE — DO NOT TOUCH
+        # ============================================================
         if uuid:
             try:
                 obj = StudyFactorAcademicResult.objects.get(uuid=uuid)
@@ -4791,10 +5202,13 @@ class StudyFactorAcademicResultDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-        # ---- DELETE ALL ----
+        # ============================================================
+        # (2) DELETE ALL (with filters)
+        # ============================================================
         if ids == "all":
-            objs = StudyFactorAcademicResult.objects.all()
+            objs = queryset
             count = objs.count()
+
             if count == 0:
                 return Response({
                     "statusCode": 404,
@@ -4802,15 +5216,25 @@ class StudyFactorAcademicResultDeleteAPIView(APIView):
                     "message": "No Study Factor Academic Results found to delete.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
+
             objs.delete()
+
+            # Smart message
+            if applied_filters:
+                msg = f"All {count} Study Factor Academic Result(s) deleted based on filters: {', '.join(applied_filters)}."
+            else:
+                msg = f"All {count} Study Factor Academic Result(s) permanently deleted."
+
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} Study Factor Academic Result(s) permanently deleted.",
+                "message": msg,
                 "data": None
             }, status=status.HTTP_200_OK)
 
-        # ---- MULTIPLE DELETE ----
+        # ============================================================
+        # (3) MULTIPLE DELETE (only selected + filtered items)
+        # ============================================================
         if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
@@ -4836,7 +5260,8 @@ class StudyFactorAcademicResultDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        objs = StudyFactorAcademicResult.objects.filter(uuid__in=valid_uuids)
+        # IMPORTANT: delete ONLY filtered + selected items 
+        objs = queryset.filter(uuid__in=valid_uuids)
         count = objs.count()
 
         if count == 0:
@@ -4848,12 +5273,14 @@ class StudyFactorAcademicResultDeleteAPIView(APIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
         objs.delete()
+
         return Response({
             "statusCode": 200,
             "status": True,
             "message": f"{count} Study Factor Academic Result(s) permanently deleted.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
+
 
 # ---------------- EXPORT ----------------
 
@@ -4875,7 +5302,7 @@ class StudyFactorAcademicResultExportAPIView(APIView):
         field_header_map = {
             'uuid': 'UUID',
             'factor_for': 'Factor For',
-            'academic_result_group': 'Academic Result Group',
+            'study_academic_result_group': 'Study Academic Result Group',
             'minimum_academic_result_required': 'Minimum Academic Result Required',
             'description': 'Description',
             'is_deleted': 'Deleted',
@@ -4897,7 +5324,7 @@ class StudyFactorAcademicResultExportAPIView(APIView):
         # --- Custom sorting logic ---
         sort_field_map = {
             'factor_for': 'factor_for__name',
-            'academic_result_group': 'academic_result_group__name',
+            'study_academic_result_group': 'study_academic_result_group__name',
             'minimum_academic_result_required': 'minimum_academic_result_required__name',
             'description': 'description',
             'is_deleted': 'is_deleted',
@@ -4920,7 +5347,7 @@ class StudyFactorAcademicResultExportAPIView(APIView):
                     orm_field = sort_field_map[field]
 
                     # Case-insensitive sorting for string fields
-                    if field in ['factor_for', 'academic_result_group', 'minimum_academic_result_required', 'description']:
+                    if field in ['factor_for', 'study_academic_result_group', 'minimum_academic_result_required', 'description']:
                         f = Lower(orm_field)
                     else:
                         f = F(orm_field)
@@ -4947,8 +5374,8 @@ class StudyFactorAcademicResultExportAPIView(APIView):
                 # Handle related fields
                 if field == 'factor_for':
                     value = getattr(obj.factor_for, 'name', '') if obj.factor_for else ''
-                elif field == 'academic_result_group':
-                    value = getattr(obj.academic_result_group, 'name', '') if obj.academic_result_group else ''
+                elif field == 'study_academic_result_group':
+                    value = getattr(obj.academic_result_group, 'name', '') if obj.study_academic_result_group else ''
                 elif field == 'minimum_academic_result_required':
                     value = getattr(obj.minimum_academic_result_required, 'name', '') if obj.minimum_academic_result_required else ''
                 else:
@@ -4995,7 +5422,7 @@ class StudyFactorAcademicResultImportAPIView(APIView):
         duplicates = []
         skipped_rows = []
 
-        required_headers = {"factor for", "academic result group", "minimum academic result required"}
+        required_headers = {"factor for", "study academic result group", "minimum academic result required"}
         optional_headers = {"description"}
 
         try:
@@ -5080,7 +5507,7 @@ class StudyFactorAcademicResultImportAPIView(APIView):
                 row_number = row.get("_row_number", "Unknown")
 
                 factor_for_val = str(row.get("factor for")).strip() if row.get("factor for") else None
-                academic_group_val = str(row.get("academic result group")).strip() if row.get("academic result group") else None
+                academic_group_val = str(row.get("study academic result group")).strip() if row.get("study academic result group") else None
                 min_result_val = str(row.get("minimum academic result required")).strip() if row.get("minimum academic result required") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
@@ -5170,7 +5597,7 @@ class StudyFactorBacklogsListAPIView(APIView):
         # --------------------------------------
         if search:
             queryset = queryset.filter(
-                Q(backlog_group__name__istartswith=search)
+                Q(study_backlogs_group__name__istartswith=search)
             )
 
         # --------------------------------------
@@ -5178,7 +5605,7 @@ class StudyFactorBacklogsListAPIView(APIView):
         # --------------------------------------
         allowed_sort_fields = [
             "factor_for__name",
-            "backlog_group__name",
+            "study_backlogs_group__name",
             "created_at",
             "updated_at"
         ]
@@ -5186,7 +5613,7 @@ class StudyFactorBacklogsListAPIView(APIView):
         # Map readable names to ORM fields
         sort_field_map = {
             "factor_for": "factor_for__name",
-            "backlog_group": "backlog_group__name",
+            "study_backlogs_group": "study_backlogs_group__name",
             "created_at": "created_at",
             "updated_at": "updated_at",
         }
@@ -5209,7 +5636,7 @@ class StudyFactorBacklogsListAPIView(APIView):
                     orm_field = sort_field_map[field]
 
                     # Case-insensitive sorting
-                    if field in ["factor_for", "backlog_group"]:
+                    if field in ["factor_for", "study_backlogs_group"]:
                         f = Lower(orm_field)
                     else:
                         f = F(orm_field)
@@ -5256,11 +5683,11 @@ class StudyFactorBacklogsCreateAPIView(APIView):
         if serializer.is_valid():
             # Duplicate check
             factor_for_obj = serializer.validated_data['factor_for']
-            backlog_group_obj = serializer.validated_data['backlog_group']
+            study_backlogs_group_obj = serializer.validated_data['study_backlogs_group']
 
             exists = StudyFactorBacklogs.objects.filter(
                 factor_for=factor_for_obj,
-                backlog_group=backlog_group_obj,
+                backlog_group=study_backlogs_group_obj,
                 is_deleted=False
             ).first()
 
@@ -5356,15 +5783,147 @@ class StudyFactorBacklogsUpdateAPIView(APIView):
         }, status=200)
 
 
+# class StudyFactorBacklogsDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request, uuid=None):
+#         ids = request.data.get("id", None)
+
+#         # ------------------------------
+#         # 1. SINGLE DELETE (via URL UUID)
+#         # ------------------------------
+#         if uuid:
+#             try:
+#                 obj = StudyFactorBacklogs.objects.get(uuid=uuid)
+#                 obj.delete()
+#                 return Response({
+#                     "statusCode": 204,
+#                     "status": True,
+#                     "message": "StudyFactorBacklogs permanently deleted.",
+#                     "data": None
+#                 }, status=status.HTTP_204_NO_CONTENT)
+#             except StudyFactorBacklogs.DoesNotExist:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "StudyFactorBacklogs not found.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#         # ------------------------------
+#         # 2. DELETE ALL
+#         # ------------------------------
+#         if ids == "all":
+#             objs = StudyFactorBacklogs.objects.all()
+#             count = objs.count()
+
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No StudyFactorBacklogs found to delete.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#             objs.delete()
+
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} StudyFactorBacklogs permanently deleted.",
+#                 "data": None
+#             }, status=status.HTTP_200_OK)
+
+#         # ------------------------------
+#         # 3. BULK DELETE (multiple UUIDs)
+#         # ------------------------------
+#         if not ids or not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         valid_uuids = []
+#         invalid_uuids = []
+
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         objs = StudyFactorBacklogs.objects.filter(uuid__in=valid_uuids)
+#         count = objs.count()
+
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching StudyFactorBacklogs found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         objs.delete()
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} StudyFactorBacklogs permanently deleted.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         }, status=status.HTTP_200_OK)
+
+
+
 class StudyFactorBacklogsDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
         ids = request.data.get("id", None)
 
-        # ------------------------------
-        # 1. SINGLE DELETE (via URL UUID)
-        # ------------------------------
+        # ----------------------------------------------------
+        # PARSE FILTER QUERY PARAMS
+        # ----------------------------------------------------
+        def parse_uuid_list(param):
+            raw = request.GET.get(param, "")
+            result = []
+            if raw:
+                for x in raw.split(","):
+                    try:
+                        result.append(UUID(x.strip()))
+                    except:
+                        pass
+            return result
+
+        factor_for_list = parse_uuid_list("factorFor")
+        backlogs_group_list = parse_uuid_list("backlogsGroup")
+
+        # ----------------------------------------------------
+        # BASE QUERYSET WITH FILTERS
+        # ----------------------------------------------------
+        queryset = StudyFactorBacklogs.objects.all()
+        applied_filters = []
+
+        if factor_for_list:
+            queryset = queryset.filter(factor_for__uuid__in=factor_for_list)
+            applied_filters.append("factorFor")
+
+        if backlogs_group_list:
+            queryset = queryset.filter(study_backlogs_group__uuid__in=backlogs_group_list)
+            applied_filters.append("backlogsGroup")
+
+        # ----------------------------------------------------
+        # 1. SINGLE DELETE (NO CHANGES)
+        # ----------------------------------------------------
         if uuid:
             try:
                 obj = StudyFactorBacklogs.objects.get(uuid=uuid)
@@ -5383,11 +5942,11 @@ class StudyFactorBacklogsDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-        # ------------------------------
-        # 2. DELETE ALL
-        # ------------------------------
+        # ----------------------------------------------------
+        # 2. DELETE ALL (with filters)
+        # ----------------------------------------------------
         if ids == "all":
-            objs = StudyFactorBacklogs.objects.all()
+            objs = queryset
             count = objs.count()
 
             if count == 0:
@@ -5400,16 +5959,22 @@ class StudyFactorBacklogsDeleteAPIView(APIView):
 
             objs.delete()
 
+            # Smart message
+            if applied_filters:
+                msg = f"All {count} StudyFactorBacklogs deleted based on filters: {', '.join(applied_filters)}."
+            else:
+                msg = f"All {count} StudyFactorBacklogs permanently deleted."
+
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} StudyFactorBacklogs permanently deleted.",
+                "message": msg,
                 "data": None
             }, status=status.HTTP_200_OK)
 
-        # ------------------------------
-        # 3. BULK DELETE (multiple UUIDs)
-        # ------------------------------
+        # ----------------------------------------------------
+        # 3. BULK DELETE (filtered + selected ONLY)
+        # ----------------------------------------------------
         if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
@@ -5435,7 +6000,9 @@ class StudyFactorBacklogsDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        objs = StudyFactorBacklogs.objects.filter(uuid__in=valid_uuids)
+        # IMPORTANT:
+        # DELETE ONLY → filtered queryset ∩ selected UUIDs
+        objs = queryset.filter(uuid__in=valid_uuids)
         count = objs.count()
 
         if count == 0:
@@ -5455,6 +6022,7 @@ class StudyFactorBacklogsDeleteAPIView(APIView):
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
 
+
 class StudyFactorBacklogsExportAPIView(APIView):
 
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -5473,7 +6041,7 @@ class StudyFactorBacklogsExportAPIView(APIView):
         field_header_map = {
             "uuid": "UUID",
             "factor_for_name": "Factor For",
-            "backlog_group_name": "Backlog Group",
+            "study_backlogs_group_name": "Study Backlogs Group",
             "backlog_accepted": "Backlog Accepted",
             "max_backlogs": "Max Backlogs",
             "description": "Description",
@@ -5499,7 +6067,7 @@ class StudyFactorBacklogsExportAPIView(APIView):
         # --- Custom Sorting Logic (Exact Department Logic) ---
         sort_field_map = {
             "factor_for_name": "factor_for__name",
-            "backlog_group_name": "backlog_group__name",
+            "study_backlogs_group_name": "study_backlogs_group__name",
             "backlog_accepted": "backlog_accepted",
             "max_backlogs": "max_backlogs",
             "description": "description",
@@ -5522,7 +6090,7 @@ class StudyFactorBacklogsExportAPIView(APIView):
 
                     orm_field = sort_field_map[field]
 
-                    if field in ["factor_for_name", "backlog_group_name", "description"]:
+                    if field in ["factor_for_name", "study_backlogs_group_name", "description"]:
                         f = Lower(orm_field)
                     else:
                         f = F(orm_field)
@@ -5556,7 +6124,7 @@ class StudyFactorBacklogsExportAPIView(APIView):
                 # Handle readable fields
                 if field == "factor_for_name":
                     value = obj.factor_for.name if obj.factor_for else ""
-                elif field == "backlog_group_name":
+                elif field == "study_backlogs_group_name":
                     value = obj.backlog_group.name if obj.backlog_group else ""
                 else:
                     value = getattr(obj, field, "")
@@ -5746,16 +6314,6 @@ class StudyFactorBacklogsImportAPIView(APIView):
         }, status=200)
 
 
-        # # ---------- Final Response ----------
-        # return Response({
-        #     "statusCode": 200,
-        #     "status": True,
-        #     "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
-        #     "imported_count": imported_count,
-        #     "duplicates": duplicates,
-        #     "skipped_rows": skipped_rows
-        # }, status=200)
-    
 
 
 
@@ -5965,6 +6523,250 @@ class StudyFactorGAPUpdateAPIView(APIView):
     
 
 # ---------------- DELETE ----------------
+# class StudyFactorGAPDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request, uuid=None):
+#         ids = request.data.get('id', None)
+
+#         # ----------------------------------
+#         # SINGLE DELETE (via /uuid/)
+#         # ----------------------------------
+#         if uuid:
+#             try:
+#                 obj = StudyFactorGAP.objects.get(uuid=uuid)
+#                 obj.delete()
+#                 return Response({
+#                     "statusCode": 204,
+#                     "status": True,
+#                     "message": "Study Factor GAP permanently deleted.",
+#                     "data": None
+#                 }, status=status.HTTP_204_NO_CONTENT)
+
+#             except StudyFactorGAP.DoesNotExist:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "Study Factor GAP not found.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#         # ----------------------------------
+#         # DELETE ALL RECORDS
+#         # ----------------------------------
+#         if ids == "all":
+#             objs = StudyFactorGAP.objects.all()
+#             count = objs.count()
+
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No Study Factor GAP records found to delete.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#             objs.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} Study Factor GAP record(s) permanently deleted.",
+#                 "data": None
+#             }, status=status.HTTP_200_OK)
+
+#         # ----------------------------------
+#         # VALIDATE BULK UUID LIST
+#         # ----------------------------------
+#         if not ids or not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         valid_uuids = []
+#         invalid_uuids = []
+
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # ----------------------------------
+#         # BULK DELETE
+#         # ----------------------------------
+#         objs = StudyFactorGAP.objects.filter(uuid__in=valid_uuids)
+#         count = objs.count()
+
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching Study Factor GAP records found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         objs.delete()
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} Study Factor GAP record(s) permanently deleted.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         }, status=status.HTTP_200_OK)
+
+
+# class StudyFactorGAPDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request, uuid=None):
+#         ids = request.data.get('id', None)
+
+#         # ----------------------------------
+#         # SINGLE DELETE (via /uuid/)
+#         # ----------------------------------
+#         if uuid:
+#             try:
+#                 obj = StudyFactorGAP.objects.get(uuid=uuid)
+#                 obj.delete()
+#                 return Response({
+#                     "statusCode": 204,
+#                     "status": True,
+#                     "message": "Study Factor GAP permanently deleted.",
+#                     "data": None
+#                 }, status=status.HTTP_204_NO_CONTENT)
+
+#             except StudyFactorGAP.DoesNotExist:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "Study Factor GAP not found.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#         # ----------------------------------
+#         # FILTER DELETE BASED ON SEARCH + FILTER
+#         # ----------------------------------
+#         search = request.GET.get("search", "").strip()
+
+#         # Filters allowed (only these)
+#         factor_for = request.GET.get("factor_for")
+#         study_gap_group = request.GET.get("study_gap_group")
+#         country = request.GET.get("country_for_admission")
+#         institute_type = request.GET.get("institute_type")
+#         course_level = request.GET.get("course_level")
+
+#         queryset = StudyFactorGAP.objects.all()
+
+#         # --- SEARCH only on factor_for (as requested) ---
+#         if search:
+#             queryset = queryset.filter(
+#                 Q(factor_for__name__icontains(search))
+#             )
+
+#         # ---- APPLY FILTERS ----
+#         if factor_for:
+#             queryset = queryset.filter(factor_for__uuid=factor_for)
+
+#         if study_gap_group:
+#             queryset = queryset.filter(study_gap_group__uuid=study_gap_group)
+
+#         if country:
+#             queryset = queryset.filter(country_for_admission__uuid=country)
+
+#         if institute_type:
+#             queryset = queryset.filter(institute_type__uuid=institute_type)
+
+#         if course_level:
+#             queryset = queryset.filter(course_level__uuid=course_level)
+
+#         # ----------------------------------
+#         # DELETE ALL FILTERED RECORDS
+#         # ----------------------------------
+#         if ids == "all":
+#             count = queryset.count()
+
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No Study Factor GAP records found for given filters.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#             queryset.delete()
+
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"{count} Study Factor GAP record(s) deleted based on filters/search.",
+#                 "data": None
+#             }, status=status.HTTP_200_OK)
+
+#         # ----------------------------------
+#         # VALIDATE BULK UUID LIST
+#         # ----------------------------------
+#         if not ids or not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         valid_uuids = []
+#         invalid_uuids = []
+
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # ----------------------------------
+#         # BULK DELETE (ONLY SELECTED ITEMS INSIDE FILTERED RESULT)
+#         # ----------------------------------
+#         objs = queryset.filter(uuid__in=valid_uuids)
+#         count = objs.count()
+
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching Study Factor GAP records found in filtered result.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         objs.delete()
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} Study Factor GAP record(s) deleted.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         }, status=status.HTTP_200_OK)
+
+
+
+
 class StudyFactorGAPDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -5972,7 +6774,7 @@ class StudyFactorGAPDeleteAPIView(APIView):
         ids = request.data.get('id', None)
 
         # ----------------------------------
-        # SINGLE DELETE (via /uuid/)
+        # SINGLE DELETE
         # ----------------------------------
         if uuid:
             try:
@@ -5994,30 +6796,64 @@ class StudyFactorGAPDeleteAPIView(APIView):
                 }, status=status.HTTP_404_NOT_FOUND)
 
         # ----------------------------------
-        # DELETE ALL RECORDS
+        # SEARCH + FILTER DELETE
+        # ----------------------------------
+        search = request.GET.get("search", "").strip()
+
+        factor_for = request.GET.get("factor_for")
+        study_gap_group = request.GET.get("study_gap_group")
+        country = request.GET.get("country_for_admission")
+        institute_type = request.GET.get("institute_type")
+        course_level = request.GET.get("course_level")
+
+        queryset = StudyFactorGAP.objects.all()
+
+        # --- SEARCH only on factor_for (istartswith) ---
+        if search:
+            queryset = queryset.filter(
+                factor_for__name__istartswith=search
+            )
+
+        # ---- ONLY ALLOWED FILTERS ----
+        if factor_for:
+            queryset = queryset.filter(factor_for__uuid=factor_for)
+
+        if study_gap_group:
+            queryset = queryset.filter(study_gap_group__uuid=study_gap_group)
+
+        if country:
+            queryset = queryset.filter(country_for_admission__uuid=country)
+
+        if institute_type:
+            queryset = queryset.filter(institute_type__uuid=institute_type)
+
+        if course_level:
+            queryset = queryset.filter(course_level__uuid=course_level)
+
+        # ----------------------------------
+        # DELETE ALL FILTERED RECORDS
         # ----------------------------------
         if ids == "all":
-            objs = StudyFactorGAP.objects.all()
-            count = objs.count()
-
+            count = queryset.count()
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No Study Factor GAP records found to delete.",
+                    "message": "No Study Factor GAP records found for given filters/search.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-            objs.delete()
+            queryset.delete()
+
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} Study Factor GAP record(s) permanently deleted.",
+                "message": f"{count} Study Factor GAP record(s) deleted based on filters/search.",
                 "data": None
             }, status=status.HTTP_200_OK)
 
         # ----------------------------------
-        # VALIDATE BULK UUID LIST
+        # BULK DELETE (selected items only)
         # ----------------------------------
         if not ids or not isinstance(ids, list):
             return Response({
@@ -6044,17 +6880,14 @@ class StudyFactorGAPDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # ----------------------------------
-        # BULK DELETE
-        # ----------------------------------
-        objs = StudyFactorGAP.objects.filter(uuid__in=valid_uuids)
+        objs = queryset.filter(uuid__in=valid_uuids)
         count = objs.count()
 
         if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "No matching Study Factor GAP records found.",
+                "message": "No matching Study Factor GAP records found in filtered result.",
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=status.HTTP_404_NOT_FOUND)
 
@@ -6063,7 +6896,7 @@ class StudyFactorGAPDeleteAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} Study Factor GAP record(s) permanently deleted.",
+            "message": f"{count} Study Factor GAP record(s) deleted.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
 
@@ -6212,6 +7045,7 @@ class StudyFactorGAPExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+    
     
 
 # ---------------- IMPORT ----------------
@@ -6448,7 +7282,7 @@ class StudyFactorLanguageAbilityCreateAPIView(APIView):
         # Correct FK mapping (UUID → actual model)
         fk_map = {
             "factor_for": FactorFor,
-            "language_ability_group": LanguageAbilityGroup,
+            "study_language_ability_group": LanguageAbilityGroup,
             "language_test_name": LanguageTest,
             "module_name": LanguagetestmoduleName,
             "minimum_overall_score": LanguageTestResult,
@@ -6503,7 +7337,7 @@ class StudyFactorLanguageAbilityListAPIView(APIView):
         search = request.GET.get('search', '').strip()
         custom_sort = request.GET.get('customSort')  # e.g., language_ability_group:asc,created_at:desc
 
-        allowed_sort_fields = ['language_ability_group', 'in_no_of_modules', 'created_at', 'updated_at']
+        allowed_sort_fields = ['study_language_ability_group', 'in_no_of_modules', 'created_at', 'updated_at']
 
         queryset = StudyFactorLanguageAbility.objects.filter(is_deleted=False)
 
@@ -6517,7 +7351,7 @@ class StudyFactorLanguageAbilityListAPIView(APIView):
         # SORTING LOGIC
         # --------------------------
         sort_field_map = {
-            'language_ability_group': 'language_ability_group__name',
+            'study_language_ability_group': 'study_language_ability_group__name',
             'in_no_of_modules': 'in_no_of_modules',
             'created_at': 'created_at',
             'updated_at': 'updated_at',
@@ -6538,7 +7372,7 @@ class StudyFactorLanguageAbilityListAPIView(APIView):
                     orm_field = sort_field_map[field]
 
                     # Case-insensitive ordering for string fields
-                    if field in ['language_ability_group']:
+                    if field in ['study_language_ability_group']:
                         f = Lower(orm_field)
                     else:
                         f = F(orm_field)
@@ -6615,7 +7449,7 @@ class StudyFactorLanguageAbilityUpdateAPIView(APIView):
         data = request.data.copy()
         fk_map = {
             "factor_for": FactorFor,
-            "language_ability_group": LanguageAbilityGroup,
+            "study_language_ability_group": LanguageAbilityGroup,
             "language_test_name": LanguageTest,
             "module_name": LanguagetestmoduleName,
             "minimum_overall_score": LanguageTestResult,
@@ -6655,13 +7489,104 @@ class StudyFactorLanguageAbilityUpdateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+# class StudyFactorLanguageAbilityDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request, uuid=None):
+#         ids = request.data.get("id")
+
+#         # Single delete via URL parameter
+#         if uuid:
+#             try:
+#                 obj = StudyFactorLanguageAbility.objects.get(uuid=uuid)
+#                 obj.delete()
+#                 return Response({
+#                     "statusCode": 204,
+#                     "status": True,
+#                     "message": "Study Factor Language Ability permanently deleted.",
+#                     "data": None
+#                 }, status=status.HTTP_204_NO_CONTENT)
+#             except StudyFactorLanguageAbility.DoesNotExist:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "Study Factor Language Ability not found.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#         # Delete all
+#         if ids == "all":
+#             objs = StudyFactorLanguageAbility.objects.all()
+#             count = objs.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No records found to delete.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+#             objs.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} Study Factor Language Ability record(s) permanently deleted.",
+#                 "data": None
+#             }, status=status.HTTP_200_OK)
+
+#         # Bulk delete validation
+#         if not ids or not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         valid_uuids = []
+#         invalid_uuids = []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         objs = StudyFactorLanguageAbility.objects.filter(uuid__in=valid_uuids)
+#         count = objs.count()
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching records found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         objs.delete()
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} Study Factor Language Ability record(s) permanently deleted.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         }, status=status.HTTP_200_OK)
+
+
+
 class StudyFactorLanguageAbilityDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
         ids = request.data.get("id")
 
-        # Single delete via URL parameter
+        # ----------------------------------
+        # SINGLE DELETE VIA URL UUID
+        # ----------------------------------
         if uuid:
             try:
                 obj = StudyFactorLanguageAbility.objects.get(uuid=uuid)
@@ -6672,6 +7597,7 @@ class StudyFactorLanguageAbilityDeleteAPIView(APIView):
                     "message": "Study Factor Language Ability permanently deleted.",
                     "data": None
                 }, status=status.HTTP_204_NO_CONTENT)
+
             except StudyFactorLanguageAbility.DoesNotExist:
                 return Response({
                     "statusCode": 404,
@@ -6680,26 +7606,73 @@ class StudyFactorLanguageAbilityDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-        # Delete all
+        # ----------------------------------
+        # SEARCH + FILTER DELETE
+        # ----------------------------------
+
+        search = request.GET.get("search", "").strip()
+
+        # Allowed filters
+        factor_for = request.GET.get("factor_for")
+        study_group = request.GET.get("study_language_ability_group")
+        language_test = request.GET.get("language_test_name")
+        module_name = request.GET.get("module_name")
+        min_overall = request.GET.get("minimum_overall_score")
+        not_less = request.GET.get("not_less_than")
+
+        queryset = StudyFactorLanguageAbility.objects.all()
+
+        # --- SEARCH only on factor_for name ---
+        if search:
+            queryset = queryset.filter(
+                factor_for__name__istartswith=search
+            )
+
+        # ---- APPLY FILTERS ----
+        if factor_for:
+            queryset = queryset.filter(factor_for__uuid=factor_for)
+
+        if study_group:
+            queryset = queryset.filter(study_language_ability_group__uuid=study_group)
+
+        if language_test:
+            queryset = queryset.filter(language_test_name__uuid=language_test)
+
+        if module_name:
+            queryset = queryset.filter(module_name__uuid=module_name)
+
+        if min_overall:
+            queryset = queryset.filter(minimum_overall_score__uuid=min_overall)
+
+        if not_less:
+            queryset = queryset.filter(not_less_than__uuid=not_less)
+
+        # ----------------------------------
+        # DELETE ALL FILTERED RESULTS
+        # ----------------------------------
         if ids == "all":
-            objs = StudyFactorLanguageAbility.objects.all()
-            count = objs.count()
+            count = queryset.count()
+
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No records found to delete.",
+                    "message": "No Study Factor Language Ability records found for given search/filter.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
-            objs.delete()
+
+            queryset.delete()
+
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} Study Factor Language Ability record(s) permanently deleted.",
+                "message": f"{count} Study Factor Language Ability record(s) deleted based on filters/search.",
                 "data": None
             }, status=status.HTTP_200_OK)
 
-        # Bulk delete validation
+        # ----------------------------------
+        # VALIDATE BULK UUID LIST
+        # ----------------------------------
         if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
@@ -6710,6 +7683,7 @@ class StudyFactorLanguageAbilityDeleteAPIView(APIView):
 
         valid_uuids = []
         invalid_uuids = []
+
         for u in ids:
             try:
                 valid_uuids.append(UUID(u))
@@ -6724,21 +7698,26 @@ class StudyFactorLanguageAbilityDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        objs = StudyFactorLanguageAbility.objects.filter(uuid__in=valid_uuids)
+        # ----------------------------------
+        # DELETE ONLY SELECTED ITEMS INSIDE FILTERED QUERYSET
+        # ----------------------------------
+        objs = queryset.filter(uuid__in=valid_uuids)
         count = objs.count()
+
         if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "No matching records found.",
+                "message": "No matching Study Factor Language Ability records found in filtered result.",
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=status.HTTP_404_NOT_FOUND)
 
         objs.delete()
+
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} Study Factor Language Ability record(s) permanently deleted.",
+            "message": f"{count} Study Factor Language Ability record(s) deleted.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
 
@@ -6760,7 +7739,7 @@ class StudyFactorLanguageAbilityExportAPIView(APIView):
         field_header_map = {
             'uuid': 'UUID',
             'factor_for': 'Factor For',
-            'language_ability_group': 'Language Ability Group',
+            'study_language_ability_group': 'Study Language Ability Group',
             'language_test_name': 'Language Test Name',
             'module_name': 'Module Name',
             'minimum_overall_score': 'Minimum Overall Score',
@@ -6785,7 +7764,7 @@ class StudyFactorLanguageAbilityExportAPIView(APIView):
 
         # --- Custom sorting logic ---
         sort_field_map = {
-            'language_ability_group': 'language_ability_group__name',
+            'study_language_ability_group': 'study_language_ability_group__name',
             'in_no_of_modules': 'in_no_of_modules',
             'created_at': 'created_at',
             'updated_at': 'updated_at',
@@ -6806,7 +7785,7 @@ class StudyFactorLanguageAbilityExportAPIView(APIView):
                     orm_field = sort_field_map[field]
 
                     # Case-insensitive sorting for string fields
-                    if field in ['language_ability_group']:
+                    if field in ['study_language_ability_group']:
                         f = Lower(orm_field)
                     else:
                         f = F(orm_field)
@@ -6833,7 +7812,7 @@ class StudyFactorLanguageAbilityExportAPIView(APIView):
                 value = getattr(obj, field, '')
                 
                 # Handle foreign keys
-                if field in ['factor_for', 'language_ability_group', 'language_test_name', 'module_name', 'minimum_overall_score', 'not_less_than']:
+                if field in ['factor_for', 'study_language_ability_group', 'language_test_name', 'module_name', 'minimum_overall_score', 'not_less_than']:
                     fk_obj = getattr(obj, field, None)
                     value = getattr(fk_obj, 'name', '') if fk_obj else ''
 
@@ -6885,7 +7864,7 @@ class StudyFactorLanguageAbilityImportAPIView(APIView):
         format_type = file.name.split(".")[-1].lower()
         required_headers = {
             "factor for",
-            "language ability group",
+            "Study language ability group",
             "language test name",
             "module name",
             "minimum overall score",
@@ -6972,7 +7951,7 @@ class StudyFactorLanguageAbilityImportAPIView(APIView):
 
                 # Read values
                 ff = row.get("factor for")
-                lag = row.get("language ability group")
+                lag = row.get("study language ability group")
                 ltn = row.get("language test name")
                 mn = row.get("module name")
                 msc = row.get("minimum overall score")
@@ -6988,7 +7967,7 @@ class StudyFactorLanguageAbilityImportAPIView(APIView):
                 # Resolve FK
                 resolved = {
                     "factor_for": self.resolve_fk(FactorFor, ff),
-                    "language_ability_group": self.resolve_fk(LanguageAbilityGroup, lag),
+                    "study_language_ability_group": self.resolve_fk(LanguageAbilityGroup, lag),
                     "language_test_name": self.resolve_fk(LanguageTest, ltn),
                     "module_name": self.resolve_fk(LanguagetestmoduleName, mn),
                     "minimum_overall_score": self.resolve_fk(LanguageTestResult, msc),
@@ -7056,7 +8035,7 @@ class StudyFactorEntranceTestAbilityCreateAPIView(APIView):
             data = serializer.validated_data
             exists = StudyFactorEntranceTestAbility.objects.filter(
                 factor_for=data["factor_for"],
-                entrance_test_ability_group=data["entrance_test_ability_group"],
+                study_entrance_test_ability_group=data["study_entrance_test_ability_group"],
                 entrance_test_name=data["entrance_test_name"],
                 minimum_score_required=data["minimum_score_required"],
                 is_deleted=False
@@ -7090,7 +8069,7 @@ class StudyFactorEntranceTestAbilityListAPIView(APIView):
         custom_sort = request.GET.get("customSort")  # e.g., name:asc,created_at:desc
 
         allowed_sort_fields = [
-            "entrance_test_ability_group",
+            "study_entrance_test_ability_group",
             "minimum_required_test_ability",
             "description",
             "created_at",
@@ -7102,14 +8081,14 @@ class StudyFactorEntranceTestAbilityListAPIView(APIView):
         #SEARCH — only on EntranceTest Ability Group name
         if search:
             queryset = queryset.filter(
-                Q(entrance_test_ability_group__name__istartswith=search)
+                Q(study_entrance_test_ability_group__name__istartswith=search)
             )
 
         # --------------------------
         # SORTING FIELDS MAP
         # --------------------------
         sort_field_map = {
-            "entrance_test_ability_group": "entrance_test_ability_group__name",
+            "study_entrance_test_ability_group": "study_entrance_test_ability_group__name",
             "minimum_required_test_ability": "minimum_required_test_ability__name",
             "description": "description",
             "created_at": "created_at",
@@ -7135,7 +8114,7 @@ class StudyFactorEntranceTestAbilityListAPIView(APIView):
 
                     # Case-insensitive for string fields
                     if field in [
-                        "entrance_test_ability_group",
+                        "study_entrance_test_ability_group",
                         "minimum_required_test_ability",
                         "description",
                     ]:
@@ -7230,18 +8209,133 @@ class StudyFactorEntranceTestAbilityUpdateAPIView(APIView):
             "data": None
         }, status=status.HTTP_400_BAD_REQUEST)
 
+# class StudyFactorEntranceTestAbilityDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request, uuid=None):
+#         ids = request.data.get("id", None)
+
+#         # ----------------------------
+#         # SINGLE DELETE
+#         # ----------------------------
+#         if uuid:
+#             try:
+#                 ability = StudyFactorEntranceTestAbility.objects.get(uuid=uuid)
+#                 ability.delete()
+#                 return Response({
+#                     "statusCode": 204,
+#                     "status": True,
+#                     "message": "Record permanently deleted.",
+#                     "data": None
+#                 }, status=status.HTTP_204_NO_CONTENT)
+#             except StudyFactorEntranceTestAbility.DoesNotExist:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "Record not found.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#         # ----------------------------
+#         # DELETE ALL
+#         # ----------------------------
+#         if ids == "all":
+#             objects = StudyFactorEntranceTestAbility.objects.all()
+#             count = objects.count()
+
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No records found to delete.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#             objects.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} record(s) permanently deleted.",
+#                 "data": None
+#             }, status=status.HTTP_200_OK)
+
+#         # ----------------------------
+#         # BULK DELETE (LIST OF UUIDs)
+#         # ----------------------------
+#         if not ids or not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         valid_uuids = []
+#         invalid_uuids = []
+
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Find matching records
+#         objects = StudyFactorEntranceTestAbility.objects.filter(uuid__in=valid_uuids)
+#         count = objects.count()
+
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching records found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         objects.delete()
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} record(s) permanently deleted.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         }, status=status.HTTP_200_OK)
+
+
+
 class StudyFactorEntranceTestAbilityDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
         ids = request.data.get("id", None)
+        search = request.GET.get("search", "").strip()
 
-        # ----------------------------
+        # ------------------------------------
+        # APPLY SEARCH FILTER
+        # ------------------------------------
+        queryset = StudyFactorEntranceTestAbility.objects.all()
+
+        if search:
+            queryset = queryset.filter(
+                Q(factor_for__name__icontains=search) |
+                Q(study_entrance_test_ability_group__name__icontains=search) |
+                Q(entrance_test_name__name__icontains=search) |
+                Q(minimum_score_required__name__icontains=search)
+            )
+
+        # ------------------------------------
         # SINGLE DELETE
-        # ----------------------------
+        # ------------------------------------
         if uuid:
             try:
-                ability = StudyFactorEntranceTestAbility.objects.get(uuid=uuid)
+                ability = queryset.get(uuid=uuid)
                 ability.delete()
                 return Response({
                     "statusCode": 204,
@@ -7257,12 +8351,12 @@ class StudyFactorEntranceTestAbilityDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-        # ----------------------------
-        # DELETE ALL
-        # ----------------------------
+        # ------------------------------------
+        # DELETE ALL (ONLY FILTERED ITEMS)
+        # ------------------------------------
         if ids == "all":
-            objects = StudyFactorEntranceTestAbility.objects.all()
-            count = objects.count()
+
+            count = queryset.count()
 
             if count == 0:
                 return Response({
@@ -7272,7 +8366,7 @@ class StudyFactorEntranceTestAbilityDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-            objects.delete()
+            queryset.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
@@ -7280,9 +8374,9 @@ class StudyFactorEntranceTestAbilityDeleteAPIView(APIView):
                 "data": None
             }, status=status.HTTP_200_OK)
 
-        # ----------------------------
-        # BULK DELETE (LIST OF UUIDs)
-        # ----------------------------
+        # ------------------------------------
+        # BULK DELETE (LIST OF UUIDs) — ONLY SELECTED + FILTERED
+        # ------------------------------------
         if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
@@ -7308,8 +8402,7 @@ class StudyFactorEntranceTestAbilityDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Find matching records
-        objects = StudyFactorEntranceTestAbility.objects.filter(uuid__in=valid_uuids)
+        objects = queryset.filter(uuid__in=valid_uuids)
         count = objects.count()
 
         if count == 0:
@@ -7347,7 +8440,7 @@ class StudyFactorEntranceTestAbilityExportAPIView(APIView):
         field_header_map = {
             "uuid": "UUID",
             "factor_for": "Factor For",
-            "entrance_test_ability_group": "Entrance Test Ability Group",
+            "study_entrance_test_ability_group": "Study Entrance Test Ability Group",
             "entrance_test_name": "Entrance Test Name",
             "minimum_score_required": "Minimum Score Required",
             "description": "Description",
@@ -7375,7 +8468,7 @@ class StudyFactorEntranceTestAbilityExportAPIView(APIView):
         # --- Sorting mapping ---
         sort_field_map = {
             "factor_for": "factor_for__name",
-            "entrance_test_ability_group": "entrance_test_ability_group__name",
+            "study_entrance_test_ability_group": "study_entrance_test_ability_group__name",
             "entrance_test_name": "entrance_test_name__fullname",   # FIXED
             "minimum_score_required": "minimum_score_required__numeric_score",  # FIXED
             "description": "description",
@@ -7401,7 +8494,7 @@ class StudyFactorEntranceTestAbilityExportAPIView(APIView):
                     # Case-insensitive sorting for text fields
                     if field in [
                         "factor_for",
-                        "entrance_test_ability_group",
+                        "study_entrance_test_ability_group",
                         "entrance_test_name",
                         "description",
                     ]:
@@ -7424,7 +8517,7 @@ class StudyFactorEntranceTestAbilityExportAPIView(APIView):
         # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = "StudyFactor Entrance Test Ability Data"
+        dataset.title = "StudyFactorEntranceTestAbility"
 
         # --- Row building ---
         for obj in queryset:
@@ -7435,8 +8528,8 @@ class StudyFactorEntranceTestAbilityExportAPIView(APIView):
                 if field == "factor_for":
                     value = getattr(obj.factor_for, "name", "")
 
-                elif field == "entrance_test_ability_group":
-                    value = getattr(obj.entrance_test_ability_group, "name", "")
+                elif field == "study_entrance_test_ability_group":
+                    value = getattr(obj.study_entrance_test_ability_group, "name", "")
 
                 elif field == "entrance_test_name":
                     value = getattr(obj.entrance_test_name, "fullname", "")
@@ -7498,7 +8591,7 @@ class StudyFactorEntranceTestAbilityImportAPIView(APIView):
         # Required & Optional Headers
         required_headers = {
             'factor for',
-            'entrance test ability group',
+            'study entrance test ability group',
             'entrance test name',
             'minimum score required',
         }
@@ -7591,7 +8684,7 @@ class StudyFactorEntranceTestAbilityImportAPIView(APIView):
             existing_map = {
                 (
                     obj.factor_for.name.strip().lower(),
-                    obj.entrance_test_ability_group.name.strip().lower(),
+                    obj.study_entrance_test_ability_group.name.strip().lower(),
                     obj.entrance_test_name.fullname.strip().lower(),
                     obj.minimum_score_required.testresult.strip().lower(),
                 ): obj
@@ -7608,7 +8701,7 @@ class StudyFactorEntranceTestAbilityImportAPIView(APIView):
                 row_number = row.get('_row_number')
 
                 factor_for_val = (row.get('factor for') or '').strip().lower()
-                ability_group_val = (row.get('entrance test ability group') or '').strip().lower()
+                ability_group_val = (row.get('study entrance test ability group') or '').strip().lower()
                 test_name_val = (row.get('entrance test name') or '').strip().lower()
                 min_score_val = (row.get('minimum score required') or '').strip().lower()
                 description = (row.get('description') or '').strip()
@@ -7665,7 +8758,7 @@ class StudyFactorEntranceTestAbilityImportAPIView(APIView):
                 to_create.append(
                     StudyFactorEntranceTestAbility(
                         factor_for=factor_obj,
-                        entrance_test_ability_group=group_obj,
+                        study_entrance_test_ability_group=group_obj,
                         entrance_test_name=test_obj,
                         minimum_score_required=min_score_obj,
                         description=description,

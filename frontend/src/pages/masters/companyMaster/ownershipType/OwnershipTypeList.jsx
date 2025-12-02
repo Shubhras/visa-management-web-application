@@ -570,8 +570,15 @@ const OwnershipTypeList = () => {
       toast.error("No ownership Type selected for deletion.");
       return;
     }
+     const deleteAll = selectAllOrNot === "all" && ((tableState.search && tableState.search.trim() !== '') || columnFilters.company_type.length > 0);
+    const payloadSend = {
+      deleteAll: deleteAll,
+      company_type: columnFilters.company_type.length > 0 ? columnFilters.company_type : '',
+      id: deleteAll == true ? "" : sendPayload,
+      search: tableState.search || '',
+    };
     dispatch(
-      ownershipTypeDelete(sendPayload, (response, error) => {
+      ownershipTypeDelete(payloadSend, (response, error) => {
         if (error) {
           toast.error(error?.response?.data?.message || "server error");
         } else {
@@ -587,7 +594,8 @@ const OwnershipTypeList = () => {
             setSelectedRows([]);
             setSelectAllOrNot("");
             setDeleteId(null);
-            fetchBankAccountTypeList();
+            //fetchBankAccountTypeList();
+            clearAllFilters();
           } else {
             toast.error("Something went wrong.");
           }

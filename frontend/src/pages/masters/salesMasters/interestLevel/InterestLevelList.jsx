@@ -402,8 +402,14 @@ const InterestLevelList = () => {
       toast.error("No interest level selected for deletion.");
       return;
     }
+    const deleteAll = selectAllOrNot === "all" && Boolean(tableState.search?.trim());
+    const payloadSend = {
+      deleteAll: deleteAll,
+      id: deleteAll == true ? "" : sendPayload,
+      search: tableState.search || '',
+    };
     dispatch(
-      interestLevelDelete(sendPayload, (response, error) => {
+      interestLevelDelete(payloadSend, (response, error) => {
         if (error) {
           toast.error(error?.response?.data?.message || "server error");
         } else {
@@ -419,7 +425,8 @@ const InterestLevelList = () => {
             setSelectedRows([]);
             setSelectAllOrNot("");
             setDeleteId(null);
-            fetchInterestLevelList();
+            //fetchInterestLevelList();
+             clearAllFilters();
           } else {
             toast.error("Something went wrong.");
           }

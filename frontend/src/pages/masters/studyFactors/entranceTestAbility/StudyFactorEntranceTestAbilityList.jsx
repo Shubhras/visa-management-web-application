@@ -7,7 +7,7 @@ import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 import { countryDemoList } from '../../../../store/master/companyMasters/actions';
 import { useGlobalSearch, } from '../../../../components/comman/GlobalSearchContext';
 import MasterLayout from '../../../../masterLayout/MasterLayout';
-import { studyFactorGapDelete, studyFactorGapExportData, studyFactorGapList } from '../../../../store/actions';
+import {  studyFactorEntranceTestAbilityDelete, studyFactorEntranceTestAbilityExportData, studyFactorEntranceTestAbilityList,  } from '../../../../store/actions';
 import AddEditStudyFactorEntranceTestAbilityModal from './AddEditEntranceTestAbilityModal';
 import AddImportStudyFactorEntranceTestAbilityModal from './AddImportEntranceTestAbilityModal';
 const StudyFactorEntranceTestAbilityList = () => {
@@ -58,18 +58,16 @@ const StudyFactorEntranceTestAbilityList = () => {
   const [stateListData, setStateListData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Factor For", "Study Age Group", "Maximum Age Accepted(Months)","Country","Intitude Type", "Course Level", "Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Factor For", "Study Age Group", "Maximum Age Accepted(Months)","Country","Intitude Type", "Course Level",]);
-  const [ItemsRequired] = useState(["Factor For", "Study Age Group", "Maximum Age Accepted(Months)","Country","Intitude Type", "Course Level",]);
+  const [items] = useState(["Factor For", "Study Entrance Test Ability Group","Entrance Test Name","Minimum Score Required", "Description", "Modified On"]);
+  const [selectedItems, setSelectedItems] = useState(["Factor For", "Study Entrance Test Ability Group","Entrance Test Name","Minimum Score Required",]);
+  const [ItemsRequired] = useState(["Factor For", "Study Entrance Test Ability Group","Entrance Test Name","Minimum Score Required",]);
   const [countryListData, setCountryListData] = useState([]);
   // Table columns configuration
   const [tableColumns] = useState([
       { id: 'factorForName', label: 'Factor For', field: 'factorForName', visible: true, required: false, filterable: false },
-      { id: 'studyAgeGroup', label: 'Study Age Group', field: 'studyAgeGroup', visible: true, required: false, filterable: false },
-      { id: 'maximumAgeAccepted', label: 'Maximum Age Accepted(Months)', field: 'maximumAgeAccepted', visible: true, required: false, filterable: false },
-      { id: 'countryName', label: 'Country for Admission', field: 'countryId', visible: true, required: false, filterable: true },
-      { id: 'instituteType', label: 'Institute Type',  field: 'instituteType', visible: true, required: false, filterable: false },
-      { id: 'courseLevel', label: 'Course Level', field: 'courseLevel', visible: true, required: false, filterable: false },
+      { id: 'studyEntranceTestAbilityGroup', label: 'Study Entrance Test Ability Group', field: 'studyEntranceTestAbilityGroup', visible: true, required: false, filterable: false },
+      { id: 'entranceTestName', label: 'Entrance Test Name', field: 'entranceTestName', visible: true, required: false, filterable: false },
+      { id: 'minimumScoreRequired', label: 'Minimum Score Required', field: 'minimumScoreRequired', visible: true, required: false, filterable: false },
       { id: 'description', label: 'Description', field: 'description', visible: false, required: false, filterable: false },
       { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false, filterable: false },
   ]);
@@ -163,7 +161,7 @@ const StudyFactorEntranceTestAbilityList = () => {
       country: columnFilters.countryId.length > 0 ? columnFilters.countryId : null,
     };
 
-    dispatch(studyFactorGapList(params, (response, error) => {
+    dispatch(studyFactorEntranceTestAbilityList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
         const paginationData = response?.pagination || {};
@@ -493,7 +491,7 @@ const StudyFactorEntranceTestAbilityList = () => {
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
-    setDeleteConfirmMessage(`Are you sure you want to delete this gap?`);
+    setDeleteConfirmMessage(`Are you sure you want to delete this language ability?`);
   };
 
   const handleBulkDelete = () => {
@@ -502,8 +500,8 @@ const StudyFactorEntranceTestAbilityList = () => {
       return;
     }
     // Choose message based on delete type
-    const message = selectAllOrNot === "all" ? `${tableState.total} all gap` : `${selectedRows.length} selected state`;
-    setDeleteConfirmMessage(`Are you sure you want to delete this gap (${message})?`);
+    const message = selectAllOrNot === "all" ? `${tableState.total} all language ability` : `${selectedRows.length} selected language ability`;
+    setDeleteConfirmMessage(`Are you sure you want to delete this language ability (${message})?`);
     setShowDeleteConfirm(true);
   };
 
@@ -514,7 +512,7 @@ const StudyFactorEntranceTestAbilityList = () => {
       toast.error("No gap selected for deletion.");
       return;
     }
-    dispatch(studyFactorGapDelete(sendPayload, (response, error) => {
+    dispatch(studyFactorEntranceTestAbilityDelete(sendPayload, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
@@ -598,11 +596,9 @@ const StudyFactorEntranceTestAbilityList = () => {
 
     const fieldMapping = {
       "Factor For": "factor_for",
-      "Country": "country_for_admission",
-      "Study Age Group": "study_age_group",
-      "Maximum Age Accepted(Months)": "maximum_age_accepted",
-      "Institute Type":"institute_type",
-      "Course Level":"course_level",
+      "Study Entrance Test Ability Group": "entrance_test_ability_group",
+      "Entrance Test Name":"entrance_test_name",
+      "Minimum Score Required": "minimum_score_required",
       "Description": "description",
       "Modified On": "updated_at",
     };
@@ -620,7 +616,7 @@ const StudyFactorEntranceTestAbilityList = () => {
     };
 
     setLoadingExport(true);
-    dispatch(studyFactorGapExportData(sendPayload, (response, error) => {
+    dispatch(studyFactorEntranceTestAbilityExportData(sendPayload, (response, error) => {
       if (error) {
         setLoadingExport(false);
         toast.error(error?.response?.message || "server error");
@@ -634,7 +630,7 @@ const StudyFactorEntranceTestAbilityList = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `Gap.xlsx`;
+          link.download = `Entrance Test Ability.xlsx`;
           document.body.appendChild(link);
           link.click();
           link.remove();
@@ -1050,20 +1046,14 @@ const StudyFactorEntranceTestAbilityList = () => {
                         {isColumnVisible('factorForName') && (
                           <td><span>{rowItem.factor_for_name}</span></td>
                         )}
-                        {isColumnVisible('studyAgeGroup') && (
-                          <td><span>{rowItem.study_age_group_name}</span></td>
+                        {isColumnVisible('studyEntranceTestAbilityGroup') && (
+                          <td><span>{rowItem.entrance_test_ability_group_name}</span></td>
                         )}
-                        {isColumnVisible('maximumAgeAccepted') && (
-                          <td><span>{rowItem.minimum_age_months}</span></td>
+                        {isColumnVisible('entranceTestName') && (
+                          <td><span>{rowItem.entranceTestName}</span></td>
                         )}
-                        {isColumnVisible('countryName') && (
-                          <td><span>{rowItem.countryName}</span></td>
-                        )} 
-                        {isColumnVisible('instituteType') && (
-                            <td><span>{Array.isArray(rowItem.instituteType) ? rowItem.countryName.join(", ") : rowItem.countryName}</span></td>
-                        )}
-                        {isColumnVisible('courseLevel') && (
-                          <td><span>{Array.isArray(rowItem.courseLevel) ? rowItem.courseLevel.join(", ") : rowItem.courseLevel}</span></td>
+                        {isColumnVisible('minimumScoreRequired') && (
+                          <td><span>{rowItem.minimum_score_required_name}</span></td>
                         )}
                         {isColumnVisible('description') && (
                           <td><span>{rowItem.description}</span></td>
@@ -1144,7 +1134,7 @@ const StudyFactorEntranceTestAbilityList = () => {
             <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
               <div className="modal-content radius-16 bg-base">
                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                  <h1 className="modal-title fs-5">Export Gap</h1>
+                  <h1 className="modal-title fs-5">Export Entrance Test Ability</h1>
                   <button
                     type="button"
                     className="btn-close"

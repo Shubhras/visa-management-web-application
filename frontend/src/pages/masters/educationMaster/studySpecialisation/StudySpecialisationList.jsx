@@ -372,6 +372,7 @@ const StudySpecialisationList = () => {
     }));
     // Reset Global Search
     setGlobalSearch('');
+    setSelectedRows([]);
   };
 
 
@@ -703,6 +704,7 @@ const StudySpecialisationList = () => {
                     onClick={clearAllFilters}
                     tableState={tableState}
                     columnFilters={columnFilters}
+                    selectedRows={selectedRows}
                     globalSearch={globalSearch}
                   />
                 </div>

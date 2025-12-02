@@ -124,43 +124,45 @@ const AddCompany = ({ show, handleClose }) => {
               <form onSubmit={handleSubmit}>
                 <div className="row">
                   {/* Department Name */}
-                  <div className="col-12 mb-10">
-                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                      Company Type <span className="text-danger">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="departmentName"
-                      value={formData.departmentName}
-                      onChange={handleChange}
-                      className={`form-control radius-8 ${errors.departmentName ? 'is-invalid' : ''}`}
-                      placeholder="Enter company type"
-                    />
-                    {errors.departmentName && (
-                      <div className="text-danger text-sm mt-1">
-                        {errors.departmentName}
-                      </div>
-                    )}
-                  </div>
+                  <div className='modal-scrollable-content'>
+                    <div className="col-12 mb-10">
+                      <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                        Company Type <span className="text-danger">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="departmentName"
+                        value={formData.departmentName}
+                        onChange={handleChange}
+                        className={`form-control radius-8 ${errors.departmentName ? 'is-invalid' : ''}`}
+                        placeholder="Enter company type"
+                      />
+                      {errors.departmentName && (
+                        <div className="text-danger text-sm mt-1">
+                          {errors.departmentName}
+                        </div>
+                      )}
+                    </div>
 
-                  {/* Description */}
-                  <div className="col-12 mb-10">
-                    <label
-                      htmlFor="desc"
-                      className="form-label fw-semibold text-primary-light text-sm mb-0"
-                    >
-                      Description <span className="text-danger"></span>
-                    </label>
-                    <textarea
-                      className={`form-control ${errors.description ? 'is-invalid' : ''}`}
-                      id="desc"
-                      name="description"
-                      value={formData.description}
-                      onChange={handleChange}
-                      rows={4}
-                      cols={50}
-                      placeholder="Description"
-                    />
+                    {/* Description */}
+                    <div className="col-12 mb-10">
+                      <label
+                        htmlFor="desc"
+                        className="form-label fw-semibold text-primary-light text-sm mb-0"
+                      >
+                        Description <span className="text-danger"></span>
+                      </label>
+                      <textarea
+                        className={`form-control ${errors.description ? 'is-invalid' : ''}`}
+                        id="desc"
+                        name="description"
+                        value={formData.description}
+                        onChange={handleChange}
+                        rows={4}
+                        cols={50}
+                        placeholder="Description"
+                      />
+                    </div>
                   </div>
                   {/* Buttons */}
                   <div className="d-flex align-items-center justify-content-center gap-3 mt-24">

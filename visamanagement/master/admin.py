@@ -1321,11 +1321,11 @@ class AgeGroupAdmin(admin.ModelAdmin):
 @admin.register(StudyFactorAcademicResult)
 class StudyFactorAcademicResultAdmin(admin.ModelAdmin):
     list_display = (
-        'id', 'uuid', 'factor_for', 'academic_result_group',
+        'id', 'uuid', 'factor_for', 'study_academic_result_group',
         'minimum_academic_result_required', 'is_deleted',
         'created_at', 'updated_at'
     )
-    search_fields = ('factor_for__name', 'academic_result_group__name')
+    search_fields = ('factor_for__name', 'study_academic_result_group__name')
     list_filter = ('is_deleted', 'created_at', 'updated_at')
     read_only_fields = ('uuid', 'created_at', 'updated_at')
 
@@ -1400,7 +1400,7 @@ class StudyFactorLanguageAbilityAdmin(admin.ModelAdmin):
     list_display = (
         'id', 'uuid',
         'factor_for',
-        'language_ability_group',
+        'study_language_ability_group',
         'language_test_name',
         'module_name',
         'minimum_overall_score',
@@ -1418,7 +1418,7 @@ class StudyFactorLanguageAbilityAdmin(admin.ModelAdmin):
 
     list_filter = (
         'factor_for',
-        'language_ability_group',
+        'study_language_ability_group',
         'language_test_name'
     )
 
@@ -1429,7 +1429,7 @@ class StudyFactorEntranceTestAbilityAdmin(admin.ModelAdmin):
     list_display = (
         'id', 'uuid',
         'factor_for',
-        'entrance_test_ability_group',
+        'study_entrance_test_ability_group',
         'entrance_test_name',
         'minimum_score_required',
         'is_deleted',
@@ -1439,12 +1439,12 @@ class StudyFactorEntranceTestAbilityAdmin(admin.ModelAdmin):
     search_fields = (
         'factor_for__name',
         'entrance_test_name__name',
-        'entrance_test_ability_group__name'
+        'study_entrance_test_ability_group__name'
     )
 
     list_filter = (
         'factor_for',
-        'entrance_test_ability_group',
+        'study_entrance_test_ability_group',
         'entrance_test_name'
     )
 
@@ -1568,7 +1568,7 @@ class EntranceTestAbilityGroupAdmin(admin.ModelAdmin):
 class StudyFactorBacklogsAdmin(admin.ModelAdmin):
     list_display = (
         "factor_for",
-        "backlog_group",
+        "study_backlogs_group",
         "backlog_accepted",
         "max_backlogs",
         "uuid",
@@ -1576,7 +1576,7 @@ class StudyFactorBacklogsAdmin(admin.ModelAdmin):
         "created_at",
         "updated_at",
     )
-    search_fields = ("uuid", "factor_for__name", "backlog_group__name")
+    search_fields = ("uuid", "factor_for__name", "study_backlogs_group__name")
     list_filter = ("backlog_accepted", "is_deleted", "created_at")
     readonly_fields = ("uuid", "created_at", "updated_at")
     

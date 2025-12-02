@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
-import { exportToExcelDuplicate } from '../../../../helper/utils/commanHelper';
+import { exportToExcelDuplicate, exportToExcelWrongData } from '../../../../helper/utils/commanHelper';
 const AddImportOccupationCategory = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -89,7 +89,7 @@ const AddImportOccupationCategory = ({ show, handleClose }) => {
                     if (response?.duplicates?.length > 0) {
                         const prepareData = {
                             data: response.duplicates || [],
-                            headers: ["Occupation Category,Country,Occupation Version"],
+                            headers: ["Occupation Category","Country","Occupation Version"],
                             sheetName: "OccupationCategory",
                             fileName: "OccupationCategory",
                         };
@@ -100,10 +100,24 @@ const AddImportOccupationCategory = ({ show, handleClose }) => {
                             prepareData.fileName
                         );
                     }
+                    if (response?.skipped_rows?.length > 0) {
+                        const prepareData = {
+                            data: response.skipped_rows || [],
+                            headers: ["Occupation Category","Country","Occupation Version", "Reason"],
+                            sheetName: "OccupationCategory",
+                            fileName: "OccupationCategory",
+                        };
+                        exportToExcelWrongData(
+                            prepareData.data,
+                            prepareData.headers,
+                            prepareData.sheetName,
+                            prepareData.fileName
+                        );
+                    }
                     setFile(null);
                     setSheetNames([]);
                     setSelectedSheet('');
-                    handleClose();
+                    handleClose(true);
                 } else {
                     toast.error("Something went wrong.");
                 }
@@ -117,7 +131,7 @@ const AddImportOccupationCategory = ({ show, handleClose }) => {
         setError('');
         setSheetNames([]);
         setSelectedSheet('');
-        handleClose();
+        handleClose(false);
         setLoading(false);
     };
     const handleDownloadSample = () => {
@@ -246,9 +260,9 @@ const AddImportOccupationCategory = ({ show, handleClose }) => {
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
                     downloadFileName: "OccupationCategory",
-                    items: ["Occupation Category","Country","Occupation Version","Occupation Category Code", "Description"],
-                    selectedItems: ["Occupation Category","Country","Occupation Version",],
-                    ItemsRequired: ["Occupation Category","Country","Occupation Version",]
+                    items: ["Occupation Category", "Country", "Occupation Version", "Occupation Category Code", "Description"],
+                    selectedItems: ["Occupation Category", "Country", "Occupation Version",],
+                    ItemsRequired: ["Occupation Category", "Country", "Occupation Version",]
                 }
                 } />
             )}

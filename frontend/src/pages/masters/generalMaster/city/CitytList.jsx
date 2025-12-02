@@ -37,7 +37,7 @@ const CityList = () => {
   const [filterDropdownData, setFilterDropdownData] = useState({});
   const [filterSearchTerms, setFilterSearchTerms] = useState({});
   const filterDropdownRef = useRef(null);
-
+  const [loadingDelete, setLoadingDelete] = useState(false);
   const handleShow = () => {
     setModalState({
       show: true,
@@ -722,30 +722,31 @@ const CityList = () => {
     const deleteAll = selectAllOrNot === "all" && ((tableState.search && tableState.search.trim() !== '') || columnFilters.countryId.length > 0 || columnFilters.stateId.length > 0 || columnFilters.districtId.length > 0);
     const payloadSend = {
       deleteAll: deleteAll,
-      country: columnFilters.countryId.length > 0 ? columnFilters.countryId.length : '',
+      country: columnFilters.countryId.length > 0 ? columnFilters.countryId : '',
       state: columnFilters.stateId.length > 0 ? columnFilters.stateId : '',
       district: columnFilters.districtId.length > 0 ? columnFilters.districtId : '',
       id: deleteAll == true ? "" : sendPayload,
       search: tableState.search || '',
     };
-      dispatch(
-        cityDelete(payloadSend, (response, error) => {
-          if (error) {
-            toast.error(error?.response?.data?.message || "server error");
+    dispatch(
+      cityDelete(payloadSend, (response, error) => {
+        if (error) {
+          toast.error(error?.response?.data?.message || "server error");
+        } else {
+          if (response?.statusCode === 200 && response?.status === true) {
+            toast.success(response?.message);
+            setShowDeleteConfirm(false);
+            setSelectedRows([]);
+            setSelectAllOrNot("");
+            setDeleteId(null);
+            //fetchCityList();
+            clearAllFilters();
           } else {
-            if (response?.statusCode === 200 && response?.status === true) {
-              toast.success(response?.message);
-              setShowDeleteConfirm(false);
-              setSelectedRows([]);
-              setSelectAllOrNot("");
-              setDeleteId(null);
-              fetchCityList();
-            } else {
-              toast.error("Something went wrong.");
-            }
+            toast.error("Something went wrong.");
           }
-        })
-      );
+        }
+      })
+    );
   };
 
   const cancelDelete = () => {
@@ -909,8 +910,8 @@ const CityList = () => {
                         <button
                           onClick={() => handleSelectAllOrNot("onlySelected")}
                           className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "onlySelected"
-                              ? "comman-btn-color"
-                              : "comman-inactive-btn"
+                            ? "comman-btn-color"
+                            : "comman-inactive-btn"
                             }`}
                         >
                           {`Select (${selectedRows.length})`}
@@ -918,8 +919,8 @@ const CityList = () => {
                         <button
                           onClick={() => handleSelectAllOrNot("all")}
                           className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "all"
-                              ? "comman-btn-color"
-                              : "comman-inactive-btn"
+                            ? "comman-btn-color"
+                            : "comman-inactive-btn"
                             }`}
                         >
                           {`Select All (${tableState.total})`}
@@ -1150,8 +1151,8 @@ const CityList = () => {
                                       }
                                       width="18"
                                       className={`ms-2 ${columnFilters[column.field]?.length > 0
-                                          ? "comman-btn-color"
-                                          : ""
+                                        ? "comman-btn-color"
+                                        : ""
                                         }`}
                                       style={{ cursor: "pointer" }}
                                       onClick={(e) =>
@@ -1170,8 +1171,8 @@ const CityList = () => {
                                           className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(
                                             (s) => s.field === column.field
                                           )?.order === "asc"
-                                              ? "disabled-sort"
-                                              : ""
+                                            ? "disabled-sort"
+                                            : ""
                                             }`}
                                           onClick={() =>
                                             applySortAsc(column.field)
@@ -1188,8 +1189,8 @@ const CityList = () => {
                                           className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(
                                             (s) => s.field === column.field
                                           )?.order === "desc"
-                                              ? "disabled-sort"
-                                              : ""
+                                            ? "disabled-sort"
+                                            : ""
                                             }`}
                                           onClick={() =>
                                             applySortDesc(column.field)
@@ -1503,8 +1504,20 @@ const CityList = () => {
                     type="button"
                     className="btn btn-danger btn-sm"
                     onClick={confirmDelete}
+                    disabled={loadingDelete}
                   >
-                    Delete
+                    {loadingDelete ? (
+                      <>
+                        <span
+                          className="spinner-border spinner-border-sm me-2"
+                          role="status"
+                          aria-hidden="true"
+                        ></span>
+                        Deleting...
+                      </>
+                    ) : (
+                      "Delete"
+                    )}
                   </button>
                 </div>
               </div>

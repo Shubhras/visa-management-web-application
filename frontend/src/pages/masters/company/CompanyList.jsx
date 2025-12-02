@@ -416,7 +416,8 @@ const CompanyList = () => {
             setSelectedRows([]);
             setSelectAllOrNot("");
             setDeleteId(null);
-            fetchCompanyTypetList();
+            //fetchCompanyTypetList();
+            clearAllFilters();
           } else {
             toast.error("Something went wrong.");
           }

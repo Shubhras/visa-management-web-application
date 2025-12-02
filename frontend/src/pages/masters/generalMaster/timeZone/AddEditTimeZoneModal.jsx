@@ -208,79 +208,81 @@ const AddEditTimeZoneModal = ({ show, handleClose, mode = 'add', rowData = null 
             <form onSubmit={handleSubmit}>
               <div className="row">
                 {/* Country Dropdown with React Select */}
-                <div className="col-12 mb-10">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Country <span className="text-danger">*</span>
-                  </label>
-                  <Select
-                    options={countryListData.map((option) => ({
-                      value: option.uuid,
-                      label: option.name+" ("+option?.continent?.name+")",
-                    }))}
-                    value={
-                      formData.country
-                        ? countryListData
-                          .map((option) => ({
-                            value: option.uuid,
-                            label: option.name+" ("+option?.continent?.name+")",
-                          }))
-                          .find((opt) => opt.value === formData.country)
-                        : null
-                    }
-                    onChange={handleSelectChange}
-                    filterOption={customFilterOption}
-                    placeholder="Select Country"
-                    isClearable
-                    isSearchable
-                    className={`custom-select-container ${errors.country ? "is-invalid" : ""
-                      }`}
-                    classNamePrefix="custom-select"
-                  />
-                  {errors.country && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.country}
-                    </div>
-                  )}
-                </div>
+                <div className='modal-scrollable-content'>
+                  <div className="col-12 mb-10">
+                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                      Country <span className="text-danger">*</span>
+                    </label>
+                    <Select
+                      options={countryListData.map((option) => ({
+                        value: option.uuid,
+                        label: option.name + " (" + option?.continent?.name + ")",
+                      }))}
+                      value={
+                        formData.country
+                          ? countryListData
+                            .map((option) => ({
+                              value: option.uuid,
+                              label: option.name + " (" + option?.continent?.name + ")",
+                            }))
+                            .find((opt) => opt.value === formData.country)
+                          : null
+                      }
+                      onChange={handleSelectChange}
+                      filterOption={customFilterOption}
+                      placeholder="Select Country"
+                      isClearable
+                      isSearchable
+                      className={`custom-select-container ${errors.country ? "is-invalid" : ""
+                        }`}
+                      classNamePrefix="custom-select"
+                    />
+                    {errors.country && (
+                      <div className="text-danger text-sm mt-1">
+                        {errors.country}
+                      </div>
+                    )}
+                  </div>
 
-                {/* TimeZone Name */}
-                <div className="col-12 mb-10">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    TimeZone <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    className={`form-control radius-8 ${errors.name ? 'is-invalid' : ''}`}
-                    placeholder="Enter time zone"
-                  />
-                  {errors.name && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.name}
-                    </div>
-                  )}
-                </div>
+                  {/* TimeZone Name */}
+                  <div className="col-12 mb-10">
+                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                      TimeZone <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      className={`form-control radius-8 ${errors.name ? 'is-invalid' : ''}`}
+                      placeholder="Enter time zone"
+                    />
+                    {errors.name && (
+                      <div className="text-danger text-sm mt-1">
+                        {errors.name}
+                      </div>
+                    )}
+                  </div>
 
-                {/* Description */}
-                <div className="col-12 mb-10">
-                  <label
-                    htmlFor="desc"
-                    className="form-label fw-semibold text-primary-light text-sm mb-0"
-                  >
-                    Description
-                  </label>
-                  <textarea
-                    className={`form-control ${errors.description ? 'is-invalid' : ''}`}
-                    id="desc"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    rows={4}
-                    cols={50}
-                    placeholder="Description"
-                  />
+                  {/* Description */}
+                  <div className="col-12 mb-10">
+                    <label
+                      htmlFor="desc"
+                      className="form-label fw-semibold text-primary-light text-sm mb-0"
+                    >
+                      Description
+                    </label>
+                    <textarea
+                      className={`form-control ${errors.description ? 'is-invalid' : ''}`}
+                      id="desc"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      rows={4}
+                      cols={50}
+                      placeholder="Description"
+                    />
+                  </div>
                 </div>
 
                 {/* Buttons */}
