@@ -1020,3 +1020,736 @@ class RelativeCreateAPTView(APIView):
                     "message":"Something went wrong. ",
                     "error":str(e)
                 },status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class RelativeListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self,request):
+        queryset = Relative.objects.all()
+
+        #filter 
+        uuids = request.GET.get("uuids")
+        if uuids:
+            uuid_list = []
+            for u in uuids.split(","):
+                try:
+                    uuid_list.append(UUID(u.strip()))
+                except:
+                    return Response({
+                        "status" : False,
+                        "message":f"Invalid UUID:{u}"
+                       
+                    },status=status.HTTP_400_BAD_REQUEST)
+                
+            queryset = queryset.filter(uuid__in=uuid_list)
+        serializer = RelativeSerializer(queryset ,many=True)
+        return Response({
+            "status":True, 
+            "message":"Relative data fatched successfully. ",
+            "data":serializer.data,
+
+            },status=status.HTTP_200_OK)
+
+class RelativeDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self,request,uuid):
+        try:
+            valid_uuid = UUID(str(uuid))
+        except:
+            return Response({
+                "status":False,
+                "message":"Invalid UUID format",
+            },status=status.HTTP_400_BAD_REQUEST)
+        relative = get_object_or_404(Relative,uuid=valid_uuid)
+        serializer = RelativeSerializer(relative)
+        return Response({
+            "status":True,
+            "statusCode":200,
+            "message":"Relative fetched successfully. ",
+            "data": serializer.data
+        },status=status.HTTP_200_OK)
+
+class RelativeUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def put(self,request,uuid):
+        try: 
+            relative = Relative.objects.get(uuid=uuid)
+        except Relative.DoesNotExist:
+               return Response({
+                "status": "error",
+                "message": "Relative not found."
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            serializer = RelativeSerializer(relative,data = request.data, partial = True)
+            serializer.is_valid(raise_exception=True)
+
+            with transaction.atomic():
+                relative = serializer.save()
+            return Response({
+                "status":True,
+                "message":"Relative updated successfully.",
+                "data":RelativeSerializer(relative).data
+            },status = status.HTTP_200_OK)
+        except serializers.ValidationError as ve:
+            return Response({
+                "status": "error",
+                "message": "Validation failed.",
+                "errors": ve.detail
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        except IntegrityError as ie:
+            return Response({
+                "status": "error",
+                "message": "Database integrity error.",
+                "details": str(ie)
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        except ValidationError as ve:
+            return Response({
+                "status": "error",
+                "message": "Validation failed.",
+                "errors": ve.message_dict
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                "status": "error",
+                "message": "Something went wrong.",
+                "details": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+class RelativeDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def delete(self,request,uuid=None):
+        id = request.data.get('id',None)
+        
+        #single delete via url
+        if uuid:
+            try:
+                obj = Relative.objects.get(uuid=uuid)
+                obj.delete()
+                return Response({
+                    "statusCode":204,
+                    "status":True,
+                    "message":"Relative deleted.",
+                    "data":None
+                },status=status.HTTP_204_NO_CONTENT)
+            except Relative.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status" :  False,
+                    "message": "Relative not found. ",
+                    "data":None        
+                        },status=status.HTTP_404_NOT_FOUND)
+        #delete all
+        if id == "all":
+            queryset = Relative.objects.all()
+            count = queryset.count()
+            queryset.delete()
+            return Response({
+                "statusCode":200,
+                "status":True,
+                "message": f"All {count} Relative permanently deleted. ",
+                "data":None
+            },status=status.HTTP_200_OK)
+        
+        #Bulk Delete
+        if not id or not isinstance(id,list):
+            return Response({
+                "statusCode":400,
+                "status":False,
+                "message":"Please provide a list of U"
+                "UIDs in 'id' field or 'all'.",
+                "data":None
+            },status= status.HTTP_400_BAD_REQUEST)
+        valid_uuids= []
+        invalid_uuids= []
+        for u in id:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(UUID(u))
+        queryset = Relative.objects.filter(uuid__in=valid_uuids)
+        count = queryset.count()
+        queryset.delete()
+        return Response({
+            "statusCode":200,
+            "status":True,
+            "message":f"{count} Relative permanently deleted.",
+            "data":{"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        },status = status.HTTP_200_OK)
+    
+#<================Visita_History====================>
+class VisitHistoryCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self,request):
+        try:
+            serializer = VisitHistorySerializer(data=request.data)
+            if serializer.is_valid():
+               serializer.save()
+               return Response({
+                 "statusCode":201,
+                 "status":True,
+                 "message":"Visit History created Successfully. ",
+                 "data":serializer.data
+                },status = status.HTTP_201_CREATED)
+            else:
+                return Response({
+                    "statusCode":400,
+                    "status":False,
+                    "message":"Validation failed. ",
+                    "error":serializer.errors
+                },status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e :
+                return Response({
+                    "statusCode":500,
+                    "status":False,
+                    "message":"Something went wrong. ",
+                    "error":str(e)
+                },status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class VisitHistoryListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self,request):
+        queryset = VisitHistory.objects.all()
+
+        #filter 
+        uuids = request.GET.get("uuids")
+        if uuids:
+            uuid_list = []
+            for u in uuids.split(","):
+                try:
+                    uuid_list.append(UUID(u.strip()))
+                except:
+                    return Response({
+                        "status" : False,
+                        "message":f"Invalid UUID:{u}"
+                       
+                    },status=status.HTTP_400_BAD_REQUEST)
+                
+            queryset = queryset.filter(uuid__in=uuid_list)
+        serializer = VisitHistorySerializer(queryset ,many=True)
+        return Response({
+            "status":True, 
+            "message":"Visit History data fatched successfully. ",
+            "data":serializer.data,
+
+            },status=status.HTTP_200_OK)
+
+
+class VisitHistoryDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self,request,uuid):
+        try:
+            valid_uuid = UUID(str(uuid))
+        except:
+            return Response({
+                "status":False,
+                "message":"Invalid UUID format",
+            },status=status.HTTP_400_BAD_REQUEST)
+        visit = get_object_or_404(VisitHistory,uuid=valid_uuid)
+        serializer = VisitHistorySerializer(visit)
+        return Response({
+            "status":True,
+            "statusCode":200,
+            "message":"Visit History fetched successfully. ",
+            "data": serializer.data
+        },status=status.HTTP_200_OK)
+
+
+class VisitHistoryUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def put(self,request,uuid):
+        try: 
+            visit = VisitHistory.objects.get(uuid=uuid)
+        except VisitHistory.DoesNotExist:
+               return Response({
+                "status": "error",
+                "message": "Visit History not found."
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            serializer = VisitHistorySerializer(visit,data = request.data, partial = True)
+            serializer.is_valid(raise_exception=True)
+
+            with transaction.atomic():
+                visit = serializer.save()
+            return Response({
+                "status":True,
+                "message":"Visit History updated successfully.",
+                "data":VisitHistorySerializer(visit).data
+            },status = status.HTTP_200_OK)
+        except serializers.ValidationError as ve:
+            return Response({
+                "status": "error",
+                "message": "Validation failed.",
+                "errors": ve.detail
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        except IntegrityError as ie:
+            return Response({
+                "status": "error",
+                "message": "Database integrity error.",
+                "details": str(ie)
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        except ValidationError as ve:
+            return Response({
+                "status": "error",
+                "message": "Validation failed.",
+                "errors": ve.message_dict
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                "status": "error",
+                "message": "Something went wrong.",
+                "details": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+       
+
+class VisitHistoryDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def delete(self,request,uuid=None):
+        id = request.data.get('id',None)
+        
+        #single delete via url
+        if uuid:
+            try:
+                obj = VisitHistory.objects.get(uuid=uuid)
+                obj.delete()
+                return Response({
+                    "statusCode":204,
+                    "status":True,
+                    "message":"visit history deleted.",
+                    "data":None
+                },status=status.HTTP_204_NO_CONTENT)
+            except VisitHistory.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status" :  False,
+                    "message": "Visit History not found. ",
+                    "data":None        
+                        },status=status.HTTP_404_NOT_FOUND)
+        #delete all
+        if id == "all":
+            queryset = VisitHistory.objects.all()
+            count = queryset.count()
+            queryset.delete()
+            return Response({
+                "statusCode":200,
+                "status":True,
+                "message": f"All {count} Visit History permanently deleted. ",
+                "data":None
+            },status=status.HTTP_200_OK)
+        
+        #Bulk Delete
+        if not id or not isinstance(id,list):
+            return Response({
+                "statusCode":400,
+                "status":False,
+                "message":"Please provide a list of U"
+                "UIDs in 'id' field or 'all'.",
+                "data":None
+            },status= status.HTTP_400_BAD_REQUEST)
+        valid_uuids= []
+        invalid_uuids= []
+        for u in id:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(UUID(u))
+        queryset = VisitHistory.objects.filter(uuid__in=valid_uuids)
+        count = queryset.count()
+        queryset.delete()
+        return Response({
+            "statusCode":200,
+            "status":True,
+            "message":f"{count} Visit History permanently deleted.",
+            "data":{"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        },status = status.HTTP_200_OK)
+    
+#<=====================Refusal_History=====================>
+
+class RefusalHistoryCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self,request):
+        try:
+            serializer = RefusalHistorySerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({
+                    "statusCode":201,
+                    "status":True,
+                    "message":"Refusal History create Successfully. ",
+                    "data":serializer.data
+                },status=status.HTTP_201_CREATED)
+            else:
+                return Response({
+                    "statusCode":400,
+                    "status":False,
+                    "message": "Validation failed. ",
+                    "error": serializer.errors
+                },status = status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                    "statusCode":500,
+                    "status":False,
+                    "message":"Something went wrong. ",
+                    "error":str(e)
+                },status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class RefusalHistoryListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self,request):
+        queryset = RefusalHistory.objects.all()
+
+        #filter 
+        uuids = request.GET.get("uuids")
+        if uuids:
+            uuid_list = []
+            for u in uuids.split(","):
+                try:
+                    uuid_list.append(UUID(u.strip()))
+                except:
+                    return Response({
+                        "status" : False,
+                        "message":f"Invalid UUID:{u}"
+                       
+                    },status=status.HTTP_400_BAD_REQUEST)
+                
+            queryset = queryset.filter(uuid__in=uuid_list)
+        serializer = RefusalHistorySerializer(queryset ,many=True)
+        return Response({
+            "status":True, 
+            "message":"Refusal History data fatched successfully. ",
+            "data":serializer.data,
+
+            },status=status.HTTP_200_OK)
+
+
+class RefusalHistoryDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self,request,uuid):
+        try:
+            valid_uuid = UUID(str(uuid))
+        except:
+            return Response({
+                "status":False,
+                "message":"Invalid UUID format",
+            },status=status.HTTP_400_BAD_REQUEST)
+        refusal = get_object_or_404(RefusalHistory,uuid=valid_uuid)
+        serializer = RefusalHistorySerializer(refusal)
+        return Response({
+            "status":True,
+            "statusCode":200,
+            "message":"Refusal History fetched successfully. ",
+            "data": serializer.data
+        },status=status.HTTP_200_OK)
+
+
+class RefusalHistoryUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def put(self,request,uuid):
+        try: 
+            refusal = RefusalHistory.objects.get(uuid=uuid)
+        except RefusalHistory.DoesNotExist:
+               return Response({
+                "status": "error",
+                "message": "Refusal History not found."
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            serializer = RefusalHistorySerializer(refusal,data = request.data, partial = True)
+            serializer.is_valid(raise_exception=True)
+
+            with transaction.atomic():
+                refusal = serializer.save()
+            return Response({
+                "status":True,
+                "message":"Refusal History updated successfully.",
+                "data":RefusalHistorySerializer(refusal).data
+            },status = status.HTTP_200_OK)
+        except serializers.ValidationError as ve:
+            return Response({
+                "status": "error",
+                "message": "Validation failed.",
+                "errors": ve.detail
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        except IntegrityError as ie:
+            return Response({
+                "status": "error",
+                "message": "Database integrity error.",
+                "details": str(ie)
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        except ValidationError as ve:
+            return Response({
+                "status": "error",
+                "message": "Validation failed.",
+                "errors": ve.message_dict
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                "status": "error",
+                "message": "Something went wrong.",
+                "details": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+       
+
+class RefusalHistoryDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def delete(self,request,uuid=None):
+        id = request.data.get('id',None)
+        
+        #single delete via url
+        if uuid:
+            try:
+                obj = RefusalHistory.objects.get(uuid=uuid)
+                obj.delete()
+                return Response({
+                    "statusCode":204,
+                    "status":True,
+                    "message":"Refusal History deleted.",
+                    "data":None
+                },status=status.HTTP_204_NO_CONTENT)
+            except RefusalHistory.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status" :  False,
+                    "message": "Refusal History not found. ",
+                    "data":None        
+                        },status=status.HTTP_404_NOT_FOUND)
+        #delete all
+        if id == "all":
+            queryset = RefusalHistory.objects.all()
+            count = queryset.count()
+            queryset.delete()
+            return Response({
+                "statusCode":200,
+                "status":True,
+                "message": f"All {count} Refusal History permanently deleted. ",
+                "data":None
+            },status=status.HTTP_200_OK)
+        
+        #Bulk Delete
+        if not id or not isinstance(id,list):
+            return Response({
+                "statusCode":400,
+                "status":False,
+                "message":"Please provide a list of U"
+                "UIDs in 'id' field or 'all'.",
+                "data":None
+            },status= status.HTTP_400_BAD_REQUEST)
+        valid_uuids= []
+        invalid_uuids= []
+        for u in id:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(UUID(u))
+        queryset = RefusalHistory.objects.filter(uuid__in=valid_uuids)
+        count = queryset.count()
+        queryset.delete()
+        return Response({
+            "statusCode":200,
+            "status":True,
+            "message":f"{count} Refusal History permanently deleted.",
+            "data":{"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        },status = status.HTTP_200_OK)
+    
+
+#<=======================Business_Experience=====================>
+
+class BusinessExperienceCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self,request):
+        try:
+            serializer = BusinessExperienceSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({
+                    "statusCode":201,
+                    "status":True,
+                    "message":"Business Experience create Successfully. ",
+                    "data":serializer.data
+                },status=status.HTTP_201_CREATED)
+            else:
+                return Response({
+                    "statusCode":400,
+                    "status":False,
+                    "message": "Validation failed. ",
+                    "error": serializer.errors
+                },status = status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                    "statusCode":500,
+                    "status":False,
+                    "message":"Something went wrong. ",
+                    "error":str(e)
+                },status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class BusinessExperienceListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self,request):
+        queryset = BusinessExperience.objects.all()
+
+        #filter 
+        uuids = request.GET.get("uuids")
+        if uuids:
+            uuid_list = []
+            for u in uuids.split(","):
+                try:
+                    uuid_list.append(UUID(u.strip()))
+                except:
+                    return Response({
+                        "status" : False,
+                        "message":f"Invalid UUID:{u}"
+                       
+                    },status=status.HTTP_400_BAD_REQUEST)
+                
+            queryset = queryset.filter(uuid__in=uuid_list)
+        serializer = BusinessExperienceSerializer(queryset ,many=True)
+        return Response({
+            "status":True, 
+            "message":"Business Experience data fatched successfully. ",
+            "data":serializer.data,
+
+            },status=status.HTTP_200_OK)
+
+
+class BusinessExperienceDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self,request,uuid):
+        try:
+            valid_uuid = UUID(str(uuid))
+        except:
+            return Response({
+                "status":False,
+                "message":"Invalid UUID format",
+            },status=status.HTTP_400_BAD_REQUEST)
+        experiences = get_object_or_404(BusinessExperience,uuid=valid_uuid)
+        serializer = BusinessExperienceSerializer(experiences)
+        return Response({
+            "status":True,
+            "statusCode":200,
+            "message":"Business Experience fetched successfully. ",
+            "data": serializer.data
+        },status=status.HTTP_200_OK)
+
+
+
+class BusinessExperienceUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def put(self,request,uuid):
+        try: 
+            experiences = BusinessExperience.objects.get(uuid=uuid)
+        except BusinessExperience.DoesNotExist:
+               return Response({
+                "status": "error",
+                "message": "Business Experience not found."
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            serializer = BusinessExperienceSerializer(experiences,data = request.data, partial = True)
+            serializer.is_valid(raise_exception=True)
+
+            with transaction.atomic():
+               experiences = serializer.save()
+            return Response({
+                "status":True,
+                "message":"Refusal History updated successfully.",
+                "data":BusinessExperienceSerializer(experiences).data
+            },status = status.HTTP_200_OK)
+        except serializers.ValidationError as ve:
+            return Response({
+                "status": "error",
+                "message": "Validation failed.",
+                "errors": ve.detail
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        except IntegrityError as ie:
+            return Response({
+                "status": "error",
+                "message": "Database integrity error.",
+                "details": str(ie)
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        except ValidationError as ve:
+            return Response({
+                "status": "error",
+                "message": "Validation failed.",
+                "errors": ve.message_dict
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                "status": "error",
+                "message": "Something went wrong.",
+                "details": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+class BusinessExperienceDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def delete(self,request,uuid=None):
+        id = request.data.get('id',None)
+        
+        #single delete via url
+        if uuid:
+            try:
+                obj = BusinessExperience.objects.get(uuid=uuid)
+                obj.delete()
+                return Response({
+                    "statusCode":204,
+                    "status":True,
+                    "message":"Business Experience deleted.",
+                    "data":None
+                },status=status.HTTP_204_NO_CONTENT)
+            except BusinessExperience.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status" :  False,
+                    "message": "Business Experience not found. ",
+                    "data":None        
+                        },status=status.HTTP_404_NOT_FOUND)
+        #delete all
+        if id == "all":
+            queryset = BusinessExperience.objects.all()
+            count = queryset.count()
+            queryset.delete()
+            return Response({
+                "statusCode":200,
+                "status":True,
+                "message": f"All {count} Business Experience permanently deleted. ",
+                "data":None
+            },status=status.HTTP_200_OK)
+        
+        #Bulk Delete
+        if not id or not isinstance(id,list):
+            return Response({
+                "statusCode":400,
+                "status":False,
+                "message":"Please provide a list of U"
+                "UIDs in 'id' field or 'all'.",
+                "data":None
+            },status= status.HTTP_400_BAD_REQUEST)
+        valid_uuids= []
+        invalid_uuids= []
+        for u in id:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(UUID(u))
+        queryset = BusinessExperience.objects.filter(uuid__in=valid_uuids)
+        count = queryset.count()
+        queryset.delete()
+        return Response({
+            "statusCode":200,
+            "status":True,
+            "message":f"{count} Business Experience permanently deleted.",
+            "data":{"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        },status = status.HTTP_200_OK)
+    

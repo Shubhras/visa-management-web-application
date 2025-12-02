@@ -122,6 +122,7 @@
 from rest_framework import serializers
 from lead.models import *
 from master.models import *
+import datetime
 
 class UUIDRefField(serializers.PrimaryKeyRelatedField):
     def to_internal_value(self, data):
@@ -447,4 +448,149 @@ class RelativeSerializer(serializers.ModelSerializer):
 
         return attrs
 
-        
+
+class VisitHistorySerializer(serializers.ModelSerializer):
+        # UUID-based foreign keys for readability
+    applicant = serializers.SlugRelatedField(
+       slug_field='uuid',
+        queryset=Applicant.objects.all()
+    )
+    applicant_type = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=ApplicantType.objects.all(),
+        required=False, # Optional field
+        allow_null=True
+    )
+    country = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=Country.objects.all(),
+        required=False,
+        allow_null=True
+    )
+    visa_category = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=VisaMain.objects.all(),
+        required=False,
+        allow_null=True
+    )
+    purpose_of_visit = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=PurposeOfVisit.objects.all(),
+        required=False,
+        allow_null=True
+    )
+
+    class Meta:
+        model = VisitHistory
+        fields = [
+            'uuid', 'applicant', 'applicant_type', 'country', 'visa_category',
+            'issue_date', 'travel_from', 'travel_to', 'purpose_of_visit',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['uuid', 'created_at', 'updated_at']
+
+
+class RefusalHistorySerializer(serializers.ModelSerializer):
+
+    applicant = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=Applicant.objects.all()
+    )
+
+    applicant_type = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=ApplicantType.objects.all(),
+        required=False,
+        allow_null=True
+    )
+
+    country = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=Country.objects.all(),
+        required=False,
+        allow_null=True
+    )
+
+    visa_category = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=VisaMain.objects.all(),
+        required=False,
+        allow_null=True
+    )
+
+    class Meta:
+        model = RefusalHistory
+        fields = [
+            'uuid', 'applicant', 'applicant_type', 'country', 'visa_category',
+            'refusal_date', 'refusal_reason', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['uuid', 'created_at', 'updated_at']
+
+    def validate(self, data):
+        import datetime
+
+        refusal_date = data.get('refusal_date')
+        refusal_reason = data.get('refusal_reason')
+
+        # Future date not allowed
+        if refusal_date and refusal_date > datetime.date.today():
+            raise serializers.ValidationError({
+                "refusal_date": "Refusal date cannot be in the future."
+            })
+
+        # Reason length validation
+        if refusal_reason and len(refusal_reason.strip()) < 10:
+            raise serializers.ValidationError({
+                "refusal_reason": "Refusal reason must be at least 10 characters long."
+            })
+
+        return data
+
+
+class BusinessExperienceSerializer(serializers.ModelSerializer):
+    applicant = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=Applicant.objects.all()
+    )
+
+    country = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=Country.objects.all(),
+        allow_null=True,
+        required=False
+    )
+
+    company_type = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=CompanyType.objects.all(),
+        allow_null=True,
+        required=False
+    )
+
+    class Meta:
+        model = BusinessExperience
+        fields = [
+            "uuid",
+            "applicant",
+            "country",
+            "company_name",
+            "company_type",
+            "share_percent",
+            "start_date",
+            "end_date",
+            "turnover",
+            "created_at",
+            "updated_at"
+        ]
+        read_only_fields = ["uuid", "created_at", "updated_at"]
+
+    def validate(self, attrs):
+        start_date = attrs.get("start_date")
+        end_date = attrs.get("end_date")
+
+        # End date must be after start date
+        if start_date and end_date and end_date < start_date:
+            raise serializers.ValidationError({
+                "end_date": "End date cannot be earlier than start date."
+            })
+        return attrs
