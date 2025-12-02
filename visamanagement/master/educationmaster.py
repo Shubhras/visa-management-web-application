@@ -1098,362 +1098,128 @@ class EducationLevelUpdateAPIView(APIView):
 
 
 
-
-
-# class EducationLevelDeleteAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
-
-#     def delete(self, request):
-#         try:
-#             search = request.GET.get("search", "").strip()
-#             delete_all = request.data.get("deleteAll", False)
-#             ids = request.data.get("id", None)
-
-
-#             # ----------------------------------
-#             # If id == "all" → delete entire table
-#             # ----------------------------------
-#             if ids == "all":
-#                 count = EducationLevel.objects.count()
-#                 EducationLevel.objects.all().delete()
-#                 return Response({
-#                     "statusCode": 200,
-#                     "status": True,
-#                     "message": f"All {count} education level code(s) deleted from the table.",
-#                 })
-
-#             # ---------------------------------------------------
-#             # Parse comma-separated UUID list from query param
-#             # ---------------------------------------------------
-#             def parse_uuid_list(param):
-#                 raw = request.GET.get(param, '')
-#                 result = []
-#                 if raw:
-#                     for x in raw.split(','):
-#                         try:
-#                             result.append(UUID(x.strip()))
-#                         except:
-#                             pass
-#                 return result
-
-#             level_code_uuids = parse_uuid_list('educationLevelCode')
-
-#             # ---------------------------------------------------
-#             # BASE QUERYSET
-#             # ---------------------------------------------------
-#             queryset = EducationLevel.objects.filter(is_deleted=False)
-
-#             # Track active filters for response message
-#             applied_filters = []
-
-#             # ---------------------------------------------------
-#             # SEARCH FILTER
-#             # ---------------------------------------------------
-#             if search:
-#                 queryset = queryset.filter(Q(educationlevel__istartswith=search))
-#                 applied_filters.append("search")
-
-#             # ---------------------------------------------------
-#             # LEVEL CODE FILTER
-#             # ---------------------------------------------------
-#             if level_code_uuids:
-#                 queryset = queryset.filter(level_code__uuid__in=level_code_uuids)
-#                 applied_filters.append("educationLevelCode")
-
-#             # ---------------------------------------------------
-#             # DELETE ALL MATCHING FILTERED RESULTS
-#             # ---------------------------------------------------
-#             if delete_all:
-#                 count = queryset.count()
-#                 queryset.delete()
-
-#                 # Smart response message
-#                 if not applied_filters:
-#                     msg = f"All {count} education level(s) deleted."
-#                 elif applied_filters == ["search"]:
-#                     msg = f"{count} education level(s) deleted based on search filter."
-#                 elif applied_filters == ["educationLevelCode"]:
-#                     msg = f"{count} education level(s) deleted based on educationLevelCode filter."
-#                 else:
-#                     msg = f"{count} education level(s) deleted based on search + educationLevelCode filters."
-
-#                 return Response({
-#                     "statusCode": 200,
-#                     "status": True,
-#                     "message": msg
-#                 }, status=200)
-
-#             # ---------------------------------------------------
-#             # DELETE SPECIFIC UUID LIST
-#             # ---------------------------------------------------
-#             if not ids or not isinstance(ids, list):
-#                 return Response({
-#                     "statusCode": 400,
-#                     "status": False,
-#                     "message": "Please provide a list of UUIDs in 'id'."
-#                 }, status=400)
-
-#             valid_uuids = []
-#             invalid_uuids = []
-
-#             for u in ids:
-#                 try:
-#                     valid_uuids.append(UUID(u))
-#                 except:
-#                     invalid_uuids.append(u)
-
-#             filtered_objects = queryset.filter(uuid__in=valid_uuids)
-
-#             count = filtered_objects.count()
-#             filtered_objects.delete()
-
-#             return Response({
-#                 "statusCode": 200,
-#                 "status": True,
-#                 "message": f"{count} education level(s) deleted.",
-#                 "invalid_uuids": invalid_uuids if invalid_uuids else None
-#             }, status=200)
-
-#         except Exception as e:
-#             return Response({
-#                 "statusCode": 500,
-#                 "status": False,
-#                 "message": f"Internal server error: {str(e)}"
-#             }, status=500)
-
-
 class EducationLevelDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request):
         try:
             search = request.GET.get("search", "").strip()
+            level_code_raw = request.GET.get("educationLevelCode", "").strip()
             ids = request.data.get("id", None)
             delete_all = request.data.get("deleteAll", False)
 
-            # ----------------------------------
-            # Parse comma-separated UUID list from query param
-            # ----------------------------------
-            def parse_uuid_list(param):
-                raw = request.GET.get(param, '')
-                result = []
-                if raw:
-                    for x in raw.split(','):
-                        try:
-                            result.append(UUID(x.strip()))
-                        except:
-                            pass
-                return result
+            # Parse educationLevelCode UUIDs from query param
+            level_code_uuids = []
+            if level_code_raw:
+                for x in level_code_raw.split(','):
+                    try:
+                        level_code_uuids.append(UUID(x.strip()))
+                    except ValueError:
+                        pass
 
-            level_code_uuids = parse_uuid_list('educationLevelCode')
-
-            # ----------------------------------
-            # Base queryset (not deleted)
-            # ----------------------------------
+            # Base queryset
             queryset = EducationLevel.objects.filter(is_deleted=False)
 
-            # -----------------------------
-            # CASE 1: Delete by search + UUID list
-            # ?search=A + { "deleteAll": false, "id": [uuid list] }
-            # -----------------------------
-            if search and delete_all is False and isinstance(ids, list):
+            # ================== CASE 1 ==================
+            # deleteAll:false + id:[uuid list]  → delete those uuids (search optional, code optional)
+            if not delete_all and isinstance(ids, list):
                 valid_uuids, invalid_uuids = [], []
                 for u in ids:
                     try:
                         valid_uuids.append(UUID(u))
-                    except:
+                    except ValueError:
                         invalid_uuids.append(u)
 
                 if not valid_uuids:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": "No valid UUIDs provided.",
-                        "data": {"invalid_uuids": invalid_uuids}
-                    }, status=400)
+                    return Response({"statusCode":400, "status":False, "message":"No valid UUIDs provided.","data":None}, status=400)
 
-                qs_bulk = queryset.filter(uuid__in=valid_uuids, educationlevel__istartswith=search)
-                count = qs_bulk.count()
+                qs = queryset.filter(uuid__in=valid_uuids)
 
+                if search:
+                    qs = qs.filter(educationlevel__istartswith=search)
+
+                if level_code_uuids:
+                    qs = qs.filter(level_code__uuid__in=level_code_uuids)
+
+                count = qs.count()
                 if count == 0:
-                    return Response({
-                        "statusCode": 404,
-                        "status": False,
-                        "message": "No matching Education Levels found.",
-                        "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-                    }, status=404)
+                    return Response({"statusCode":404, "status":False, "message":"No matching record found.","data":{"invalid_uuids":invalid_uuids} if invalid_uuids else None}, status=404)
 
                 try:
                     with transaction.atomic():
-                        qs_bulk.delete()
+                        qs.delete()
                 except IntegrityError:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": "You can't delete Education Level(s) because they are used in child tables.",
-                        "data": None
-                    }, status=400)
+                    return Response({"statusCode":400, "status":False, "message":"You can't delete Education Level(s) because they are used in child tables.","data":None}, status=400)
 
-                return Response({
-                    "statusCode": 200,
-                    "status": True,
-                    "message": f"{count} Education Level(s) deleted successfully.",
-                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-                }, status=200)
+                return Response({"statusCode":200, "status":True, "message":f"{count} record(s) deleted successfully.","data":{"invalid_uuids":invalid_uuids} if invalid_uuids else None}, status=200)
 
-            # -----------------------------
-            # CASE 2: Delete full table
-            # ?search= + { "deleteAll": false, "id":"all" }
-            # -----------------------------
-            if delete_all is False and ids == "all" and search == "" and not level_code_uuids:
+            # ================== CASE 2 ==================
+            # deleteAll:false + id:"all" + no filters → full table delete
+            if not delete_all and ids == "all" and not search and not level_code_uuids:
                 count = queryset.count()
                 if count == 0:
-                    return Response({
-                        "statusCode": 404,
-                        "status": False,
-                        "message": "No Education Levels found to delete.",
-                        "data": None
-                    }, status=404)
+                    return Response({"statusCode":404, "status":False, "message":"No records found to delete.","data":None}, status=404)
 
-                try:
-                    with transaction.atomic():
-                        queryset.delete()
-                except IntegrityError:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": "You can't delete Education Level(s) because they are used in child tables.",
-                        "data": None
-                    }, status=400)
+                with transaction.atomic():
+                    queryset.delete()
 
-                return Response({
-                    "statusCode": 200,
-                    "status": True,
-                    "message": f"All {count} Education Level(s) deleted successfully.",
-                    "data": None
-                }, status=200)
+                return Response({"statusCode":200, "status":True, "message":f"All {count} record(s) deleted successfully.","data":None}, status=200)
 
-            # -----------------------------
-            # CASE 3: Delete only search-matched data
-            # ?search=A + { "deleteAll": true, "id": "" }
-            # -----------------------------
-            if delete_all and search and not level_code_uuids and (ids in [None, "", []]):
-                qs_search = queryset.filter(educationlevel__istartswith=search)
-                count = qs_search.count()
-
+            # ================== CASE 3 ==================
+            # deleteAll:true + search=A + id empty + no code filter → delete only search matched
+            if delete_all and search and (ids in [None, "", []]) and not level_code_uuids:
+                qs = queryset.filter(educationlevel__istartswith=search)
+                count = qs.count()
                 if count == 0:
-                    return Response({
-                        "statusCode": 404,
-                        "status": False,
-                        "message": "No Education Levels found matching this search.",
-                        "data": None
-                    }, status=404)
+                    return Response({"statusCode":404, "status":False, "message":"No matching search data found.","data":None}, status=404)
 
                 try:
                     with transaction.atomic():
-                        qs_search.delete()
+                        qs.delete()
                 except IntegrityError:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": "You can't delete Education Level(s) because they are used in child tables.",
-                        "data": None
-                    }, status=400)
+                    return Response({"statusCode":400, "status":False, "message":"You can't delete Education Level(s) because they are used in child tables.","data":None}, status=400)
 
-                return Response({
-                    "statusCode": 200,
-                    "status": True,
-                    "message": f"{count} Education Level(s) deleted based on search filter.",
-                    "data": None
-                }, status=200)
+                return Response({"statusCode":200, "status":True, "message":f"{count} record(s) deleted based on search filter.","data":None}, status=200)
 
-            # -----------------------------
-            # CASE 4: Delete only educationLevelCode-matched data
-            # ?search= & educationLevelCode=uuid1,uuid2 + { "deleteAll": true, "id": "" }
-            # -----------------------------
+            # ================== CASE 4 ==================
+            # deleteAll:true + continent(code)=uuid list + no search + id empty → delete only code matched
             if delete_all and not search and level_code_uuids and (ids in [None, "", []]):
-                qs_code = queryset.filter(level_code__uuid__in=level_code_uuids)
-                count = qs_code.count()
-
+                qs = queryset.filter(level_code__uuid__in=level_code_uuids)
+                count = qs.count()
                 if count == 0:
-                    return Response({
-                        "statusCode": 404,
-                        "status": False,
-                        "message": "No Education Levels found matching this educationLevelCode filter.",
-                        "data": None
-                    }, status=404)
-
+                    return Response({"statusCode":404, "status":False, "message":"No matching educationLevelCode data found.","data":None}, status=404)
                 try:
                     with transaction.atomic():
-                        qs_code.delete()
+                        qs.delete()
                 except IntegrityError:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": "Cannot delete Education Level(s) due to related records.",
-                        "data": None
-                    }, status=400)
+                    return Response({"statusCode":400, "status":False, "message":"You can't delete Education Level(s) because they are used in child tables.","data":None}, status=400)
+                
+                return Response({"statusCode":200, "status":True, "message":f"{count} record(s) deleted based on educationLevelCode filter.","data":None}, status=200)
 
-                return Response({
-                    "statusCode": 200,
-                    "status": True,
-                    "message": f"{count} Education Level(s) deleted based on educationLevelCode filter.",
-                    "data": None
-                }, status=200)
-
-            # -----------------------------
-            # CASE 5: Delete based on search + educationLevelCode filter
-            # ?search=A & educationLevelCode=uuid1,uuid2 + { "deleteAll": true, "id": "" }
-            # -----------------------------
+            # ================== CASE 5 ==================
+            # deleteAll:true + search=A + continent(code)=uuid list + id empty → delete combined matched
             if delete_all and search and level_code_uuids and (ids in [None, "", []]):
-                qs_both = queryset.filter(
+                qs = queryset.filter(
                     educationlevel__istartswith=search,
                     level_code__uuid__in=level_code_uuids
                 )
-                count = qs_both.count()
-
+                count = qs.count()
                 if count == 0:
-                    return Response({
-                        "statusCode": 404,
-                        "status": False,
-                        "message": "No Education Levels found matching search + educationLevelCode filters.",
-                        "data": None
-                    }, status=404)
-
+                    return Response({"statusCode":404, "status":False, "message":"No matching combined data found.","data":None}, status=404)
                 try:
                     with transaction.atomic():
-                        qs_both.delete()
+                        qs.delete()
                 except IntegrityError:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": "Cannot delete Education Level(s) due to related records.",
-                        "data": None
-                    }, status=400)
+                    return Response({"statusCode":400, "status":False, "message":"You can't delete Education Level(s) because they are used in child tables.","data":None}, status=400)
 
-                return Response({
-                    "statusCode": 200,
-                    "status": True,
-                    "message": f"{count} Education Level(s) deleted based on search + educationLevelCode filters.",
-                    "data": None
-                }, status=200)
+                return Response({"statusCode":200, "status":True, "message":f"{count} record(s) deleted based on search + educationLevelCode both.","data":None}, status=200)
 
-            # -----------------------------
-            # Fallback invalid request
-            # -----------------------------
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Invalid delete request format.",
-                "data": None
-            }, status=400)
+            # ===== If none matches =====
+            return Response({"statusCode":400, "status":False, "message":"Invalid delete request format.","data":None}, status=400)
 
         except Exception as e:
-            return Response({
-                "statusCode": 500,
-                "status": False,
-                "message": f"Internal server error: {str(e)}"
-            }, status=500)
+            return Response({"statusCode":500, "status":False, "message":str(e),"data":None}, status=500)
+
 
 
 
@@ -5959,70 +5725,42 @@ class AcademicResultDeleteAPIView(APIView):
 
     def delete(self, request):
         try:
-            # ---------- Query Params ----------
+
             search = request.GET.get("search", "").strip()
             academic_result_type_param = request.GET.get("academicResultType", "").strip()
-
-            # ---------- Body Params ----------
             ids = request.data.get("id", None)
             delete_all = request.data.get("deleteAll", False)
 
-            
-            # ---------- Base Queryset ----------
-            queryset = AcademicResult.objects.filter(is_deleted=False)
-            applied_filters = []
+            print(request.data)
 
-            # Apply search filter if present
+            # Base queryset
+            queryset = AcademicResult.objects.filter(is_deleted=False)
+            academic_result_type_uuids = []
+
             if search:
                 queryset = queryset.filter(Academicresult__istartswith=search)
-                applied_filters.append("search")
 
-            # Apply continent filter if present (comma separated UUIDs)
-            academic_result_type_uuids = []
             if academic_result_type_param:
+                print("academic_result_type_param",academic_result_type_param)
                 for u in academic_result_type_param.split(","):
                     try:
                         academic_result_type_uuids.append(UUID(u.strip()))
                     except:
-                        pass
+                        return Response({
+                            "statusCode": 400,
+                            "status": False,
+                            "message": f"Invalid Academic Result Type UUID: {u.strip()}",
+                            "data": None
+                        }, status=400)
                 if academic_result_type_uuids:
+                    print("academic_result_type__result_type_uuids",academic_result_type_uuids)
                     queryset = queryset.filter(AcademicResulttype__uuid__in=academic_result_type_uuids)
-                    applied_filters.append("academic_result_type")
+                    print("academic_resusult_type_uuids",academic_result_type_uuids)
 
-            # ---------- Case 2: Full table delete when id == "all" + no filters ----------
-            if not delete_all and ids == "all" and not search and not academic_result_type_uuids:
-                count = AcademicResult.objects.filter(is_deleted=False).count()
-                if count == 0:
-                    return Response({
-                        "statusCode": 404,
-                        "status": False,
-                        "message": "No Academic Results found to delete.",
-                        "data": None
-                    }, status=404)
-
-                try:
-                    with transaction.atomic():
-                        AcademicResult.objects.filter(is_deleted=False).delete()
-                except IntegrityError:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": "You can't delete Academic Results because they are used in child tables.",
-                        "data": None
-                    }, status=400)
-
-                return Response({
-                    "statusCode": 200,
-                    "status": True,
-                    "message": f"All {count} Academic Result(s) permanently deleted.",
-                    "data": None
-                })
-
-            # ---------- Case 1: UUID list + search + continent filters ----------
+            print("academic_result_type_uuidsacademic_result_type_uuids",academic_result_type_uuids)
+            # ---- CASE 1: Delete specific UUID list ----
             if not delete_all and isinstance(ids, list) and ids:
-                valid = []
-                invalid = []
-
+                valid, invalid = [], []
                 for u in ids:
                     try:
                         valid.append(UUID(u))
@@ -6031,8 +5769,8 @@ class AcademicResultDeleteAPIView(APIView):
 
                 if valid:
                     qs_delete = queryset.filter(uuid__in=valid)
-
                     count = qs_delete.count()
+
                     if count == 0:
                         return Response({
                             "statusCode": 404,
@@ -6055,117 +5793,65 @@ class AcademicResultDeleteAPIView(APIView):
                     return Response({
                         "statusCode": 200,
                         "status": True,
-                        "message": f"{count} Academic Result(s) deleted based on UUID list.",
+                        "message": f"{count} Academic Result(s) deleted.",
                         "data": {"invalid_uuids": invalid} if invalid else None
                     })
 
-            # ---------- Case 3: deleteAll:true + search only ----------
-            if delete_all and search and not academic_result_type_uuids:
-                qs_search = queryset.filter(Academicresult__istartswith=search)
-                count = qs_search.count()
-
+            # ---- CASE 2: Delete full table when id == "all" + no filters ----
+            if not delete_all and ids == "all" and not search and not academic_result_type_uuids:
+                count = AcademicResult.objects.filter(is_deleted=False).count()
                 if count == 0:
                     return Response({
                         "statusCode": 404,
                         "status": False,
-                        "message": "No Academic Result(s) found matching this search.",
+                        "message": "No Academic Results found to delete.",
                         "data": None
                     }, status=404)
 
                 try:
+                    with transaction.atomic():
+                        AcademicResult.objects.filter(is_deleted=False).delete()
+                except IntegrityError:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "You can't delete Academic Results, child table dependency exists.",
+                        "data": None
+                    }, status=400)
+
+                return Response({"statusCode": 200, "status": True, "message": f"All {count} result(s) deleted", "data": None})
+
+            # ---- CASE 3: deleteAll:true + search only ----
+            if delete_all and search and not academic_result_type_uuids:
+                qs_search = AcademicResult.objects.filter(is_deleted=False, Academicresult__istartswith=search)
+                count = qs_search.count()
+                if count:
                     with transaction.atomic():
                         qs_search.delete()
-                except IntegrityError:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": "You can't delete search dataset because they are used in child tables.",
-                        "data": None
-                    }, status=400)
+                    return Response({"statusCode": 200, "status": True, "message": f"{count} result(s) deleted by search", "data": None})
 
-                return Response({
-                    "statusCode": 200,
-                    "status": True,
-                    "message": f"{count} Academic Result(s) deleted based on search filter.",
-                    "data": None
-                })
-
-            # ---------- Case 4: deleteAll:true + academic_result_type only ----------
+            # ---- CASE 4: deleteAll:true + academic_result_type only ----
             if delete_all and academic_result_type_uuids and not search:
                 count = queryset.count()
-
-                if count == 0:
-                    return Response({
-                        "statusCode": 404,
-                        "status": False,
-                        "message": "No Academic Result(s) found to delete based on continent filter.",
-                        "data": None
-                    }, status=404)
-
-                try:
+                if count:
                     with transaction.atomic():
                         queryset.delete()
-                except IntegrityError:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": "You can't delete Academic Result dataset, child tables exist.",
-                        "data": None
-                    }, status=400)
+                    return Response({"statusCode": 200, "status": True, "message": f"{count} result(s) deleted by academic_result_type", "data": None})
 
-                return Response({
-                    "statusCode": 200,
-                    "status": True,
-                    "message": f"{count} Academic Result(s) deleted based on continent filter.",
-                    "data": None
-                })
-
-            # ---------- Case 5: deleteAll:true + search + academic_result_type ----------
+            # ---- CASE 5: deleteAll:true + both filters ----
             if delete_all and search and academic_result_type_uuids:
-                qs_combined = queryset.filter(Academicresult__istartswith=search)
-
+                qs_combined = AcademicResult.objects.filter(is_deleted=False, Academicresult__istartswith=search, AcademicResulttype__uuid__in=academic_result_type_uuids)
                 count = qs_combined.count()
-                if count == 0:
-                    return Response({
-                        "statusCode": 404,
-                        "status": False,
-                        "message": "No Academic Result(s) found matching search + continent filter.",
-                        "data": None
-                    }, status=404)
-
-                try:
+                if count:
                     with transaction.atomic():
                         qs_combined.delete()
-                except IntegrityError:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": "Can't delete combined dataset, child tables exist.",
-                        "data": None
-                    }, status=400)
+                    return Response({"statusCode": 200, "status": True, "message": f"{count} result(s) deleted by combined filters", "data": None})
 
-                return Response({
-                    "statusCode": 200,
-                    "status": True,
-                    "message": f"{count} Academic Result(s) deleted based on search + AcademicResulttype filters.",
-                    "data": None
-                })
-
-            # ---------- Fallback ----------
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Invalid delete request format.",
-                "data": None
-            }, status=400)
+            # ---- Fallback ----
+            return Response({"statusCode": 400, "status": False, "message": "Invalid delete request format.", "data": None}, status=400)
 
         except Exception as e:
-            return Response({
-                "statusCode": 500,
-                "status": False,
-                "message": f"Internal server error: {str(e)}",
-                "data": None
-            }, status=500)
+            return Response({"statusCode": 500, "status": False, "message": str(e), "data": None}, status=500)
 
 
 class AcademicResultExportAPIView(APIView):
@@ -11212,7 +10898,7 @@ class DegreeAwardedInstituteDeleteAPIView(APIView):
             delete_all = request.data.get("deleteAll", False)
 
             # ---------------- Base queryset ----------------
-            queryset = DegreeAwardedInstitute.objects.filter(is_deleted=False)
+            queryset = DegreeAwardedInstitute.objects.filter()
             applied_filters = []
 
             # ---------------- Apply filters dynamically ----------------
@@ -11238,7 +10924,7 @@ class DegreeAwardedInstituteDeleteAPIView(APIView):
 
             # ---------------- CASE 2: Full table delete when "id" == "all" and no filters ----------------
             if not delete_all and ids == "all" and not applied_filters:
-                full_qs = DegreeAwardedInstitute.objects.filter(is_deleted=False)
+                full_qs = DegreeAwardedInstitute.objects.filter()
                 count = full_qs.count()
 
                 if count == 0:
