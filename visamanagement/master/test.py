@@ -544,169 +544,111 @@ class LanguageImportAPIView(APIView):
         sheet_name = request.data.get('sheet_name')
 
         if not file:
-            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'statusCode': 400, 'status': False, 'message': 'No file uploaded'}, status=400)
 
-        format_type = file.name.split('.')[-1].lower()
-
-        # Required & optional headers
+        ext = file.name.split('.')[-1].lower()
         required_headers = {'language name (test)'}
         optional_headers = {'description', 'is_deleted'}
-
-        data = []
+        parsed_data = []
         duplicates = []
         skipped_rows = []
+        to_create = []
+        imported_count = 0
+        seen_in_file = set()
 
         try:
-            headers = []
-
-            # ---------------------------------------------------------
-            #                      XLSX Handling
-            # ---------------------------------------------------------
-            if format_type == 'xlsx':
+            # ---------------- XLSX Handling ----------------
+            if ext == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 sheets = wb.sheetnames
 
                 if not sheet_name:
-                    return Response({
-                        "error": "Please provide sheet_name",
-                        "available_sheets": sheets
-                    }, status=400)
+                    return Response({'statusCode': 400, 'status': False, 'message': 'Please provide sheet_name', 'available_sheets': sheets}, status=400)
 
                 if sheet_name not in sheets:
-                    return Response({
-                        "error": f"Sheet '{sheet_name}' not found",
-                        "available_sheets": sheets
-                    }, status=400)
+                    return Response({'statusCode': 400, 'status': False, 'message': f"Sheet '{sheet_name}' not found", 'available_sheets': sheets}, status=400)
 
                 ws = wb[sheet_name]
-
                 if ws.max_row <= 1:
-                    return Response({
-                        "status": False,
-                        "statusCode": 400,
-                        "message": f"Sheet '{sheet_name}' is empty."
-                    }, status=400)
+                    return Response({'statusCode': 400, 'status': False, 'message': f"Sheet '{sheet_name}' is empty."}, status=400)
 
-                headers = [
-                    (cell.value or "").strip().lower()
-                    for cell in next(ws.iter_rows(min_row=1, max_row=1))
-                ]
-
-                # Validate required headers
+                headers = [(cell.value or "").strip().lower() for cell in next(ws.iter_rows(min_row=1, max_row=1))]
                 missing = required_headers - set(headers)
                 if missing:
-                    return Response({
-                        "status": False,
-                        "statusCode": 400,
-                        "message": f"Missing required headers: {missing}"
-                    }, status=400)
+                    return Response({'statusCode': 400, 'status': False, 'message': f"Missing required headers: {missing}"}, status=400)
 
-                # Load row data
-                for row_no, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
-                    row_dict["_row_number"] = row_no
-                    data.append(row_dict)
+                    row_dict["_row_number"] = idx
+                    parsed_data.append(row_dict)
 
-            # ---------------------------------------------------------
-            #                       CSV Handling
-            # ---------------------------------------------------------
-            elif format_type == "csv":
+            # ---------------- CSV Handling ----------------
+            elif ext == 'csv':
                 decoded = file.read().decode('utf-8')
                 dataset = Dataset()
-                dataset.load(decoded, format="csv")
-
+                dataset.load(decoded, format='csv')
                 for idx, row in enumerate(dataset.dict, start=2):
                     row_lower = {k.lower(): v for k, v in row.items()}
-
                     missing = required_headers - set(row_lower.keys())
                     if missing:
-                        return Response({
-                            "status": False,
-                            "statusCode": 400,
-                            "message": f"Missing required headers: {missing}"
-                        }, status=400)
-
+                        return Response({'statusCode': 400, 'status': False, 'message': f"Missing required headers: {missing}"}, status=400)
                     row_lower["_row_number"] = idx
-                    data.append(row_lower)
-
+                    parsed_data.append(row_lower)
             else:
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "Unsupported file format. Use .xlsx or .csv"
-                }, status=400)
+                return Response({'statusCode': 400, 'status': False, 'message': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
 
-            # ---------------------------------------------------------
-            #                       PROCESS ROWS
-            # ---------------------------------------------------------
-            imported_count = 0
+            # ---------------- PROCESS ROWS ----------------
+            existing_map = {l.name.lower(): l for l in Language.objects.all()}
 
-            for row in reversed(data):
+            for row in reversed(parsed_data):
                 row_no = row.get("_row_number", "Unknown")
-
                 name = (row.get("language name (test)") or "").strip()
                 description = (row.get("description") or "").strip()
                 is_deleted = row.get("is_deleted", False)
 
-                # Missing language name
                 if not name:
-                    skipped_rows.append({
-                        "Row": row_no,
-                        "Language Name": "",
-                        "Description": description,
-                        "Reason": "Missing language name"
-                    })
+                    skipped_rows.append({"Row": row_no, "Language Name": "", "Description": description, "Reason": "Missing language name"})
                     continue
 
-                # Check if language already exists
-                existing = Language.objects.filter(name__iexact=name).first()
+                if name.lower() in seen_in_file:
+                    duplicates.append({"Row": row_no, "Language Name": name, "Description": description, "Reason": "Duplicate in file"})
+                    continue
+                seen_in_file.add(name.lower())
 
+                existing = existing_map.get(name.lower())
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({
-                            "Row": row_no,
-                            "Language Name": "",
-                            "Description": description,
-                            "Reason": "Already exists in database"
-                        })
+                        duplicates.append({"Row": row_no, "Language Name": name, "Description": description, "Reason": "Already exists in database"})
                         continue
-                    
-                    # Reactivate deleted record
                     existing.description = description
                     existing.is_deleted = False
                     existing.save()
                     imported_count += 1
+                    continue
 
-                else:
-                    # Create new
-                    Language.objects.create(
-                        name=name,
-                        description=description,
-                        is_deleted=is_deleted or False
-                    )
-                    imported_count += 1
+                # Add to bulk create list
+                to_create.append(Language(name=name, description=description, is_deleted=is_deleted or False))
+
+            # Bulk create
+            if to_create:
+                batch_size = 500
+                for i in range(0, len(to_create), batch_size):
+                    Language.objects.bulk_create(to_create[i:i + batch_size])
+                imported_count += len(to_create)
 
         except Exception as e:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": str(e)
-            }, status=400)
+            return Response({'statusCode': 400, 'status': False, 'message': str(e)}, status=400)
 
-        # ---------------------------------------------------------
-        #                        FINAL RESPONSE
-        # ---------------------------------------------------------
         return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"Sheet '{sheet_name}' imported successfully" if sheet_name else "Import successful",
-            "imported_count": imported_count,
-            "duplicates": list(reversed(duplicates)),
-            "skipped_rows": list(reversed(skipped_rows)),
-        }, status=200)
-
+            'statusCode': 200,
+            'status': True,
+            'message': f"Sheet '{sheet_name}' imported successfully" if sheet_name else "Import successful",
+            'imported_count': imported_count,
+            'duplicates': list(reversed(duplicates)),
+            'skipped_rows': list(reversed(skipped_rows)),
+        })
 
 
 #--------------------language Test-------------------

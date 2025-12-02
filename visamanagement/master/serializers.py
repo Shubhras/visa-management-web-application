@@ -1560,6 +1560,7 @@ class JobProspectSerializer(serializers.ModelSerializer):
 class RepresentingCountrySerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='country.name', read_only=True)
     largest_state_name = serializers.CharField(source='largest_state.name', read_only=True)
+    smallest_state_name = serializers.CharField(source='smallest_state.stateName', read_only=True)
     largest_city_name = serializers.CharField(source='largest_city.name', read_only=True)
 
     class Meta:
@@ -1593,6 +1594,8 @@ class RepresentingCountrySerializer(serializers.ModelSerializer):
             'official_language',
             'largest_state',
             'largest_state_name',
+            'smallest_state',
+            'smallest_state_name',
             'largest_city',
             'largest_city_name',
             'major_cities',
@@ -1610,7 +1613,7 @@ class RepresentingCountrySerializer(serializers.ModelSerializer):
         ]
         read_only_fields = [
             'created_at', 'updated_at',
-            'name', 'largest_state_name', 'largest_city_name'
+            'name', 'largest_state_name', 'largest_city_name','smallest_state_name'
         ]
 
     def create(self, validated_data):
