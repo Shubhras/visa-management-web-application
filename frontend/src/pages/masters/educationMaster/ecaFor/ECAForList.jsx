@@ -236,6 +236,7 @@ const ECAForList = () => {
     }));
     // Reset Global Search
     setGlobalSearch('');
+     setSelectedRows([]);
   };
 
   const handleSearchChange = (value) => {
@@ -368,7 +369,13 @@ const ECAForList = () => {
       toast.error("No eca for selected for deletion.");
       return;
     }
-    dispatch(ecaForDelete(sendPayload, (response, error) => {
+    const deleteAll = selectAllOrNot === "all" && Boolean(tableState.search?.trim());
+    const payloadSend = {
+      deleteAll: deleteAll,
+      id: deleteAll == true ? "" : sendPayload,
+      search: tableState.search || '',
+    };
+    dispatch(ecaForDelete(payloadSend, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
@@ -380,7 +387,8 @@ const ECAForList = () => {
           setSelectedRows([]);
           setSelectAllOrNot('');
           setDeleteId(null);
-          fetchDepartmentList();
+          //fetchDepartmentList();
+           clearAllFilters();
         } else {
           toast.error("Something went wrong.");
         }

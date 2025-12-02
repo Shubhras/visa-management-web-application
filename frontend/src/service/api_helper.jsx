@@ -2212,8 +2212,11 @@ export const editDegreeAwardedInstituteDataAPI = (payload) => {
 };
 
 export const deleteDegreeAwardedInstituteDataAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_DEGREE_AWARDED_INSTITUTE_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+   const apiUrl = `${url.DELETE_DEGREE_AWARDED_INSTITUTE_API}delete/?search=${payload?.search}&country=${payload?.country}&state=${payload?.state}&educationLevel=${payload?.educationLevel}&degreeAwardedBy=${payload?.degreeAwardedBy}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -2488,8 +2491,11 @@ export const editEcaAwardingBodyAPI = (payload) => {
 };
 
 export const deleteEcaAwardingBodyAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_ECA_AWARDING_BODY_API}delete/`;
+    const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+   const apiUrl = `${url.DELETE_ECA_AWARDING_BODY_API}delete/?search=${payload?.search}&country=${payload?.country}&ecaFor=${payload?.ecaFor}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -2541,8 +2547,11 @@ export const editMediumOfEducationAPI = (payload) => {
 };
 
 export const deleteMediumOfEducationAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_MEDIUM_OF_EDUCATION_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_MEDIUM_OF_EDUCATION_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -2595,8 +2604,11 @@ export const editEcaForAPI = (payload) => {
 };
 
 export const deleteEcaForAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_ECA_FOR_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_ECA_FOR_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
