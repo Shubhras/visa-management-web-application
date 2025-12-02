@@ -329,6 +329,10 @@ const EntranceTestModuleNameList = () => {
     };
 
     const clearAllFilters = () => {
+        // Reset filter dropdowns
+        setColumnFilters({
+            entranceTestName: [],
+        });
         setTableState(prev => ({
             ...prev,
             page: 1,
@@ -481,7 +485,14 @@ const EntranceTestModuleNameList = () => {
             toast.error("No entrance test module name selected for deletion.");
             return;
         }
-        dispatch(entranceTestModuleNameDelete(sendPayload, (response, error) => {
+        const deleteAll = selectAllOrNot === "all" && ((tableState.search && tableState.search.trim() !== '') || columnFilters.entranceTestName.length > 0);
+        const payloadSend = {
+            deleteAll: deleteAll,
+            entranceTestName: columnFilters.entranceTestName.length > 0 ? columnFilters.entranceTestName : '',
+            id: deleteAll == true ? "" : sendPayload,
+            search: tableState.search || '',
+        };
+        dispatch(entranceTestModuleNameDelete(payloadSend, (response, error) => {
             if (error) {
                 toast.error(error?.response?.data?.message || "server error");
             } else {
@@ -493,7 +504,8 @@ const EntranceTestModuleNameList = () => {
                     setSelectedRows([]);
                     setSelectAllOrNot('');
                     setDeleteId(null);
-                    fetchDepartmentList();
+                    //fetchDepartmentList();
+                    clearAllFilters();
                 } else {
                     toast.error("Something went wrong.");
                 }

@@ -899,6 +899,22 @@ class DegreeAwardedInstituteSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'uuid', 'degree_awarded_by_name', 'state_name', 'education_level_name']
 
 
+    def validate(self, attrs):
+        degree_awarded_by = attrs.get('degree_awarded_by')
+        education_level = attrs.get('education_level')
+        country = attrs.get('country')
+
+        if DegreeAwardedInstitute.objects.filter(
+            degree_awarded_by=degree_awarded_by,
+            education_level=education_level,
+            country=country
+        ).exists():
+            raise serializers.ValidationError(
+            "This institute already exists with this Degree Awarded By, Education Level and Country."
+        )
+
+        return attrs
+    
 
 class LanguageSerializer(serializers.ModelSerializer):
     class Meta:

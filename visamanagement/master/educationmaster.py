@@ -434,6 +434,55 @@ class EducationLevelCodeDeleteAPIView(APIView):
 
             queryset = EducationLevelCode.objects.filter(is_deleted=False)
 
+
+
+            # CASE 4: Bulk delete by UUID list, search optional
+            if delete_all is False and isinstance(ids, list):
+                valid_uuids, invalid_uuids = [], []
+                for u in ids:
+                    try:
+                        valid_uuids.append(UUID(u))
+                    except ValueError:
+                        invalid_uuids.append(u)
+
+                if not valid_uuids:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "No valid UUIDs provided.",
+                        "data": {"invalid_uuids": invalid_uuids}
+                    }, status=400)
+
+                qs_bulk = queryset.filter(uuid__in=valid_uuids)
+                count = qs_bulk.count()
+
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No matching records found.",
+                        "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                    }, status=404)
+
+                try:
+                    with transaction.atomic():
+                        qs_bulk.delete()
+                except IntegrityError:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Cannot delete because these records are used in child tables.",
+                        "data": None
+                    }, status=400)
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} record(s) deleted successfully.",
+                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                }, status=200)
+
+
             # -----------------------------
             # CASE 1: Delete by Search + UUID list
             # ?search=A + { "deleteAll": false, "id": [uuid list] }
@@ -2345,6 +2394,55 @@ class StudymainareaDeleteAPIView(APIView):
                     "message": f"{count} study main area(s) deleted successfully.",
                     "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
                 }, status=200)
+
+
+            # CASE 4: Bulk delete by UUID list, search optional
+            if delete_all is False and isinstance(ids, list):
+                valid_uuids, invalid_uuids = [], []
+                for u in ids:
+                    try:
+                        valid_uuids.append(UUID(u))
+                    except ValueError:
+                        invalid_uuids.append(u)
+
+                if not valid_uuids:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "No valid UUIDs provided.",
+                        "data": {"invalid_uuids": invalid_uuids}
+                    }, status=400)
+
+                qs_bulk = queryset.filter(uuid__in=valid_uuids)
+                count = qs_bulk.count()
+
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No matching records found.",
+                        "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                    }, status=404)
+
+                try:
+                    with transaction.atomic():
+                        qs_bulk.delete()
+                except IntegrityError:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Cannot delete because these records are used in child tables.",
+                        "data": None
+                    }, status=400)
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} record(s) deleted successfully.",
+                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                }, status=200)
+
+
 
             # ----------------------------------
             # Fallback: invalid format
@@ -6818,6 +6916,55 @@ class EducationTypeDeleteAPIView(APIView):
             # ---------------- BASE QUERYSET for filtered deletes ----------------
             queryset = EducationType.objects.filter(is_deleted=False)
 
+            
+            # CASE 4: Bulk delete by UUID list, search optional
+            if delete_all is False and isinstance(ids, list):
+                valid_uuids, invalid_uuids = [], []
+                for u in ids:
+                    try:
+                        valid_uuids.append(UUID(u))
+                    except ValueError:
+                        invalid_uuids.append(u)
+
+                if not valid_uuids:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "No valid UUIDs provided.",
+                        "data": {"invalid_uuids": invalid_uuids}
+                    }, status=400)
+
+                qs_bulk = queryset.filter(uuid__in=valid_uuids)
+                count = qs_bulk.count()
+
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No matching records found.",
+                        "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                    }, status=404)
+
+                try:
+                    with transaction.atomic():
+                        qs_bulk.delete()
+                except IntegrityError:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Cannot delete because these records are used in child tables.",
+                        "data": None
+                    }, status=400)
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} record(s) deleted successfully.",
+                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                }, status=200)
+
+
+
             # ---------------- CASE 1: SEARCH + UUID LIST DELETE ----------------
             # ?search=A   +   { "deleteAll": false, "id": [uuid list] }
             if search and delete_all is False and isinstance(ids, list):
@@ -9732,67 +9879,6 @@ class DegreeAwardedByUpdateAPIView(APIView):
 
 
 # -------------------- DELETE API --------------------
-# class DegreeAwardedByDeleteAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
-
-#     def delete(self, request, uuid=None):
-#         ids = request.data.get('id', None)
-
-#         if uuid:
-#             try:
-#                 degree = DegreeAwardedBy.objects.get(uuid=uuid)
-#                 degree.delete()
-#                 return Response({
-#                     "statusCode": 204,
-#                     "status": True,
-#                     "message": "Degree permanently deleted",
-#                     "data": None
-#                 }, status=status.HTTP_204_NO_CONTENT)
-#             except DegreeAwardedBy.DoesNotExist:
-#                 return Response({
-#                     "statusCode": 404,
-#                     "status": False,
-#                     "message": "Degree not found",
-#                     "data": None
-#                 }, status=status.HTTP_404_NOT_FOUND)
-
-#         if ids == "all":
-#             count = DegreeAwardedBy.objects.count()
-#             DegreeAwardedBy.objects.all().delete()
-#             return Response({
-#                 "statusCode": 200,
-#                 "status": True,
-#                 "message": f"All {count} degree(s) permanently deleted",
-#                 "data": None
-#             })
-
-#         if not ids or not isinstance(ids, list):
-#             return Response({
-#                 "statusCode": 400,
-#                 "status": False,
-#                 "message": "Provide a list of UUIDs in 'id' field or 'all'.",
-#                 "data": None
-#             }, status=status.HTTP_400_BAD_REQUEST)
-
-#         valid_uuids = []
-#         invalid_uuids = []
-#         for u in ids:
-#             try:
-#                 valid_uuids.append(UUID(u))
-#             except ValueError:
-#                 invalid_uuids.append(u)
-
-#         queryset = DegreeAwardedBy.objects.filter(uuid__in=valid_uuids)
-#         count = queryset.count()
-#         queryset.delete()
-
-#         return Response({
-#             "statusCode": 200,
-#             "status": True,
-#             "message": f"{count} degree(s) permanently deleted",
-#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-#         })
-
 
 
 class DegreeAwardedByDeleteAPIView(APIView):
@@ -10449,114 +10535,6 @@ class DegreeAwardedByImportAPIView(APIView):
 
 
 
-        
-# class DegreeAwardedInstituteListAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
-
-#     def get(self, request):
-#         search = request.GET.get('search', '').strip()
-#         sort_by = request.GET.get('sortBy', 'created_at')
-#         sort_order = request.GET.get('sortOrder', 'desc')
-
-#         allowed_sort_fields = ['name', 'created_at', 'updated_at']
-#         if sort_by not in allowed_sort_fields:
-#             sort_by = 'created_at'
-#         if sort_order == 'desc':
-#             sort_by = f'-{sort_by}'
-
-#         queryset = DegreeAwardedInstitute.objects.all()
-#         if search:
-#             queryset = queryset.filter(
-#                 Q(name__istartswith=search) 
-#             )
-
-#         queryset = queryset.order_by(sort_by)
-#         serializer = DegreeAwardedInstituteSerializer(queryset, many=True)
-#         return Response({
-#             "statusCode": 200,
-#             "status": True,
-#             "data": serializer.data
-#         })
-
-
-
-# class DegreeAwardedInstituteListAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
-
-#     def get(self, request):
-#         search = request.GET.get('search', '').strip()
-#         sort_by = request.GET.get('sortBy', 'created_at')
-#         sort_order = request.GET.get('sortOrder', 'desc')
-
-#         # Filter parameters (can be comma-separated UUIDs)
-#         country_param = request.GET.get('country', '')
-#         state_param = request.GET.get('state', '')
-#         education_level_param = request.GET.get('educationLevel', '')
-#         degree_awarded_by_param = request.GET.get('degreeAwardedBy', '')
-
-#         # -----------------------
-#         # Allowed sort fields
-#         # -----------------------
-#         allowed_sort_fields = ['name', 'created_at', 'updated_at']
-#         if sort_by not in allowed_sort_fields:
-#             sort_by = 'created_at'
-#         if sort_order == 'desc':
-#             sort_by = f'-{sort_by}'
-
-#         # -----------------------
-#         # Initial queryset
-#         # -----------------------
-#         queryset = DegreeAwardedInstitute.objects.all()
-
-#         # -----------------------
-#         # Search filter
-#         # -----------------------
-#         if search:
-#             queryset = queryset.filter(Q(name__istartswith=search))
-
-#         # -----------------------
-#         # UUID filters helper
-#         # -----------------------
-#         def parse_uuid_list(param):
-#             uuids = []
-#             for u in param.split(','):
-#                 u = u.strip()
-#                 if not u:
-#                     continue
-#                 try:
-#                     uuids.append(UUID(u))
-#                 except ValueError:
-#                     pass
-#             return uuids
-
-#         # Apply filters
-#         country_uuids = parse_uuid_list(country_param)
-#         state_uuids = parse_uuid_list(state_param)
-#         education_level_uuids = parse_uuid_list(education_level_param)
-#         degree_awarded_by_uuids = parse_uuid_list(degree_awarded_by_param)
-
-#         if country_uuids:
-#             queryset = queryset.filter(country__uuid__in=country_uuids)
-#         if state_uuids:
-#             queryset = queryset.filter(state__uuid__in=state_uuids)
-#         if education_level_uuids:
-#             queryset = queryset.filter(education_level__uuid__in=education_level_uuids)
-#         if degree_awarded_by_uuids:
-#             queryset = queryset.filter(degree_awarded_by__uuid__in=degree_awarded_by_uuids)
-
-#         # -----------------------
-#         # Sorting
-#         # -----------------------
-#         queryset = queryset.order_by(sort_by)
-
-#         # -----------------------
-#         # Pagination
-#         # -----------------------
-#         paginator = CustomPagination()
-#         result_page = paginator.paginate_queryset(queryset, request)
-#         serializer = DegreeAwardedInstituteSerializer(result_page, many=True)
-
-#         return paginator.get_paginated_response(serializer.data)
 
 class DegreeAwardedInstituteListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -10715,18 +10693,18 @@ class DegreeAwardedInstituteCreateAPIView(APIView):
                 }, status=status.HTTP_200_OK)
 
             # -------------------------
-            # Serializer errors
+            # Custom Unique Error (from serializer.validate)
             # -------------------------
-            errors = []
-            for field, field_errors in serializer.errors.items():
-                for error in field_errors:
-                    errors.append(f"{field}: {error}")
+            if "statusCode" in serializer.errors:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+            # -------------------------
+            # Normal validation errors
+            # -------------------------
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Validation error.",
-                "errors": errors
+                "message": list(serializer.errors.values())[0][0]
             }, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
@@ -10903,7 +10881,7 @@ class DegreeAwardedInstituteDeleteAPIView(APIView):
 
             # ---------------- Apply filters dynamically ----------------
             if search:
-                queryset = queryset.filter(degree_awarded_by__istartswith=search)
+                queryset = queryset.filter(name__istartswith=search)
                 applied_filters.append("search")
 
             if country_uuids:

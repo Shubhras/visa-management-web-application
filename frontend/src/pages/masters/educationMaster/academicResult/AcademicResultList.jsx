@@ -332,6 +332,11 @@ const AcademicResultList = () => {
     };
 
     const clearAllFilters = () => {
+        // Reset filter dropdowns
+        setColumnFilters({
+            academicResultType: [],
+
+        });
         setTableState(prev => ({
             ...prev,
             page: 1,
@@ -484,9 +489,10 @@ const AcademicResultList = () => {
             toast.error("No academic result selected for deletion.");
             return;
         }
-        const deleteAll = selectAllOrNot === "all" && Boolean(tableState.search?.trim());
+        const deleteAll = selectAllOrNot === "all" && ((tableState.search && tableState.search.trim() !== '') || columnFilters.academicResultType.length > 0);
         const payloadSend = {
             deleteAll: deleteAll,
+            academicResultType: columnFilters.academicResultType.length > 0 ? columnFilters.academicResultType : '',
             id: deleteAll == true ? "" : sendPayload,
             search: tableState.search || '',
         };

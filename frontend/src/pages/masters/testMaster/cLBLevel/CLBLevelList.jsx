@@ -368,7 +368,13 @@ const CLBLevelList = () => {
             toast.error("No clb level selected for deletion.");
             return;
         }
-        dispatch(clbLevelDelete(sendPayload, (response, error) => {
+        const deleteAll = selectAllOrNot === "all" && Boolean(tableState.search?.trim());
+        const payloadSend = {
+            deleteAll: deleteAll,
+            id: deleteAll == true ? "" : sendPayload,
+            search: tableState.search || '',
+        };
+        dispatch(clbLevelDelete(payloadSend, (response, error) => {
             if (error) {
                 toast.error(error?.response?.data?.message || "server error");
             } else {
@@ -380,7 +386,8 @@ const CLBLevelList = () => {
                     setSelectedRows([]);
                     setSelectAllOrNot('');
                     setDeleteId(null);
-                    fetchDepartmentList();
+                    //fetchDepartmentList();
+                    clearAllFilters();
                 } else {
                     toast.error("Something went wrong.");
                 }
