@@ -345,6 +345,11 @@ const EntranceTestResultList = () => {
     };
 
     const clearAllFilters = () => {
+        // Reset filter dropdowns
+        setColumnFilters({
+            entranceTestName: [],
+            entranceTestModuleName: [],
+        });
         setTableState(prev => ({
             ...prev,
             page: 1,
@@ -496,7 +501,15 @@ const EntranceTestResultList = () => {
             toast.error("No entrance test result selected for deletion.");
             return;
         }
-        dispatch(entranceTestResultDelete(sendPayload, (response, error) => {
+        const deleteAll = selectAllOrNot === "all" && ((tableState.search && tableState.search.trim() !== '') || columnFilters.entranceTestName.length > 0 || columnFilters.entranceTestModuleName.length > 0);
+        const payloadSend = {
+            deleteAll: deleteAll,
+            entranceTestName: columnFilters.entranceTestName.length > 0 ? columnFilters.entranceTestName : '',
+            entranceTestModuleName: columnFilters.entranceTestModuleName.length > 0 ? columnFilters.entranceTestModuleName : '',
+            id: deleteAll == true ? "" : sendPayload,
+            search: tableState.search || '',
+        };
+        dispatch(entranceTestResultDelete(payloadSend, (response, error) => {
             if (error) {
                 toast.error(error?.response?.data?.message || "server error");
             } else {
@@ -508,7 +521,8 @@ const EntranceTestResultList = () => {
                     setSelectedRows([]);
                     setSelectAllOrNot('');
                     setDeleteId(null);
-                    fetchDepartmentList();
+                    //fetchDepartmentList();
+                    clearAllFilters();
                 } else {
                     toast.error("Something went wrong.");
                 }

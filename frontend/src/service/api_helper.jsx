@@ -2158,8 +2158,11 @@ export const editAcademicResultDataAPI = (payload) => {
 };
 
 export const deleteAcademicResultDataAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_ACADEMIC_RESULT_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+   const apiUrl = `${url.DELETE_ACADEMIC_RESULT_API}delete/?search=${payload?.search}&academicResultType=${payload?.academicResultType}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -2662,9 +2665,10 @@ export const editLanguageNameTestAPI = (payload) => {
 
 export const deleteLanguageNameTestAPI = (payload) => {
   const prepareDATA = {
-    id: payload,
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
   };
-  const apiUrl = `${url.DELETE_LANGUAGE_NAME_TEST_API}delete/`;
+  const apiUrl = `${url.DELETE_LANGUAGE_NAME_TEST_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -2718,9 +2722,10 @@ export const editLanguageTestNameAPI = (payload) => {
 
 export const deleteLanguageTestNameAPI = (payload) => {
   const prepareDATA = {
-    id: payload,
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
   };
-  const apiUrl = `${url.DELETE_LANGUAGE_TEST_NAME_API}delete/`;
+   const apiUrl = `${url.DELETE_LANGUAGE_TEST_NAME_API}delete/?search=${payload?.search}&languageNameTest=${payload?.languageNameTest}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -2773,8 +2778,11 @@ export const editLanguageTestModuleNameAPI = (payload) => {
 };
 
 export const deleteLanguageTestModuleNameAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_LANGUAGE_TEST_MODULE_NAME_API}delete/`;
+    const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_LANGUAGE_TEST_MODULE_NAME_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -2827,8 +2835,11 @@ export const editLanguageBenchmarkLevelAPI = (payload) => {
 };
 
 export const deleteLanguageBenchmarkLevelAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_LANGUAGE_BENCHMARK_LEVEL_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_LANGUAGE_BENCHMARK_LEVEL_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -2881,9 +2892,12 @@ export const editClbLevelAPI = (payload) => {
 };
 
 export const deleteClbLevelAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_CLB_LEVEL_API}delete/`;
-  return delWithPayload(apiUrl, prepareDATA);
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_CLB_LEVEL_API}delete/?search=${payload?.search}`;
+  return delWithPayload(apiUrl, prepareDATA);;
 };
 
 export const exportClbLevelAPI = (payload) => {
@@ -2934,9 +2948,12 @@ export const editEntranceTestNameAPI = (payload) => {
 };
 
 export const deleteEntranceTestNameAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_ENTRANCE_TEST_NAME_API}delete/`;
-  return delWithPayload(apiUrl, prepareDATA);
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_ENTRANCE_TEST_NAME_API}delete/?search=${payload?.search}`;
+  return delWithPayload(apiUrl, prepareDATA);;
 };
 
 export const exportEntranceTestNameAPI = (payload) => {
@@ -2987,8 +3004,11 @@ export const editEntranceTestModuleNameAPI = (payload) => {
 };
 
 export const deleteEntranceTestModuleNameAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_ENTRANCE_TEST_MODULE_NAME_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+   const apiUrl = `${url.DELETE_ENTRANCE_TEST_MODULE_NAME_API}delete/?search=${payload?.search}&entranceTestName=${payload?.entranceTestName}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -3041,8 +3061,11 @@ export const editEntranceTestResultAPI = (payload) => {
 };
 
 export const deleteEntranceTestResultAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_ENTRANCE_TEST_RESULT_API}delete/`;
+    const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+   const apiUrl = `${url.DELETE_ENTRANCE_TEST_RESULT_API}delete/?search=${payload?.search}&entranceTestName=${payload?.entranceTestName}&entranceTestModuleName=${payload?.entranceTestModuleName}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -3100,8 +3123,11 @@ export const editLanguageTestResultAPI = (payload) => {
 };
 
 export const deleteLanguageTestResultAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_LANGUAGE_TEST_RESULT_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+   const apiUrl = `${url.DELETE_LANGUAGE_TEST_RESULT_API}delete/?search=${payload?.search}&languageNameTest=${payload?.languageNameTest}&languageTestName=${payload?.languageTestName}&languageModuleName=${payload?.languageModuleName}&languageBanchMarkLevel=${payload?.languageBanchMarkLevel}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
