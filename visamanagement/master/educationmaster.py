@@ -10607,18 +10607,18 @@ class DegreeAwardedInstituteCreateAPIView(APIView):
                 }, status=status.HTTP_200_OK)
 
             # -------------------------
-            # Serializer errors
+            # Custom Unique Error (from serializer.validate)
             # -------------------------
-            errors = []
-            for field, field_errors in serializer.errors.items():
-                for error in field_errors:
-                    errors.append(f"{field}: {error}")
+            if "statusCode" in serializer.errors:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+            # -------------------------
+            # Normal validation errors
+            # -------------------------
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Validation error.",
-                "errors": errors
+                "message": list(serializer.errors.values())[0][0]
             }, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
