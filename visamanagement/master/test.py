@@ -727,16 +727,33 @@ class LanguageTestListAPIView(APIView):
         custom_sort = request.GET.get('customSort', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at').strip()
         sort_order = request.GET.get('sortOrder', 'desc').strip().lower()
+        uuid_language_name_test = request.GET.get('languageNameTest', '').strip()
 
         queryset = LanguageTest.objects.filter(is_deleted=False)
 
-        # ---- SEARCH ----
+        #  Safe UUID List Parser
+        def parse_uuid_list(raw):
+            valid = []
+            if raw:
+                for x in raw.split(','):
+                    try:
+                        valid.append(UUID(x.strip()))
+                    except ValueError:
+                        continue
+            return valid
+
+        #  FILTER → language UUID list
+        language_test_uuids = parse_uuid_list(uuid_language_name_test)
+        if language_test_uuids:
+            queryset = queryset.filter(language__uuid__in=language_test_uuids)
+
+        #  SEARCH
         if search:
             queryset = queryset.filter(
-                Q(name__istartswith=search) 
+                Q(name__istartswith=search)
             )
 
-        # ---- SORTING ----
+        #  SORTING FIXED
         sort_field_map = {
             'languageNameTest': 'language__name',
             'languageTestName': 'name',
@@ -746,10 +763,11 @@ class LanguageTestListAPIView(APIView):
             'updated_at': 'updated_at',
         }
 
-        sort_fields = []
+        orm_field = sort_field_map.get(sort_by, 'created_at')
 
         # CASE 1 → Custom multi rule sort
         if custom_sort:
+            sort_fields = []
             for rule in custom_sort.split(','):
                 try:
                     field, order = rule.split(':')
@@ -757,23 +775,24 @@ class LanguageTestListAPIView(APIView):
                     order = order.strip().lower()
                     if field not in sort_field_map:
                         continue
-                    orm_field = sort_field_map[field]
+                    mapped = sort_field_map[field]
 
-                    if field in ['name', 'fullname', 'description']:
-                        expr = Lower(F(orm_field))
+                    if field in ['fullname', 'description', 'languageNameTest', 'languageTestName']:
+                        expr = Lower(F(mapped))
                     else:
-                        expr = F(orm_field)
+                        expr = F(mapped)
 
-                    sort_fields.append(
-                        expr.asc(nulls_last=True) if order == 'asc' else expr.desc(nulls_last=True)
-                    )
+                    sort_fields.append(expr.asc(nulls_last=True) if order == 'asc' else expr.desc(nulls_last=True))
 
                 except ValueError:
                     continue
 
-        # CASE 2 → Normal sortBy + sortOrder (single field)
+            if sort_fields:
+                queryset = queryset.order_by(*sort_fields)
+
+        # CASE 2 → Normal sortBy + sortOrder
         else:
-            orm_field = sort_field_map.get(sort_by, 'created_at')
+            sort_fields = []  #  Initialized to avoid crash
 
             if sort_by in ['name', 'fullname', 'description']:
                 expr = Lower(F(orm_field))
@@ -784,13 +803,14 @@ class LanguageTestListAPIView(APIView):
                 expr.asc(nulls_last=True) if sort_order == 'asc' else expr.desc(nulls_last=True)
             )
 
-        queryset = queryset.order_by(*sort_fields)
+            queryset = queryset.order_by(*sort_fields)  #  Ordering applied here only
 
-        # ---- PAGINATION ----
+        #  Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = LanguageTestSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
+
 
 
 
@@ -2960,34 +2980,79 @@ class LanguageTestResultImportAPIView(APIView):
 
 
 
-
-
 class CLBLevelListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['name', 'description', 'created_at']
-
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        custom_sort = request.GET.get('customSort', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at').strip()
+        sort_order = request.GET.get('sortOrder', 'desc').strip().lower()
 
         queryset = CLBLevel.objects.filter(is_deleted=False)
+
+        #  SEARCH filter
         if search:
             queryset = queryset.filter(
-                Q(name__istartswith=search) |
-                Q(description__istartswith=search)
+                Q(name__istartswith=search) 
             )
 
-        queryset = queryset.order_by(sort_by)
+        #  SORTING MAP
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        orm_field = sort_field_map.get(sort_by, 'created_at')
+
+        # CASE 1 → Multi-rule customSort
+        if custom_sort:
+            sort_fields = []
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+                    mapped = sort_field_map[field]
+
+                    # case-insensitive for text
+                    expr = Lower(F(mapped)) if field in ['name', 'description'] else F(mapped)
+
+                    sort_fields.append(
+                        expr.asc(nulls_last=True) if order == 'asc' else expr.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+
+            if sort_fields:
+                queryset = queryset.order_by(*sort_fields)
+
+        # CASE 2 → Normal sortBy + sortOrder
+        else:
+            sort_fields = []  
+            if sort_by in ['name', 'description']:
+                expr = Lower(F(orm_field))
+            else:
+                expr = F(orm_field)
+
+            sort_fields.append(
+                expr.asc(nulls_last=True) if sort_order == 'asc' else expr.desc(nulls_last=True)
+            )
+
+            queryset = queryset.order_by(*sort_fields)
+
+        #  Pagination response
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = CLBLevelSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
+
+
+
 
 
 class CLBLevelCreateAPIView(APIView):
@@ -3423,33 +3488,111 @@ class CLBLevelImportAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+# class StudyLanguageBanchmarkListAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')
+#         allowed_sort_fields = ['name', 'description', 'created_at']
+
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = 'created_at'
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
+
+#         queryset = StudyLanguageBanchmark.objects.filter(is_deleted=False)
+#         if search:
+#             queryset = queryset.filter(
+#                 Q(name__istartswith=search) |
+#                 Q(description__istartswith=search)
+#             )
+
+#         queryset = queryset.order_by(sort_by)
+#         paginator = CustomPagination()
+#         result_page = paginator.paginate_queryset(queryset, request)
+#         serializer = StudyLanguageBanchmarkSerializer(result_page, many=True)
+#         return paginator.get_paginated_response(serializer.data)
+
+
 class StudyLanguageBanchmarkListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['name', 'description', 'created_at']
-
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        custom_sort = request.GET.get('customSort', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at').strip()
+        sort_order = request.GET.get('sortOrder', 'desc').strip().lower()
 
         queryset = StudyLanguageBanchmark.objects.filter(is_deleted=False)
+
+        #  SEARCH (multi field)
         if search:
             queryset = queryset.filter(
-                Q(name__istartswith=search) |
-                Q(description__istartswith=search)
+                Q(name__istartswith=search)
             )
 
-        queryset = queryset.order_by(sort_by)
+        #  SORTING
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',  # if exists in model
+        }
+
+        sort_fields = []
+
+        # CASE 1 → Custom multi-rule sorting
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    #  Case-insensitive Lower() for text fields
+                    if field in ['name', 'description']:
+                        expr = Lower(F(orm_field))
+                    else:
+                        expr = F(orm_field)
+
+                    sort_fields.append(
+                        expr.asc(nulls_last=True) if order == 'asc' else expr.desc(nulls_last=True)
+                    )
+
+                except ValueError:
+                    continue
+
+            if sort_fields:
+                queryset = queryset.order_by(*sort_fields)
+            else:
+                queryset = queryset.order_by(F('created_at').desc(nulls_last=True))
+
+        # CASE 2 → Normal single field sort (`sortBy` + `sortOrder`)
+        else:
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+
+            if sort_by in ['name', 'description']:
+                expr = Lower(F(orm_field))
+            else:
+                expr = F(orm_field)
+
+            queryset = queryset.order_by(
+                expr.asc(nulls_last=True) if sort_order == 'asc' else expr.desc(nulls_last=True)
+            )
+
+        #  PAGINATION
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = StudyLanguageBanchmarkSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
-
+    
 
 class StudyLanguageBanchmarkCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -3885,33 +4028,109 @@ class StudyLanguageBenchmarkImportAPIView(APIView):
 
 
 
+# class EntranceTestNameListAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')
+#         allowed_sort_fields = ['fullname', 'shortname', 'description', 'updated_at']
+
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = 'created_at'
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
+
+#         queryset = EntranceTestName.objects.filter(is_deleted=False)
+#         if search:
+#             queryset = queryset.filter(
+#                 Q(fullname__istartswith=search) |
+#                 Q(shortname__istartswith=search) |
+#                 Q(description__istartswith=search)
+#             )
+
+#         queryset = queryset.order_by(sort_by)
+#         paginator = CustomPagination()
+#         result_page = paginator.paginate_queryset(queryset, request)
+#         serializer = EntranceTestNameSerializer(result_page, many=True)
+#         return paginator.get_paginated_response(serializer.data)
+
+
 class EntranceTestNameListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['fullname', 'shortname', 'description', 'updated_at']
+        custom_sort = request.GET.get('customSort', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at').strip()
+        sort_order = request.GET.get('sortOrder', 'desc').strip().lower()
 
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
-
+        #  base queryset
         queryset = EntranceTestName.objects.filter(is_deleted=False)
+
+        #  search filter
         if search:
             queryset = queryset.filter(
-                Q(fullname__istartswith=search) |
-                Q(shortname__istartswith=search) |
-                Q(description__istartswith=search)
+                Q(fullname__istartswith=search)
             )
 
-        queryset = queryset.order_by(sort_by)
+        #  sorting map
+        sort_field_map = {
+            'fullname': 'fullname',
+            'shortname': 'shortname',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        orm_field = sort_field_map.get(sort_by, 'created_at')
+
+        # CASE 1 → custom multi-rule sort
+        if custom_sort:
+            sort_fields = []
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+                    mapped = sort_field_map[field]
+
+                    expr = Lower(F(mapped)) if field in ['fullname', 'shortname', 'description'] else F(mapped)
+
+                    sort_fields.append(
+                        expr.asc(nulls_last=True) if order == 'asc' else expr.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+
+            if sort_fields:
+                queryset = queryset.order_by(*sort_fields)
+
+        # CASE 2 → normal single sortBy + sortOrder
+        else:
+            sort_fields = []  #  init list to avoid crash
+            
+            expr = Lower(F(orm_field)) if sort_by in ['fullname', 'shortname', 'description'] else F(orm_field)
+
+            sort_fields.append(
+                expr.asc(nulls_last=True) if sort_order == 'asc' else expr.desc(nulls_last=True)
+            )
+
+            queryset = queryset.order_by(*sort_fields)
+
+        #  final fallback default sort
+        if not queryset.ordered:
+            queryset = queryset.order_by(F('created_at').desc(nulls_last=True))  #  default created_at DESC
+
+        #  pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = EntranceTestNameSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
+    
 
 
 class EntranceTestNameCreateAPIView(APIView):
