@@ -238,7 +238,7 @@ const MediumofEducationList = () => {
     }));
     // Reset Global Search
     setGlobalSearch('');
-     setSelectedRows([]);
+    setSelectedRows([]);
   };
   const handleSearchChange = (value) => {
     setTableState(prev => ({
@@ -370,7 +370,7 @@ const MediumofEducationList = () => {
       toast.error("No medium of education selected for deletion.");
       return;
     }
-     const deleteAll = selectAllOrNot === "all" && Boolean(tableState.search?.trim());
+    const deleteAll = selectAllOrNot === "all" && Boolean(tableState.search?.trim());
     const payloadSend = {
       deleteAll: deleteAll,
       id: deleteAll == true ? "" : sendPayload,
@@ -388,8 +388,8 @@ const MediumofEducationList = () => {
           setSelectedRows([]);
           setSelectAllOrNot('');
           setDeleteId(null);
-         //fetchDepartmentList();
-         clearAllFilters();
+          //fetchDepartmentList();
+          clearAllFilters();
         } else {
           toast.error("Something went wrong.");
         }
