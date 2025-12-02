@@ -167,12 +167,217 @@ class FactorForUpdateAPIView(APIView):
 
 
 # ---------------- DELETE ----------------
+# class FactorForDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request, uuid=None):
+#         ids = request.data.get('id', None)
+
+#         if uuid:
+#             try:
+#                 obj = FactorFor.objects.get(uuid=uuid)
+#                 obj.delete()
+#                 return Response({
+#                     "statusCode": 204,
+#                     "status": True,
+#                     "message": "FactorFor permanently deleted.",
+#                     "data": None
+#                 }, status=204)
+#             except FactorFor.DoesNotExist:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "FactorFor not found.",
+#                     "data": None
+#                 }, status=404)
+
+#         if ids == "all":
+#             objs = FactorFor.objects.all()
+#             count = objs.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No FactorFor found to delete.",
+#                     "data": None
+#                 }, status=404)
+#             objs.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} FactorFor permanently deleted.",
+#                 "data": None
+#             })
+
+#         if not ids or not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=400)
+
+#         valid_uuids = []
+#         invalid_uuids = []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=400)
+
+#         objs = FactorFor.objects.filter(uuid__in=valid_uuids)
+#         count = objs.count()
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching FactorFor found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=404)
+
+#         objs.delete()
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} FactorFor(s) permanently deleted.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         })
+
+
+
+# class FactorForDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request, uuid=None):
+#         ids = request.data.get('id', None)
+#         search = request.GET.get("search", "").strip()  # <-- Added
+#         custom_filter = request.GET.get("filter", "")   # <-- Optional if you need filters
+
+#         # -------------------------
+#         #  SINGLE DELETE
+#         # -------------------------
+#         if uuid:
+#             try:
+#                 obj = FactorFor.objects.get(uuid=uuid)
+#                 obj.delete()
+#                 return Response({
+#                     "statusCode": 204,
+#                     "status": True,
+#                     "message": "FactorFor permanently deleted.",
+#                     "data": None
+#                 }, status=204)
+#             except FactorFor.DoesNotExist:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "FactorFor not found.",
+#                     "data": None
+#                 }, status=404)
+
+#         # -------------------------
+#         #  BULK DELETE - ALL (but respect search/filter)
+#         # -------------------------
+#         if ids == "all":
+#             objs = FactorFor.objects.all()
+
+#             # Apply search if provided --------------> IMPORTANT
+#             if search:
+#                 objs = objs.filter(name__icontains=search)
+
+#             # Apply any filter query param if required
+#             if custom_filter:
+#                 objs = objs.filter(category__uuid=custom_filter)
+
+#             count = objs.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No FactorFor found to delete.",
+#                     "data": None
+#                 }, status=404)
+
+#             objs.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"{count} FactorFor permanently deleted.",
+#                 "data": None
+#             })
+
+#         # -------------------------
+#         #  MULTIPLE DELETE
+#         # -------------------------
+#         if not ids or not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=400)
+
+#         valid_uuids = []
+#         invalid_uuids = []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=400)
+
+#         objs = FactorFor.objects.filter(uuid__in=valid_uuids)
+
+#         # Apply search on selected UUIDs --------------> IMPORTANT
+#         if search:
+#             objs = objs.filter(name__icontains=search)
+
+#         # Optional filters
+#         if custom_filter:
+#             objs = objs.filter(category__uuid=custom_filter)
+
+#         count = objs.count()
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching FactorFor found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=404)
+
+#         objs.delete()
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} FactorFor(s) permanently deleted.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         })
+
+
 class FactorForDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
         ids = request.data.get('id', None)
+        search = request.GET.get("search", "").strip()  # ONLY search by factor_for
 
+        # -------------------------
+        #  SINGLE DELETE
+        # -------------------------
         if uuid:
             try:
                 obj = FactorFor.objects.get(uuid=uuid)
@@ -191,8 +396,17 @@ class FactorForDeleteAPIView(APIView):
                     "data": None
                 }, status=404)
 
+
+        # -------------------------
+        #  BULK DELETE (ALL) — BUT ONLY MATCHING SEARCH
+        # -------------------------
         if ids == "all":
             objs = FactorFor.objects.all()
+
+            # SEARCH ONLY on factor_for
+            if search:
+                objs = objs.filter(factor_for__icontains=search)
+
             count = objs.count()
             if count == 0:
                 return Response({
@@ -201,6 +415,7 @@ class FactorForDeleteAPIView(APIView):
                     "message": "No FactorFor found to delete.",
                     "data": None
                 }, status=404)
+
             objs.delete()
             return Response({
                 "statusCode": 200,
@@ -209,6 +424,10 @@ class FactorForDeleteAPIView(APIView):
                 "data": None
             })
 
+
+        # -------------------------
+        #  MULTIPLE DELETE (Selected Items)
+        # -------------------------
         if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
@@ -234,6 +453,11 @@ class FactorForDeleteAPIView(APIView):
             }, status=400)
 
         objs = FactorFor.objects.filter(uuid__in=valid_uuids)
+
+        # APPLY SEARCH FILTER — ONLY ON factor_for FIELD
+        if search:
+            objs = objs.filter(factor_for__icontains=search)
+
         count = objs.count()
         if count == 0:
             return Response({
@@ -250,6 +474,7 @@ class FactorForDeleteAPIView(APIView):
             "message": f"{count} FactorFor(s) permanently deleted.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         })
+
 
 
 # ---------------- EXPORT ----------------
@@ -550,12 +775,102 @@ class AgeGroupUpdateAPIView(APIView):
 
 
 # ---------------- DELETE ----------------
+# class AgeGroupDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request, uuid=None):
+#         ids = request.data.get('id', None)
+
+#         if uuid:
+#             try:
+#                 obj = AgeGroup.objects.get(uuid=uuid)
+#                 obj.delete()
+#                 return Response({
+#                     "statusCode": 204,
+#                     "status": True,
+#                     "message": "AgeGroup permanently deleted.",
+#                     "data": None
+#                 }, status=204)
+#             except AgeGroup.DoesNotExist:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "AgeGroup not found.",
+#                     "data": None
+#                 }, status=404)
+
+#         if ids == "all":
+#             objs = AgeGroup.objects.all()
+#             count = objs.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No AgeGroup found to delete.",
+#                     "data": None
+#                 }, status=404)
+#             objs.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} AgeGroup permanently deleted.",
+#                 "data": None
+#             })
+
+#         if not ids or not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=400)
+
+#         valid_uuids = []
+#         invalid_uuids = []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=400)
+
+#         objs = AgeGroup.objects.filter(uuid__in=valid_uuids)
+#         count = objs.count()
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching AgeGroup found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=404)
+
+#         objs.delete()
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} AgeGroup(s) permanently deleted.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         })
+
+
+
 class AgeGroupDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
+        search = request.GET.get("search", "").strip()   # SEARCH ONLY on age_group
         ids = request.data.get('id', None)
 
+        # -------------------------
+        #  SINGLE DELETE
+        # -------------------------
         if uuid:
             try:
                 obj = AgeGroup.objects.get(uuid=uuid)
@@ -574,8 +889,16 @@ class AgeGroupDeleteAPIView(APIView):
                     "data": None
                 }, status=404)
 
+        # -------------------------
+        #  BULK DELETE (ALL) — BUT ONLY MATCHING SEARCH
+        # -------------------------
         if ids == "all":
             objs = AgeGroup.objects.all()
+
+            # APPLY SEARCH FILTER (ONLY AGE GROUP)
+            if search:
+                objs = objs.filter(age_group__icontains=search)
+
             count = objs.count()
             if count == 0:
                 return Response({
@@ -584,6 +907,7 @@ class AgeGroupDeleteAPIView(APIView):
                     "message": "No AgeGroup found to delete.",
                     "data": None
                 }, status=404)
+
             objs.delete()
             return Response({
                 "statusCode": 200,
@@ -592,6 +916,9 @@ class AgeGroupDeleteAPIView(APIView):
                 "data": None
             })
 
+        # -------------------------
+        #  MULTIPLE DELETE (Selected Rows)
+        # -------------------------
         if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
@@ -617,6 +944,11 @@ class AgeGroupDeleteAPIView(APIView):
             }, status=400)
 
         objs = AgeGroup.objects.filter(uuid__in=valid_uuids)
+
+        # APPLY SEARCH FILTER — ONLY ON age_group FIELD
+        if search:
+            objs = objs.filter(age_group__icontains=search)
+
         count = objs.count()
         if count == 0:
             return Response({
@@ -931,12 +1263,101 @@ class AcademicResultGroupUpdateAPIView(APIView):
 
 
 # ---------------- DELETE ----------------
+# class AcademicResultGroupDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request, uuid=None):
+#         ids = request.data.get('id', None)
+
+#         if uuid:
+#             try:
+#                 obj = AcademicResultGroup.objects.get(uuid=uuid)
+#                 obj.delete()
+#                 return Response({
+#                     "statusCode": 204,
+#                     "status": True,
+#                     "message": "AcademicResultGroup permanently deleted.",
+#                     "data": None
+#                 }, status=204)
+#             except AcademicResultGroup.DoesNotExist:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "AcademicResultGroup not found.",
+#                     "data": None
+#                 }, status=404)
+
+#         if ids == "all":
+#             objs = AcademicResultGroup.objects.all()
+#             count = objs.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No AcademicResultGroup found to delete.",
+#                     "data": None
+#                 }, status=404)
+#             objs.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} AcademicResultGroup permanently deleted.",
+#                 "data": None
+#             })
+
+#         if not ids or not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=400)
+
+#         valid_uuids = []
+#         invalid_uuids = []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=400)
+
+#         objs = AcademicResultGroup.objects.filter(uuid__in=valid_uuids)
+#         count = objs.count()
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching AcademicResultGroup found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=404)
+
+#         objs.delete()
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} AcademicResultGroup(s) permanently deleted.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         })
+
+
 class AcademicResultGroupDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
+        search = request.GET.get("search", "").strip()  # SEARCH ONLY on academic_result_group
         ids = request.data.get('id', None)
 
+        # -------------------------
+        #  SINGLE DELETE
+        # -------------------------
         if uuid:
             try:
                 obj = AcademicResultGroup.objects.get(uuid=uuid)
@@ -955,8 +1376,14 @@ class AcademicResultGroupDeleteAPIView(APIView):
                     "data": None
                 }, status=404)
 
+        # -------------------------
+        #  BULK DELETE (ALL) — APPLY SEARCH FILTER
+        # -------------------------
         if ids == "all":
             objs = AcademicResultGroup.objects.all()
+            if search:
+                objs = objs.filter(academic_result_group__icontains=search)
+
             count = objs.count()
             if count == 0:
                 return Response({
@@ -965,6 +1392,7 @@ class AcademicResultGroupDeleteAPIView(APIView):
                     "message": "No AcademicResultGroup found to delete.",
                     "data": None
                 }, status=404)
+
             objs.delete()
             return Response({
                 "statusCode": 200,
@@ -973,6 +1401,9 @@ class AcademicResultGroupDeleteAPIView(APIView):
                 "data": None
             })
 
+        # -------------------------
+        #  MULTIPLE DELETE (Selected UUIDs)
+        # -------------------------
         if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
@@ -998,6 +1429,9 @@ class AcademicResultGroupDeleteAPIView(APIView):
             }, status=400)
 
         objs = AcademicResultGroup.objects.filter(uuid__in=valid_uuids)
+        if search:
+            objs = objs.filter(academic_result_group__icontains=search)
+
         count = objs.count()
         if count == 0:
             return Response({
@@ -1014,6 +1448,7 @@ class AcademicResultGroupDeleteAPIView(APIView):
             "message": f"{count} AcademicResultGroup(s) permanently deleted.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         })
+
 
 
 # ---------------- EXPORT ----------------
@@ -1311,12 +1746,103 @@ class BacklogsGroupUpdateAPIView(APIView):
 
 
 # -------------------- Delete API --------------------
+# class BacklogsGroupDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request, uuid=None):
+#         ids = request.data.get('id', None)
+
+#         if uuid:
+#             try:
+#                 group = BacklogsGroup.objects.get(uuid=uuid)
+#                 group.delete()
+#                 return Response({
+#                     "statusCode": 204,
+#                     "status": True,
+#                     "message": "BacklogsGroup permanently deleted.",
+#                     "data": None
+#                 }, status=status.HTTP_204_NO_CONTENT)
+#             except BacklogsGroup.DoesNotExist:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "BacklogsGroup not found.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#         if ids == "all":
+#             groups = BacklogsGroup.objects.all()
+#             count = groups.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No BacklogsGroups found to delete.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+#             groups.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} BacklogsGroups permanently deleted.",
+#                 "data": None
+#             })
+
+#         if not ids or not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         valid_uuids = []
+#         invalid_uuids = []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         groups = BacklogsGroup.objects.filter(uuid__in=valid_uuids)
+#         count = groups.count()
+
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching BacklogsGroups found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         groups.delete()
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} BacklogsGroup(s) permanently deleted.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         })
+
+
 class BacklogsGroupDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
+        search = request.GET.get("search", "").strip()  # SEARCH ONLY on 'name' field
         ids = request.data.get('id', None)
 
+        # -------------------------
+        #  SINGLE DELETE
+        # -------------------------
         if uuid:
             try:
                 group = BacklogsGroup.objects.get(uuid=uuid)
@@ -1335,8 +1861,14 @@ class BacklogsGroupDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
+        # -------------------------
+        #  BULK DELETE (ALL) — APPLY SEARCH FILTER
+        # -------------------------
         if ids == "all":
             groups = BacklogsGroup.objects.all()
+            if search:
+                groups = groups.filter(name__icontains=search)
+
             count = groups.count()
             if count == 0:
                 return Response({
@@ -1345,6 +1877,7 @@ class BacklogsGroupDeleteAPIView(APIView):
                     "message": "No BacklogsGroups found to delete.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
+
             groups.delete()
             return Response({
                 "statusCode": 200,
@@ -1353,6 +1886,9 @@ class BacklogsGroupDeleteAPIView(APIView):
                 "data": None
             })
 
+        # -------------------------
+        #  MULTIPLE DELETE (Selected UUIDs)
+        # -------------------------
         if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
@@ -1378,8 +1914,10 @@ class BacklogsGroupDeleteAPIView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         groups = BacklogsGroup.objects.filter(uuid__in=valid_uuids)
-        count = groups.count()
+        if search:
+            groups = groups.filter(name__icontains=search)
 
+        count = groups.count()
         if count == 0:
             return Response({
                 "statusCode": 404,
@@ -1389,7 +1927,6 @@ class BacklogsGroupDeleteAPIView(APIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
         groups.delete()
-
         return Response({
             "statusCode": 200,
             "status": True,
@@ -1699,12 +2236,103 @@ class GAPGroupUpdateAPIView(APIView):
 
 
 # -------------------- Delete API --------------------
+# class GAPGroupDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request, uuid=None):
+#         ids = request.data.get('id', None)
+
+#         if uuid:
+#             try:
+#                 group = GAPGroup.objects.get(uuid=uuid)
+#                 group.delete()
+#                 return Response({
+#                     "statusCode": 204,
+#                     "status": True,
+#                     "message": "GAPGroup permanently deleted.",
+#                     "data": None
+#                 }, status=status.HTTP_204_NO_CONTENT)
+#             except GAPGroup.DoesNotExist:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "GAPGroup not found.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#         if ids == "all":
+#             groups = GAPGroup.objects.all()
+#             count = groups.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No GAPGroups found to delete.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+#             groups.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} GAPGroups permanently deleted.",
+#                 "data": None
+#             })
+
+#         if not ids or not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         valid_uuids = []
+#         invalid_uuids = []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         groups = GAPGroup.objects.filter(uuid__in=valid_uuids)
+#         count = groups.count()
+
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching GAPGroups found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         groups.delete()
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} GAPGroup(s) permanently deleted.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         })
+
+
 class GAPGroupDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
+        search = request.GET.get("search", "").strip()  # SEARCH ONLY on 'name' field
         ids = request.data.get('id', None)
 
+        # -------------------------
+        #  SINGLE DELETE
+        # -------------------------
         if uuid:
             try:
                 group = GAPGroup.objects.get(uuid=uuid)
@@ -1723,8 +2351,14 @@ class GAPGroupDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
+        # -------------------------
+        #  BULK DELETE (ALL) — APPLY SEARCH FILTER
+        # -------------------------
         if ids == "all":
             groups = GAPGroup.objects.all()
+            if search:
+                groups = groups.filter(name__icontains=search)
+
             count = groups.count()
             if count == 0:
                 return Response({
@@ -1733,6 +2367,7 @@ class GAPGroupDeleteAPIView(APIView):
                     "message": "No GAPGroups found to delete.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
+
             groups.delete()
             return Response({
                 "statusCode": 200,
@@ -1741,6 +2376,9 @@ class GAPGroupDeleteAPIView(APIView):
                 "data": None
             })
 
+        # -------------------------
+        #  MULTIPLE DELETE (Selected UUIDs)
+        # -------------------------
         if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
@@ -1766,8 +2404,10 @@ class GAPGroupDeleteAPIView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         groups = GAPGroup.objects.filter(uuid__in=valid_uuids)
-        count = groups.count()
+        if search:
+            groups = groups.filter(name__icontains=search)
 
+        count = groups.count()
         if count == 0:
             return Response({
                 "statusCode": 404,
@@ -1777,7 +2417,6 @@ class GAPGroupDeleteAPIView(APIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
         groups.delete()
-
         return Response({
             "statusCode": 200,
             "status": True,
@@ -2087,91 +2726,95 @@ class LanguageAbilityGroupUpdateAPIView(APIView):
 
 
 # -------------------- Delete API --------------------
-class LanguageAbilityGroupDeleteAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+# class LanguageAbilityGroupDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def delete(self, request, uuid=None):
-        ids = request.data.get('id', None)
+#     def delete(self, request, uuid=None):
+#         ids = request.data.get('id', None)
 
-        if uuid:
-            try:
-                group = LanguageAbilityGroup.objects.get(uuid=uuid)
-                group.delete()
-                return Response({
-                    "statusCode": 204,
-                    "status": True,
-                    "message": "LanguageAbilityGroup permanently deleted.",
-                    "data": None
-                }, status=status.HTTP_204_NO_CONTENT)
-            except LanguageAbilityGroup.DoesNotExist:
-                return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "LanguageAbilityGroup not found.",
-                    "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
+#         if uuid:
+#             try:
+#                 group = LanguageAbilityGroup.objects.get(uuid=uuid)
+#                 group.delete()
+#                 return Response({
+#                     "statusCode": 204,
+#                     "status": True,
+#                     "message": "LanguageAbilityGroup permanently deleted.",
+#                     "data": None
+#                 }, status=status.HTTP_204_NO_CONTENT)
+#             except LanguageAbilityGroup.DoesNotExist:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "LanguageAbilityGroup not found.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
 
-        if ids == "all":
-            groups = LanguageAbilityGroup.objects.all()
-            count = groups.count()
-            if count == 0:
-                return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "No LanguageAbilityGroups found to delete.",
-                    "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
-            groups.delete()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": f"All {count} LanguageAbilityGroups permanently deleted.",
-                "data": None
-            })
+#         if ids == "all":
+#             groups = LanguageAbilityGroup.objects.all()
+#             count = groups.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No LanguageAbilityGroups found to delete.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+#             groups.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} LanguageAbilityGroups permanently deleted.",
+#                 "data": None
+#             })
 
-        if not ids or not isinstance(ids, list):
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
-                "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+#         if not ids or not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
 
-        valid_uuids = []
-        invalid_uuids = []
-        for u in ids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
+#         valid_uuids = []
+#         invalid_uuids = []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
 
-        if not valid_uuids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_400_BAD_REQUEST)
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=status.HTTP_400_BAD_REQUEST)
 
-        groups = LanguageAbilityGroup.objects.filter(uuid__in=valid_uuids)
-        count = groups.count()
+#         groups = LanguageAbilityGroup.objects.filter(uuid__in=valid_uuids)
+#         count = groups.count()
 
-        if count == 0:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "No matching LanguageAbilityGroups found.",
-                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=status.HTTP_404_NOT_FOUND)
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching LanguageAbilityGroups found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_404_NOT_FOUND)
 
-        groups.delete()
+#         groups.delete()
 
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} LanguageAbilityGroup(s) permanently deleted.",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        })
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} LanguageAbilityGroup(s) permanently deleted.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         })
+
+
+
+
 
 
 # -------------------- Export API --------------------
