@@ -190,3 +190,261 @@ class ApplicantSerializer(serializers.ModelSerializer):
             "last_name": {"required": True},
         }
 
+#<------------------------Education-------------------------->
+
+class EducationSerializer(serializers.ModelSerializer):
+    # UUID-based foreign keys for creation/updating
+    applicant = serializers.SlugRelatedField(slug_field='uuid', queryset=Applicant.objects.all())
+    education_level = serializers.SlugRelatedField(slug_field='uuid', queryset=EducationLevel.objects.all())
+    education_duration = serializers.SlugRelatedField(slug_field='uuid', queryset=EducationDuration.objects.all())
+    study_major_area = serializers.SlugRelatedField(slug_field='uuid', queryset=Studymajorarea.objects.all())
+    study_main_area = serializers.SlugRelatedField(slug_field='uuid', queryset=Studymainarea.objects.all(), allow_null=True)
+    country = serializers.SlugRelatedField(slug_field='uuid', queryset=Country.objects.all())
+    state = serializers.SlugRelatedField(slug_field='uuid', queryset=State.objects.all())
+    medium_of_education = serializers.SlugRelatedField(slug_field='uuid', queryset=MediumofEducation.objects.all())
+    academic_result_type = serializers.SlugRelatedField(slug_field='uuid', queryset=AcademicResultType.objects.all())
+    education_type = serializers.SlugRelatedField(slug_field='uuid', queryset=EducationType.objects.all())
+    math_result_type = serializers.SlugRelatedField(slug_field='uuid', queryset=AcademicResultType.objects.all(), allow_null=True)
+    english_result_type = serializers.SlugRelatedField(slug_field='uuid', queryset=AcademicResultType.objects.all(), allow_null=True)
+    physics_result_type = serializers.SlugRelatedField(slug_field='uuid', queryset=AcademicResultType.objects.all(), allow_null=True)
+
+    # Read-only fields to show related names in response
+    applicant_name = serializers.CharField(source='applicant.first_name', read_only=True)
+    education_level_name = serializers.CharField(source='education_level.name', read_only=True)
+    country_name = serializers.CharField(source='country.name', read_only=True)
+    state_name = serializers.CharField(source='state.name', read_only=True)
+    study_major_area_name = serializers.CharField(source='study_major_area.name', read_only=True)
+    study_main_area_name = serializers.CharField(source='study_main_area.name', read_only=True)
+    education_type_name = serializers.CharField(source='education_type.name', read_only=True)
+
+    class Meta:
+        model = Education
+        fields = "__all__"
+
+    # Custom validation for dates
+    def validate(self, attrs):
+        start_date = attrs.get("start_date")
+        end_date = attrs.get("end_date")
+        if start_date and end_date and start_date > end_date:
+            raise serializers.ValidationError({"end_date": "End date must be greater than start date."})
+        return attrs
+
+
+class WorkExperienceSerializer(serializers.ModelSerializer):
+
+    applicant = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=Applicant.objects.all()
+    )
+
+    country = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=Country.objects.all(),
+        required=False,
+        allow_null=True
+    )
+
+    state = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=State.objects.all(),
+        required=False,
+        allow_null=True
+    )
+
+    designation = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=Designation.objects.all(),
+        required=False,
+        allow_null=True
+    )
+
+    salary_mode = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=ModeofSalary.objects.all(),
+        required=False,
+        allow_null=True
+    )
+
+    itr_status = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=ITReturnStatus.objects.all(),
+        required=False,
+        allow_null=True
+    )
+
+    currency = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=Country.objects.all(),
+        required=False,
+        allow_null=True
+    )
+
+    job_type = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=JobType.objects.all(),
+        required=False,
+        allow_null=True
+    )
+
+    class Meta:
+        model = WorkExperience
+        fields = [
+            "uuid",
+            "applicant",
+            "consider",
+            "country",
+            "state",
+            "employer_name",
+            "designation",
+            "job_start_date",
+            "job_end_date",
+            "years",
+            "months",
+            "monthly_salary",
+            "salary_mode",
+            "itr_status",
+            "currency",
+            "job_type",
+            "salary_amount",
+            "days",
+            "amount_numeric",
+            "created_at",
+            "updated_at"
+        ]
+    def validate(self, attrs):
+        start_date = attrs.get("start_date")
+        end_date = attrs.get("end_date")
+        if start_date and end_date and start_date > end_date:
+            raise serializers.ValidationError({"end_date": "End date must be greater than start date."})
+        return attrs
+
+
+class LanguageAbilitySerializer(serializers.ModelSerializer):
+
+    # UUID Based Foreign Keys (POST/PUT/PATCH me UUID doge)
+    applicant = serializers.SlugRelatedField(slug_field='uuid', queryset=Applicant.objects.all())
+    language = serializers.SlugRelatedField(slug_field='uuid', queryset=Language.objects.all(), allow_null=True)
+
+    listening_score = serializers.SlugRelatedField(slug_field='uuid', queryset=LanguagetestmoduleName.objects.all())
+    speaking_score = serializers.SlugRelatedField(slug_field='uuid', queryset=LanguagetestmoduleName.objects.all())
+    reading_score = serializers.SlugRelatedField(slug_field='uuid', queryset=LanguagetestmoduleName.objects.all())
+    writing_score = serializers.SlugRelatedField(slug_field='uuid', queryset=LanguagetestmoduleName.objects.all())
+    overall_score = serializers.SlugRelatedField(slug_field='uuid', queryset=LanguagetestmoduleName.objects.all())
+
+    # Read Only Display Fields
+    applicant_name = serializers.CharField(source='applicant.first_name', read_only=True)
+    language_name = serializers.CharField(source='language.name', read_only=True)
+    listening_score_name = serializers.CharField(source='listening_score.name', read_only=True)
+    speaking_score_name = serializers.CharField(source='speaking_score.name', read_only=True)
+    reading_score_name = serializers.CharField(source='reading_score.name', read_only=True)
+    writing_score_name = serializers.CharField(source='writing_score.name', read_only=True)
+    overall_score_name = serializers.CharField(source='overall_score.name', read_only=True)
+
+    class Meta:
+        model = LanguageAbility
+        fields = "__all__"
+
+
+class EntranceTestAbilitySerializer(serializers.ModelSerializer):
+    applicant = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=Applicant.objects.all()
+    )
+
+    module_01_score = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=EntranceTestModuleName.objects.all()
+    )
+    module_02_score = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=EntranceTestModuleName.objects.all()
+    )
+    module_03_score = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=EntranceTestModuleName.objects.all()
+    )
+    total_score = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=EntranceTestModuleName.objects.all()
+    )
+
+    class Meta:
+        model = EntranceTestAbility
+        fields = "__all__"
+
+    def validate(self, data):
+        appeared_test = data.get("appeared_test")
+
+        if appeared_test == "Yes":
+        
+            required_fields = [
+                "entrance_test_name",
+                "entrance_test_short_name",
+                "module_01_score",
+                "module_02_score",
+                "module_03_score",
+                "total_score"
+            ]
+
+            for field in required_fields:
+                if not data.get(field):
+                    raise serializers.ValidationError(
+                        {field: f"{field.replace('_',' ')} is required when appeared_test is Yes."}
+        )
+        return data
+    
+    
+class RelativeSerializer(serializers.ModelSerializer):
+
+    applicant = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=Applicant.objects.all()
+    )
+    applicant_type = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=ApplicantType.objects.all()
+    )
+    country = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=Country.objects.all()
+    )
+    state = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=State.objects.all(),
+        required=False,
+        allow_null=True
+    )
+    city = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=City.objects.all(),
+        required=False,
+        allow_null=True
+    )
+    relation = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=Relation.objects.all()
+    )
+    visa_category = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=VisaMain.objects.all(),
+        required=False,
+        allow_null=True
+    )
+
+    class Meta:
+        model = Relative
+        fields = '__all__'
+
+    def validate(self, attrs):
+        applicant = attrs.get("applicant")
+        relation = attrs.get("relation")
+
+        # Prevent duplicate relation entries for same applicant
+        if Relative.objects.filter(applicant=applicant, relation=relation).exists():
+            raise serializers.ValidationError(
+               {"relation": "This relation already exists for this applicant."}
+            )
+
+        return attrs
+
+        
