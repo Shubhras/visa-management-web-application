@@ -10795,7 +10795,7 @@ class DegreeAwardedInstituteDeleteAPIView(APIView):
 
             # ---------------- Apply filters dynamically ----------------
             if search:
-                queryset = queryset.filter(degree_awarded_by__istartswith=search)
+                queryset = queryset.filter(name__istartswith=search)
                 applied_filters.append("search")
 
             if country_uuids:
