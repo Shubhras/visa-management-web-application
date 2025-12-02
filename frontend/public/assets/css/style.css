@@ -16026,8 +16026,7 @@ td.fc-header-center {
   background-color: rgba(0, 0, 0, 0.5);
 }
  .modal-scrollable-content {
-  /* max-height: 260px; */
-    max-height: 65vh;
+  max-height: 260px;
   overflow-y: auto;
   overflow-x: hidden;
   /* scrollbar-width: none;  */

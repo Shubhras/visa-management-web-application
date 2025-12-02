@@ -1109,18 +1109,6 @@ const LeadsB2CList = () => {
                         border: "1px solid #e0e0e0",
                         borderRadius: "8px",
                         padding: "16px",
-                        boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
-                        transition: "all 0.2s ease",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = "translateY(-4px)";
-                        e.currentTarget.style.boxShadow =
-                          "0 6px 14px rgba(0,0,0,0.15)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = "translateY(0px)";
-                        e.currentTarget.style.boxShadow =
-                          "0 2px 6px rgba(0,0,0,0.1)";
                       }}
                     >
                       <h6
