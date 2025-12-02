@@ -909,11 +909,9 @@ class DegreeAwardedInstituteSerializer(serializers.ModelSerializer):
             education_level=education_level,
             country=country
         ).exists():
-            raise serializers.ValidationError({
-                "statusCode": 400,
-                "status": False,
-                "message": "This institute already exists with this Degree Awarded By, Education Level and Country."
-            })
+            raise serializers.ValidationError(
+            "This institute already exists with this Degree Awarded By, Education Level and Country."
+        )
 
         return attrs
     
