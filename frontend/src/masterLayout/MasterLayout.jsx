@@ -346,7 +346,7 @@ const MasterLayout = ({ children }) => {
             { name: "Work Rights After Study", path: "/work-rights-after-study" },
             { name: "PR Possibility", path: "/pr-possibility" },
             { name: "Spouse Can Apply with Candidate?", path: "/spouse-can-apply-with-candidate" },
-            { name: "Visa Main Category", path: "/visa-main-category" },
+            // { name: "Visa Main Category", path: "/visa-main-category" },
             { name: "Spouse Visa Category", path: '/spouse-visa-category' },
             { name: "Spouse Work Rights", path: "/spouse-work-rights" },
             { name: "Children Can Apply with Candidate?", path: "/children-can-apply-with-candidate" },
