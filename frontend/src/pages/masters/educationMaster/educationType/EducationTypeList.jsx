@@ -235,6 +235,7 @@ const EducationTypeList = () => {
         }));
         // Reset Global Search
         setGlobalSearch('');
+        setSelectedRows([]);
     };
 
     const handleSearchChange = (value) => {
@@ -565,6 +566,7 @@ const EducationTypeList = () => {
                                         onClick={clearAllFilters}
                                         tableState={tableState}
                                         globalSearch={globalSearch}
+                                        selectedRows={selectedRows}
                                     />
                                 </div>
                             </div>

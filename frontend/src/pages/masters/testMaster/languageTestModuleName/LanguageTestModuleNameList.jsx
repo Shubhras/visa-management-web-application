@@ -235,6 +235,7 @@ const LanguageTestModuleNameList = () => {
         }));
         // Reset Global Search
         setGlobalSearch('');
+        setSelectedRows([]);
     };
 
     const handleSearchChange = (value) => {
@@ -554,6 +555,7 @@ const LanguageTestModuleNameList = () => {
                                         onClick={clearAllFilters}
                                         tableState={tableState}
                                         globalSearch={globalSearch}
+                                        selectedRows={selectedRows}
                                     />
                                 </div>
                             </div>

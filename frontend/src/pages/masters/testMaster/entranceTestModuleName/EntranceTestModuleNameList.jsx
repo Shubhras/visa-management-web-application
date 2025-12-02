@@ -348,6 +348,7 @@ const EntranceTestModuleNameList = () => {
         }));
         // Reset Global Search
         setGlobalSearch('');
+        setSelectedRows([]);
     };
 
     const handleSearchChange = (value) => {
@@ -674,6 +675,7 @@ const EntranceTestModuleNameList = () => {
                                         tableState={tableState}
                                         columnFilters={columnFilters}
                                         globalSearch={globalSearch}
+                                        selectedRows={selectedRows}
                                     />
                                 </div>
                             </div>

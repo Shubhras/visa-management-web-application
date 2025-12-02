@@ -386,14 +386,6 @@ const EducationLevelList = () => {
         }));
     };
 
-    // For "Select All" button
-    const handleSelectAllButton = () => {
-        if (isAllSelected) {
-            setSelectedRows([]);
-        } else {
-            setSelectedRows(stakeholderTypeData.map(Item => Item.uuid));
-        }
-    };
     // For checkbox in table header
     const handleSelectAll = (e) => {
         const checked = e.target.checked;
@@ -707,6 +699,7 @@ const EducationLevelList = () => {
                                         tableState={tableState}
                                         columnFilters={columnFilters}
                                         globalSearch={globalSearch}
+                                        selectedRows={selectedRows}
                                     />
                                 </div>
                             </div>

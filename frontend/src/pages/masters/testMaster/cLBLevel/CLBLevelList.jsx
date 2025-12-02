@@ -234,6 +234,7 @@ const CLBLevelList = () => {
         }));
         // Reset Global Search
         setGlobalSearch('');
+        setSelectedRows([]);
     };
 
 
@@ -553,6 +554,7 @@ const CLBLevelList = () => {
                                         onClick={clearAllFilters}
                                         tableState={tableState}
                                         globalSearch={globalSearch}
+                                        selectedRows={selectedRows}
                                     />
                                 </div>
                             </div>
