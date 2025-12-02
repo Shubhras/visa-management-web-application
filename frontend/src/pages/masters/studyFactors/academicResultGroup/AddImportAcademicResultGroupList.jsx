@@ -93,7 +93,7 @@ const AddImportAcademicResultGroupModal = ({ show, handleClose }) => {
             if (response?.duplicates?.length > 0) {
               const prepareData = {
                 data: response.duplicates || [],
-                 headers: ["Academic Result", "Reason"],
+                 headers: ["Academic Result Group"],
                 sheetName: "AcademicResultGroup",
                 fileName: "AcademicResultGroup",
               };
@@ -107,7 +107,7 @@ const AddImportAcademicResultGroupModal = ({ show, handleClose }) => {
             if (response?.skipped_rows?.length > 0) {
               const prepareData = {
                 data: response.skipped_rows || [],
-                headers: ["Academic Result", "Reason"],
+                headers: ["Academic Result Group", "Reason"],
                 sheetName: "AcademicResultGroup",
                 fileName: "AcademicResultGroup",
               };
@@ -280,7 +280,7 @@ const AddImportAcademicResultGroupModal = ({ show, handleClose }) => {
           show={showSampleExcelDownload}
           handleClose={handleCloseSampleExcelDownload}
           prepareData={{
-            downloadFileName: "Academic Result Group",
+            downloadFileName: "AcademicResultGroup",
             items: ["Academic Result", "Description"],
             selectedItems: ["Academic Result"],
             ItemsRequired: ["Academic Result"],

@@ -93,7 +93,7 @@ const AddImportBacklogsGroupModal = ({ show, handleClose }) => {
             if (response?.duplicates?.length > 0) {
               const prepareData = {
                 data: response.duplicates || [],
-                headers: ["Backlogs"],
+                headers: ["Backlogs Group"],
                 sheetName: "BacklogsGroup",
                 fileName: "BacklogsGroup",
               };
@@ -107,7 +107,7 @@ const AddImportBacklogsGroupModal = ({ show, handleClose }) => {
             if (response?.skipped_rows?.length > 0) {
               const prepareData = {
                 data: response.skipped_rows || [],
-                headers: ["Backlogs", "Reason"],
+                headers: ["Backlogs Group", "Reason"],
                 sheetName: "BacklogsGroup",
                 fileName: "BacklogsGroup",
               };
@@ -280,10 +280,10 @@ const AddImportBacklogsGroupModal = ({ show, handleClose }) => {
           show={showSampleExcelDownload}
           handleClose={handleCloseSampleExcelDownload}
           prepareData={{
-            downloadFileName: "Backlogs Group",
-            items: ["Backlogs", "Description"],
-            selectedItems: ["Backlogs"],
-            ItemsRequired: ["Backlogs"],
+            downloadFileName: "BacklogsGroup",
+            items: ["Backlogs Group", "Description"],
+            selectedItems: ["Backlogs Group"],
+            ItemsRequired: ["Backlogs Group"],
           }}
         />
       )}

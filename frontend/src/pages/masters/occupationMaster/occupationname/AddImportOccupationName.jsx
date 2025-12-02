@@ -106,8 +106,8 @@ const AddImportOccupationName = ({ show, handleClose }) => {
                   "Occupation Code",
                   "Occupation Name",
                 ],
-                sheetName: "Occupation Name ",
-                fileName: "Occupation Name",
+                sheetName: "OccupationName ",
+                fileName: "OccupationName",
               };
               exportToExcelDuplicate(
                 prepareData.data,
@@ -129,8 +129,8 @@ const AddImportOccupationName = ({ show, handleClose }) => {
                   "Occupation Name",
                   "Reason",
                 ],
-                sheetName: "Occupation Name",
-                fileName: "Occupation Name",
+                sheetName: "OccupationName",
+                fileName: "OccupationName",
               };
               exportToExcelWrongData(
                 prepareData.data,
@@ -301,7 +301,7 @@ const AddImportOccupationName = ({ show, handleClose }) => {
           show={showSampleExcelDownload}
           handleClose={handleCloseSampleExcelDownload}
           prepareData={{
-            downloadFileName: "Occupation Name",
+            downloadFileName: "OccupationName",
             items: [
               "Country",
               "Occupation Version",

@@ -456,7 +456,7 @@ import PaymentCategoryList from "./pages/masters/visaProcessMaster/paymentCatego
 import RelatedOccupationList from "./pages/masters/occupationMaster/relatedOccupation/RelatedOccupationList";
 import FactorForList from "./pages/masters/studyFactors/factorFor/FactorForList";
 import AgeGroupList from "./pages/masters/studyFactors/studyAgeGroup/AgeGroupList";
-import AcademicResultGroupList from "./pages/masters/studyFactors/academicResultGroup/AddImportAcademicResultGroupModal";
+import AcademicResultGroupList from "./pages/masters/studyFactors/academicResultGroup/AcademicResultGroupList";
 import GapGroupList from "./pages/masters/studyFactors/gapGroup/GapGroupList";
 import BacklogsGroupList from "./pages/masters/studyFactors/backlogsGroup/BacklogsGroupList";
 import RepresentingCountryList from "./pages/masters/visaMaster/representingCountry/RepresentingCountryList";
@@ -479,6 +479,7 @@ import StudyFactorGapList from "./pages/masters/studyFactors/gap/StudyFactorGapL
 import StudyFactorLanguageAbilityList from "./pages/masters/studyFactors/languageAbility/StudyFactorLanguageAbilityList";
 import StudyFactorEntranceTestAbilityList from "./pages/masters/studyFactors/entranceTestAbility/StudyFactorEntranceTestAbilityList";
 import OccupationToOccupationList from "./pages/masters/occupationMaster/occupationToOccupation/OccupationToOccupationList";
+import EligibilityforOccupationNameList from "./pages/masters/occupationMaster/eligibilityforOccupationName/EligibilityforOccupationName";
 
 
 
@@ -781,6 +782,7 @@ function App() {
           <Route path="/job-prospect" element={<ProtectedRoute><JobProspectList /></ProtectedRoute>}></Route>
           <Route path="/related-occupation" element={<ProtectedRoute>< RelatedOccupationList /></ProtectedRoute>}></Route>
           <Route path="/occupation-to-occupation" element={<ProtectedRoute>< OccupationToOccupationList /></ProtectedRoute>}></Route>
+          <Route path="/eligibility-for-occupation-name" element={<ProtectedRoute><EligibilityforOccupationNameList/></ProtectedRoute>}></Route>
 
 
 

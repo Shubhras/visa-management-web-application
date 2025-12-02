@@ -297,7 +297,7 @@ const AddImportDesignationModal = ({ show, handleClose }) => {
           show={showSampleExcelDownload}
           handleClose={handleCloseSampleExcelDownload}
           prepareData={{
-            downloadFileName: "Designation(Job Title)",
+            downloadFileName: "Designation",
             items: [
               "Country",
               "Occupation Version",

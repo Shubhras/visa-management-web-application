@@ -9,12 +9,215 @@ import {
   occupationLevelExportData,
   occupationLevelList,
   occupationLevelDelete,
+  occupationVersionList,
+  representingCountryList,
+  occupationCategoryList,
+  occupationLevelCodeList
 } from "../../../../store/master/occupationMaster/action";
 import AddImportOccupationLevel from "./AddImportOccupationLevel";
 import AddEditOccupationLevel from "./AddEditOccupationLevel";
-
+import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
+import ResetButton from '../../../../components/comman/ResetButton';
 const OccupationLevelList = () => {
   const dispatch = useDispatch();
+  const { globalSearch, setGlobalSearch } = useGlobalSearch();
+  const [columnFilters, setColumnFilters] = useState({
+    occupationVersion: [],
+    representingCountry: [],
+    occupationCategory: [],
+    occupationLevelCode: []
+  });
+  const [activeFilterColumn, setActiveFilterColumn] = useState(null);
+  const [filterDropdownData, setFilterDropdownData] = useState({});
+  const [filterSearchTerms, setFilterSearchTerms] = useState({});
+  const filterDropdownRef = useRef(null);
+  useEffect(() => {
+    fetchOccupationVersionDropdown();
+    fetchRepresentingCountryDropdown();
+    fetchOccupationCategoryDropdown();
+    fetchOccupationLevelCodeDropdown();
+  }, []);
+
+  const fetchOccupationVersionDropdown = () => {
+    const params = {
+      page: 1,
+      limit: 2000,
+      search: "",
+      sortBy: "name",
+      sortOrder: "asc"
+    };
+    dispatch(occupationVersionList(params, (response, error) => {
+      if (response?.statusCode === 200 && response?.status === true) {
+        const options = (response.data || []).map(item => ({
+          id: item.uuid || item.id,
+          name: String(item.occupation_version ?? "")
+        }));
+        const sortedOptions = options.sort((a, b) =>
+          String(a.name).localeCompare(String(b.name), undefined, { numeric: true })
+        );
+        // Update filter dropdown data
+        setFilterDropdownData(prev => ({
+          ...prev,
+          occupationVersion: sortedOptions
+        }));
+      }
+    }));
+  };
+  const fetchRepresentingCountryDropdown = () => {
+    const params = {
+      page: 1,
+      limit: 2000,
+      search: "",
+      sortBy: "name",
+      sortOrder: "asc"
+    };
+    dispatch(representingCountryList(params, (response, error) => {
+      if (response?.statusCode === 200 && response?.status === true) {
+        const options = (response.data || []).map(item => ({
+          id: item.uuid || item.id,
+          name: String(item.majorarea ?? "")
+        }));
+        // Sort A–Z by name, numeric safe
+        const sortedOptions = options.sort((a, b) =>
+          String(a.name).localeCompare(String(b.name), undefined, { numeric: true })
+        );
+        // Update filter dropdown data
+        setFilterDropdownData(prev => ({
+          ...prev,
+          representingCountry: sortedOptions
+        }));
+      }
+    }));
+  };
+  const fetchOccupationCategoryDropdown = () => {
+    const params = {
+      page: 1,
+      limit: 2000,
+      search: "",
+      sortBy: "name",
+      sortOrder: "asc"
+    };
+    dispatch(occupationCategoryList(params, (response, error) => {
+      if (response?.statusCode === 200 && response?.status === true) {
+        const options = (response.data || []).map(item => ({
+          id: item.uuid || item.id,
+          name: String(item.occupationcategory ?? "")
+        }));
+        const sortedOptions = options.sort((a, b) =>
+          String(a.name).localeCompare(String(b.name), undefined, { numeric: true })
+        );
+        // Update filter dropdown data
+        setFilterDropdownData(prev => ({
+          ...prev,
+          occupationCategory: sortedOptions
+        }));
+      }
+    }));
+  };
+  const fetchOccupationLevelCodeDropdown = () => {
+    const params = {
+      page: 1,
+      limit: 2000,
+      search: "",
+      sortBy: "name",
+      sortOrder: "asc"
+    };
+    dispatch(occupationLevelCodeList(params, (response, error) => {
+      if (response?.statusCode === 200 && response?.status === true) {
+        const options = (response.data || []).map(item => ({
+          id: item.uuid || item.id,
+          name: String(item.occupationlevelcode ?? "")
+        }));
+        const sortedOptions = options.sort((a, b) =>
+          String(a.name).localeCompare(String(b.name), undefined, { numeric: true })
+        );
+        // Update filter dropdown data
+        setFilterDropdownData(prev => ({
+          ...prev,
+          occupationLevelCode: sortedOptions
+        }));
+      }
+    }));
+  };
+
+  const toggleFilterDropdown = (e, columnField) => {
+    e.stopPropagation()
+    setActiveFilterColumn(activeFilterColumn === columnField ? null : columnField)
+    setFilterSearchTerms(prev => ({ ...prev, [columnField]: '' }))
+  }
+  const handleFilterCheckboxChange = (columnField, value, checked) => {
+    setColumnFilters(prev => {
+      const current = prev[columnField] || []
+      const updated = checked ? [...current, value] : current.filter(v => v !== value)
+      return { ...prev, [columnField]: updated }
+    })
+  }
+
+  const handleFilterSelectAll = (columnField) => {
+    const searchTerm = String(filterSearchTerms[columnField] || '').toLowerCase()
+    const available = (filterDropdownData[columnField] || [])
+      .filter(o => String(o.name).toLowerCase().includes(searchTerm))
+      .map(o => o.id)
+    setColumnFilters(prev => ({ ...prev, [columnField]: available }))
+  }
+
+
+  const handleFilterClearAll = (columnField) => {
+    setColumnFilters(prev => ({ ...prev, [columnField]: [] }))
+  }
+
+  const getFilteredOptions = (columnField) => {
+    const searchTerm = String(filterSearchTerms[columnField] || '').toLowerCase()
+    const options = filterDropdownData[columnField] || []
+    return options.filter(o =>
+      String(o.name ?? '').toLowerCase().includes(searchTerm)
+    )
+  }
+
+  const clearAllOnlyHeaderFilters = () => setColumnFilters({
+    occupationVersion: [],
+    representingCountry: [],
+    occupationCategory: [],
+    occupationLevelCode: []
+
+  })
+  const hasActiveFilters = () => Object.values(columnFilters).some(list => list.length > 0)
+  // Close filter when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target)) {
+        setActiveFilterColumn(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+  // Sort ascending (Smallest to Largest)
+  const applySortAsc = (field) => {
+    setTableState(prev => {
+      let newSort = [...prev.sort]
+      const existingIndex = newSort.findIndex(s => s.field === field)
+      if (existingIndex === -1) newSort.push({ field, order: 'asc' })
+      else newSort[existingIndex].order = 'asc'
+      return { ...prev, sort: newSort, page: 1 }
+    })
+  }
+
+  // Sort descending (Largest to Smallest)
+  const applySortDesc = (field) => {
+    setTableState(prev => {
+      let newSort = [...prev.sort]
+      const existingIndex = newSort.findIndex(s => s.field === field)
+      if (existingIndex === -1) newSort.push({ field, order: 'desc' })
+      else newSort[existingIndex].order = 'desc'
+      return { ...prev, sort: newSort, page: 1 }
+    })
+  }
+
+
+
+
+
   const [modalState, setModalState] = useState({
     show: false,
     mode: "add",
@@ -29,7 +232,7 @@ const OccupationLevelList = () => {
     });
   };
 
-  // ✅ FIXED: For closing modal - only refresh if shouldRefresh is true
+
   const handleClose = (shouldRefresh = false) => {
     setModalState({
       show: false,
@@ -83,23 +286,26 @@ const OccupationLevelList = () => {
     {
       id: "country",
       label: "Country",
-      field: "country",
+      field: "representingCountry",
       visible: true,
       required: false,
+      filterable: true
     },
     {
       id: "occupationversion",
       label: "Occupation Version",
-      field: "occupationversion",
+      field: "occupationVersion",
       visible: true,
       required: false,
+      filterable: true
     },
     {
       id: "occupationlevelcode",
       label: "Occupation Level Code",
-      field: "occupationlevelcode",
+      field: "occupationLevelCode",
       visible: true,
       required: false,
+      filterable: true
     },
     {
       id: "occupationlevel",
@@ -107,13 +313,15 @@ const OccupationLevelList = () => {
       field: "occupationlevel",
       visible: true,
       required: false,
+      filterable: false
     },
     {
       id: "occupationcategory",
       label: "Occupation Category",
-      field: "occupationcategory",
+      field: "occupationCategory",
       visible: true,
       required: false,
+      filterable: true
     },
     {
       id: "description",
@@ -121,6 +329,7 @@ const OccupationLevelList = () => {
       field: "description",
       visible: true,
       required: false,
+      filterable: false
     },
     {
       id: "updated_at",
@@ -173,19 +382,26 @@ const OccupationLevelList = () => {
     };
   }, [showColumnDropdown]);
 
+  // Updated state with sorting
   const [tableState, setTableState] = useState({
     page: 1,
     limit: 25,
-    search: "",
-    status: "",
-    sortBy: "created_at",
-    sortOrder: "desc",
+    search: '',
+    status: '',
+    sortBy: '', // Field to sort by
+    sortOrder: '', // 'asc' or 'desc'
+    sort: [
+      { field: "created_at", order: "desc" }
+    ],
     total: 0,
     totalPages: 0,
     currentPage: 1,
     hasNext: false,
-    hasPrevious: false,
+    hasPrevious: false
   });
+  useEffect(() => {
+    setTableState(prev => ({ ...prev, search: globalSearch, page: 1 }));
+  }, [globalSearch]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -199,23 +415,23 @@ const OccupationLevelList = () => {
 
   useEffect(() => {
     fetchOccupationLevelList();
-  }, [
-    tableState.page,
-    tableState.limit,
-    tableState.status,
-    tableState.sortBy,
-    tableState.sortOrder,
-  ]);
+  }, [tableState.page, tableState.limit, tableState.status, tableState.sort, columnFilters]);
+
 
   const fetchOccupationLevelList = () => {
     setLoading(true);
     const params = {
       page: tableState.page,
       limit: tableState.limit,
-      search: tableState.search || "",
-      status: tableState.status || "",
-      sortBy: tableState.sortBy || "",
-      sortOrder: tableState.sortOrder || "",
+      search: tableState.search || '',
+      status: tableState.status || '',
+      sortBy: tableState.sortBy || '',
+      sortOrder: tableState.sortOrder || '',
+      sort: tableState.sort,
+      occupationVersion: columnFilters.occupationVersion.length > 0 ? columnFilters.occupationVersion : null,
+      representingCountry: columnFilters.representingCountry.length > 0 ? columnFilters.representingCountry : null,
+      occupationCategory: columnFilters.occupationCategory.length > 0 ? columnFilters.occupationCategory : null,
+      occupationLevelCode: columnFilters.occupationLevelCode.length > 0 ? columnFilters.occupationLevelCode : null,
     };
 
     dispatch(
@@ -256,26 +472,57 @@ const OccupationLevelList = () => {
   };
 
   const handleSort = (field) => {
-    setTableState((prev) => {
-      if (prev.sortBy === field) {
-        if (prev.sortOrder === "asc") {
-          return { ...prev, sortOrder: "desc", page: 1 };
-        } else if (prev.sortOrder === "desc") {
-          return { ...prev, sortBy: "", sortOrder: "", page: 1 };
+    setTableState(prev => {
+      let newSort = [...prev.sort];
+      const existingIndex = newSort.findIndex(s => s.field === field);
+      if (existingIndex === -1) {
+        newSort.push({ field, order: "asc" });
+      }
+      else {
+        const existing = newSort[existingIndex];
+        if (existing.order === "asc") {
+          newSort[existingIndex].order = "desc";
+        }
+        else if (existing.order === "desc") {
+          newSort.splice(existingIndex, 1);
         }
       }
-      return { ...prev, sortBy: field, sortOrder: "asc", page: 1 };
+      return { ...prev, sort: newSort, page: 1 };
     });
   };
 
   const getSortIcon = (field) => {
-    if (tableState.sortBy !== field) {
-      return <Icon icon="ri:sort-desc" className="sorting-th-icone" />;
+    const sortObj = tableState.sort.find(s => s.field === field);
+    if (!sortObj) {
+      return <Icon icon="ri:menu-line" className="sorting-th-icone" />;
     }
-    if (tableState.sortOrder === "asc") {
+    if (sortObj.order === "asc") {
       return <Icon icon="ri:sort-asc" className="sorting-th-icone" />;
     }
     return <Icon icon="ri:sort-desc" className="sorting-th-icone" />;
+  };
+
+  const clearAllFilters = () => {
+    setTableState(prev => ({
+      ...prev,
+      page: 1,
+      limit: 25,
+      search: '',
+      status: '',
+      sortBy: '',
+      sortOrder: '',
+      sort: [
+        { field: "created_at", order: "desc" }   // default sort
+      ],
+      total: 0,
+      totalPages: 0,
+      currentPage: 1,
+      hasNext: false,
+      hasPrevious: false
+    }));
+    // Reset Global Search
+    setGlobalSearch('');
+    setSelectedRows([]);
   };
 
   const handleSearchChange = (value) => {
@@ -411,12 +658,28 @@ const OccupationLevelList = () => {
   const confirmDelete = () => {
     const sendPayload =
       selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
-    if (!sendPayload || sendPayload.length === 0) {
-      toast.error("No occupation level selected for deletion.");
+    if (
+      !sendPayload ||
+      (Array.isArray(sendPayload) && sendPayload.length === 0)
+    ) {
+      toast.error("No district selected for deletion.");
       return;
     }
+  
+    const deleteAll = selectAllOrNot === "all" && ((tableState.search && tableState.search.trim() !== '') || columnFilters.occupationVersion.length > 0 || columnFilters.representingCountry.length > 0
+      || columnFilters.occupationCategory.length > 0 || columnFilters.occupationLevelCode.length > 0);
+
+    const payloadSend = {
+      deleteAll: deleteAll,
+      occupationVersion: columnFilters.occupationVersion.length > 0 ? columnFilters.occupationVersion : '',
+      representingCountry: columnFilters.representingCountry.length > 0 ? columnFilters.representingCountry : '',
+      occupationCategory: columnFilters.occupationCategory.length > 0 ? columnFilters.occupationCategory : '',
+      occupationLevelCode: columnFilters.occupationLevelCode.length > 0 ? columnFilters.occupationLevelCode : '',
+      id: deleteAll == true ? "" : sendPayload,
+      search: tableState.search || '',
+    };
     dispatch(
-      occupationLevelDelete(sendPayload, (response, error) => {
+      occupationLevelDelete(payloadSend, (response, error) => {
         if (error) {
           toast.error(error?.response?.data?.message || "server error");
         } else {
@@ -432,7 +695,8 @@ const OccupationLevelList = () => {
             setSelectedRows([]);
             setSelectAllOrNot("");
             setDeleteId(null);
-            fetchOccupationLevelList();
+            // fetchOccupationLevelList();
+            clearAllFilters();
           } else {
             toast.error("Something went wrong.");
           }
@@ -514,12 +778,19 @@ const OccupationLevelList = () => {
     const mappedFields = selectedItems.map(
       (item) => fieldMapping[item] || item
     );
-    
+
     const fieldsString = mappedFields.join(",");
     const sendPayload = {
       file: "xlsx",
       fields: fieldsString,
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
+      search: tableState.search || '', // Add search parameter
+      sort: tableState.sort, // Add sort parameter
+      occupationVersion: columnFilters.occupationVersion.length > 0 ? columnFilters.occupationVersion : null,
+      representingCountry: columnFilters.representingCountry.length > 0 ? columnFilters.representingCountry : null,
+      occupationCategory: columnFilters.occupationCategory.length > 0 ? columnFilters.occupationCategory : null,
+      occupationLevelCode: columnFilters.occupationLevelCode.length > 0 ? columnFilters.occupationLevelCode : null,
+
     };
     setLoadingExport(true);
     dispatch(
@@ -564,8 +835,13 @@ const OccupationLevelList = () => {
         <div className="card basic-data-table main-container-data">
           <div className="card-body container-data">
             <div className="row align-items-center gy-3 gx-2 flex-wrap filter-action-btn">
+              {/* Left Section: Import / Export / Delete */}
               <div className="col-xl-6 col-lg-4 col-md-12">
                 <div className="d-flex flex-wrap align-items-center gap-2">
+                  <button
+                    className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
+                    onClick={handleShow}
+                  >New</button>
                   <button
                     className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
                     onClick={handleShowImport}
@@ -585,34 +861,41 @@ const OccupationLevelList = () => {
                   >
                     Delete
                   </button>
-                  {selectedRows?.length > 0 &&
-                    selectedRows?.length === departments?.length && (
-                      <>
-                        <button
-                          onClick={() => handleSelectAllOrNot("onlySelected")}
-                          className={`btn btn-sm py-1 fw-medium ${
-                            selectAllOrNot === "onlySelected"
-                              ? "comman-btn-color"
-                              : "comman-inactive-btn"
-                          }`}
-                        >
-                          {`Select (${selectedRows.length})`}
-                        </button>
-                        <button
-                          onClick={() => handleSelectAllOrNot("all")}
-                          className={`btn btn-sm py-1 fw-medium ${
-                            selectAllOrNot === "all"
-                              ? "comman-btn-color"
-                              : "comman-inactive-btn"
-                          }`}
-                        >
-                          {`Select All (${tableState.total})`}
-                        </button>
-                      </>
-                    )}
+                  {(selectedRows?.length > 0 && selectedRows?.length === departments?.length) && (
+                    <>
+                      <button
+                        onClick={() => handleSelectAllOrNot("onlySelected")}
+                        className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "onlySelected" ? "comman-btn-color" : "comman-inactive-btn"}`}
+                      >
+                        {`Select (${selectedRows.length})`}
+                      </button>
+                      <button
+                        onClick={() => handleSelectAllOrNot("all")}
+                        className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "all" ? "comman-btn-color" : "comman-inactive-btn"}`}
+                      >
+                        {`Select All (${tableState.total})`}
+                      </button>
+                    </>
+                  )}
+                  {hasActiveFilters() && (
+                    <button onClick={clearAllOnlyHeaderFilters} className="btn btn-sm py-1 comman-inactive-btn">
+                      <Icon icon="mdi:filter-off" width="16" /> Clear Filters
+                    </button>
+                  )}
+                  {/* <button
+                    onClick={clearAllFilters}
+                    className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
+                  >Reset </button> */}
+                  <ResetButton
+                    onClick={clearAllFilters}
+                    tableState={tableState}
+                    columnFilters={columnFilters}
+                    selectedRows={selectedRows}
+                    globalSearch={globalSearch}
+                  />
                 </div>
               </div>
-
+              {/* Right Section: Select / Search / +Add New */}
               <div className="col-xl-6 col-lg-8 col-md-12">
                 <div className="d-flex flex-wrap align-items-center justify-content-end gap-2">
                   <select
@@ -625,45 +908,112 @@ const OccupationLevelList = () => {
                     <option value={50}>50</option>
                     <option value={100}>100</option>
                   </select>
-                  <div className="position-relative flex-grow-1 search-filter-div">
-                    <Icon
-                      icon="ion:search-outline"
-                      className="position-absolute search-filter-icone"
-                    />
-                    <input
-                      type="text"
-                      className="form-control form-control-sm ps-5 search-filter-input"
-                      placeholder="Search..."
-                      value={tableState.search}
-                      onChange={(e) => handleSearchChange(e.target.value)}
-                    />
-                    {tableState.search && tableState.search.length > 0 && (
-                      <span
-                        className="position-absolute"
-                        style={{
-                          right: "10px",
-                          top: "50%",
-                          transform: "translateY(-50%)",
-                          cursor: "pointer",
-                          zIndex: 999,
-                          fontSize: "20px",
-                          color: "#6c757d",
-                          lineHeight: 1,
-                        }}
-                        onClick={() => {
-                          handleSearchChange("");
-                        }}
-                      >
-                        ×
-                      </span>
-                    )}
-                  </div>
-                  <button
-                    className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
-                    onClick={handleShow}
-                  >
-                    New
-                  </button>
+                  {tableState.total > 0 && (
+                    <div className="d-flex justify-content-between align-items-center px-4 py-0">
+                      <div className="showing-total-page">
+                        {startIndex + 1}-{" "}
+                        {Math.min(startIndex + tableState.limit, tableState.total)}{" "}
+                        of {tableState.total}
+                      </div>
+                      <nav>
+                        <ul className="pagination mb-0 gap-4px">
+                          <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
+                            <button
+                              className="border-0 bg-transparent"
+                              onClick={() => goToPage(1)}
+                              disabled={!tableState.hasPrevious}
+                              style={{
+                                padding: '0px 8px',
+                                color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
+                                fontSize: '18px',
+                                cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
+                              }}
+                            >
+                              «
+                            </button>
+                          </li>
+                          <li className={`page-item ${!tableState.hasPrevious ? 'disabled' : ''}`}>
+                            <button
+                              className="border-0 bg-transparent"
+                              onClick={() => goToPage(tableState.currentPage - 1)}
+                              disabled={!tableState.hasPrevious}
+                              style={{
+                                padding: '0px 8px',
+                                color: !tableState.hasPrevious ? '#ccc' : '#6c757d',
+                                fontSize: '18px',
+                                cursor: !tableState.hasPrevious ? 'not-allowed' : 'pointer'
+                              }}
+                            >
+                              ‹
+                            </button>
+                          </li>
+                          {getPaginationNumbers().map((page, idx) => (
+                            <li key={idx} className="page-item">
+                              {page === '...' ? (
+                                <span
+                                  className="border-0 bg-transparent"
+                                  style={{
+                                    padding: '0px 10px',
+                                    color: '#6c757d',
+                                    cursor: 'default'
+                                  }}
+                                >
+                                  ...
+                                </span>
+                              ) : (
+                                <button
+                                  className="border-0"
+                                  onClick={() => goToPage(page)}
+                                  style={{
+                                    padding: '0px 10px',
+                                    minWidth: '30px',
+                                    backgroundColor: page === tableState.currentPage ? '#5a6c5b' : 'transparent',
+                                    color: page === tableState.currentPage ? '#fff' : '#6c757d',
+                                    borderRadius: '4px',
+                                    fontWeight: page === tableState.currentPage ? '500' : '400',
+                                    cursor: 'pointer',
+                                    fontSize: "14px"
+                                  }}
+                                >
+                                  {page}
+                                </button>
+                              )}
+                            </li>
+                          ))}
+                          <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
+                            <button
+                              className="border-0 bg-transparent"
+                              onClick={() => goToPage(tableState.currentPage + 1)}
+                              disabled={!tableState.hasNext}
+                              style={{
+                                padding: '0px 8px',
+                                color: !tableState.hasNext ? '#ccc' : '#6c757d',
+                                fontSize: '18px',
+                                cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
+                              }}
+                            >
+                              ›
+                            </button>
+                          </li>
+                          <li className={`page-item ${!tableState.hasNext ? 'disabled' : ''}`}>
+                            <button
+                              className="border-0 bg-transparent"
+                              onClick={() => goToPage(tableState.totalPages)}
+                              disabled={!tableState.hasNext}
+                              style={{
+                                padding: '0px 8px',
+                                color: !tableState.hasNext ? '#ccc' : '#6c757d',
+                                fontSize: '18px',
+                                cursor: !tableState.hasNext ? 'not-allowed' : 'pointer'
+                              }}
+                            >
+                              »
+                            </button>
+                          </li>
+                        </ul>
+                      </nav>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -685,22 +1035,173 @@ const OccupationLevelList = () => {
                         <span>No.</span>
                       </div>
                     </th>
-                    {tableColumns.map(
-                      (column) =>
-                        isColumnVisible(column.id) && (
-                          <th
-                            key={column.id}
-                            scope="col"
-                            className="sorting-th"
-                            onClick={() => handleSort(column.field)}
-                          >
-                            <div className="d-flex align-items-center">
+                    {tableColumns.map((column) => (
+                      isColumnVisible(column.id) && (
+                        <th key={column.id} scope="col" className="sorting-th">
+                          <div className="d-flex align-items-center justify-content-between position-relative">
+                            <div
+                              className="d-flex align-items-center flex-grow-1"
+                              onClick={() => handleSort(column.field)}
+                              style={{ cursor: 'pointer' }}
+                            >
                               {column.label}
                               {getSortIcon(column.field)}
+
+                              {column.filterable && (
+                                <div className="position-relative comman-filtter-all">
+                                  <Icon
+                                    icon={
+                                      columnFilters[column.field]?.length > 0
+                                        ? 'mdi:filter'
+                                        : 'mdi:filter-outline'
+                                    }
+                                    width="18"
+                                    className={`ms-2 ${columnFilters[column.field]?.length > 0 ? 'comman-btn-color' : ''
+                                      }`}
+                                    style={{ cursor: 'pointer' }}
+                                    onClick={(e) => toggleFilterDropdown(e, column.field)}
+                                  />
+
+                                  {activeFilterColumn === column.field && (
+                                    <div
+                                      ref={filterDropdownRef}
+                                      className="position-absolute bg-white border rounded shadow-sm p-3 main-div-dropdown"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      {/* Sort options */}
+                                      <div
+                                        className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(
+                                          (s) => s.field === column.field && s.order === 'asc'
+                                        )
+                                          ? 'disabled-sort'
+                                          : ''
+                                          }`}
+                                        onClick={() => applySortAsc(column.field)}
+                                      >
+                                        <Icon
+                                          icon="ri:arrow-up-line"
+                                          className="me-2 text-muted"
+                                          width="18"
+                                        />
+                                        Sort Smallest to Largest
+                                      </div>
+                                      <div
+                                        className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(
+                                          (s) => s.field === column.field && s.order === 'desc'
+                                        )
+                                          ? 'disabled-sort'
+                                          : ''
+                                          }`}
+                                        onClick={() => applySortDesc(column.field)}
+                                      >
+                                        <Icon
+                                          icon="ri:arrow-down-line"
+                                          className="me-2 text-muted"
+                                          width="18"
+                                        />
+                                        Sort Largest to Smallest
+                                      </div>
+
+                                      {/* Search box */}
+                                      <div className="mb-2">
+                                        <input
+                                          type="text"
+                                          className="form-control form-control-sm input-search"
+                                          placeholder="Search..."
+                                          value={filterSearchTerms[column.field] || ''}
+                                          onChange={(e) =>
+                                            setFilterSearchTerms((prev) => ({
+                                              ...prev,
+                                              [column.field]: e.target.value,
+                                            }))
+                                          }
+                                        />
+                                      </div>
+
+                                      {/* Select/Clear all */}
+                                      <div className="gap-2 mb-2 select-clear-all">
+                                        <button
+                                          className="btn btn-sm py-1 btn-primary flex-grow-1 comman-btn-color mr-10"
+                                          onClick={() => handleFilterSelectAll(column.field)}
+                                        >
+                                          Select All
+                                        </button>
+                                        <button
+                                          className="btn btn-sm py-1 btn-secondary flex-grow-1"
+                                          onClick={() => handleFilterClearAll(column.field)}
+                                        >
+                                          Clear All
+                                        </button>
+                                      </div>
+
+                                      {/* Option list */}
+                                      <div className="select-all-dropdown">
+                                        {getFilteredOptions(column.field).length > 0 ? (
+                                          getFilteredOptions(column.field).map((option, idx) => (
+                                            <div
+                                              key={idx}
+                                              className="bg-white rounded p-2 mb-2 d-flex align-items-center gap-2 form-check-div"
+
+                                            >
+                                              <input
+                                                type="checkbox"
+                                                id={`filter-${column.field}-${idx}`}
+                                                checked={columnFilters[column.field]?.includes(
+                                                  option.id
+                                                )}
+                                                onChange={(e) =>
+                                                  handleFilterCheckboxChange(
+                                                    column.field,
+                                                    option.id,
+                                                    e.target.checked
+                                                  )
+                                                }
+                                                className="form-check-input"
+                                              />
+                                              <label
+                                                htmlFor={`filter-${column.field}-${idx}`}
+                                                className="mb-0 flex-grow-1 form-check-label"
+                                                title={option.name}
+                                                style={{
+                                                  display: 'block',
+                                                  whiteSpace: 'nowrap',
+                                                  overflow: 'hidden',
+                                                  textOverflow: 'ellipsis',
+                                                  maxWidth: '200px',
+                                                  cursor: 'pointer',
+                                                }}
+
+                                              >
+                                                {option.name}
+                                              </label>
+                                            </div>
+                                          ))
+                                        ) : (
+                                          <div className="no-records-found">
+                                            No options available
+                                          </div>
+                                        )}
+                                      </div>
+
+                                      {/* Footer */}
+                                      <div className="d-flex gap-2 mt-2 pt-2 border-top justify-content-end">
+                                        <button
+                                          className="btn btn-sm  py-1 btn-secondary flex-grow-1  mt-10"
+                                          onClick={() => setActiveFilterColumn(null)}
+                                          style={{ maxWidth: '80px' }}
+                                        >
+                                          Cancel
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
-                          </th>
-                        )
-                    )}
+                          </div>
+                        </th>
+                      )
+                    ))}
                     <th scope="col" className="action-th">
                       <div
                         className="position-relative table-header-hide-show"
@@ -863,146 +1364,6 @@ const OccupationLevelList = () => {
                   )}
                 </tbody>
               </table>
-
-              {tableState.total > 0 && (
-                <div className="d-flex justify-content-between align-items-center px-4 py-3">
-                  <div className="showing-total-page">
-                    Showing {startIndex + 1} to{" "}
-                    {Math.min(startIndex + tableState.limit, tableState.total)}{" "}
-                    of {tableState.total} entries
-                  </div>
-                  <nav>
-                    <ul className="pagination mb-0" style={{ gap: "4px" }}>
-                      <li
-                        className={`page-item ${
-                          !tableState.hasPrevious ? "disabled" : ""
-                        }`}
-                      >
-                        <button
-                          className="border-0 bg-transparent"
-                          onClick={() => goToPage(1)}
-                          disabled={!tableState.hasPrevious}
-                          style={{
-                            padding: "6px 10px",
-                            color: !tableState.hasPrevious ? "#ccc" : "#6c757d",
-                            fontSize: "18px",
-                            cursor: !tableState.hasPrevious
-                              ? "not-allowed"
-                              : "pointer",
-                          }}
-                        >
-                          «
-                        </button>
-                      </li>
-                      <li
-                        className={`page-item ${
-                          !tableState.hasPrevious ? "disabled" : ""
-                        }`}
-                      >
-                        <button
-                          className="border-0 bg-transparent"
-                          onClick={() => goToPage(tableState.currentPage - 1)}
-                          disabled={!tableState.hasPrevious}
-                          style={{
-                            padding: "6px 10px",
-                            color: !tableState.hasPrevious ? "#ccc" : "#6c757d",
-                            fontSize: "18px",
-                            cursor: !tableState.hasPrevious
-                              ? "not-allowed"
-                              : "pointer",
-                          }}
-                        >
-                          ‹
-                        </button>
-                      </li>
-                      {getPaginationNumbers().map((page, idx) => (
-                        <li key={idx} className="page-item">
-                          {page === "..." ? (
-                            <span
-                              className="border-0 bg-transparent"
-                              style={{
-                                padding: "6px 12px",
-                                color: "#6c757d",
-                                cursor: "default",
-                              }}
-                            >
-                              ...
-                            </span>
-                          ) : (
-                            <button
-                              className="border-0 "
-                              onClick={() => goToPage(page)}
-                              style={{
-                                padding: "6px 12px",
-                                minWidth: "36px",
-                                backgroundColor:
-                                  page === tableState.currentPage
-                                    ? "#5a6c5b"
-                                    : "transparent",
-                                color:
-                                  page === tableState.currentPage
-                                    ? "#fff"
-                                    : "#6c757d",
-                                borderRadius: "4px",
-                                fontWeight:
-                                  page === tableState.currentPage
-                                    ? "500"
-                                    : "400",
-                                cursor: "pointer",
-                                fontSize: "16px",
-                              }}
-                            >
-                              {page}
-                            </button>
-                          )}
-                        </li>
-                      ))}
-                      <li
-                        className={`page-item ${
-                          !tableState.hasNext ? "disabled" : ""
-                        }`}
-                      >
-                        <button
-                          className=" border-0 bg-transparent"
-                          onClick={() => goToPage(tableState.currentPage + 1)}
-                          disabled={!tableState.hasNext}
-                          style={{
-                            padding: "6px 10px",
-                            color: !tableState.hasNext ? "#ccc" : "#6c757d",
-                            fontSize: "18px",
-                            cursor: !tableState.hasNext
-                              ? "not-allowed"
-                              : "pointer",
-                          }}
-                        >
-                          ›
-                        </button>
-                      </li>
-                      <li
-                        className={`page-item ${
-                          !tableState.hasNext ? "disabled" : ""
-                        }`}
-                      >
-                        <button
-                          className="border-0 bg-transparent"
-                          onClick={() => goToPage(tableState.totalPages)}
-                          disabled={!tableState.hasNext}
-                          style={{
-                            padding: "6px 10px",
-                            color: !tableState.hasNext ? "#ccc" : "#6c757d",
-                            fontSize: "18px",
-                            cursor: !tableState.hasNext
-                              ? "not-allowed"
-                              : "pointer",
-                          }}
-                        >
-                          »
-                        </button>
-                      </li>
-                    </ul>
-                  </nav>
-                </div>
-              )}
             </div>
           </div>
         </div>

@@ -104,8 +104,8 @@ const AddImportOccupationLevel = ({ show, handleClose }) => {
                   "Occupation Level Code",
                   "Occupation Level",
                 ],
-                sheetName: "Occupation Level ",
-                fileName: "Occupation Level",
+                sheetName: "OccupationLevel ",
+                fileName: "OccupationLevel",
               };
               exportToExcelDuplicate(
                 prepareData.data,
@@ -125,8 +125,8 @@ const AddImportOccupationLevel = ({ show, handleClose }) => {
                   "Occupation Level",
                   "Reason",
                 ],
-                sheetName: "Occupation Level",
-                fileName: "Occupation Level",
+                sheetName: "OccupationLevel",
+                fileName: "OccupationLevel",
               };
               exportToExcelWrongData(
                 prepareData.data,
@@ -297,7 +297,7 @@ const AddImportOccupationLevel = ({ show, handleClose }) => {
           show={showSampleExcelDownload}
           handleClose={handleCloseSampleExcelDownload}
           prepareData={{
-            downloadFileName: "Occupation Level",
+            downloadFileName: "OccupationLevel",
             items: [
               "Country",
               "Occupation Version",

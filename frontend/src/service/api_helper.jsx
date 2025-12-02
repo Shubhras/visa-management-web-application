@@ -3367,8 +3367,11 @@ export const editOccupationLevelCodeAPI = (payload) => {
 };
 
 export const deleteOccupationLevelCodeAPI = (payload) => {
-  const prepareData = { id: payload };
-  const apiUrl = `${url.DELETE_OCCUPATION_LEVEL_CODE}delete/`;
+   const prepareData = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+   const apiUrl = `${url.DELETE_OCCUPATION_LEVEL_CODE}delete/?search=${payload?.search}&occupationVersion=${payload?.occupationVersion}&representingCountry=${payload?.representingCountry}`;
   return delWithPayload(apiUrl, prepareData);
 };
 
@@ -3399,8 +3402,14 @@ export const editOccupationLevelAPI = (payload) => {
 };
 
 export const deleteOccupationLevelAPI = (payload) => {
-  const preparedData = { id: payload };
-  const apiUrl = `${url.DELETE_OCCUPATION_LEVEL_API}delete/`;
+  // const preparedData = { id: payload };
+  // const apiUrl = `${url.DELETE_OCCUPATION_LEVEL_API}delete/`;
+  const preparedData = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+   const apiUrl = `${url.DELETE_OCCUPATION_LEVEL_API}delete/?search=${payload?.search}&occupationVersion=${payload?.occupationVersion}&representingCountry=${payload?.representingCountry}&occupationCategory=${payload?.occupationCategory}&occupationLevelCode=${payload?.occupationLevelCode}`;
+  
   return delWithPayload(apiUrl, preparedData);
 };
 
@@ -3431,8 +3440,11 @@ export const editOccupationCodeAPI = (payload) => {
 };
 
 export const deleteOccupationCodeAPI = (payload) => {
-  const preparedData = { id: payload };
-  const apiUrl = `${url.DELETE_OCCUPATION_CODE_API}delete/`;
+   const preparedData = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+   const apiUrl = `${url.DELETE_OCCUPATION_CODE_API}delete/?search=${payload?.search}&occupationVersion=${payload?.occupationVersion}&representingCountry=${payload?.representingCountry}`;
   return delWithPayload(apiUrl, preparedData);
 };
 
@@ -3463,8 +3475,11 @@ export const editOccupationNameAPI = (payload) => {
 };
 
 export const deleteOccupationNameAPI = (payload) => {
-  const preparedData = { id: payload };
-  const apiUrl = `${url.DELETE_OCCUPATION_NAME_API}delete/`;
+   const preparedData = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+   const apiUrl = `${url.DELETE_OCCUPATION_NAME_API}delete/?search=${payload?.search}&occupationVersion=${payload?.occupationVersion}&representingCountry=${payload?.representingCountry}&occupationLevelCode=${payload?.occupationLevelCode}&occupationCategory=${payload?.occupationCategory}&occupationLevel=${payload?.occupationLevel}&occupationCode=${payload?.occupationCode}`;
   return delWithPayload(apiUrl, preparedData);
 };
 
@@ -3495,8 +3510,11 @@ export const editDesignationAPI = (payload) => {
 };
 
 export const deleteDesignationAPI = (payload) => {
-  const preparedData = { id: payload };
-  const apiUrl = `${url.DELETE_DESIGNATION_API}delete/`;
+   const preparedData = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+   const apiUrl = `${url.DELETE_DESIGNATION_API}delete/?search=${payload?.search}&occupationVersion=${payload?.occupationVersion}&representingCountry=${payload?.representingCountry}&occupationName=${payload?.occupationName}&occupationCode=${payload?.occupationCode}`;
   return delWithPayload(apiUrl, preparedData);
 };
 
@@ -3527,8 +3545,14 @@ export const editJobProspectAPI = (payload) => {
 };
 
 export const deleteJobProspectAPI = (payload) => {
-  const preparedData = { id: payload };
-  const apiUrl = `${url.DELETE_JOB_PROSPECT_API}delete/`;
+  // const preparedData = { id: payload };
+  // const apiUrl = `${url.DELETE_JOB_PROSPECT_API}delete/`;
+  // return delWithPayload(apiUrl, preparedData);
+  const preparedData = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+   const apiUrl = `${url.DELETE_JOB_PROSPECT_API}delete/?search=${payload?.search}&occupationVersion=${payload?.occupationVersion}&representingCountry=${payload?.representingCountry}&occupationLevelCode=${payload?.occupationLevelCode}&occupationCode=${payload?.occupationCode}&occupationType=${payload?.occupationType}&occupationProspect=${payload?.occupationProspect}`;
   return delWithPayload(apiUrl, preparedData);
 };
 
@@ -3579,8 +3603,13 @@ export const editRelatedOccupationAPI = (payload) => {
 };
 
 export const deleteRelatedOccupationAPI = (payload) => {
-  const preparedData = { id: payload };
-  const apiUrl = `${url.DELETE_RELATED_OCCUPATION_API}delete/`;
+  // const preparedData = { id: payload };
+  // const apiUrl = `${url.DELETE_RELATED_OCCUPATION_API}delete/`;
+  const preparedData = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+   const apiUrl = `${url.DELETE_RELATED_OCCUPATION_API}delete/?search=${payload?.search}&occupationVersion=${payload?.occupationVersion}&representingCountry=${payload?.representingCountry}&occupationName=${payload?.occupationName}&occupationCode=${payload?.occupationCode}`;
   return delWithPayload(apiUrl, preparedData);
 };
 
@@ -3612,8 +3641,11 @@ export const editOccupationToOccupationAPI = (payload) => {
 };
 
 export const deleteOccupationToOccupationAPI = (payload) => {
-  const preparedData = { id: payload };
-  const apiUrl = `${url.DELETE_OCCUPATION_TO_OCCUPATION_API}delete/`;
+   const preparedData = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+   const apiUrl = `${url.DELETE_OCCUPATION_TO_OCCUPATION_API}delete/?search=${payload?.search}&occupationVersion=${payload?.occupationVersion}&representingCountry=${payload?.representingCountry}&occupationName=${payload?.occupationName}&occupationCode=${payload?.occupationCode}`;
   return delWithPayload(apiUrl, preparedData);
 };
 
@@ -3644,8 +3676,13 @@ export const editEligibilityOccupationNameAPI = (payload) => {
 };
 
 export const deleteEligibilityOccupationNameAPI = (payload) => {
-  const apiUrl = `${url.DELETE_ELIGIBILITY_OCCUPATION_NAME_API}delete/`;
-  return delWithPayload(apiUrl, { id: payload });
+  // const apiUrl = `${url.DELETE_ELIGIBILITY_OCCUPATION_NAME_API}delete/`;
+   const preparedData = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+   const apiUrl = `${url.DELETE_ELIGIBILITY_OCCUPATION_NAME_API}delete/?search=${payload?.search}&occupationVersion=${payload?.occupationVersion}&representingCountry=${payload?.representingCountry}&occupationName=${payload?.occupationName}&occupationCode=${payload?.occupationCode}`;
+  return delWithPayload(apiUrl,preparedData);
 };
 
 export const exportEligibilityOccupationNameAPI = (payload) => {
@@ -5213,9 +5250,14 @@ export const editFactorForAPI = (payload) => {
 };
 
 export const deleteFactorForAPI = (payload) => {
-  const preparedData = { id: payload };
-  const apiUrl = `${url.DELETE_FACTOR_FOR_API}delete/`;
-  return delWithPayload(apiUrl, preparedData);
+  // const preparedData = { id: payload };
+  // const apiUrl = `${url.DELETE_FACTOR_FOR_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+ const apiUrl = `${url.DELETE_FACTOR_FOR_API}delete/?search=${payload?.search}`;
+  return delWithPayload(apiUrl, prepareDATA);
 };
 
 export const exportFactorForAPI = (payload) => {
@@ -5245,8 +5287,13 @@ export const editAgeGroupAPI = (payload) => {
 };
 
 export const deleteAgeGroupAPI = (payload) => {
-  const preparedData = { id: payload };
-  const apiUrl = `${url.DELETE_AGE_GROUP_API}delete/`;
+  // const preparedData = { id: payload };
+  // const apiUrl = `${url.DELETE_AGE_GROUP_API}delete/`;
+  const preparedData = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+ const apiUrl = `${url.DELETE_AGE_GROUP_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, preparedData);
 };
 
@@ -5276,8 +5323,13 @@ export const editAcademicResultGroupAPI = (payload) => {
 };
 
 export const deleteAcademicResultGroupAPI = (payload) => {
-  const preparedData = { id: payload };
-  const apiUrl = `${url.DELETE_ACADEMIC_RESULT_GROUP_API}delete/`;
+  // const preparedData = { id: payload };
+  // const apiUrl = `${url.DELETE_ACADEMIC_RESULT_GROUP_API}delete/`;
+   const preparedData = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+ const apiUrl = `${url.DELETE_ACADEMIC_RESULT_GROUP_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, preparedData);
 };
 
@@ -5306,8 +5358,13 @@ export const editBacklogsGroupAPI = (payload) => {
 };
 
 export const deleteBacklogsGroupAPI = (payload) => {
-  const preparedData = { id: payload };
-  const apiUrl = `${url.DELETE_BACKLOGS_GROUP_API}delete/`;
+  // const preparedData = { id: payload };
+  // const apiUrl = `${url.DELETE_BACKLOGS_GROUP_API}delete/`;
+   const preparedData = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+ const apiUrl = `${url.DELETE_BACKLOGS_GROUP_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, preparedData);
 };
 
@@ -5336,8 +5393,13 @@ export const editGapGroupAPI = (payload) => {
 };
 
 export const deleteGapGroupAPI = (payload) => {
-  const preparedData = { id: payload };
-  const apiUrl = `${url.DELETE_GAP_GROUP_API}delete/`;
+  // const preparedData = { id: payload };
+  // const apiUrl = `${url.DELETE_GAP_GROUP_API}delete/`;
+   const preparedData = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+ const apiUrl = `${url.DELETE_GAP_GROUP_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, preparedData);
 };
 
@@ -5603,8 +5665,13 @@ export const editLanguageAbilityGroupAPI = (payload) => {
 };
 
 export const deleteLanguageAbilityGroupAPI = (payload) => {
-    const apiUrl = `${url.DELETE_LANGUAGE_ABILITY_GROUP_API}delete/`;
-    return delWithPayload(apiUrl, { id: payload });
+    // const apiUrl = `${url.DELETE_LANGUAGE_ABILITY_GROUP_API}delete/`;
+    const preparedData = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+ const apiUrl = `${url.DELETE_LANGUAGE_ABILITY_GROUP_API}delete/?search=${payload?.search}`;
+    return delWithPayload(apiUrl, preparedData);
 };
 
 export const exportLanguageAbilityGroupAPI = (payload) => {
@@ -5633,8 +5700,13 @@ export const editEntranceTestAbilityGroupAPI = (payload) => {
 };
 
 export const deleteEntranceTestAbilityGroupAPI = (payload) => {
-    const apiUrl = `${url.DELETE_ENTRANCE_TEST_ABILITY_GROUP_API}delete/`;
-    return delWithPayload(apiUrl, { id: payload });
+    // const apiUrl = `${url.DELETE_ENTRANCE_TEST_ABILITY_GROUP_API}delete/`;
+    const preparedData = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+ const apiUrl = `${url.DELETE_ENTRANCE_TEST_ABILITY_GROUP_API}delete/?search=${payload?.search}`;
+    return delWithPayload(apiUrl, preparedData);
 };
 
 export const exportEntranceTestAbilityGroupAPI = (payload) => {

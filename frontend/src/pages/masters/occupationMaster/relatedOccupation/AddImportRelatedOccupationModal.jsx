@@ -107,8 +107,8 @@ const AddImportRelatedOccupationModal = ({ show, handleClose }) => {
                   "Related Occupation Code",
                   "Job Prospect",
                 ],
-                sheetName: "Related Occupation",
-                fileName: "Related Occupation",
+                sheetName: "RelatedOccupation",
+                fileName: "RelatedOccupation",
               };
               exportToExcelDuplicate(
                 prepareData.data,
@@ -128,8 +128,8 @@ const AddImportRelatedOccupationModal = ({ show, handleClose }) => {
                   "Related Occupation Code",
                   "Reason",
                 ],
-                sheetName: "Related Occupation",
-                fileName: "Related Occupation",
+                sheetName: "RelatedOccupation",
+                fileName: "RelatedOccupation",
               };
               exportToExcelWrongData(
                 prepareData.data,
@@ -300,7 +300,7 @@ const AddImportRelatedOccupationModal = ({ show, handleClose }) => {
           show={showSampleExcelDownload}
           handleClose={handleCloseSampleExcelDownload}
           prepareData={{
-            downloadFileName: "Related Occupation",
+            downloadFileName: "RelatedOccupation",
             items: [
               "Country",
               "Occupation Version",
