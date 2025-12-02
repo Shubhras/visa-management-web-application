@@ -2665,6 +2665,36 @@ class LanguageTestResultDeleteAPIView(APIView):
                     "message": f"{count} result(s) deleted based on filters: {', '.join(applied_filters)}",
                     "data": None
                 })
+            
+            if delete_all_flag and applied_filters and (ids_body in [None, "", []]):
+                count = queryset.count()
+
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No result(s) found matching applied filters",
+                        "data": None
+                    }, status=404)
+
+                try:
+                    with transaction.atomic():
+                        queryset.delete()
+                except IntegrityError:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Filtered dataset can't be deleted, child reference exists",
+                        "data": None
+                    }, status=400)
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} result(s) deleted based on filters: {', '.join(applied_filters)}",
+                    "data": None
+                })
+
 
             # ---------- Case 5: deleteAll:true but no filter applied ----------
             if delete_all_flag and not applied_filters:
@@ -4113,7 +4143,7 @@ class EntranceTestNameDeleteAPIView(APIView):
         # CASE 3: deleteAll = true AND search present → Search delete
         # ---------------------------------------------------
         if delete_all and search and (ids in [None, ""]):
-            qs_search = queryset.filter(fullname__istartswith=search)
+            qs_search = queryset.filter(shortname__istartswith=search)
             count = qs_search.count()
 
             if count == 0:
@@ -5274,6 +5304,39 @@ class EntranceTestResultDeleteAPIView(APIView):
                     "message": f"{count} result(s) deleted based on filters: {', '.join(applied_filters)}",
                     "data": None
                 })
+
+
+            # ---------- Case 4: deleteAll:true with applied filters ----------
+            if delete_all_flag and applied_filters and (ids_body in [None, "", []]):
+                count = queryset.count()
+
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No result(s) found matching applied filters",
+                        "data": None
+                    }, status=404)
+
+                try:
+                    with transaction.atomic():
+                        queryset.delete()
+                except IntegrityError:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Filtered dataset can't be deleted, child reference exists",
+                        "data": None
+                    }, status=400)
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} result(s) deleted based on filters: {', '.join(applied_filters)}",
+                    "data": None
+                })
+
+
 
             # ---------- Case 5: deleteAll:true but no filter applied ----------
             if delete_all_flag and not applied_filters:

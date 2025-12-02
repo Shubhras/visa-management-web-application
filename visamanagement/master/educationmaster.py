@@ -9879,67 +9879,6 @@ class DegreeAwardedByUpdateAPIView(APIView):
 
 
 # -------------------- DELETE API --------------------
-# class DegreeAwardedByDeleteAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
-
-#     def delete(self, request, uuid=None):
-#         ids = request.data.get('id', None)
-
-#         if uuid:
-#             try:
-#                 degree = DegreeAwardedBy.objects.get(uuid=uuid)
-#                 degree.delete()
-#                 return Response({
-#                     "statusCode": 204,
-#                     "status": True,
-#                     "message": "Degree permanently deleted",
-#                     "data": None
-#                 }, status=status.HTTP_204_NO_CONTENT)
-#             except DegreeAwardedBy.DoesNotExist:
-#                 return Response({
-#                     "statusCode": 404,
-#                     "status": False,
-#                     "message": "Degree not found",
-#                     "data": None
-#                 }, status=status.HTTP_404_NOT_FOUND)
-
-#         if ids == "all":
-#             count = DegreeAwardedBy.objects.count()
-#             DegreeAwardedBy.objects.all().delete()
-#             return Response({
-#                 "statusCode": 200,
-#                 "status": True,
-#                 "message": f"All {count} degree(s) permanently deleted",
-#                 "data": None
-#             })
-
-#         if not ids or not isinstance(ids, list):
-#             return Response({
-#                 "statusCode": 400,
-#                 "status": False,
-#                 "message": "Provide a list of UUIDs in 'id' field or 'all'.",
-#                 "data": None
-#             }, status=status.HTTP_400_BAD_REQUEST)
-
-#         valid_uuids = []
-#         invalid_uuids = []
-#         for u in ids:
-#             try:
-#                 valid_uuids.append(UUID(u))
-#             except ValueError:
-#                 invalid_uuids.append(u)
-
-#         queryset = DegreeAwardedBy.objects.filter(uuid__in=valid_uuids)
-#         count = queryset.count()
-#         queryset.delete()
-
-#         return Response({
-#             "statusCode": 200,
-#             "status": True,
-#             "message": f"{count} degree(s) permanently deleted",
-#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-#         })
-
 
 
 class DegreeAwardedByDeleteAPIView(APIView):
