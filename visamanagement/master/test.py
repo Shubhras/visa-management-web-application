@@ -127,96 +127,6 @@ class LanguageUpdateAPIView(APIView):
 
 
 
-# class LanguageDeleteAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
-
-#     def delete(self, request, uuid=None):
-#         uuids = request.data.get('id', None)
-
-#         # --- Single delete via URL parameter ---
-#         if uuid:
-#             try:
-#                 lang = Language.objects.get(uuid=uuid, is_deleted=False)
-#                 lang.delete()
-#                 return Response({
-#                     "statusCode": 204,
-#                     "status": True,
-#                     "message": "Language deleted successfully",
-#                     "data": None
-#                 }, status=status.HTTP_204_NO_CONTENT)
-#             except Language.DoesNotExist:
-#                 return Response({
-#                     "statusCode": 404,
-#                     "status": False,
-#                     "message": "Language not found",
-#                     "data": None
-#                 }, status=status.HTTP_404_NOT_FOUND)
-
-#         # --- Delete all if 'all' is passed ---
-#         if uuids == "all":
-#             langs = Language.objects.filter(is_deleted=False)
-#             count = langs.count()
-#             if count == 0:
-#                 return Response({
-#                     "statusCode": 404,
-#                     "status": False,
-#                     "message": "No Language records found to delete.",
-#                     "data": None
-#                 }, status=status.HTTP_404_NOT_FOUND)
-#             langs.delete()
-#             return Response({
-#                 "statusCode": 200,
-#                 "status": True,
-#                 "message": f"All {count} Language record(s) deleted successfully.",
-#                 "data": None
-#             }, status=status.HTTP_200_OK)
-
-#         # --- Validate UUID list ---
-#         if not uuids or not isinstance(uuids, list):
-#             return Response({
-#                 "statusCode": 400,
-#                 "status": False,
-#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
-#                 "data": None
-#             }, status=status.HTTP_400_BAD_REQUEST)
-
-#         valid_uuids = []
-#         invalid_uuids = []
-#         for u in uuids:
-#             try:
-#                 valid_uuids.append(UUID(u))
-#             except ValueError:
-#                 invalid_uuids.append(u)
-
-#         if not valid_uuids:
-#             return Response({
-#                 "statusCode": 400,
-#                 "status": False,
-#                 "message": "No valid UUIDs provided.",
-#                 "data": {"invalid_uuids": invalid_uuids}
-#             }, status=status.HTTP_400_BAD_REQUEST)
-
-#         # --- Bulk delete ---
-#         langs = Language.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-#         count = langs.count()
-
-#         if count == 0:
-#             return Response({
-#                 "statusCode": 404,
-#                 "status": False,
-#                 "message": "No matching Language records found.",
-#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-#             }, status=status.HTTP_404_NOT_FOUND)
-
-#         langs.delete()
-
-#         return Response({
-#             "statusCode": 200,
-#             "status": True,
-#             "message": f"{count} Language record(s) deleted successfully.",
-#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-#         }, status=status.HTTP_200_OK)
-
 
 class LanguageDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -351,37 +261,6 @@ class LanguageDeleteAPIView(APIView):
             "data": None
         }, status=400)
     
-
-
-
-# class LanguageListAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
-
-#     def get(self, request):
-#         search = request.GET.get('search', '').strip()
-#         sort_by = request.GET.get('sortBy', 'created_at')
-#         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
-
-#         allowed_sort_fields = ['name', 'description', 'created_at']
-#         if sort_by not in allowed_sort_fields:
-#             sort_by = 'created_at'
-
-#         # Apply descending order for 'desc'
-#         if sort_order == 'desc':
-#             sort_by = f'-{sort_by}'
-
-#         queryset = Language.objects.filter(is_deleted=False)  
-#         if search:
-#             queryset = queryset.filter(
-#                 Q(name__istartswith=search) |
-#                 Q(description__istartswith=search)
-#             )
-
-#         queryset = queryset.order_by(sort_by)
-#         paginator = CustomPagination()
-#         result_page = paginator.paginate_queryset(queryset, request)
-#         serializer = LanguageSerializer(result_page, many=True)
-#         return paginator.get_paginated_response(serializer.data)
 
 
 
@@ -665,172 +544,116 @@ class LanguageImportAPIView(APIView):
         sheet_name = request.data.get('sheet_name')
 
         if not file:
-            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'statusCode': 400, 'status': False, 'message': 'No file uploaded'}, status=400)
 
-        format_type = file.name.split('.')[-1].lower()
-
-        # Required & optional headers
+        ext = file.name.split('.')[-1].lower()
         required_headers = {'language name (test)'}
         optional_headers = {'description', 'is_deleted'}
-
-        data = []
+        parsed_data = []
         duplicates = []
         skipped_rows = []
+        to_create = []
+        imported_count = 0
+        seen_in_file = set()
 
         try:
-            headers = []
-
-            # ---------------------------------------------------------
-            #                      XLSX Handling
-            # ---------------------------------------------------------
-            if format_type == 'xlsx':
+            # ---------------- XLSX Handling ----------------
+            if ext == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 sheets = wb.sheetnames
 
                 if not sheet_name:
-                    return Response({
-                        "error": "Please provide sheet_name",
-                        "available_sheets": sheets
-                    }, status=400)
+                    return Response({'statusCode': 400, 'status': False, 'message': 'Please provide sheet_name', 'available_sheets': sheets}, status=400)
 
                 if sheet_name not in sheets:
-                    return Response({
-                        "error": f"Sheet '{sheet_name}' not found",
-                        "available_sheets": sheets
-                    }, status=400)
+                    return Response({'statusCode': 400, 'status': False, 'message': f"Sheet '{sheet_name}' not found", 'available_sheets': sheets}, status=400)
 
                 ws = wb[sheet_name]
-
                 if ws.max_row <= 1:
-                    return Response({
-                        "status": False,
-                        "statusCode": 400,
-                        "message": f"Sheet '{sheet_name}' is empty."
-                    }, status=400)
+                    return Response({'statusCode': 400, 'status': False, 'message': f"Sheet '{sheet_name}' is empty."}, status=400)
 
-                headers = [
-                    (cell.value or "").strip().lower()
-                    for cell in next(ws.iter_rows(min_row=1, max_row=1))
-                ]
-
-                # Validate required headers
+                headers = [(cell.value or "").strip().lower() for cell in next(ws.iter_rows(min_row=1, max_row=1))]
                 missing = required_headers - set(headers)
                 if missing:
-                    return Response({
-                        "status": False,
-                        "statusCode": 400,
-                        "message": f"Missing required headers: {missing}"
-                    }, status=400)
+                    return Response({'statusCode': 400, 'status': False, 'message': f"Missing required headers: {missing}"}, status=400)
 
-                # Load row data
-                for row_no, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
-                    row_dict["_row_number"] = row_no
-                    data.append(row_dict)
+                    row_dict["_row_number"] = idx
+                    parsed_data.append(row_dict)
 
-            # ---------------------------------------------------------
-            #                       CSV Handling
-            # ---------------------------------------------------------
-            elif format_type == "csv":
+            # ---------------- CSV Handling ----------------
+            elif ext == 'csv':
                 decoded = file.read().decode('utf-8')
                 dataset = Dataset()
-                dataset.load(decoded, format="csv")
-
+                dataset.load(decoded, format='csv')
                 for idx, row in enumerate(dataset.dict, start=2):
                     row_lower = {k.lower(): v for k, v in row.items()}
-
                     missing = required_headers - set(row_lower.keys())
                     if missing:
-                        return Response({
-                            "status": False,
-                            "statusCode": 400,
-                            "message": f"Missing required headers: {missing}"
-                        }, status=400)
-
+                        return Response({'statusCode': 400, 'status': False, 'message': f"Missing required headers: {missing}"}, status=400)
                     row_lower["_row_number"] = idx
-                    data.append(row_lower)
-
+                    parsed_data.append(row_lower)
             else:
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "Unsupported file format. Use .xlsx or .csv"
-                }, status=400)
+                return Response({'statusCode': 400, 'status': False, 'message': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
 
-            # ---------------------------------------------------------
-            #                       PROCESS ROWS
-            # ---------------------------------------------------------
-            imported_count = 0
+            # ---------------- PROCESS ROWS ----------------
+            existing_map = {l.name.lower(): l for l in Language.objects.all()}
 
-            for row in reversed(data):
+            for row in reversed(parsed_data):
                 row_no = row.get("_row_number", "Unknown")
-
                 name = (row.get("language name (test)") or "").strip()
                 description = (row.get("description") or "").strip()
                 is_deleted = row.get("is_deleted", False)
 
-                # Missing language name
                 if not name:
-                    skipped_rows.append({
-                        "Row": row_no,
-                        "Language Name": "",
-                        "Description": description,
-                        "Reason": "Missing language name"
-                    })
+                    skipped_rows.append({"Row": row_no, "Language Name": "", "Description": description, "Reason": "Missing language name"})
                     continue
 
-                # Check if language already exists
-                existing = Language.objects.filter(name__iexact=name).first()
+                if name.lower() in seen_in_file:
+                    duplicates.append({"Row": row_no, "Language Name": name, "Description": description, "Reason": "Duplicate in file"})
+                    continue
+                seen_in_file.add(name.lower())
 
+                existing = existing_map.get(name.lower())
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({
-                            "Row": row_no,
-                            "Language Name": "",
-                            "Description": description,
-                            "Reason": "Already exists in database"
-                        })
+                        duplicates.append({"Row": row_no, "Language Name": name, "Description": description, "Reason": "Already exists in database"})
                         continue
-                    
-                    # Reactivate deleted record
                     existing.description = description
                     existing.is_deleted = False
                     existing.save()
                     imported_count += 1
+                    continue
 
-                else:
-                    # Create new
-                    Language.objects.create(
-                        name=name,
-                        description=description,
-                        is_deleted=is_deleted or False
-                    )
-                    imported_count += 1
+                # Add to bulk create list
+                to_create.append(Language(name=name, description=description, is_deleted=is_deleted or False))
+
+            # Bulk create
+            if to_create:
+                batch_size = 500
+                for i in range(0, len(to_create), batch_size):
+                    Language.objects.bulk_create(to_create[i:i + batch_size])
+                imported_count += len(to_create)
 
         except Exception as e:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": str(e)
-            }, status=400)
+            return Response({'statusCode': 400, 'status': False, 'message': str(e)}, status=400)
 
-        # ---------------------------------------------------------
-        #                        FINAL RESPONSE
-        # ---------------------------------------------------------
         return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"Sheet '{sheet_name}' imported successfully" if sheet_name else "Import successful",
-            "imported_count": imported_count,
-            "duplicates": list(reversed(duplicates)),
-            "skipped_rows": list(reversed(skipped_rows)),
-        }, status=200)
-
+            'statusCode': 200,
+            'status': True,
+            'message': f"Sheet '{sheet_name}' imported successfully" if sheet_name else "Import successful",
+            'imported_count': imported_count,
+            'duplicates': list(reversed(duplicates)),
+            'skipped_rows': list(reversed(skipped_rows)),
+        })
 
 
 #--------------------language Test-------------------
+
+
 
 # class LanguageTestListAPIView(APIView):
 #     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -839,13 +662,14 @@ class LanguageImportAPIView(APIView):
 #         search = request.GET.get('search', '').strip()
 #         sort_by = request.GET.get('sortBy', 'created_at')
 #         sort_order = request.GET.get('sortOrder', 'desc')
-#         allowed_sort_fields = ['name', 'fullname', 'description', 'updated_at']
-
+#         custom_sort = request.GET.get('customSort')
+#         allowed_sort_fields = ['name', 'fullname', 'description', 'created_at','updated_at']
+        
 #         if sort_by not in allowed_sort_fields:
 #             sort_by = 'created_at'
 #         if sort_order == 'desc':
 #             sort_by = f'-{sort_by}'
-
+             
 #         queryset = LanguageTest.objects.filter(is_deleted=False)
 
 #         if search:
@@ -853,7 +677,42 @@ class LanguageImportAPIView(APIView):
 #                 Q(name__istartswith=search)
 #             )
 
-#         queryset = queryset.order_by(sort_by)
+#         # sorting
+#         sort_field_map = {
+#             'name': 'name',
+#             'fullname': 'fullname',
+#             'description': 'description',
+#             'created_at': 'created_at',
+#             'updated_at': 'updated_at',
+#         }
+#         sort_fields = []
+#         if custom_sort:
+#             for rule in custom_sort.split(','):
+#                 try:
+#                     field,order = rule.split(':')
+#                     field = field.strip()
+#                     order = order.strip().lower()
+#                     if field not in sort_field_map:
+#                         continue
+#                     orm_field = sort_field_map[field]
+
+#                     if field in ['name','fullname','description']:
+#                         f = Lower(orm_field)
+#                     else:
+#                         f = F(orm_field)
+#                     sort_fields.append(
+#                         f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+#                     )
+#                 except ValueError:
+#                     continue
+#         else:
+#             sort_by = request.GET.get('sortBy','created_at')
+#             sort_order = request.GET.get('sortOrder','asc')
+#             orm_field = sort_field_map.get(sort_by , 'created_at')
+#             f = F(orm_field)
+#             sort_fields = [f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)]
+#         queryset = queryset.order_by(*sort_fields)
+#         #queryset = queryset.order_by(sort_by)
 #         paginator = CustomPagination()
 #         result_page = paginator.paginate_queryset(queryset, request)
 #         serializer = LanguageTestSerializer(result_page, many=True)
@@ -865,63 +724,93 @@ class LanguageTestListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
-        custom_sort = request.GET.get('customSort')
-        allowed_sort_fields = ['name', 'fullname', 'description', 'created_at','updated_at']
-        
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
-             
+        custom_sort = request.GET.get('customSort', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at').strip()
+        sort_order = request.GET.get('sortOrder', 'desc').strip().lower()
+        uuid_language_name_test = request.GET.get('languageNameTest', '').strip()
+
         queryset = LanguageTest.objects.filter(is_deleted=False)
 
+        #  Safe UUID List Parser
+        def parse_uuid_list(raw):
+            valid = []
+            if raw:
+                for x in raw.split(','):
+                    try:
+                        valid.append(UUID(x.strip()))
+                    except ValueError:
+                        continue
+            return valid
+
+        #  FILTER → language UUID list
+        language_test_uuids = parse_uuid_list(uuid_language_name_test)
+        if language_test_uuids:
+            queryset = queryset.filter(language__uuid__in=language_test_uuids)
+
+        #  SEARCH
         if search:
             queryset = queryset.filter(
                 Q(name__istartswith=search)
             )
 
-        # sorting
+        #  SORTING FIXED
         sort_field_map = {
-            'name': 'name',
+            'languageNameTest': 'language__name',
+            'languageTestName': 'name',
             'fullname': 'fullname',
             'description': 'description',
             'created_at': 'created_at',
             'updated_at': 'updated_at',
         }
-        sort_fields = []
+
+        orm_field = sort_field_map.get(sort_by, 'created_at')
+
+        # CASE 1 → Custom multi rule sort
         if custom_sort:
+            sort_fields = []
             for rule in custom_sort.split(','):
                 try:
-                    field,order = rule.split(':')
+                    field, order = rule.split(':')
                     field = field.strip()
                     order = order.strip().lower()
                     if field not in sort_field_map:
                         continue
-                    orm_field = sort_field_map[field]
+                    mapped = sort_field_map[field]
 
-                    if field in ['name','fullname','description']:
-                        f = Lower(orm_field)
+                    if field in ['fullname', 'description', 'languageNameTest', 'languageTestName']:
+                        expr = Lower(F(mapped))
                     else:
-                        f = F(orm_field)
-                    sort_fields.append(
-                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
-                    )
+                        expr = F(mapped)
+
+                    sort_fields.append(expr.asc(nulls_last=True) if order == 'asc' else expr.desc(nulls_last=True))
+
                 except ValueError:
                     continue
+
+            if sort_fields:
+                queryset = queryset.order_by(*sort_fields)
+
+        # CASE 2 → Normal sortBy + sortOrder
         else:
-            sort_by = request.GET.get('sortBy','created_at')
-            sort_order = request.GET.get('sortOrder','asc')
-            orm_field = sort_field_map.get(sort_by , 'created_at')
-            f = F(orm_field)
-            sort_fields = [f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)]
-        queryset = queryset.order_by(*sort_fields)
-        #queryset = queryset.order_by(sort_by)
+            sort_fields = []  #  Initialized to avoid crash
+
+            if sort_by in ['name', 'fullname', 'description']:
+                expr = Lower(F(orm_field))
+            else:
+                expr = F(orm_field)
+
+            sort_fields.append(
+                expr.asc(nulls_last=True) if sort_order == 'asc' else expr.desc(nulls_last=True)
+            )
+
+            queryset = queryset.order_by(*sort_fields)  #  Ordering applied here only
+
+        #  Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = LanguageTestSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
+
 
 
 
@@ -3091,34 +2980,79 @@ class LanguageTestResultImportAPIView(APIView):
 
 
 
-
-
 class CLBLevelListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['name', 'description', 'created_at']
-
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        custom_sort = request.GET.get('customSort', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at').strip()
+        sort_order = request.GET.get('sortOrder', 'desc').strip().lower()
 
         queryset = CLBLevel.objects.filter(is_deleted=False)
+
+        #  SEARCH filter
         if search:
             queryset = queryset.filter(
-                Q(name__istartswith=search) |
-                Q(description__istartswith=search)
+                Q(name__istartswith=search) 
             )
 
-        queryset = queryset.order_by(sort_by)
+        #  SORTING MAP
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        orm_field = sort_field_map.get(sort_by, 'created_at')
+
+        # CASE 1 → Multi-rule customSort
+        if custom_sort:
+            sort_fields = []
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+                    mapped = sort_field_map[field]
+
+                    # case-insensitive for text
+                    expr = Lower(F(mapped)) if field in ['name', 'description'] else F(mapped)
+
+                    sort_fields.append(
+                        expr.asc(nulls_last=True) if order == 'asc' else expr.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+
+            if sort_fields:
+                queryset = queryset.order_by(*sort_fields)
+
+        # CASE 2 → Normal sortBy + sortOrder
+        else:
+            sort_fields = []  
+            if sort_by in ['name', 'description']:
+                expr = Lower(F(orm_field))
+            else:
+                expr = F(orm_field)
+
+            sort_fields.append(
+                expr.asc(nulls_last=True) if sort_order == 'asc' else expr.desc(nulls_last=True)
+            )
+
+            queryset = queryset.order_by(*sort_fields)
+
+        #  Pagination response
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = CLBLevelSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
+
+
+
 
 
 class CLBLevelCreateAPIView(APIView):
@@ -3554,33 +3488,111 @@ class CLBLevelImportAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+# class StudyLanguageBanchmarkListAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')
+#         allowed_sort_fields = ['name', 'description', 'created_at']
+
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = 'created_at'
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
+
+#         queryset = StudyLanguageBanchmark.objects.filter(is_deleted=False)
+#         if search:
+#             queryset = queryset.filter(
+#                 Q(name__istartswith=search) |
+#                 Q(description__istartswith=search)
+#             )
+
+#         queryset = queryset.order_by(sort_by)
+#         paginator = CustomPagination()
+#         result_page = paginator.paginate_queryset(queryset, request)
+#         serializer = StudyLanguageBanchmarkSerializer(result_page, many=True)
+#         return paginator.get_paginated_response(serializer.data)
+
+
 class StudyLanguageBanchmarkListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['name', 'description', 'created_at']
-
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        custom_sort = request.GET.get('customSort', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at').strip()
+        sort_order = request.GET.get('sortOrder', 'desc').strip().lower()
 
         queryset = StudyLanguageBanchmark.objects.filter(is_deleted=False)
+
+        #  SEARCH (multi field)
         if search:
             queryset = queryset.filter(
-                Q(name__istartswith=search) |
-                Q(description__istartswith=search)
+                Q(name__istartswith=search)
             )
 
-        queryset = queryset.order_by(sort_by)
+        #  SORTING
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',  # if exists in model
+        }
+
+        sort_fields = []
+
+        # CASE 1 → Custom multi-rule sorting
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    #  Case-insensitive Lower() for text fields
+                    if field in ['name', 'description']:
+                        expr = Lower(F(orm_field))
+                    else:
+                        expr = F(orm_field)
+
+                    sort_fields.append(
+                        expr.asc(nulls_last=True) if order == 'asc' else expr.desc(nulls_last=True)
+                    )
+
+                except ValueError:
+                    continue
+
+            if sort_fields:
+                queryset = queryset.order_by(*sort_fields)
+            else:
+                queryset = queryset.order_by(F('created_at').desc(nulls_last=True))
+
+        # CASE 2 → Normal single field sort (`sortBy` + `sortOrder`)
+        else:
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+
+            if sort_by in ['name', 'description']:
+                expr = Lower(F(orm_field))
+            else:
+                expr = F(orm_field)
+
+            queryset = queryset.order_by(
+                expr.asc(nulls_last=True) if sort_order == 'asc' else expr.desc(nulls_last=True)
+            )
+
+        #  PAGINATION
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = StudyLanguageBanchmarkSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
-
+    
 
 class StudyLanguageBanchmarkCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -4016,33 +4028,109 @@ class StudyLanguageBenchmarkImportAPIView(APIView):
 
 
 
+# class EntranceTestNameListAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')
+#         allowed_sort_fields = ['fullname', 'shortname', 'description', 'updated_at']
+
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = 'created_at'
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
+
+#         queryset = EntranceTestName.objects.filter(is_deleted=False)
+#         if search:
+#             queryset = queryset.filter(
+#                 Q(fullname__istartswith=search) |
+#                 Q(shortname__istartswith=search) |
+#                 Q(description__istartswith=search)
+#             )
+
+#         queryset = queryset.order_by(sort_by)
+#         paginator = CustomPagination()
+#         result_page = paginator.paginate_queryset(queryset, request)
+#         serializer = EntranceTestNameSerializer(result_page, many=True)
+#         return paginator.get_paginated_response(serializer.data)
+
+
 class EntranceTestNameListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['fullname', 'shortname', 'description', 'updated_at']
+        custom_sort = request.GET.get('customSort', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at').strip()
+        sort_order = request.GET.get('sortOrder', 'desc').strip().lower()
 
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
-
+        #  base queryset
         queryset = EntranceTestName.objects.filter(is_deleted=False)
+
+        #  search filter
         if search:
             queryset = queryset.filter(
-                Q(fullname__istartswith=search) |
-                Q(shortname__istartswith=search) |
-                Q(description__istartswith=search)
+                Q(fullname__istartswith=search)
             )
 
-        queryset = queryset.order_by(sort_by)
+        #  sorting map
+        sort_field_map = {
+            'fullname': 'fullname',
+            'shortname': 'shortname',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        orm_field = sort_field_map.get(sort_by, 'created_at')
+
+        # CASE 1 → custom multi-rule sort
+        if custom_sort:
+            sort_fields = []
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+                    mapped = sort_field_map[field]
+
+                    expr = Lower(F(mapped)) if field in ['fullname', 'shortname', 'description'] else F(mapped)
+
+                    sort_fields.append(
+                        expr.asc(nulls_last=True) if order == 'asc' else expr.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+
+            if sort_fields:
+                queryset = queryset.order_by(*sort_fields)
+
+        # CASE 2 → normal single sortBy + sortOrder
+        else:
+            sort_fields = []  #  init list to avoid crash
+            
+            expr = Lower(F(orm_field)) if sort_by in ['fullname', 'shortname', 'description'] else F(orm_field)
+
+            sort_fields.append(
+                expr.asc(nulls_last=True) if sort_order == 'asc' else expr.desc(nulls_last=True)
+            )
+
+            queryset = queryset.order_by(*sort_fields)
+
+        #  final fallback default sort
+        if not queryset.ordered:
+            queryset = queryset.order_by(F('created_at').desc(nulls_last=True))  #  default created_at DESC
+
+        #  pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = EntranceTestNameSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
+    
 
 
 class EntranceTestNameCreateAPIView(APIView):
