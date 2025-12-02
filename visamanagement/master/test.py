@@ -24,6 +24,7 @@ import pytz
 from django.utils import timezone
 import io
 import csv
+from django.db import DatabaseError, transaction, IntegrityError
 
 india_tz = pytz.timezone('Asia/Kolkata')
 
@@ -126,125 +127,140 @@ class LanguageUpdateAPIView(APIView):
 
 
 
+
 class LanguageDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def delete(self, request, uuid=None):
-        uuids = request.data.get('id', None)
+    def delete(self, request):
+        ids = request.data.get("id", None)
+        delete_all = request.data.get("deleteAll", False)
+        search = request.GET.get("search", "").strip()
 
-        # --- Single delete via URL parameter ---
-        if uuid:
-            try:
-                lang = Language.objects.get(uuid=uuid, is_deleted=False)
-                lang.delete()
-                return Response({
-                    "statusCode": 204,
-                    "status": True,
-                    "message": "Language deleted successfully",
-                    "data": None
-                }, status=status.HTTP_204_NO_CONTENT)
-            except Language.DoesNotExist:
-                return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "Language not found",
-                    "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
+        queryset = Language.objects.filter(is_deleted=False)
 
-        # --- Delete all if 'all' is passed ---
-        if uuids == "all":
-            langs = Language.objects.filter(is_deleted=False)
-            count = langs.count()
+        # ---------------------------------------------------
+        # CASE 3: deleteAll = true AND search present → Search delete
+        # ---------------------------------------------------
+        if delete_all and search and (ids in [None, ""]):
+            qs_search = queryset.filter(name__istartswith=search)
+            count = qs_search.count()
+
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No Language records found to delete.",
+                    "message": "No languages found matching this search filter",
                     "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
-            langs.delete()
+                }, status=404)
+
+            try:
+                with transaction.atomic():
+                    qs_search.delete()
+            except IntegrityError:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "You can't delete selected language(s) because they are used in child tables",
+                    "data": None
+                }, status=400)
+
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} Language record(s) deleted successfully.",
+                "message": f"{count} language(s) deleted based on search filter",
                 "data": None
-            }, status=status.HTTP_200_OK)
+            }, status=200)
 
-        # --- Validate UUID list ---
-        if not uuids or not isinstance(uuids, list):
+        # ---------------------------------------------------
+        # CASE 2: deleteAll = false AND id = "all" → Delete full table
+        # ---------------------------------------------------
+        if ids == "all" and delete_all is False and search == "":
+            qs_all = queryset
+            count = qs_all.count()
+
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No languages found to delete",
+                    "data": None
+                }, status=404)
+
+            deleted, skipped = [], []
+
+            for lang in qs_all:
+                try:
+                    with transaction.atomic():
+                        lang.delete()
+                    deleted.append(str(lang.uuid))
+                except IntegrityError:
+                    skipped.append(lang.name)
+
             return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
-                "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+                "statusCode": 200,
+                "status": True,
+                "message": f"Delete completed. {len(deleted)} deleted, {len(skipped)} skipped"
+            }, status=200)
 
-        valid_uuids = []
-        invalid_uuids = []
-        for u in uuids:
+        # ---------------------------------------------------
+        # CASE 1: deleteAll = false AND id = [UUID list] → Bulk delete
+        # ---------------------------------------------------
+        if delete_all is False and isinstance(ids, list):
+            valid_uuids, invalid_uuids = [], []
+
+            for u in ids:
+                try:
+                    valid_uuids.append(UUID(u))
+                except ValueError:
+                    invalid_uuids.append(u)
+
+            if not valid_uuids:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "No valid UUIDs provided.",
+                    "data": {"invalid_uuids": invalid_uuids}
+                }, status=400)
+
+            qs_ids = queryset.filter(uuid__in=valid_uuids)
+            count = qs_ids.count()
+
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No matching languages found for given UUIDs",
+                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                }, status=404)
+
             try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
+                with transaction.atomic():
+                    qs_ids.delete()
+            except IntegrityError:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "One or more language(s) are used in child tables, cannot delete.",
+                    "data": None
+                }, status=400)
 
-        if not valid_uuids:
             return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        # --- Bulk delete ---
-        langs = Language.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = langs.count()
-
-        if count == 0:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "No matching Language records found.",
+                "statusCode": 200,
+                "status": True,
+                "message": f"{count} language(s) deleted.",
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=status.HTTP_404_NOT_FOUND)
+            }, status=200)
 
-        langs.delete()
-
+        # ---------------------------------------------------
+        # INVALID FORMAT
+        # ---------------------------------------------------
         return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} Language record(s) deleted successfully.",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=status.HTTP_200_OK)
-
-
-# class LanguageListAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
-
-#     def get(self, request):
-#         search = request.GET.get('search', '').strip()
-#         sort_by = request.GET.get('sortBy', 'created_at')
-#         sort_order = request.GET.get('sortOrder', 'desc')  # default to newest first
-
-#         allowed_sort_fields = ['name', 'description', 'created_at']
-#         if sort_by not in allowed_sort_fields:
-#             sort_by = 'created_at'
-
-#         # Apply descending order for 'desc'
-#         if sort_order == 'desc':
-#             sort_by = f'-{sort_by}'
-
-#         queryset = Language.objects.filter(is_deleted=False)  
-#         if search:
-#             queryset = queryset.filter(
-#                 Q(name__istartswith=search) |
-#                 Q(description__istartswith=search)
-#             )
-
-#         queryset = queryset.order_by(sort_by)
-#         paginator = CustomPagination()
-#         result_page = paginator.paginate_queryset(queryset, request)
-#         serializer = LanguageSerializer(result_page, many=True)
-#         return paginator.get_paginated_response(serializer.data)
+            "statusCode": 400,
+            "status": False,
+            "message": "Invalid delete request format",
+            "data": None
+        }, status=400)
+    
 
 
 
@@ -528,172 +544,116 @@ class LanguageImportAPIView(APIView):
         sheet_name = request.data.get('sheet_name')
 
         if not file:
-            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'statusCode': 400, 'status': False, 'message': 'No file uploaded'}, status=400)
 
-        format_type = file.name.split('.')[-1].lower()
-
-        # Required & optional headers
+        ext = file.name.split('.')[-1].lower()
         required_headers = {'language name (test)'}
         optional_headers = {'description', 'is_deleted'}
-
-        data = []
+        parsed_data = []
         duplicates = []
         skipped_rows = []
+        to_create = []
+        imported_count = 0
+        seen_in_file = set()
 
         try:
-            headers = []
-
-            # ---------------------------------------------------------
-            #                      XLSX Handling
-            # ---------------------------------------------------------
-            if format_type == 'xlsx':
+            # ---------------- XLSX Handling ----------------
+            if ext == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 sheets = wb.sheetnames
 
                 if not sheet_name:
-                    return Response({
-                        "error": "Please provide sheet_name",
-                        "available_sheets": sheets
-                    }, status=400)
+                    return Response({'statusCode': 400, 'status': False, 'message': 'Please provide sheet_name', 'available_sheets': sheets}, status=400)
 
                 if sheet_name not in sheets:
-                    return Response({
-                        "error": f"Sheet '{sheet_name}' not found",
-                        "available_sheets": sheets
-                    }, status=400)
+                    return Response({'statusCode': 400, 'status': False, 'message': f"Sheet '{sheet_name}' not found", 'available_sheets': sheets}, status=400)
 
                 ws = wb[sheet_name]
-
                 if ws.max_row <= 1:
-                    return Response({
-                        "status": False,
-                        "statusCode": 400,
-                        "message": f"Sheet '{sheet_name}' is empty."
-                    }, status=400)
+                    return Response({'statusCode': 400, 'status': False, 'message': f"Sheet '{sheet_name}' is empty."}, status=400)
 
-                headers = [
-                    (cell.value or "").strip().lower()
-                    for cell in next(ws.iter_rows(min_row=1, max_row=1))
-                ]
-
-                # Validate required headers
+                headers = [(cell.value or "").strip().lower() for cell in next(ws.iter_rows(min_row=1, max_row=1))]
                 missing = required_headers - set(headers)
                 if missing:
-                    return Response({
-                        "status": False,
-                        "statusCode": 400,
-                        "message": f"Missing required headers: {missing}"
-                    }, status=400)
+                    return Response({'statusCode': 400, 'status': False, 'message': f"Missing required headers: {missing}"}, status=400)
 
-                # Load row data
-                for row_no, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
-                    row_dict["_row_number"] = row_no
-                    data.append(row_dict)
+                    row_dict["_row_number"] = idx
+                    parsed_data.append(row_dict)
 
-            # ---------------------------------------------------------
-            #                       CSV Handling
-            # ---------------------------------------------------------
-            elif format_type == "csv":
+            # ---------------- CSV Handling ----------------
+            elif ext == 'csv':
                 decoded = file.read().decode('utf-8')
                 dataset = Dataset()
-                dataset.load(decoded, format="csv")
-
+                dataset.load(decoded, format='csv')
                 for idx, row in enumerate(dataset.dict, start=2):
                     row_lower = {k.lower(): v for k, v in row.items()}
-
                     missing = required_headers - set(row_lower.keys())
                     if missing:
-                        return Response({
-                            "status": False,
-                            "statusCode": 400,
-                            "message": f"Missing required headers: {missing}"
-                        }, status=400)
-
+                        return Response({'statusCode': 400, 'status': False, 'message': f"Missing required headers: {missing}"}, status=400)
                     row_lower["_row_number"] = idx
-                    data.append(row_lower)
-
+                    parsed_data.append(row_lower)
             else:
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "Unsupported file format. Use .xlsx or .csv"
-                }, status=400)
+                return Response({'statusCode': 400, 'status': False, 'message': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
 
-            # ---------------------------------------------------------
-            #                       PROCESS ROWS
-            # ---------------------------------------------------------
-            imported_count = 0
+            # ---------------- PROCESS ROWS ----------------
+            existing_map = {l.name.lower(): l for l in Language.objects.all()}
 
-            for row in reversed(data):
+            for row in reversed(parsed_data):
                 row_no = row.get("_row_number", "Unknown")
-
                 name = (row.get("language name (test)") or "").strip()
                 description = (row.get("description") or "").strip()
                 is_deleted = row.get("is_deleted", False)
 
-                # Missing language name
                 if not name:
-                    skipped_rows.append({
-                        "Row": row_no,
-                        "Language Name": "",
-                        "Description": description,
-                        "Reason": "Missing language name"
-                    })
+                    skipped_rows.append({"Row": row_no, "Language Name": "", "Description": description, "Reason": "Missing language name"})
                     continue
 
-                # Check if language already exists
-                existing = Language.objects.filter(name__iexact=name).first()
+                if name.lower() in seen_in_file:
+                    duplicates.append({"Row": row_no, "Language Name": name, "Description": description, "Reason": "Duplicate in file"})
+                    continue
+                seen_in_file.add(name.lower())
 
+                existing = existing_map.get(name.lower())
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({
-                            "Row": row_no,
-                            "Language Name": "",
-                            "Description": description,
-                            "Reason": "Already exists in database"
-                        })
+                        duplicates.append({"Row": row_no, "Language Name": name, "Description": description, "Reason": "Already exists in database"})
                         continue
-                    
-                    # Reactivate deleted record
                     existing.description = description
                     existing.is_deleted = False
                     existing.save()
                     imported_count += 1
+                    continue
 
-                else:
-                    # Create new
-                    Language.objects.create(
-                        name=name,
-                        description=description,
-                        is_deleted=is_deleted or False
-                    )
-                    imported_count += 1
+                # Add to bulk create list
+                to_create.append(Language(name=name, description=description, is_deleted=is_deleted or False))
+
+            # Bulk create
+            if to_create:
+                batch_size = 500
+                for i in range(0, len(to_create), batch_size):
+                    Language.objects.bulk_create(to_create[i:i + batch_size])
+                imported_count += len(to_create)
 
         except Exception as e:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": str(e)
-            }, status=400)
+            return Response({'statusCode': 400, 'status': False, 'message': str(e)}, status=400)
 
-        # ---------------------------------------------------------
-        #                        FINAL RESPONSE
-        # ---------------------------------------------------------
         return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"Sheet '{sheet_name}' imported successfully" if sheet_name else "Import successful",
-            "imported_count": imported_count,
-            "duplicates": list(reversed(duplicates)),
-            "skipped_rows": list(reversed(skipped_rows)),
-        }, status=200)
-
+            'statusCode': 200,
+            'status': True,
+            'message': f"Sheet '{sheet_name}' imported successfully" if sheet_name else "Import successful",
+            'imported_count': imported_count,
+            'duplicates': list(reversed(duplicates)),
+            'skipped_rows': list(reversed(skipped_rows)),
+        })
 
 
 #--------------------language Test-------------------
+
+
 
 # class LanguageTestListAPIView(APIView):
 #     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -702,13 +662,14 @@ class LanguageImportAPIView(APIView):
 #         search = request.GET.get('search', '').strip()
 #         sort_by = request.GET.get('sortBy', 'created_at')
 #         sort_order = request.GET.get('sortOrder', 'desc')
-#         allowed_sort_fields = ['name', 'fullname', 'description', 'updated_at']
-
+#         custom_sort = request.GET.get('customSort')
+#         allowed_sort_fields = ['name', 'fullname', 'description', 'created_at','updated_at']
+        
 #         if sort_by not in allowed_sort_fields:
 #             sort_by = 'created_at'
 #         if sort_order == 'desc':
 #             sort_by = f'-{sort_by}'
-
+             
 #         queryset = LanguageTest.objects.filter(is_deleted=False)
 
 #         if search:
@@ -716,7 +677,42 @@ class LanguageImportAPIView(APIView):
 #                 Q(name__istartswith=search)
 #             )
 
-#         queryset = queryset.order_by(sort_by)
+#         # sorting
+#         sort_field_map = {
+#             'name': 'name',
+#             'fullname': 'fullname',
+#             'description': 'description',
+#             'created_at': 'created_at',
+#             'updated_at': 'updated_at',
+#         }
+#         sort_fields = []
+#         if custom_sort:
+#             for rule in custom_sort.split(','):
+#                 try:
+#                     field,order = rule.split(':')
+#                     field = field.strip()
+#                     order = order.strip().lower()
+#                     if field not in sort_field_map:
+#                         continue
+#                     orm_field = sort_field_map[field]
+
+#                     if field in ['name','fullname','description']:
+#                         f = Lower(orm_field)
+#                     else:
+#                         f = F(orm_field)
+#                     sort_fields.append(
+#                         f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+#                     )
+#                 except ValueError:
+#                     continue
+#         else:
+#             sort_by = request.GET.get('sortBy','created_at')
+#             sort_order = request.GET.get('sortOrder','asc')
+#             orm_field = sort_field_map.get(sort_by , 'created_at')
+#             f = F(orm_field)
+#             sort_fields = [f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)]
+#         queryset = queryset.order_by(*sort_fields)
+#         #queryset = queryset.order_by(sort_by)
 #         paginator = CustomPagination()
 #         result_page = paginator.paginate_queryset(queryset, request)
 #         serializer = LanguageTestSerializer(result_page, many=True)
@@ -728,63 +724,93 @@ class LanguageTestListAPIView(APIView):
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
-        custom_sort = request.GET.get('customSort')
-        allowed_sort_fields = ['name', 'fullname', 'description', 'created_at','updated_at']
-        
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
-             
+        custom_sort = request.GET.get('customSort', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at').strip()
+        sort_order = request.GET.get('sortOrder', 'desc').strip().lower()
+        uuid_language_name_test = request.GET.get('languageNameTest', '').strip()
+
         queryset = LanguageTest.objects.filter(is_deleted=False)
 
+        #  Safe UUID List Parser
+        def parse_uuid_list(raw):
+            valid = []
+            if raw:
+                for x in raw.split(','):
+                    try:
+                        valid.append(UUID(x.strip()))
+                    except ValueError:
+                        continue
+            return valid
+
+        #  FILTER → language UUID list
+        language_test_uuids = parse_uuid_list(uuid_language_name_test)
+        if language_test_uuids:
+            queryset = queryset.filter(language__uuid__in=language_test_uuids)
+
+        #  SEARCH
         if search:
             queryset = queryset.filter(
                 Q(name__istartswith=search)
             )
 
-        # sorting
+        #  SORTING FIXED
         sort_field_map = {
-            'name': 'name',
+            'languageNameTest': 'language__name',
+            'languageTestName': 'name',
             'fullname': 'fullname',
             'description': 'description',
             'created_at': 'created_at',
             'updated_at': 'updated_at',
         }
-        sort_fields = []
+
+        orm_field = sort_field_map.get(sort_by, 'created_at')
+
+        # CASE 1 → Custom multi rule sort
         if custom_sort:
+            sort_fields = []
             for rule in custom_sort.split(','):
                 try:
-                    field,order = rule.split(':')
+                    field, order = rule.split(':')
                     field = field.strip()
                     order = order.strip().lower()
                     if field not in sort_field_map:
                         continue
-                    orm_field = sort_field_map[field]
+                    mapped = sort_field_map[field]
 
-                    if field in ['name','fullname','description']:
-                        f = Lower(orm_field)
+                    if field in ['fullname', 'description', 'languageNameTest', 'languageTestName']:
+                        expr = Lower(F(mapped))
                     else:
-                        f = F(orm_field)
-                    sort_fields.append(
-                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
-                    )
+                        expr = F(mapped)
+
+                    sort_fields.append(expr.asc(nulls_last=True) if order == 'asc' else expr.desc(nulls_last=True))
+
                 except ValueError:
                     continue
+
+            if sort_fields:
+                queryset = queryset.order_by(*sort_fields)
+
+        # CASE 2 → Normal sortBy + sortOrder
         else:
-            sort_by = request.GET.get('sortBy','created_at')
-            sort_order = request.GET.get('sortOrder','asc')
-            orm_field = sort_field_map.get(sort_by , 'created_at')
-            f = F(orm_field)
-            sort_fields = [f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)]
-        queryset = queryset.order_by(*sort_fields)
-        #queryset = queryset.order_by(sort_by)
+            sort_fields = []  #  Initialized to avoid crash
+
+            if sort_by in ['name', 'fullname', 'description']:
+                expr = Lower(F(orm_field))
+            else:
+                expr = F(orm_field)
+
+            sort_fields.append(
+                expr.asc(nulls_last=True) if sort_order == 'asc' else expr.desc(nulls_last=True)
+            )
+
+            queryset = queryset.order_by(*sort_fields)  #  Ordering applied here only
+
+        #  Pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = LanguageTestSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
+
 
 
 
@@ -895,163 +921,257 @@ class LanguageTestUpdateAPIView(APIView):
 
 
 
+# class LanguageTestDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request, uuid=None):
+#         uuids = request.data.get('id', None)
+
+#         if uuid:
+#             try:
+#                 obj = LanguageTest.objects.get(uuid=uuid, is_deleted=False)
+#                 obj.delete()
+#                 return Response({
+#                     "statusCode": 204,
+#                     "status": True,
+#                     "message": "LanguageTest deleted successfully",
+#                     "data": None
+#                 }, status=status.HTTP_204_NO_CONTENT)
+#             except LanguageTest.DoesNotExist:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "LanguageTest not found",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#         if uuids == "all":
+#             objs = LanguageTest.objects.filter(is_deleted=False)
+#             count = objs.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No LanguageTest records found to delete.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+#             objs.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} LanguageTest record(s) deleted successfully.",
+#                 "data": None
+#             }, status=status.HTTP_200_OK)
+
+#         if not uuids or not isinstance(uuids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         valid_uuids = []
+#         invalid_uuids = []
+#         for u in uuids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         objs = LanguageTest.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+#         count = objs.count()
+
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching LanguageTest records found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         objs.delete()
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} LanguageTest record(s) deleted successfully.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         }, status=status.HTTP_200_OK)
+
+
 class LanguageTestDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def delete(self, request, uuid=None):
-        uuids = request.data.get('id', None)
+    def delete(self, request):
+        try:
+            # ---------- Query Params ----------
+            search = request.GET.get("search", "").strip()
+            language_name_test_param = request.GET.get("languageNameTest", "").strip()
 
-        if uuid:
-            try:
-                obj = LanguageTest.objects.get(uuid=uuid, is_deleted=False)
-                obj.delete()
+            # ---------- Parse comma UUIDs ----------
+            def parse_uuids(param):
+                arr = []
+                if param:
+                    for u in param.split(","):
+                        try:
+                            arr.append(UUID(u.strip()))
+                        except:
+                            pass
+                return arr
+
+            language_name_test_uuids = parse_uuids(language_name_test_param)
+
+            # ---------- Body Params ----------
+            uuids_body = request.data.get("id", None)
+            delete_all = request.data.get("deleteAll", False)
+
+            # ---------- Base Queryset ----------
+            queryset = LanguageTest.objects.filter(is_deleted=False)
+            applied_filters = []
+
+            # Apply search filter
+            if search:
+                queryset = queryset.filter(name__istartswith=search)
+                applied_filters.append("search")
+
+            # Apply languageNameTest filter
+            if language_name_test_uuids:
+                queryset = queryset.filter(language__uuid__in=language_name_test_uuids)
+                applied_filters.append("languageNameTest")
+
+            # ---------- Case 2: Full table delete when id=="all" & deleteAll:false & no filters ----------
+            if not delete_all and uuids_body == "all" and not applied_filters and not language_name_test_uuids:
+                queryset = LanguageTest.objects.filter(is_deleted=False)
+                total = queryset.count()
+
+                if total == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No records found to delete",
+                        "data": None
+                    }, status=404)
+
+                try:
+                    with transaction.atomic():
+                        queryset.delete()
+                except IntegrityError:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Full table can't be deleted, child reference exists.",
+                        "data": None
+                    }, status=400)
+
                 return Response({
-                    "statusCode": 204,
+                    "statusCode": 200,
                     "status": True,
-                    "message": "LanguageTest deleted successfully",
+                    "message": f"All {total} LanguageTest record(s) permanently deleted",
                     "data": None
-                }, status=status.HTTP_204_NO_CONTENT)
-            except LanguageTest.DoesNotExist:
-                return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "LanguageTest not found",
-                    "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
+                })
 
-        if uuids == "all":
-            objs = LanguageTest.objects.filter(is_deleted=False)
-            count = objs.count()
-            if count == 0:
-                return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "No LanguageTest records found to delete.",
-                    "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
-            objs.delete()
-            return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": f"All {count} LanguageTest record(s) deleted successfully.",
-                "data": None
-            }, status=status.HTTP_200_OK)
+            # ---------- Case 3: Delete list of UUIDs from body with filters if applied ----------
+            if not delete_all and isinstance(uuids_body, list) and uuids_body:
+                valid = []
+                invalid = []
+                for u in uuids_body:
+                    try:
+                        valid.append(UUID(u))
+                    except:
+                        invalid.append(u)
 
-        if not uuids or not isinstance(uuids, list):
+                if not valid:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "No valid UUIDs provided.",
+                        "data": {"invalid_uuids": invalid}
+                    }, status=400)
+
+                qs_delete = queryset.filter(uuid__in=valid)
+                count = qs_delete.count()
+
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No matching records found",
+                        "data": {"invalid_uuids": invalid} if invalid else None
+                    }, status=404)
+
+                try:
+                    with transaction.atomic():
+                        qs_delete.delete()
+                except IntegrityError:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Can't delete selected dataset, child reference exists.",
+                        "data": None
+                    }, status=400)
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} LanguageTest record(s) deleted successfully",
+                    "data": {"invalid_uuids": invalid} if invalid else None
+                })
+
+            # ---------- Case 4: deleteAll:true with filter only ----------
+            if delete_all and applied_filters:
+                count = queryset.count()
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No records found matching applied filters",
+                        "data": None
+                    }, status=404)
+
+                try:
+                    with transaction.atomic():
+                        queryset.delete()
+                except IntegrityError:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Filtered dataset can't be deleted, child reference exists",
+                        "data": None
+                    }, status=400)
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} record(s) deleted based on filter: {', '.join(applied_filters)}",
+                    "data": None
+                })
+
+            # ---------- Case 5: deleteAll:true but no filters ----------
+            if delete_all and not applied_filters:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "deleteAll:true requires at least one filter to delete",
+                    "data": None
+                }, status=400)
+
+            # ---------- Final fallback ----------
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+                "message": "Invalid delete request combination",
                 "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=400)
 
-        valid_uuids = []
-        invalid_uuids = []
-        for u in uuids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
-
-        objs = LanguageTest.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = objs.count()
-
-        if count == 0:
+        except Exception as e:
             return Response({
-                "statusCode": 404,
+                "statusCode": 500,
                 "status": False,
-                "message": "No matching LanguageTest records found.",
-                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=status.HTTP_404_NOT_FOUND)
+                "message": f"Internal server error: {str(e)}",
+                "data": None
+            }, status=500)
+        
 
-        objs.delete()
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} LanguageTest record(s) deleted successfully.",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=status.HTTP_200_OK)
-
-
-
-# class LanguageTestExportAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
-
-#     def get(self, request):
-#         # --- Get query params ---
-#         format_type = request.GET.get('format', 'xlsx').lower()
-#         fields = request.GET.get('fields')  # comma-separated fields
-#         uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
-
-#         uuids = [u.strip() for u in uuids_param.split(',') if u]
-
-#         # --- Field to header mapping ---
-#         field_header_map = {
-#             'uuid': 'UUID',
-#             'language': 'Language Name (Test)',
-#             'name': 'Language Test Name',
-#             'fullname': 'Language Test Full Name',
-#             'description': 'Description',
-#             'is_deleted': 'Deleted',
-#             'created_at': 'Created On',
-#             'updated_at': 'Modified On',
-#         }
-
-#         # --- Determine fields to export ---
-#         if fields:
-#             field_list = [f.strip() for f in fields.split(',')]
-#         else:
-#             field_list = list(field_header_map.keys())
-
-#         # --- Fetch queryset ---
-#         queryset = LanguageTest.objects.all()
-#         if uuids:
-#             queryset = queryset.filter(uuid__in=uuids)
-#         queryset = queryset.order_by('-created_at')
-
-#         # --- Prepare dataset ---
-#         dataset = Dataset()
-#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-#         dataset.title = 'LanguageTest'
-
-#         for obj in queryset:
-#             row = []
-#             for field in field_list:
-#                 value = getattr(obj, field, '')
-
-#                 # Special handling for language FK
-#                 if field == 'language' and obj.language:
-#                     value = obj.language.name
-
-#                 # Convert datetime to IST
-#                 elif field in ['created_at', 'updated_at'] and value:
-#                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-
-#                 # Boolean to int
-#                 elif isinstance(value, bool):
-#                     value = int(value)
-
-#                 row.append(value if value is not None else '')
-
-#             dataset.append(row)
-
-#         # --- Export logic ---
-#         if format_type == 'csv':
-#             file_data = dataset.export('csv')
-#             content_type = 'text/csv'
-#             file_name = 'language_tests.csv'
-#         else:
-#             file_data = io.BytesIO(dataset.export('xlsx'))
-#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-#             file_name = 'language_tests.xlsx'
-
-#         # --- Return response ---
-#         response = HttpResponse(
-#             file_data if format_type == 'csv' else file_data.getvalue(),
-#             content_type=content_type
-#         )
-#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
-#         return response
 
 
 class LanguageTestExportAPIView(APIView):
@@ -1530,140 +1650,219 @@ class LanguagetestmoduleNameUpdateAPIView(APIView):
 
 
 
+# class LanguagetestmoduleNameDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request, uuid=None):
+#         uuids = request.data.get('id', None)
+
+#         if uuid:
+#             try:
+#                 obj = LanguagetestmoduleName.objects.get(uuid=uuid, is_deleted=False)
+#                 obj.delete()
+#                 return Response({
+#                     "statusCode": 204,
+#                     "status": True,
+#                     "message": "Module deleted successfully",
+#                     "data": None
+#                 }, status=status.HTTP_204_NO_CONTENT)
+#             except LanguagetestmoduleName.DoesNotExist:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "Module not found",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#         if uuids == "all":
+#             objs = LanguagetestmoduleName.objects.filter(is_deleted=False)
+#             count = objs.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No records found to delete.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+#             objs.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} records deleted successfully.",
+#                 "data": None
+#             }, status=status.HTTP_200_OK)
+
+#         if not uuids or not isinstance(uuids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         valid_uuids = []
+#         invalid_uuids = []
+#         for u in uuids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         objs = LanguagetestmoduleName.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+#         count = objs.count()
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching records found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         objs.delete()
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} record(s) deleted successfully.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         }, status=status.HTTP_200_OK)
+
+
 class LanguagetestmoduleNameDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
-        uuids = request.data.get('id', None)
+        ids = request.data.get("id", None)
+        delete_all = request.data.get("deleteAll", False)
+        search = request.GET.get("search", "").strip()
 
-        if uuid:
-            try:
-                obj = LanguagetestmoduleName.objects.get(uuid=uuid, is_deleted=False)
-                obj.delete()
-                return Response({
-                    "statusCode": 204,
-                    "status": True,
-                    "message": "Module deleted successfully",
-                    "data": None
-                }, status=status.HTTP_204_NO_CONTENT)
-            except LanguagetestmoduleName.DoesNotExist:
-                return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "Module not found",
-                    "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
+        queryset = LanguagetestmoduleName.objects.filter(is_deleted=False)
 
-        if uuids == "all":
-            objs = LanguagetestmoduleName.objects.filter(is_deleted=False)
-            count = objs.count()
+        # ---------------------------------------------------
+        # CASE 3: deleteAll = true AND search present → Search delete
+        # ---------------------------------------------------
+        if delete_all and search and (ids in [None, ""]):
+            qs_search = queryset.filter(name__istartswith=search)
+            count = qs_search.count()
+
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No records found to delete.",
+                    "message": "No modules match this search filter",
                     "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
-            objs.delete()
+                }, status=404)
+
+            try:
+                with transaction.atomic():
+                    qs_search.delete()
+            except IntegrityError:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Module(s) cannot be deleted because they are used in child tables",
+                    "data": None
+                }, status=400)
+
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} records deleted successfully.",
+                "message": f"{count} module(s) deleted based on search filter",
                 "data": None
-            }, status=status.HTTP_200_OK)
+            }, status=200)
 
-        if not uuids or not isinstance(uuids, list):
+        # ---------------------------------------------------
+        # CASE 2: deleteAll = false AND id = "all" → Delete everything
+        # ---------------------------------------------------
+        if ids == "all" and delete_all is False and search == "":
+            qs_all = queryset
+            count = qs_all.count()
+
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No modules found to delete.",
+                    "data": None
+                }, status=404)
+
+            deleted, skipped = [], []
+
+            for obj in qs_all:
+                try:
+                    with transaction.atomic():
+                        obj.delete()
+                    deleted.append(str(obj.uuid))
+                except IntegrityError:
+                    skipped.append(obj.name)
+
             return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Provide a list of UUIDs in 'id' field or 'all'.",
-                "data": None
-            }, status=status.HTTP_400_BAD_REQUEST)
+                "statusCode": 200,
+                "status": True,
+                "message": f"{len(deleted)} deleted, {len(skipped)} skipped."
+            }, status=200)
 
-        valid_uuids = []
-        invalid_uuids = []
-        for u in uuids:
+        # ---------------------------------------------------
+        # CASE 1: deleteAll = false AND id = [UUID list] → Bulk delete
+        # ---------------------------------------------------
+        if delete_all is False and isinstance(ids, list):
+            valid_uuids, invalid_uuids = [], []
+
+            for u in ids:
+                try:
+                    valid_uuids.append(UUID(u))
+                except ValueError:
+                    invalid_uuids.append(u)
+
+            if not valid_uuids:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "No valid UUIDs provided",
+                    "data": {"invalid_uuids": invalid_uuids}
+                }, status=400)
+
+            qs_ids = queryset.filter(uuid__in=valid_uuids)
+            count = qs_ids.count()
+
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No matching records found",
+                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                }, status=404)
+
             try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
+                with transaction.atomic():
+                    qs_ids.delete()
+            except IntegrityError:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "One or more module(s) are used in child tables, cannot delete",
+                    "data": None
+                }, status=400)
 
-        objs = LanguagetestmoduleName.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = objs.count()
-        if count == 0:
             return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "No matching records found.",
+                "statusCode": 200,
+                "status": True,
+                "message": f"{count} module(s) deleted",
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=status.HTTP_404_NOT_FOUND)
+            }, status=200)
 
-        objs.delete()
+        # ---------------------------------------------------
+        # INVALID FORMAT
+        # ---------------------------------------------------
         return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} record(s) deleted successfully.",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=status.HTTP_200_OK)
+            "statusCode": 400,
+            "status": False,
+            "message": "Invalid delete request format",
+            "data": None
+        }, status=400)
 
 
-        
-# class LanguagetestmoduleNameExportAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
 
-#     def get(self, request):
-#         format_type = request.GET.get('format', 'xlsx').lower()
-#         fields = request.GET.get('fields')
-#         uuids_param = request.GET.get('uuids', '')
-
-#         uuids = [u.strip() for u in uuids_param.split(',') if u]
-
-#         field_header_map = {
-#             'uuid': 'UUID',
-#             'name': 'Language Test Module Name',
-#             'description': 'Description',
-#             'is_deleted': 'Deleted',
-#             'created_at': 'Created On',
-#             'updated_at': 'Modified On',
-#         }
-
-#         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
-
-#         queryset = LanguagetestmoduleName.objects.all()
-#         if uuids:
-#             queryset = queryset.filter(uuid__in=uuids)
-#         queryset = queryset.order_by('-created_at')
-
-#         dataset = Dataset()
-#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-#         dataset.title = 'LanguagetestmoduleName'
-
-#         for obj in queryset:
-#             row = []
-#             for field in field_list:
-#                 value = getattr(obj, field, '')
-#                 if field in ['created_at', 'updated_at'] and value:
-#                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-#                 elif isinstance(value, bool):
-#                     value = int(value)
-#                 row.append(value if value is not None else '')
-#             dataset.append(row)
-
-#         if format_type == 'csv':
-#             file_data = dataset.export('csv')
-#             content_type = 'text/csv'
-#             file_name = 'modules.csv'
-#         else:
-#             file_data = io.BytesIO(dataset.export('xlsx'))
-#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-#             file_name = 'modules.xlsx'
-
-#         response = HttpResponse(
-#             file_data if format_type == 'csv' else file_data.getvalue(),
-#             content_type=content_type
-#         )
-#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
-#         return response
+  
 
 
 class LanguagetestmoduleNameExportAPIView(APIView):
@@ -2160,115 +2359,261 @@ class LanguageTestResultUpdateAPIView(APIView):
 
 
 # -------------------- Delete -------------------- #
+# class LanguageTestResultDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request):
+#         ids = request.data.get('id', None)
+#         if not ids:
+#             return Response({"statusCode": 400, "status": False, "message": "Provide 'id' field", "data": None}, status=400)
+
+#         if ids == "all":
+#             objs = LanguageTestResult.objects.filter(is_deleted=False)
+#             count = objs.count()
+#             objs.delete()
+#             return Response({"statusCode": 200, "status": True, "message": f"All {count} result(s) deleted", "data": None})
+
+#         if not isinstance(ids, list):
+#             return Response({"statusCode": 400, "status": False, "message": "Provide list of UUIDs", "data": None}, status=400)
+
+#         valid_uuids, invalid_uuids = [], []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         objs = LanguageTestResult.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+#         count = objs.count()
+#         if count == 0:
+#             return Response({"statusCode": 404, "status": False, "message": "No matching result found", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None}, status=404)
+
+#         objs.delete()
+#         return Response({"statusCode": 200, "status": True, "message": f"{count} result(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
+
+
 class LanguageTestResultDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request):
-        ids = request.data.get('id', None)
-        if not ids:
-            return Response({"statusCode": 400, "status": False, "message": "Provide 'id' field", "data": None}, status=400)
+        try:
+            # ---------- Query Params ----------
+            search = request.GET.get("search", "").strip()
+            language_name_test_param = request.GET.get("languageNameTest", "").strip()
+            language_test_name_param = request.GET.get("languageTestName", "").strip()
+            language_module_name_param = request.GET.get("languageModuleName", "").strip()
+            language_benchmark_level_param = request.GET.get("languageBanchMarkLevel", "").strip()
 
-        if ids == "all":
-            objs = LanguageTestResult.objects.filter(is_deleted=False)
-            count = objs.count()
-            objs.delete()
-            return Response({"statusCode": 200, "status": True, "message": f"All {count} result(s) deleted", "data": None})
+            # ---------- Parse comma UUIDs ----------
+            def parse_uuids(param):
+                arr = []
+                if param:
+                    for u in param.split(","):
+                        try:
+                            arr.append(UUID(u.strip()))
+                        except:
+                            pass
+                return arr
 
-        if not isinstance(ids, list):
-            return Response({"statusCode": 400, "status": False, "message": "Provide list of UUIDs", "data": None}, status=400)
+            language_name_test_uuids = parse_uuids(language_name_test_param)
+            language_test_name_uuids = parse_uuids(language_test_name_param)
+            language_module_name_uuids = parse_uuids(language_module_name_param)
+            language_benchmark_level_uuids = parse_uuids(language_benchmark_level_param)
 
-        valid_uuids, invalid_uuids = [], []
-        for u in ids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
+            # ---------- Body Params ----------
+            ids_body = request.data.get("id", None)
+            delete_all_flag = request.data.get("deleteAll", False)
 
-        objs = LanguageTestResult.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = objs.count()
-        if count == 0:
-            return Response({"statusCode": 404, "status": False, "message": "No matching result found", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None}, status=404)
+            # ---------- Base Queryset ----------
+            queryset = LanguageTestResult.objects.filter(is_deleted=False)
+            applied_filters = []
 
-        objs.delete()
-        return Response({"statusCode": 200, "status": True, "message": f"{count} result(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
+            if search:
+                queryset = queryset.filter(numeric_score__istartswith=search)
+                applied_filters.append("search")
+
+            if language_name_test_uuids:
+                queryset = queryset.filter(language__uuid__in=language_name_test_uuids)
+                applied_filters.append("languageNameTest")
+
+            if language_test_name_uuids:
+                queryset = queryset.filter(language_test__uuid__in=language_test_name_uuids)
+                applied_filters.append("languageTestName")
+
+            if language_module_name_uuids:
+                queryset = queryset.filter(module_name__uuid__in=language_module_name_uuids)
+                applied_filters.append("languageModuleName")
+
+            if language_benchmark_level_uuids:
+                queryset = queryset.filter(lb_level__uuid__in=language_benchmark_level_uuids)
+                applied_filters.append("languageBanchMarkLevel")
+
+            
+
+            # ---------- Case 2: Full table delete when id=="all", deleteAll:false, no filters ----------
+            if not delete_all_flag and ids_body == "all" and not applied_filters:
+                total = LanguageTestResult.objects.filter(is_deleted=False).count()
+                if total == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No records found to delete",
+                        "data": None
+                    }, status=404)
+
+                try:
+                    with transaction.atomic():
+                        LanguageTestResult.objects.filter(is_deleted=False).delete()
+                except IntegrityError:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Full table can't be deleted, child reference exists.",
+                        "data": None
+                    }, status=400)
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"All {total} LanguageTestResult record(s) permanently deleted",
+                    "data": None
+                })
+
+            # ---------- Case 3: Delete UUID list from body ----------
+            if not delete_all_flag and isinstance(ids_body, list) and ids_body:
+                valid = []
+                invalid = []
+                for u in ids_body:
+                    try:
+                        valid.append(UUID(u))
+                    except:
+                        invalid.append(u)
+
+                if not valid:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "No valid UUIDs provided.",
+                        "data": {"invalid_uuids": invalid}
+                    }, status=400)
+
+                qs_delete = queryset.filter(uuid__in=valid)
+                count = qs_delete.count()
+
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No matching result(s) found",
+                        "data": {"invalid_uuids": invalid} if invalid else None
+                    }, status=404)
+
+                try:
+                    with transaction.atomic():
+                        qs_delete.delete()
+                except IntegrityError:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Can't delete selected dataset, child reference exists.",
+                        "data": None
+                    }, status=400)
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} result(s) deleted successfully",
+                    "data": {"invalid_uuids": invalid} if invalid else None
+                })
+
+            # ---------- Case 4: deleteAll:true with applied filters ----------
+            if delete_all_flag and applied_filters:
+                count = queryset.count()
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No result(s) found matching applied filters",
+                        "data": None
+                    }, status=404)
+
+                try:
+                    with transaction.atomic():
+                        queryset.delete()
+                except IntegrityError:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Filtered dataset can't be deleted, child reference exists",
+                        "data": None
+                    }, status=400)
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} result(s) deleted based on filters: {', '.join(applied_filters)}",
+                    "data": None
+                })
+            
+            if delete_all_flag and applied_filters and (ids_body in [None, "", []]):
+                count = queryset.count()
+
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No result(s) found matching applied filters",
+                        "data": None
+                    }, status=404)
+
+                try:
+                    with transaction.atomic():
+                        queryset.delete()
+                except IntegrityError:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Filtered dataset can't be deleted, child reference exists",
+                        "data": None
+                    }, status=400)
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} result(s) deleted based on filters: {', '.join(applied_filters)}",
+                    "data": None
+                })
 
 
-# class LanguageTestResultExportAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
+            # ---------- Case 5: deleteAll:true but no filter applied ----------
+            if delete_all_flag and not applied_filters:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "deleteAll:true requires at least one filter to delete",
+                    "data": None
+                }, status=400)
 
-#     def get(self, request):
-#         format_type = request.GET.get('format', 'xlsx').lower()
-#         fields = request.GET.get('fields')
-#         uuids_param = request.GET.get('uuids', '')
-#         uuids = [u.strip() for u in uuids_param.split(',') if u]
+            # ---------- Final fallback ----------
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Invalid delete request combination",
+                "data": None
+            }, status=400)
 
-#         # Field to header mapping
-#         field_header_map = {
-#             'uuid': 'UUID',
-#             'language': 'Language Name (Test)',
-#             'language_test': 'Language Test Name',
-#             'languagetest_module_name': 'Module Name',
-#             'lb_level': 'Language Benchmark Level',
-#             'numeric_score': 'Language Test Result',
-#             'description': 'Description',
-#             'is_deleted': 'Deleted',
-#             'created_at': 'Created On',
-#             'updated_at': 'Modified On',
-#         }
+        except Exception as e:
+            return Response({
+                "statusCode": 500,
+                "status": False,
+                "message": f"Internal server error: {str(e)}",
+                "data": None
+            }, status=500)
+        
 
-#         # Fields to export
-#         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
-#         # Fetch queryset
-#         queryset = LanguageTestResult.objects.filter(is_deleted=False)
-#         if uuids:
-#             queryset = queryset.filter(uuid__in=uuids)
-#         queryset = queryset.order_by('-created_at')
 
-#         # Prepare dataset
-#         dataset = Dataset()
-#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-#         dataset.title = 'Language Test Results'
-
-#         for obj in queryset:
-#             row = []
-#             for field in field_list:
-#                 value = getattr(obj, field, '')
-#                 # Foreign keys formatting
-#                 if field == 'language' and value:
-#                     value = value.name
-#                 elif field == 'language_test' and value:
-#                     value = value.name
-#                 elif field == 'languagetest_module_name' and value:
-#                     value = value.name
-#                 elif field == 'lb_level' and value:
-#                     value = value.name
-#                 # Datetime formatting
-#                 elif field in ['created_at', 'updated_at'] and value:
-#                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-#                 # Boolean formatting
-#                 elif isinstance(value, bool):
-#                     value = int(value)
-#                 row.append(value if value is not None else '')
-#             dataset.append(row)
-
-#         # Export data
-#         if format_type == 'csv':
-#             file_data = dataset.export('csv')
-#             content_type = 'text/csv'
-#             file_name = 'language_test_results.csv'
-#         else:
-#             file_data = io.BytesIO(dataset.export('xlsx'))
-#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-#             file_name = 'language_test_results.xlsx'
-
-#         response = HttpResponse(
-#             file_data if format_type == 'csv' else file_data.getvalue(),
-#             content_type=content_type
-#         )
-#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
-#         return response
-
+# -------------------- Export -------------------- #
 
 
 class LanguageTestResultExportAPIView(APIView):
@@ -2635,34 +2980,79 @@ class LanguageTestResultImportAPIView(APIView):
 
 
 
-
-
 class CLBLevelListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['name', 'description', 'created_at']
-
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        custom_sort = request.GET.get('customSort', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at').strip()
+        sort_order = request.GET.get('sortOrder', 'desc').strip().lower()
 
         queryset = CLBLevel.objects.filter(is_deleted=False)
+
+        #  SEARCH filter
         if search:
             queryset = queryset.filter(
-                Q(name__istartswith=search) |
-                Q(description__istartswith=search)
+                Q(name__istartswith=search) 
             )
 
-        queryset = queryset.order_by(sort_by)
+        #  SORTING MAP
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        orm_field = sort_field_map.get(sort_by, 'created_at')
+
+        # CASE 1 → Multi-rule customSort
+        if custom_sort:
+            sort_fields = []
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+                    mapped = sort_field_map[field]
+
+                    # case-insensitive for text
+                    expr = Lower(F(mapped)) if field in ['name', 'description'] else F(mapped)
+
+                    sort_fields.append(
+                        expr.asc(nulls_last=True) if order == 'asc' else expr.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+
+            if sort_fields:
+                queryset = queryset.order_by(*sort_fields)
+
+        # CASE 2 → Normal sortBy + sortOrder
+        else:
+            sort_fields = []  
+            if sort_by in ['name', 'description']:
+                expr = Lower(F(orm_field))
+            else:
+                expr = F(orm_field)
+
+            sort_fields.append(
+                expr.asc(nulls_last=True) if sort_order == 'asc' else expr.desc(nulls_last=True)
+            )
+
+            queryset = queryset.order_by(*sort_fields)
+
+        #  Pagination response
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = CLBLevelSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
+
+
+
 
 
 class CLBLevelCreateAPIView(APIView):
@@ -2711,37 +3101,174 @@ class CLBLevelUpdateAPIView(APIView):
         return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
 
 
+# class CLBLevelDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request):
+#         ids = request.data.get('id', None)
+#         if not ids:
+#             return Response({"statusCode": 400, "status": False, "message": "Provide 'id' field", "data": None}, status=400)
+
+#         if ids == "all":
+#             objs = CLBLevel.objects.filter(is_deleted=False)
+#             count = objs.count()
+#             objs.delete()
+#             return Response({"statusCode": 200, "status": True, "message": f"All {count} CLB Level(s) deleted", "data": None})
+
+#         if not isinstance(ids, list):
+#             return Response({"statusCode": 400, "status": False, "message": "Provide list of UUIDs", "data": None}, status=400)
+
+#         valid_uuids, invalid_uuids = [], []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         objs = CLBLevel.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+#         count = objs.count()
+#         if count == 0:
+#             return Response({"statusCode": 404, "status": False, "message": "No matching CLB Level found", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None}, status=404)
+
+#         objs.delete()
+#         return Response({"statusCode": 200, "status": True, "message": f"{count} CLB Level(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
+
+
 class CLBLevelDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request):
-        ids = request.data.get('id', None)
-        if not ids:
-            return Response({"statusCode": 400, "status": False, "message": "Provide 'id' field", "data": None}, status=400)
+        ids = request.data.get("id", None)
+        delete_all = request.data.get("deleteAll", False)
+        search = request.GET.get("search", "").strip()
 
-        if ids == "all":
-            objs = CLBLevel.objects.filter(is_deleted=False)
-            count = objs.count()
-            objs.delete()
-            return Response({"statusCode": 200, "status": True, "message": f"All {count} CLB Level(s) deleted", "data": None})
+        queryset = CLBLevel.objects.filter(is_deleted=False)
 
-        if not isinstance(ids, list):
-            return Response({"statusCode": 400, "status": False, "message": "Provide list of UUIDs", "data": None}, status=400)
+        # ---------------------------------------------------
+        # CASE 3: deleteAll = true AND search present → Search delete
+        # ---------------------------------------------------
+        if delete_all and search and (ids in [None, ""]):
+            qs_search = queryset.filter(name__istartswith=search)   
+            count = qs_search.count()
 
-        valid_uuids, invalid_uuids = [], []
-        for u in ids:
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No CLB Level found matching this search filter",
+                    "data": None
+                }, status=404)
+
             try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
+                with transaction.atomic():
+                    qs_search.delete()
+            except IntegrityError:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "You can't delete selected CLB Level(s) because they are used in child tables",
+                    "data": None
+                }, status=400)
 
-        objs = CLBLevel.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = objs.count()
-        if count == 0:
-            return Response({"statusCode": 404, "status": False, "message": "No matching CLB Level found", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None}, status=404)
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"{count} CLB Level(s) deleted based on search filter",
+                "data": None
+            }, status=200)
 
-        objs.delete()
-        return Response({"statusCode": 200, "status": True, "message": f"{count} CLB Level(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
+        # ---------------------------------------------------
+        # CASE 2: id = "all" → Delete entire table
+        # ---------------------------------------------------
+        if ids == "all" and delete_all is False and search == "":
+            qs_all = queryset
+            count = qs_all.count()
+
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No CLB Level(s) found to delete",
+                    "data": None
+                }, status=404)
+
+            deleted, skipped = [], []
+
+            for obj in qs_all:
+                try:
+                    with transaction.atomic():
+                        obj.delete()
+                    deleted.append(str(obj.uuid))
+                except IntegrityError:
+                    skipped.append(obj.level_name)
+
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"Delete completed. {len(deleted)} deleted, {len(skipped)} skipped"
+            }, status=200)
+
+        # ---------------------------------------------------
+        # CASE 1: id = [UUID list] → Bulk delete
+        # ---------------------------------------------------
+        if delete_all is False and isinstance(ids, list):
+            valid_uuids, invalid_uuids = [], []
+
+            for u in ids:
+                try:
+                    valid_uuids.append(UUID(u))
+                except ValueError:
+                    invalid_uuids.append(u)
+
+            if not valid_uuids:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "No valid UUIDs provided",
+                    "data": {"invalid_uuids": invalid_uuids}
+                }, status=400)
+
+            qs_ids = queryset.filter(uuid__in=valid_uuids)
+            count = qs_ids.count()
+
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No CLB Level found for given UUID list",
+                    "data": None
+                }, status=404)
+
+            try:
+                with transaction.atomic():
+                    qs_ids.delete()
+            except IntegrityError:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "One or more CLB Level(s) are used in child tables — cannot delete",
+                    "data": None
+                }, status=400)
+
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"{count} CLB Level(s) deleted",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+            }, status=200)
+
+        # ---------------------------------------------------
+        # INVALID FORMAT
+        # ---------------------------------------------------
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": "Invalid delete request format",
+            "data": None
+        }, status=400)
+
+
+
 
 
 class CLBLevelExportAPIView(APIView):
@@ -2961,33 +3488,111 @@ class CLBLevelImportAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+# class StudyLanguageBanchmarkListAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')
+#         allowed_sort_fields = ['name', 'description', 'created_at']
+
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = 'created_at'
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
+
+#         queryset = StudyLanguageBanchmark.objects.filter(is_deleted=False)
+#         if search:
+#             queryset = queryset.filter(
+#                 Q(name__istartswith=search) |
+#                 Q(description__istartswith=search)
+#             )
+
+#         queryset = queryset.order_by(sort_by)
+#         paginator = CustomPagination()
+#         result_page = paginator.paginate_queryset(queryset, request)
+#         serializer = StudyLanguageBanchmarkSerializer(result_page, many=True)
+#         return paginator.get_paginated_response(serializer.data)
+
+
 class StudyLanguageBanchmarkListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['name', 'description', 'created_at']
-
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        custom_sort = request.GET.get('customSort', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at').strip()
+        sort_order = request.GET.get('sortOrder', 'desc').strip().lower()
 
         queryset = StudyLanguageBanchmark.objects.filter(is_deleted=False)
+
+        #  SEARCH (multi field)
         if search:
             queryset = queryset.filter(
-                Q(name__istartswith=search) |
-                Q(description__istartswith=search)
+                Q(name__istartswith=search)
             )
 
-        queryset = queryset.order_by(sort_by)
+        #  SORTING
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',  # if exists in model
+        }
+
+        sort_fields = []
+
+        # CASE 1 → Custom multi-rule sorting
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    #  Case-insensitive Lower() for text fields
+                    if field in ['name', 'description']:
+                        expr = Lower(F(orm_field))
+                    else:
+                        expr = F(orm_field)
+
+                    sort_fields.append(
+                        expr.asc(nulls_last=True) if order == 'asc' else expr.desc(nulls_last=True)
+                    )
+
+                except ValueError:
+                    continue
+
+            if sort_fields:
+                queryset = queryset.order_by(*sort_fields)
+            else:
+                queryset = queryset.order_by(F('created_at').desc(nulls_last=True))
+
+        # CASE 2 → Normal single field sort (`sortBy` + `sortOrder`)
+        else:
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+
+            if sort_by in ['name', 'description']:
+                expr = Lower(F(orm_field))
+            else:
+                expr = F(orm_field)
+
+            queryset = queryset.order_by(
+                expr.asc(nulls_last=True) if sort_order == 'asc' else expr.desc(nulls_last=True)
+            )
+
+        #  PAGINATION
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = StudyLanguageBanchmarkSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
-
+    
 
 class StudyLanguageBanchmarkCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -3035,37 +3640,178 @@ class StudyLanguageBanchmarkUpdateAPIView(APIView):
         return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
 
 
+# class StudyLanguageBanchmarkDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request):
+#         ids = request.data.get('id', None)
+#         if not ids:
+#             return Response({"statusCode": 400, "status": False, "message": "Provide 'id' field", "data": None}, status=400)
+
+#         if ids == "all":
+#             objs = StudyLanguageBanchmark.objects.filter(is_deleted=False)
+#             count = objs.count()
+#             objs.delete()
+#             return Response({"statusCode": 200, "status": True, "message": f"All {count} benchmark(s) deleted", "data": None})
+
+#         if not isinstance(ids, list):
+#             return Response({"statusCode": 400, "status": False, "message": "Provide list of UUIDs", "data": None}, status=400)
+
+#         valid_uuids, invalid_uuids = [], []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         objs = StudyLanguageBanchmark.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+#         count = objs.count()
+#         if count == 0:
+#             return Response({"statusCode": 404, "status": False, "message": "No matching benchmark found", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None}, status=404)
+
+#         objs.delete()
+#         return Response({"statusCode": 200, "status": True, "message": f"{count} benchmark(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
+
+
 class StudyLanguageBanchmarkDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request):
-        ids = request.data.get('id', None)
-        if not ids:
-            return Response({"statusCode": 400, "status": False, "message": "Provide 'id' field", "data": None}, status=400)
+        ids = request.data.get("id", None)
+        delete_all = request.data.get("deleteAll", False)
+        search = request.GET.get("search", "").strip()
 
-        if ids == "all":
-            objs = StudyLanguageBanchmark.objects.filter(is_deleted=False)
-            count = objs.count()
-            objs.delete()
-            return Response({"statusCode": 200, "status": True, "message": f"All {count} benchmark(s) deleted", "data": None})
+        queryset = StudyLanguageBanchmark.objects.filter(is_deleted=False)
 
-        if not isinstance(ids, list):
-            return Response({"statusCode": 400, "status": False, "message": "Provide list of UUIDs", "data": None}, status=400)
+        # ---------------------------------------------------
+        # CASE 3: deleteAll = true AND search present → Search delete
+        # ---------------------------------------------------
+        if delete_all and search and (ids in [None, ""]):
+            qs_search = queryset.filter(name__istartswith=search)
+            count = qs_search.count()
 
-        valid_uuids, invalid_uuids = [], []
-        for u in ids:
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No benchmarks found matching search filter",
+                    "data": None
+                }, status=404)
+
             try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
+                with transaction.atomic():
+                    qs_search.delete()
+            except IntegrityError:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Some benchmark(s) are used in child tables. Delete skipped.",
+                    "data": None
+                }, status=400)
 
-        objs = StudyLanguageBanchmark.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = objs.count()
-        if count == 0:
-            return Response({"statusCode": 404, "status": False, "message": "No matching benchmark found", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None}, status=404)
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"{count} benchmark(s) deleted using search filter",
+                "data": None
+            }, status=200)
 
-        objs.delete()
-        return Response({"statusCode": 200, "status": True, "message": f"{count} benchmark(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
+        # ---------------------------------------------------
+        # CASE 2: deleteAll = false AND id = "all" → Delete everything
+        # ---------------------------------------------------
+        if ids == "all" and delete_all is False and search == "":
+            qs_all = queryset
+            count = qs_all.count()
+
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No benchmarks found to delete",
+                    "data": None
+                }, status=404)
+
+            deleted, skipped = [], []
+
+            for obj in qs_all:
+                try:
+                    with transaction.atomic():
+                        obj.delete()
+                    deleted.append(str(obj.uuid))
+                except IntegrityError:
+                    skipped.append(obj.uuid)
+
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"Delete completed: {len(deleted)} deleted, {len(skipped)} skipped",
+                "data": {
+                    "deleted": deleted,
+                    "not_deleted": skipped
+                }
+            }, status=200)
+
+        # ---------------------------------------------------
+        # CASE 1: deleteAll = false AND id = [UUID list] → Bulk delete
+        # ---------------------------------------------------
+        if delete_all is False and isinstance(ids, list):
+            valid_uuids, invalid_uuids = [], []
+
+            for u in ids:
+                try:
+                    valid_uuids.append(UUID(u))
+                except ValueError:
+                    invalid_uuids.append(u)
+
+            if not valid_uuids:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "No valid UUIDs provided.",
+                    "data": {"invalid_uuids": invalid_uuids}
+                }, status=400)
+
+            qs_ids = queryset.filter(uuid__in=valid_uuids)
+            count = qs_ids.count()
+
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No matching benchmark records found",
+                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                }, status=404)
+
+            try:
+                with transaction.atomic():
+                    qs_ids.delete()
+            except IntegrityError:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "One or more benchmark(s) are used in child tables. Cannot delete.",
+                    "data": None
+                }, status=400)
+
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"{count} benchmark(s) deleted",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+            }, status=200)
+
+        # ---------------------------------------------------
+        # INVALID REQUEST FORMAT
+        # ---------------------------------------------------
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": "Invalid delete request format",
+            "data": None
+        }, status=400)
+
+
+
 
 
 class StudyLanguageBenchmarkExportAPIView(APIView):
@@ -3282,33 +4028,109 @@ class StudyLanguageBenchmarkImportAPIView(APIView):
 
 
 
+# class EntranceTestNameListAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')
+#         allowed_sort_fields = ['fullname', 'shortname', 'description', 'updated_at']
+
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = 'created_at'
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
+
+#         queryset = EntranceTestName.objects.filter(is_deleted=False)
+#         if search:
+#             queryset = queryset.filter(
+#                 Q(fullname__istartswith=search) |
+#                 Q(shortname__istartswith=search) |
+#                 Q(description__istartswith=search)
+#             )
+
+#         queryset = queryset.order_by(sort_by)
+#         paginator = CustomPagination()
+#         result_page = paginator.paginate_queryset(queryset, request)
+#         serializer = EntranceTestNameSerializer(result_page, many=True)
+#         return paginator.get_paginated_response(serializer.data)
+
+
 class EntranceTestNameListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['fullname', 'shortname', 'description', 'updated_at']
+        custom_sort = request.GET.get('customSort', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at').strip()
+        sort_order = request.GET.get('sortOrder', 'desc').strip().lower()
 
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
-
+        #  base queryset
         queryset = EntranceTestName.objects.filter(is_deleted=False)
+
+        #  search filter
         if search:
             queryset = queryset.filter(
-                Q(fullname__istartswith=search) |
-                Q(shortname__istartswith=search) |
-                Q(description__istartswith=search)
+                Q(fullname__istartswith=search)
             )
 
-        queryset = queryset.order_by(sort_by)
+        #  sorting map
+        sort_field_map = {
+            'fullname': 'fullname',
+            'shortname': 'shortname',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        orm_field = sort_field_map.get(sort_by, 'created_at')
+
+        # CASE 1 → custom multi-rule sort
+        if custom_sort:
+            sort_fields = []
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+                    if field not in sort_field_map:
+                        continue
+                    mapped = sort_field_map[field]
+
+                    expr = Lower(F(mapped)) if field in ['fullname', 'shortname', 'description'] else F(mapped)
+
+                    sort_fields.append(
+                        expr.asc(nulls_last=True) if order == 'asc' else expr.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+
+            if sort_fields:
+                queryset = queryset.order_by(*sort_fields)
+
+        # CASE 2 → normal single sortBy + sortOrder
+        else:
+            sort_fields = []  #  init list to avoid crash
+            
+            expr = Lower(F(orm_field)) if sort_by in ['fullname', 'shortname', 'description'] else F(orm_field)
+
+            sort_fields.append(
+                expr.asc(nulls_last=True) if sort_order == 'asc' else expr.desc(nulls_last=True)
+            )
+
+            queryset = queryset.order_by(*sort_fields)
+
+        #  final fallback default sort
+        if not queryset.ordered:
+            queryset = queryset.order_by(F('created_at').desc(nulls_last=True))  #  default created_at DESC
+
+        #  pagination
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = EntranceTestNameSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
+    
 
 
 class EntranceTestNameCreateAPIView(APIView):
@@ -3363,37 +4185,172 @@ class EntranceTestNameUpdateAPIView(APIView):
         return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
 
 
+# class EntranceTestNameDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request):
+#         ids = request.data.get('id', None)
+#         if not ids:
+#             return Response({"statusCode": 400, "status": False, "message": "Provide 'id' field", "data": None}, status=400)
+
+#         if ids == "all":
+#             objs = EntranceTestName.objects.filter(is_deleted=False)
+#             count = objs.count()
+#             objs.delete()
+#             return Response({"statusCode": 200, "status": True, "message": f"All {count} entrance test(s) deleted", "data": None})
+
+#         if not isinstance(ids, list):
+#             return Response({"statusCode": 400, "status": False, "message": "Provide list of UUIDs", "data": None}, status=400)
+
+#         valid_uuids, invalid_uuids = [], []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         objs = EntranceTestName.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+#         count = objs.count()
+#         if count == 0:
+#             return Response({"statusCode": 404, "status": False, "message": "No matching entrance test found", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None}, status=404)
+
+#         objs.delete()
+#         return Response({"statusCode": 200, "status": True, "message": f"{count} entrance test(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
+
 class EntranceTestNameDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request):
-        ids = request.data.get('id', None)
-        if not ids:
-            return Response({"statusCode": 400, "status": False, "message": "Provide 'id' field", "data": None}, status=400)
+        ids = request.data.get("id", None)
+        delete_all = request.data.get("deleteAll", False)
+        search = request.GET.get("search", "").strip()
 
-        if ids == "all":
-            objs = EntranceTestName.objects.filter(is_deleted=False)
-            count = objs.count()
-            objs.delete()
-            return Response({"statusCode": 200, "status": True, "message": f"All {count} entrance test(s) deleted", "data": None})
+        queryset = EntranceTestName.objects.filter(is_deleted=False)
 
-        if not isinstance(ids, list):
-            return Response({"statusCode": 400, "status": False, "message": "Provide list of UUIDs", "data": None}, status=400)
+        # ---------------------------------------------------
+        # CASE 3: deleteAll = true AND search present → Search delete
+        # ---------------------------------------------------
+        if delete_all and search and (ids in [None, ""]):
+            qs_search = queryset.filter(shortname__istartswith=search)
+            count = qs_search.count()
 
-        valid_uuids, invalid_uuids = [], []
-        for u in ids:
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No entrance test(s) found matching this search filter",
+                    "data": None
+                }, status=404)
+
             try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
+                with transaction.atomic():
+                    qs_search.delete()
+            except IntegrityError:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "You can't delete selected entrance test(s) because they are used in child tables",
+                    "data": None
+                }, status=400)
 
-        objs = EntranceTestName.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = objs.count()
-        if count == 0:
-            return Response({"statusCode": 404, "status": False, "message": "No matching entrance test found", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None}, status=404)
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"{count} entrance test(s) deleted based on search filter",
+                "data": None
+            }, status=200)
 
-        objs.delete()
-        return Response({"statusCode": 200, "status": True, "message": f"{count} entrance test(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
+        # ---------------------------------------------------
+        # CASE 2: id = "all" AND deleteAll = false → Delete all records
+        # ---------------------------------------------------
+        if ids == "all" and delete_all is False and search == "":
+            qs_all = queryset
+            count = qs_all.count()
+
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No entrance test(s) found to delete",
+                    "data": None
+                }, status=404)
+
+            deleted, skipped = [], []
+
+            for obj in qs_all:
+                try:
+                    with transaction.atomic():
+                        obj.delete()
+                    deleted.append(str(obj.uuid))
+                except IntegrityError:
+                    skipped.append(obj.name)
+
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"Delete completed. {len(deleted)} deleted, {len(skipped)} skipped.",
+                "data": {"deleted": deleted, "not_deleted": skipped}
+            }, status=200)
+
+        # ---------------------------------------------------
+        # CASE 1: id = [UUID list] → Bulk delete
+        # ---------------------------------------------------
+        if delete_all is False and isinstance(ids, list):
+            valid_uuids, invalid_uuids = [], []
+
+            for u in ids:
+                try:
+                    valid_uuids.append(UUID(u))
+                except ValueError:
+                    invalid_uuids.append(u)
+
+            if not valid_uuids:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "No valid UUIDs provided.",
+                    "data": {"invalid_uuids": invalid_uuids}
+                }, status=400)
+
+            qs_ids = queryset.filter(uuid__in=valid_uuids)
+            count = qs_ids.count()
+
+            if count == 0:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No entrance test(s) found for given UUID list",
+                    "data": None
+                }, status=404)
+
+            try:
+                with transaction.atomic():
+                    qs_ids.delete()
+            except IntegrityError:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "One or more entrance test(s) are used in child tables, cannot delete.",
+                    "data": None
+                }, status=400)
+
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"{count} entrance test(s) deleted.",
+                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+            }, status=200)
+
+        # ---------------------------------------------------
+        # INVALID FORMAT
+        # ---------------------------------------------------
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": "Invalid delete request format",
+            "data": None
+        }, status=400)
+
 
 
 # -------------------- Export -------------------- #
@@ -3689,37 +4646,242 @@ class EntranceTestModuleNameUpdateAPIView(APIView):
 
 
 # -------------------- Delete -------------------- #
+# class EntranceTestModuleNameDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request):
+#         ids = request.data.get('id', None)
+#         if not ids:
+#             return Response({"statusCode": 400, "status": False, "message": "Provide 'id' field", "data": None}, status=400)
+
+#         if ids == "all":
+#             objs = EntranceTestModuleName.objects.filter(is_deleted=False)
+#             count = objs.count()
+#             objs.delete()
+#             return Response({"statusCode": 200, "status": True, "message": f"All {count} module(s) deleted", "data": None})
+
+#         if not isinstance(ids, list):
+#             return Response({"statusCode": 400, "status": False, "message": "Provide list of UUIDs", "data": None}, status=400)
+
+#         valid_uuids, invalid_uuids = [], []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         objs = EntranceTestModuleName.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+#         count = objs.count()
+#         if count == 0:
+#             return Response({"statusCode": 404, "status": False, "message": "No matching module found", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None}, status=404)
+
+#         objs.delete()
+#         return Response({"statusCode": 200, "status": True, "message": f"{count} module(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
+
+
 class EntranceTestModuleNameDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def delete(self, request):
-        ids = request.data.get('id', None)
-        if not ids:
-            return Response({"statusCode": 400, "status": False, "message": "Provide 'id' field", "data": None}, status=400)
+    def delete(self, request, uuid=None):
+        try:
+            # ---------- Query Params ----------
+            search = request.GET.get("search", "").strip()
+            entrance_test_name_param = request.GET.get("entranceTestName", "").strip()
 
-        if ids == "all":
-            objs = EntranceTestModuleName.objects.filter(is_deleted=False)
-            count = objs.count()
-            objs.delete()
-            return Response({"statusCode": 200, "status": True, "message": f"All {count} module(s) deleted", "data": None})
+            # Parse comma separated UUIDs from filter (if needed)
+            def parse_uuids(param):
+                arr = []
+                if param:
+                    for u in param.split(","):
+                        try:
+                            arr.append(UUID(u.strip()))
+                        except:
+                            pass
+                return arr
 
-        if not isinstance(ids, list):
-            return Response({"statusCode": 400, "status": False, "message": "Provide list of UUIDs", "data": None}, status=400)
+            entrance_test_name_uuids = parse_uuids(entrance_test_name_param)
 
-        valid_uuids, invalid_uuids = [], []
-        for u in ids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
+            # ---------- Body Params ----------
+            ids_body = request.data.get("id", None)
+            delete_all_flag = request.data.get("deleteAll", False)
 
-        objs = EntranceTestModuleName.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = objs.count()
-        if count == 0:
-            return Response({"statusCode": 404, "status": False, "message": "No matching module found", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None}, status=404)
+            # ---------- Base Queryset ----------
+            queryset = EntranceTestModuleName.objects.filter(is_deleted=False)
+            applied_filters = []
 
-        objs.delete()
-        return Response({"statusCode": 200, "status": True, "message": f"{count} module(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
+            # Apply search filter
+            if search:
+                queryset = queryset.filter(moduleName__istartswith=search)
+                applied_filters.append("search")
+
+            # Apply entranceTestName filter
+            if entrance_test_name_uuids:
+                queryset = queryset.filter(entrancetest__uuid__in=entrance_test_name_uuids)
+                applied_filters.append("entranceTestName")
+
+            # ---------- Case 1: Delete single UUID from URL ----------
+            if uuid:
+                try:
+                    obj = queryset.get(uuid=uuid)
+                except EntranceTestModuleName.DoesNotExist:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "Entrance Test Module not found",
+                        "data": None
+                    }, status=404)
+
+                try:
+                    with transaction.atomic():
+                        obj.delete()
+                except IntegrityError:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "You can't delete this record, child reference exists.",
+                        "data": None
+                    }, status=400)
+
+                return Response({
+                    "statusCode": 204,
+                    "status": True,
+                    "message": "Entrance Test Module permanently deleted",
+                    "data": None
+                }, status=204)
+
+            # ---------- Case 2: Full table delete when id=="all" & deleteAll:false & no filters ----------
+            if not delete_all_flag and ids_body == "all" and not applied_filters:
+                queryset = EntranceTestModuleName.objects.filter(is_deleted=False)
+                total = queryset.count()
+
+                if total == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No records found to delete",
+                        "data": None
+                    }, status=404)
+
+                try:
+                    with transaction.atomic():
+                        queryset.delete()
+                except IntegrityError:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Full table can't be deleted, child reference exists.",
+                        "data": None
+                    }, status=400)
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"All {total} module(s) permanently deleted",
+                    "data": None
+                })
+
+            # ---------- Case 3: Bulk UUID list delete from body ----------
+            if not delete_all_flag and isinstance(ids_body, list) and ids_body:
+                valid = []
+                invalid = []
+                for u in ids_body:
+                    try:
+                        valid.append(UUID(u))
+                    except:
+                        invalid.append(u)
+
+                if not valid:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "No valid UUIDs provided.",
+                        "data": {"invalid_uuids": invalid}
+                    }, status=400)
+
+                qs_delete = queryset.filter(uuid__in=valid)
+                count = qs_delete.count()
+
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No matching module found",
+                        "data": {"invalid_uuids": invalid} if invalid else None
+                    }, status=404)
+
+                try:
+                    with transaction.atomic():
+                        qs_delete.delete()
+                except IntegrityError:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Can't delete selected dataset, child reference exists.",
+                        "data": None
+                    }, status=400)
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} module(s) deleted successfully",
+                    "data": {"invalid_uuids": invalid} if invalid else None
+                })
+
+            # ---------- Case 4: deleteAll:true & filter applied ----------
+            if delete_all_flag and applied_filters:
+                count = queryset.count()
+
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No records found matching applied filters",
+                        "data": None
+                    }, status=404)
+
+                try:
+                    with transaction.atomic():
+                        queryset.delete()
+                except IntegrityError:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Filtered dataset can't be deleted, child reference exists",
+                        "data": None
+                    }, status=400)
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} record(s) deleted based on filter: {', '.join(applied_filters)}",
+                    "data": None
+                })
+
+            # ---------- Case 5: deleteAll:true without filter ----------
+            if delete_all_flag and not applied_filters:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "deleteAll:true requires at least one filter to delete",
+                    "data": None
+                }, status=400)
+
+            # ---------- Final fallback ----------
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Invalid delete request combination",
+                "data": None
+            }, status=400)
+
+        except Exception as e:
+            return Response({
+                "statusCode": 500,
+                "status": False,
+                "message": f"Internal server error: {str(e)}",
+                "data": None
+            }, status=500)
+        
 
 
 class EntranceTestModuleExportAPIView(APIView):
@@ -4044,37 +5206,252 @@ class EntranceTestResultUpdateAPIView(APIView):
 
 
 # -------------------- Delete -------------------- #
+# class EntranceTestResultDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request):
+#         ids = request.data.get('id', None)
+#         if not ids:
+#             return Response({"statusCode": 400, "status": False, "message": "Provide 'id' field", "data": None}, status=400)
+
+#         if ids == "all":
+#             objs = EntranceTestResult.objects.filter(is_deleted=False)
+#             count = objs.count()
+#             objs.delete()
+#             return Response({"statusCode": 200, "status": True, "message": f"All {count} result(s) deleted", "data": None})
+
+#         if not isinstance(ids, list):
+#             return Response({"statusCode": 400, "status": False, "message": "Provide list of UUIDs", "data": None}, status=400)
+
+#         valid_uuids, invalid_uuids = [], []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         objs = EntranceTestResult.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+#         count = objs.count()
+#         if count == 0:
+#             return Response({"statusCode": 404, "status": False, "message": "No matching result found", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None}, status=404)
+
+#         objs.delete()
+#         return Response({"statusCode": 200, "status": True, "message": f"{count} result(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
+
 class EntranceTestResultDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request):
-        ids = request.data.get('id', None)
-        if not ids:
-            return Response({"statusCode": 400, "status": False, "message": "Provide 'id' field", "data": None}, status=400)
+        try:
+            # ---------- Query Params ----------
+            search = request.GET.get("search", "").strip()
+            entrance_test_name_param = request.GET.get("entranceTestName", "").strip()
+            entrance_test_module_name_param = request.GET.get("entranceTestModuleName", "").strip()
 
-        if ids == "all":
-            objs = EntranceTestResult.objects.filter(is_deleted=False)
-            count = objs.count()
-            objs.delete()
-            return Response({"statusCode": 200, "status": True, "message": f"All {count} result(s) deleted", "data": None})
+            # ---------- Parse comma UUIDs ----------
+            def parse_uuids(param):
+                arr = []
+                if param:
+                    for u in param.split(","):
+                        try:
+                            arr.append(UUID(u.strip()))
+                        except:
+                            pass
+                return arr
 
-        if not isinstance(ids, list):
-            return Response({"statusCode": 400, "status": False, "message": "Provide list of UUIDs", "data": None}, status=400)
+            entrance_test_name_uuids = parse_uuids(entrance_test_name_param)
+            entrance_test_module_name_uuids = parse_uuids(entrance_test_module_name_param)
 
-        valid_uuids, invalid_uuids = [], []
-        for u in ids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
+            # ---------- Body Params ----------
+            ids_body = request.data.get("id", None)
+            delete_all_flag = request.data.get("deleteAll", False)
 
-        objs = EntranceTestResult.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-        count = objs.count()
-        if count == 0:
-            return Response({"statusCode": 404, "status": False, "message": "No matching result found", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None}, status=404)
+            # ---------- Base Queryset ----------
+            queryset = EntranceTestResult.objects.filter(is_deleted=False)
+            applied_filters = []
 
-        objs.delete()
-        return Response({"statusCode": 200, "status": True, "message": f"{count} result(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
+            # Apply search
+            if search:
+                queryset = queryset.filter(testresult__istartswith=search)
+                applied_filters.append("search")
+
+            # Apply entranceTestName filter
+            if entrance_test_name_uuids:
+                queryset = queryset.filter(entrancetest__uuid__in=entrance_test_name_uuids)
+                applied_filters.append("entranceTestName")
+
+            # Apply entranceTestModuleName filter
+            if entrance_test_module_name_uuids:
+                queryset = queryset.filter(moduleName__uuid__in=entrance_test_module_name_uuids)
+                applied_filters.append("entranceTestModuleName")
+
+            # ---------- Case 2: Full table delete when id=="all", deleteAll:false, no filters ----------
+            if not delete_all_flag and ids_body == "all" and not applied_filters:
+                queryset = EntranceTestResult.objects.filter(is_deleted=False)
+                total = queryset.count()
+
+                if total == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No records found to delete",
+                        "data": None
+                    }, status=404)
+
+                try:
+                    with transaction.atomic():
+                        queryset.delete()
+                except IntegrityError:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Full table can't be deleted, child reference exists.",
+                        "data": None
+                    }, status=400)
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"All {total} result(s) permanently deleted",
+                    "data": None
+                })
+
+            # ---------- Case 3: Delete UUID list from body ----------
+            if not delete_all_flag and isinstance(ids_body, list) and ids_body:
+                valid = []
+                invalid = []
+                for u in ids_body:
+                    try:
+                        valid.append(UUID(u))
+                    except:
+                        invalid.append(u)
+
+                if not valid:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "No valid UUIDs provided.",
+                        "data": {"invalid_uuids": invalid}
+                    }, status=400)
+
+                qs_delete = queryset.filter(uuid__in=valid)
+                count = qs_delete.count()
+
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No matching result(s) found",
+                        "data": {"invalid_uuids": invalid} if invalid else None
+                    }, status=404)
+
+                try:
+                    with transaction.atomic():
+                        qs_delete.delete()
+                except IntegrityError:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Can't delete selected dataset, child reference exists.",
+                        "data": None
+                    }, status=400)
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} result(s) deleted successfully",
+                    "data": {"invalid_uuids": invalid} if invalid else None
+                })
+
+            # ---------- Case 4: deleteAll:true with applied filters ----------
+            if delete_all_flag and applied_filters:
+                count = queryset.count()
+
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No result(s) found matching applied filters",
+                        "data": None
+                    }, status=404)
+
+                try:
+                    with transaction.atomic():
+                        queryset.delete()
+                except IntegrityError:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Filtered dataset can't be deleted, child reference exists",
+                        "data": None
+                    }, status=400)
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} result(s) deleted based on filters: {', '.join(applied_filters)}",
+                    "data": None
+                })
+
+
+            # ---------- Case 4: deleteAll:true with applied filters ----------
+            if delete_all_flag and applied_filters and (ids_body in [None, "", []]):
+                count = queryset.count()
+
+                if count == 0:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No result(s) found matching applied filters",
+                        "data": None
+                    }, status=404)
+
+                try:
+                    with transaction.atomic():
+                        queryset.delete()
+                except IntegrityError:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Filtered dataset can't be deleted, child reference exists",
+                        "data": None
+                    }, status=400)
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{count} result(s) deleted based on filters: {', '.join(applied_filters)}",
+                    "data": None
+                })
+
+
+
+            # ---------- Case 5: deleteAll:true but no filter applied ----------
+            if delete_all_flag and not applied_filters:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "deleteAll:true requires at least one filter to delete",
+                    "data": None
+                }, status=400)
+
+            # ---------- Final fallback ----------
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Invalid delete request combination",
+                "data": None
+            }, status=400)
+
+        except Exception as e:
+            return Response({
+                "statusCode": 500,
+                "status": False,
+                "message": f"Internal server error: {str(e)}",
+                "data": None
+            }, status=500)
+        
+
 
 
 # -------------------- Export -------------------- #

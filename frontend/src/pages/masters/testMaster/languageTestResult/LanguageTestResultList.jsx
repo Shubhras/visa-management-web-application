@@ -217,18 +217,6 @@ const LanguageTestResultList = () => {
         })
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
     const [modalState, setModalState] = useState({
         show: false,
         mode: 'add', // 'add' or 'edit'
@@ -440,6 +428,13 @@ const LanguageTestResultList = () => {
     };
 
     const clearAllFilters = () => {
+        // Reset filter dropdowns
+        setColumnFilters({
+            languageNameTest: [],
+            languageTestName: [],
+            languageModuleName: [],
+            languageBanchMarkLevel: [],
+        });
         setTableState(prev => ({
             ...prev,
             page: 1,
@@ -459,6 +454,7 @@ const LanguageTestResultList = () => {
         }));
         // Reset Global Search
         setGlobalSearch('');
+        setSelectedRows([]);
     };
     const handleSearchChange = (value) => {
         setTableState(prev => ({
@@ -590,7 +586,18 @@ const LanguageTestResultList = () => {
             toast.error("No language test result selected for deletion.");
             return;
         }
-        dispatch(languageTestResultDelete(sendPayload, (response, error) => {
+        const deleteAll = selectAllOrNot === "all" && ((tableState.search && tableState.search.trim() !== '') || columnFilters.languageNameTest.length > 0 || columnFilters.languageTestName.length > 0 || columnFilters.languageModuleName.length > 0 || columnFilters.languageBanchMarkLevel.length > 0);
+        const payloadSend = {
+            deleteAll: deleteAll,
+            languageNameTest: columnFilters.languageNameTest.length > 0 ? columnFilters.languageNameTest : '',
+            languageTestName: columnFilters.languageTestName.length > 0 ? columnFilters.languageTestName : '',
+            languageModuleName: columnFilters.languageModuleName.length > 0 ? columnFilters.languageModuleName : '',
+            languageBanchMarkLevel: columnFilters.languageBanchMarkLevel.length > 0 ? columnFilters.languageBanchMarkLevel : '',
+            id: deleteAll == true ? "" : sendPayload,
+            search: tableState.search || '',
+        };
+
+        dispatch(languageTestResultDelete(payloadSend, (response, error) => {
             if (error) {
                 toast.error(error?.response?.data?.message || "server error");
             } else {
@@ -602,7 +609,8 @@ const LanguageTestResultList = () => {
                     setSelectedRows([]);
                     setSelectAllOrNot('');
                     setDeleteId(null);
-                    fetchDepartmentList();
+                    //fetchDepartmentList();
+                    clearAllFilters();
                 } else {
                     toast.error("Something went wrong.");
                 }
@@ -793,6 +801,7 @@ const LanguageTestResultList = () => {
                                         tableState={tableState}
                                         columnFilters={columnFilters}
                                         globalSearch={globalSearch}
+                                        selectedRows={selectedRows}
                                     />
                                 </div>
                             </div>

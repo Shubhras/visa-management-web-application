@@ -121,10 +121,6 @@ const LanguageTestNameList = () => {
     }
 
 
-
-
-
-
     const [modalState, setModalState] = useState({
         show: false,
         mode: 'add', // 'add' or 'edit'
@@ -329,6 +325,10 @@ const LanguageTestNameList = () => {
     };
 
     const clearAllFilters = () => {
+        // Reset filter dropdowns
+        setColumnFilters({
+            languageNameTest: [],
+        });
         setTableState(prev => ({
             ...prev,
             page: 1,
@@ -348,6 +348,7 @@ const LanguageTestNameList = () => {
         }));
         // Reset Global Search
         setGlobalSearch('');
+        setSelectedRows([]);
     };
 
     const handleSearchChange = (value) => {
@@ -480,7 +481,15 @@ const LanguageTestNameList = () => {
             toast.error("No language test name selected for deletion.");
             return;
         }
-        dispatch(languageTestNameDelete(sendPayload, (response, error) => {
+
+        const deleteAll = selectAllOrNot === "all" && ((tableState.search && tableState.search.trim() !== '') || columnFilters.languageNameTest.length > 0);
+        const payloadSend = {
+            deleteAll: deleteAll,
+            languageNameTest: columnFilters.languageNameTest.length > 0 ? columnFilters.languageNameTest : '',
+            id: deleteAll == true ? "" : sendPayload,
+            search: tableState.search || '',
+        };
+        dispatch(languageTestNameDelete(payloadSend, (response, error) => {
             if (error) {
                 toast.error(error?.response?.data?.message || "server error");
             } else {
@@ -492,7 +501,8 @@ const LanguageTestNameList = () => {
                     setSelectedRows([]);
                     setSelectAllOrNot('');
                     setDeleteId(null);
-                    fetchDepartmentList();
+                    //fetchDepartmentList();
+                    clearAllFilters();
                 } else {
                     toast.error("Something went wrong.");
                 }
@@ -675,6 +685,7 @@ const LanguageTestNameList = () => {
                                         tableState={tableState}
                                         columnFilters={columnFilters}
                                         globalSearch={globalSearch}
+                                        selectedRows={selectedRows}
                                     />
                                 </div>
                             </div>

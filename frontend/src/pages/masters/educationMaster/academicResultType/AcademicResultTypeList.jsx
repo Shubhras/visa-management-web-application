@@ -238,6 +238,7 @@ const AcademicResultTypeList = () => {
     }));
     // Reset Global Search
     setGlobalSearch('');
+    setSelectedRows([]);
   };
 
   const handleSearchChange = (value) => {
@@ -370,7 +371,13 @@ const AcademicResultTypeList = () => {
       toast.error("No academic result type selected for deletion.");
       return;
     }
-    dispatch(academicResultTypeDelete(sendPayload, (response, error) => {
+  const deleteAll = selectAllOrNot === "all" && Boolean(tableState.search?.trim());
+    const payloadSend = {
+      deleteAll: deleteAll,
+      id: deleteAll == true ? "" : sendPayload,
+      search: tableState.search || '',
+    };
+    dispatch(academicResultTypeDelete(payloadSend, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
@@ -382,7 +389,8 @@ const AcademicResultTypeList = () => {
           setSelectedRows([]);
           setSelectAllOrNot('');
           setDeleteId(null);
-          fetchDepartmentList();
+         // fetchDepartmentList();
+          clearAllFilters();
         } else {
           toast.error("Something went wrong.");
         }
@@ -559,6 +567,7 @@ const AcademicResultTypeList = () => {
                     onClick={clearAllFilters}
                     tableState={tableState}
                     globalSearch={globalSearch}
+                    selectedRows={selectedRows}
                   />
                 </div>
               </div>

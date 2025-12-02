@@ -400,7 +400,8 @@ urlpatterns = [
     path('degree-awarded-institute/', DegreeAwardedInstituteListAPIView.as_view(), name='degree_awarded_institute_list'),
     path('degree-awarded-institute/create/', DegreeAwardedInstituteCreateAPIView.as_view(), name='degree_awarded_institute_create'),
     path('degree-awarded-institute/<uuid:uuid>/retrieve/', DegreeAwardedInstituteRetrieveAPIView.as_view(), name='degree_awarded_institute_retrieve'),
-    path('degree-awarded-institute/<uuid:uuid>/update/', DegreeAwardedInstituteUpdateAPIView.as_view(), name='degree_awarded_institute_update'),    path('degree-awarded-institute/delete/', DegreeAwardedInstituteDeleteAPIView.as_view(), name='degree_awarded_institute_delete_bulk'),
+    path('degree-awarded-institute/<uuid:uuid>/update/', DegreeAwardedInstituteUpdateAPIView.as_view(), name='degree_awarded_institute_update'),    
+    path('degree-awarded-institute/delete/', DegreeAwardedInstituteDeleteAPIView.as_view(), name='degree_awarded_institute_delete_bulk'),
     path('degree-awarded-institute/export/', DegreeAwardedInstituteExportAPIView.as_view(), name='degree_awarded_institute_export'),
     path('degree-awarded-institute/import/', DegreeAwardedInstituteImportAPIView.as_view(), name='degree_awarded_institute_import'),
     path('degrees-by-education-level/', DegreeAwardedByEducationLevelAPIView.as_view(), name='degrees-by-education-level'),
@@ -477,7 +478,6 @@ urlpatterns = [
 
    #----------------------- process.py------------------
 
-
     path("documentcategory/create/", DocumentCategoryCreateAPIView.as_view(), name='DocumentCategory-create'),
     path("documentcategory/", DocumentCategoryListAPIView.as_view(), name='DocumentCategory-list'),
     path("documentcategory/<uuid:uuid>/", DocumentCategoryRetrieveAPIView.as_view(), name='DocumentCategory-detail'),
@@ -522,12 +522,14 @@ urlpatterns = [
 
 
     path('requireddocument/create/', RequiredDocumentCreateAPIView.as_view(), name='required_document_create'),
-    path('requireddocument/', RequiredDocumentListAPIView.as_view(), name='required_document_list'),
+    path('requireddocument/', RequiredDocumentListAPIView.as_view(), name='required_document_list'),   
+    path("requireddocument/visa-major/by-country/<uuid:representing_country_uuid>/",VisaMajorByCountryListAPIView.as_view(),name="visa_major_by_country"),
     path('requireddocument/<uuid:uuid>/', RequiredDocumentRetrieveAPIView.as_view(), name='required_document_retrieve'),
     path('requireddocument/<uuid:uuid>/update/', RequiredDocumentUpdateAPIView.as_view(), name='required_document_update'),
     path('requireddocument/delete/', RequiredDocumentDeleteAPIView.as_view(), name='required_document_delete'),
     path('requireddocument/export/', RequiredDocumentExportAPIView.as_view(), name='required_document_export'),
     path('requireddocument/import/', RequiredDocumentImportAPIView.as_view(), name='required_document_import'),
+
 
     path('process-status-name/create/', ProcessStatusCreateAPIView.as_view(), name='process_status_create'),
     path('process-status-name/', ProcessStatusListAPIView.as_view(), name='process_status_list'),
@@ -539,7 +541,8 @@ urlpatterns = [
 
     path('process-substatus-name/create/', ProcessSubStatusCreateAPIView.as_view(), name='process_sub_status_create'),
     path('process-substatus-name/', ProcessSubStatusListAPIView.as_view(), name='process_sub_status_list'),
-    path('process-substatus-name/<uuid:uuid>/', ProcessSubStatusRetrieveAPIView.as_view(), name='process_sub_status_retrieve'),
+    path('process-substatus-name/<uuid:uuid>/', ProcessSubStatusRetrieveAPIView.as_view(), name='process_sub_status_retrieve'),    
+    path("process-substatus-name/by-country/<uuid:representing_country_uuid>/",ProcessSubStatusByCountryAPIView.as_view(),name="process_sub_status_by_country"),
     path('process-substatus-name/<uuid:uuid>/update/', ProcessSubStatusUpdateAPIView.as_view(), name='process_sub_status_update'),
     path('process-substatus-name/delete/', ProcessSubStatusDeleteAPIView.as_view(), name='process_sub_status_delete'),
     path('process-substatus-name/export/', ProcessSubStatusExportAPIView.as_view(), name='process_sub_status_export'),
