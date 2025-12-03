@@ -24,6 +24,7 @@ import pytz
 from django.utils import timezone
 import io
 import csv
+from master.dependency_report import generate_dependency_report
 from django.db import DatabaseError, transaction, IntegrityError
 
 india_tz = pytz.timezone('Asia/Kolkata')
@@ -128,8 +129,155 @@ class LanguageUpdateAPIView(APIView):
 
 
 
+# class LanguageDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request):
+#         ids = request.data.get("id", None)
+#         delete_all = request.data.get("deleteAll", False)
+#         search = request.GET.get("search", "").strip()
+
+#         queryset = Language.objects.filter(is_deleted=False)
+
+#         # ---------------------------------------------------
+#         # CASE 3: deleteAll = true AND search present → Search delete
+#         # ---------------------------------------------------
+#         if delete_all and search and (ids in [None, ""]):
+#             qs_search = queryset.filter(name__istartswith=search)
+#             count = qs_search.count()
+
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No languages found matching this search filter",
+#                     "data": None
+#                 }, status=404)
+
+#             try:
+#                 with transaction.atomic():
+#                     qs_search.delete()
+#             except IntegrityError:
+#                 return Response({
+#                     "statusCode": 400,
+#                     "status": False,
+#                     "message": "You can't delete selected language(s) because they are used in child tables",
+#                     "data": None
+#                 }, status=400)
+
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"{count} language(s) deleted based on search filter",
+#                 "data": None
+#             }, status=200)
+
+#         # ---------------------------------------------------
+#         # CASE 2: deleteAll = false AND id = "all" → Delete full table
+#         # ---------------------------------------------------
+#         if ids == "all" and delete_all is False and search == "":
+#             qs_all = queryset
+#             count = qs_all.count()
+
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No languages found to delete",
+#                     "data": None
+#                 }, status=404)
+
+#             deleted, skipped = [], []
+
+#             for lang in qs_all:
+#                 try:
+#                     with transaction.atomic():
+#                         lang.delete()
+#                     deleted.append(str(lang.uuid))
+#                 except IntegrityError:
+#                     skipped.append(lang.name)
+
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"Delete completed. {len(deleted)} deleted, {len(skipped)} skipped"
+#             }, status=200)
+
+#         # ---------------------------------------------------
+#         # CASE 1: deleteAll = false AND id = [UUID list] → Bulk delete
+#         # ---------------------------------------------------
+#         if delete_all is False and isinstance(ids, list):
+#             valid_uuids, invalid_uuids = [], []
+
+#             for u in ids:
+#                 try:
+#                     valid_uuids.append(UUID(u))
+#                 except ValueError:
+#                     invalid_uuids.append(u)
+
+#             if not valid_uuids:
+#                 return Response({
+#                     "statusCode": 400,
+#                     "status": False,
+#                     "message": "No valid UUIDs provided.",
+#                     "data": {"invalid_uuids": invalid_uuids}
+#                 }, status=400)
+
+#             qs_ids = queryset.filter(uuid__in=valid_uuids)
+#             count = qs_ids.count()
+
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No matching languages found for given UUIDs",
+#                     "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#                 }, status=404)
+
+#             try:
+#                 with transaction.atomic():
+#                     qs_ids.delete()
+#             except IntegrityError:
+#                 return Response({
+#                     "statusCode": 400,
+#                     "status": False,
+#                     "message": "One or more language(s) are used in child tables, cannot delete.",
+#                     "data": None
+#                 }, status=400)
+
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"{count} language(s) deleted.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=200)
+
+#         # ---------------------------------------------------
+#         # INVALID FORMAT
+#         # ---------------------------------------------------
+#         return Response({
+#             "statusCode": 400,
+#             "status": False,
+#             "message": "Invalid delete request format",
+#             "data": None
+#         }, status=400)
+    
+
 class LanguageDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def download_dependency_report(self, lang_obj):
+        """Return XLSX file as HttpResponse."""
+        dataset = generate_dependency_report(lang_obj)
+        file_data = io.BytesIO(dataset.export("xlsx"))
+        file_name = "language_dependency_report.xlsx"
+
+        response = HttpResponse(
+            file_data.getvalue(),
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        response["Content-Disposition"] = f'attachment; filename="{file_name}"'
+        return response
 
     def delete(self, request):
         ids = request.data.get("id", None)
@@ -139,7 +287,7 @@ class LanguageDeleteAPIView(APIView):
         queryset = Language.objects.filter(is_deleted=False)
 
         # ---------------------------------------------------
-        # CASE 3: deleteAll = true AND search present → Search delete
+        # CASE 3: deleteAll = true AND search present
         # ---------------------------------------------------
         if delete_all and search and (ids in [None, ""]):
             qs_search = queryset.filter(name__istartswith=search)
@@ -153,16 +301,12 @@ class LanguageDeleteAPIView(APIView):
                     "data": None
                 }, status=404)
 
-            try:
-                with transaction.atomic():
-                    qs_search.delete()
-            except IntegrityError:
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "You can't delete selected language(s) because they are used in child tables",
-                    "data": None
-                }, status=400)
+            for lang in qs_search:
+                try:
+                    with transaction.atomic():
+                        lang.delete()
+                except IntegrityError:
+                    return self.download_dependency_report(lang)
 
             return Response({
                 "statusCode": 200,
@@ -172,7 +316,7 @@ class LanguageDeleteAPIView(APIView):
             }, status=200)
 
         # ---------------------------------------------------
-        # CASE 2: deleteAll = false AND id = "all" → Delete full table
+        # CASE 2: FULL TABLE DELETE (id = "all")
         # ---------------------------------------------------
         if ids == "all" and delete_all is False and search == "":
             qs_all = queryset
@@ -194,16 +338,17 @@ class LanguageDeleteAPIView(APIView):
                         lang.delete()
                     deleted.append(str(lang.uuid))
                 except IntegrityError:
-                    skipped.append(lang.name)
+                    # Instead of skipping → download dependency report
+                    return self.download_dependency_report(lang)
 
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"Delete completed. {len(deleted)} deleted, {len(skipped)} skipped"
+                "message": f"Delete completed. {len(deleted)} deleted.",
             }, status=200)
 
         # ---------------------------------------------------
-        # CASE 1: deleteAll = false AND id = [UUID list] → Bulk delete
+        # CASE 1: BULK DELETE (id = [UUID list])
         # ---------------------------------------------------
         if delete_all is False and isinstance(ids, list):
             valid_uuids, invalid_uuids = [], []
@@ -229,20 +374,16 @@ class LanguageDeleteAPIView(APIView):
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No matching languages found for given UUIDs",
+                    "message": "No matching languages found.",
                     "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
                 }, status=404)
 
-            try:
-                with transaction.atomic():
-                    qs_ids.delete()
-            except IntegrityError:
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "One or more language(s) are used in child tables, cannot delete.",
-                    "data": None
-                }, status=400)
+            for lang in qs_ids:
+                try:
+                    with transaction.atomic():
+                        lang.delete()
+                except IntegrityError:
+                    return self.download_dependency_report(lang)
 
             return Response({
                 "statusCode": 200,
@@ -260,7 +401,6 @@ class LanguageDeleteAPIView(APIView):
             "message": "Invalid delete request format",
             "data": None
         }, status=400)
-    
 
 
 
