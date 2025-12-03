@@ -921,84 +921,6 @@ class LanguageTestUpdateAPIView(APIView):
 
 
 
-# class LanguageTestDeleteAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
-
-#     def delete(self, request, uuid=None):
-#         uuids = request.data.get('id', None)
-
-#         if uuid:
-#             try:
-#                 obj = LanguageTest.objects.get(uuid=uuid, is_deleted=False)
-#                 obj.delete()
-#                 return Response({
-#                     "statusCode": 204,
-#                     "status": True,
-#                     "message": "LanguageTest deleted successfully",
-#                     "data": None
-#                 }, status=status.HTTP_204_NO_CONTENT)
-#             except LanguageTest.DoesNotExist:
-#                 return Response({
-#                     "statusCode": 404,
-#                     "status": False,
-#                     "message": "LanguageTest not found",
-#                     "data": None
-#                 }, status=status.HTTP_404_NOT_FOUND)
-
-#         if uuids == "all":
-#             objs = LanguageTest.objects.filter(is_deleted=False)
-#             count = objs.count()
-#             if count == 0:
-#                 return Response({
-#                     "statusCode": 404,
-#                     "status": False,
-#                     "message": "No LanguageTest records found to delete.",
-#                     "data": None
-#                 }, status=status.HTTP_404_NOT_FOUND)
-#             objs.delete()
-#             return Response({
-#                 "statusCode": 200,
-#                 "status": True,
-#                 "message": f"All {count} LanguageTest record(s) deleted successfully.",
-#                 "data": None
-#             }, status=status.HTTP_200_OK)
-
-#         if not uuids or not isinstance(uuids, list):
-#             return Response({
-#                 "statusCode": 400,
-#                 "status": False,
-#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
-#                 "data": None
-#             }, status=status.HTTP_400_BAD_REQUEST)
-
-#         valid_uuids = []
-#         invalid_uuids = []
-#         for u in uuids:
-#             try:
-#                 valid_uuids.append(UUID(u))
-#             except ValueError:
-#                 invalid_uuids.append(u)
-
-#         objs = LanguageTest.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-#         count = objs.count()
-
-#         if count == 0:
-#             return Response({
-#                 "statusCode": 404,
-#                 "status": False,
-#                 "message": "No matching LanguageTest records found.",
-#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-#             }, status=status.HTTP_404_NOT_FOUND)
-
-#         objs.delete()
-#         return Response({
-#             "statusCode": 200,
-#             "status": True,
-#             "message": f"{count} LanguageTest record(s) deleted successfully.",
-#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-#         }, status=status.HTTP_200_OK)
-
-
 class LanguageTestDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -1247,8 +1169,8 @@ class LanguageTestExportAPIView(APIView):
             queryset = queryset.filter(Q(name__istartswith=search))
             
         sort_field_map = {
-            'name': 'name',
-            'language': 'language__name', 
+            'languageNameTest': 'language__name',
+            'languageTestName': 'name',
             'fullname': 'fullname',
             'description': 'description',
             'created_at': 'created_at',
@@ -1267,9 +1189,9 @@ class LanguageTestExportAPIView(APIView):
                         continue
  
                     orm_field = sort_field_map[field]
-                    if field in ['name','fullname','description']:
+                    if field in ['languageTestName','fullname','description']:
                         f = Lower(orm_field)
-                    elif field == 'language':
+                    elif field == 'languageNameTest':
                         f = Lower('language__name')
                     else:
                         f = F(orm_field)
