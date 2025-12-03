@@ -3833,8 +3833,11 @@ export const editInstituteGroupNameDataAPI = (payload) => {
 };
 
 export const deleteInstituteGroupNameDataAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_INSTITUTE_GROUP_NAME_API}delete/`;
+    const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_INSTITUTE_GROUP_NAME_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -3887,8 +3890,11 @@ export const editInstituteStatusDataAPI = (payload) => {
 };
 
 export const deleteInstituteStatusDataAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_INSTITUTE_STATUS_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_INSTITUTE_STATUS_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -3941,8 +3947,11 @@ export const editInstitutePriorityDataAPI = (payload) => {
 };
 
 export const deleteInstitutePriorityDataAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_INSTITUTE_PRIORITY_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_INSTITUTE_PRIORITY_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -3995,8 +4004,11 @@ export const editInstituteDepartmentDataAPI = (payload) => {
 };
 
 export const deleteInstituteDepartmentDataAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_INSTITUTE_DEPARTMENT_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_INSTITUTE_DEPARTMENT_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -4049,8 +4061,11 @@ export const editBankAccountForDataAPI = (payload) => {
 };
 
 export const deleteBankAccountForDataAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_BANK_ACCOUNT_FOR_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_BANK_ACCOUNT_FOR_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -4156,8 +4171,11 @@ export const editCourseLevelCodeDataAPI = (payload) => {
 };
 
 export const deleteCourseLevelCodeDataAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_COURSE_LEVEL_CODE_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_COURSE_LEVEL_CODE_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -4209,8 +4227,11 @@ export const editCourseDividedInDataAPI = (payload) => {
 };
 
 export const deleteCourseDividedInDataAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_COURSE_DIVIDED_IN_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_COURSE_DIVIDED_IN_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -4262,8 +4283,11 @@ export const editCourseStatusDataAPI = (payload) => {
 };
 
 export const deleteCourseStatusDataAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_COURSE_STATUS_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_COURSE_STATUS_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -4315,8 +4339,11 @@ export const editIntakeNameDataAPI = (payload) => {
 };
 
 export const deleteIntakeNameDataAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_INTAKE_NAME_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_INTAKE_NAME_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -4369,8 +4396,11 @@ export const editCourseStatusIntakeDataAPI = (payload) => {
 };
 
 export const deleteCourseStatusIntakeDataAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_COURSE_STATUS_INTAKE_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_COURSE_STATUS_INTAKE_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -4422,8 +4452,11 @@ export const editScholarshipBasedOnDataAPI = (payload) => {
 };
 
 export const deleteScholarshipBasedOnDataAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_SCHOLARSHIP_BASED_ON_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_SCHOLARSHIP_BASED_ON_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -4475,8 +4508,11 @@ export const editCourseLevelDataAPI = (payload) => {
 };
 
 export const deleteCourseLevelDataAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_COURSE_LEVEL_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+   const apiUrl = `${url.DELETE_COURSE_LEVEL_API}delete/?search=${payload?.search}&courseLevelCode=${payload?.courseLevelCode}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -4528,8 +4564,11 @@ export const editCourseDurationDataAPI = (payload) => {
 };
 
 export const deleteCourseDurationDataAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_COURSE_DURATION_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+   const apiUrl = `${url.DELETE_COURSE_DURATION_API}delete/?search=${payload?.search}&courseLevel=${payload?.courseLevel}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
