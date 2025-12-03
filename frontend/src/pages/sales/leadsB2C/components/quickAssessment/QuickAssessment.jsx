@@ -410,7 +410,7 @@ const QuickAssessment = () => {
       </div>
 
       {/* ===================== MAIN SELECTORS ===================== */}
-      <div className="row g-3">
+      <div className="row g-3 mb-3">
         {/* Visa Main Category */}
         <div className="col-md-4">
           <label className="form-label fw-semibold">
@@ -444,6 +444,10 @@ const QuickAssessment = () => {
             options={visaNameOptions}
             value={visaNameOptions.find((o) => o.value === visaType) || null}
             onChange={(option) => setVisaType(option?.value || null)}
+            menuPortalTarget={document.body}
+            styles={{
+              menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+            }}
           />
         </div>
       </div>
@@ -521,12 +525,12 @@ const QuickAssessment = () => {
           <div className="row g-3 mb-20">
             {/* Intake */}
             <div className="col-md-2">
-              <label className="form-label">Intake Month</label>
-              <Select options={[{ value: "", label: "Month Name" }]} />
-            </div>
-            <div className="col-md-2">
               <label className="form-label">Intake Name</label>
               <Select options={[{ value: "", label: "Master" }]} />
+            </div>
+            <div className="col-md-2">
+              <label className="form-label">Intake Month</label>
+              <Select options={[{ value: "", label: "Month Name" }]} />
             </div>
 
             {/* Fees */}
@@ -535,11 +539,12 @@ const QuickAssessment = () => {
               <div className="d-flex gap-2">
                 <input
                   className="form-control form-control-sm w-full"
-                  placeholder="Amount"
+                  placeholder="(Currency)"
                 />
                 <input
                   className="form-control form-control-sm w-full"
-                  placeholder="Amount"
+                  placeholder="Numeric"
+                  type="number"
                 />
               </div>
             </div>
@@ -549,11 +554,13 @@ const QuickAssessment = () => {
               <div className="d-flex gap-2">
                 <input
                   className="form-control form-control-sm w-full"
-                  placeholder="Amount"
+                  placeholder="Total Course Fee"
+                  type="number"
                 />
                 <input
                   className="form-control form-control-sm w-full"
-                  placeholder="Amount"
+                  placeholder="Per Year Fee"
+                  type="number"
                 />
               </div>{" "}
             </div>
@@ -565,13 +572,14 @@ const QuickAssessment = () => {
 
               <div className="row g-2">
                 <div className="col-md-6 ">
-                  <Select options={yesNoOptions}  />
+                  <Select options={yesNoOptions} />
                 </div>
 
                 <div className="col-md-6 ">
                   <input
                     className="form-control form-control-sm "
                     placeholder="Amount"
+                    type="number"
                   />
                 </div>
               </div>
@@ -605,7 +613,13 @@ const QuickAssessment = () => {
           <div className="row g-3">
             <div className="col-md-4 mb-10">
               <label className="form-label">With Job Offer?</label>
-              <Select options={yesNoOptions} />
+              <Select
+                options={yesNoOptions}
+                menuPortalTarget={document.body}
+                styles={{
+                  menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                }}
+              />
             </div>
 
             {/* Table */}

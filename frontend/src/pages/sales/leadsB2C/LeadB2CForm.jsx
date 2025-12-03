@@ -277,7 +277,7 @@ const LeadB2CForm = () => {
                 data-bs-target="#leadSidebar"
               >
                 {/* <Icon icon="mdi:view-grid" width="26" /> */}
-                <Icon icon="material-symbols:menu" width="30"  />
+                <Icon icon="material-symbols:menu" width="30" />
               </div>
             </div>
           </div>
@@ -358,11 +358,9 @@ const LeadB2CForm = () => {
                       >
                         {/* LEFT CONTENT */}
                         <div>
-                          <strong>
-                            {note.note}
-                          </strong>
+                          <strong>{note.note}</strong>
                           <br />
-                          <span className="text-muted small"> 
+                          <span className="text-muted small">
                             {note.createdAt ? note.createdAt : "Internal Note"}
                           </span>
                         </div>
@@ -480,7 +478,7 @@ const LeadB2CForm = () => {
                               handleEditAction(action);
                             }}
                           >
-                            <Icon icon="lucide:edit" width="18" />
+                            <Icon icon="lucide:edit" width="18" style={{  color: "#059669" }}/>
                           </button>
 
                           <button
@@ -562,8 +560,23 @@ const LeadB2CForm = () => {
                               handleEditOffice(item);
                             }}
                           >
-                            <Icon icon="lucide:edit" width="18" />
+                            <Icon icon="lucide:edit" width="18" style={{  color: "#059669" }}/>
                           </button>
+
+                          {/* <Link
+                            to="#"
+                            className="edit-btn-icone"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditOffice(item);
+                            }}
+                          >
+                            <Icon
+                              icon="lucide:edit"
+                              width="18"
+                              className="icone"
+                            />
+                          </Link> */}
 
                           <button
                             className="btn btn-link text-danger p-0 m-0"
