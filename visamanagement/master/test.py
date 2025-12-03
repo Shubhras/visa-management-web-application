@@ -24,6 +24,7 @@ import pytz
 from django.utils import timezone
 import io
 import csv
+from master.dependency_report import generate_dependency_report
 from django.db import DatabaseError, transaction, IntegrityError
 
 india_tz = pytz.timezone('Asia/Kolkata')
@@ -261,6 +262,145 @@ class LanguageDeleteAPIView(APIView):
             "data": None
         }, status=400)
     
+
+# class LanguageDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def download_dependency_report(self, lang_obj):
+#         """Return XLSX file as HttpResponse."""
+#         dataset = generate_dependency_report(lang_obj)
+#         file_data = io.BytesIO(dataset.export("xlsx"))
+#         file_name = "language_dependency_report.xlsx"
+
+#         response = HttpResponse(
+#             file_data.getvalue(),
+#             content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+#         )
+#         response["Content-Disposition"] = f'attachment; filename="{file_name}"'
+#         return response
+
+#     def delete(self, request):
+#         ids = request.data.get("id", None)
+#         delete_all = request.data.get("deleteAll", False)
+#         search = request.GET.get("search", "").strip()
+
+#         queryset = Language.objects.filter(is_deleted=False)
+
+#         # ---------------------------------------------------
+#         # CASE 3: deleteAll = true AND search present
+#         # ---------------------------------------------------
+#         if delete_all and search and (ids in [None, ""]):
+#             qs_search = queryset.filter(name__istartswith=search)
+#             count = qs_search.count()
+
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No languages found matching this search filter",
+#                     "data": None
+#                 }, status=404)
+
+#             for lang in qs_search:
+#                 try:
+#                     with transaction.atomic():
+#                         lang.delete()
+#                 except IntegrityError:
+#                     return self.download_dependency_report(lang)
+
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"{count} language(s) deleted based on search filter",
+#                 "data": None
+#             }, status=200)
+
+#         # ---------------------------------------------------
+#         # CASE 2: FULL TABLE DELETE (id = "all")
+#         # ---------------------------------------------------
+#         if ids == "all" and delete_all is False and search == "":
+#             qs_all = queryset
+#             count = qs_all.count()
+
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No languages found to delete",
+#                     "data": None
+#                 }, status=404)
+
+#             deleted, skipped = [], []
+
+#             for lang in qs_all:
+#                 try:
+#                     with transaction.atomic():
+#                         lang.delete()
+#                     deleted.append(str(lang.uuid))
+#                 except IntegrityError:
+#                     # Instead of skipping → download dependency report
+#                     return self.download_dependency_report(lang)
+
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"Delete completed. {len(deleted)} deleted.",
+#             }, status=200)
+
+#         # ---------------------------------------------------
+#         # CASE 1: BULK DELETE (id = [UUID list])
+#         # ---------------------------------------------------
+#         if delete_all is False and isinstance(ids, list):
+#             valid_uuids, invalid_uuids = [], []
+
+#             for u in ids:
+#                 try:
+#                     valid_uuids.append(UUID(u))
+#                 except ValueError:
+#                     invalid_uuids.append(u)
+
+#             if not valid_uuids:
+#                 return Response({
+#                     "statusCode": 400,
+#                     "status": False,
+#                     "message": "No valid UUIDs provided.",
+#                     "data": {"invalid_uuids": invalid_uuids}
+#                 }, status=400)
+
+#             qs_ids = queryset.filter(uuid__in=valid_uuids)
+#             count = qs_ids.count()
+
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No matching languages found.",
+#                     "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#                 }, status=404)
+
+#             for lang in qs_ids:
+#                 try:
+#                     with transaction.atomic():
+#                         lang.delete()
+#                 except IntegrityError:
+#                     return self.download_dependency_report(lang)
+
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"{count} language(s) deleted.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=200)
+
+#         # ---------------------------------------------------
+#         # INVALID FORMAT
+#         # ---------------------------------------------------
+#         return Response({
+#             "statusCode": 400,
+#             "status": False,
+#             "message": "Invalid delete request format",
+#             "data": None
+#         }, status=400)
 
 
 
@@ -2640,7 +2780,7 @@ class LanguageTestResultExportAPIView(APIView):
             queryset = queryset.filter(language_test__uuid__in=language_test_names)
 
         if language_module_names:
-            queryset = queryset.filter(languagetest_module_name__uuid__in=language_module_names)
+            queryset = queryset.filter(module_name__uuid__in=language_module_names)
 
         # ---------------------------------------------------
         # SEARCH
@@ -3752,7 +3892,8 @@ class StudyLanguageBanchmarkUpdateAPIView(APIView):
         except StudyLanguageBanchmark.DoesNotExist:
             return Response({"statusCode": 404, "status": False, "message": "Not found", "data": None}, status=404)
 
-        serializer = StudyLanguageBanchmarkSerializer(obj, data=request.data)
+        serializer = StudyLanguageBanchmarkSerializer(obj, data=request.data, partial=True)
+
         if serializer.is_valid():
             serializer.save()
             return Response({"statusCode": 200, "status": True, "message": "Updated successfully", "data": serializer.data})
@@ -4312,7 +4453,7 @@ class EntranceTestNameListAPIView(APIView):
         #  search filter
         if search:
             queryset = queryset.filter(
-                Q(fullname__istartswith=search)
+                Q(shortname__istartswith=search)
             )
 
         #  sorting map
@@ -4563,67 +4704,7 @@ class EntranceTestNameDeleteAPIView(APIView):
 
 # -------------------- Export -------------------- #
 
-# class EntranceTestNameExportAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
 
-#     def get(self, request):
-#         format_type = request.GET.get('format', 'xlsx').lower()
-#         fields = request.GET.get('fields')
-#         uuids_param = request.GET.get('uuids', '')
-#         uuids = [u.strip() for u in uuids_param.split(',') if u]
-
-#         # Field to header mapping
-#         field_header_map = {
-#             'uuid': 'UUID',
-#             'fullname': 'Entrance Test Full Name',
-#             'shortname': 'Entrance Test Name',
-#             'description': 'Description',
-#             'is_deleted': 'Deleted',
-#             'created_at': 'Created On',
-#             'updated_at': 'Modified On',
-#         }
-
-#         # Determine fields to export
-#         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
-
-#         # Fetch queryset
-#         queryset = EntranceTestName.objects.filter(is_deleted=False)
-#         if uuids:
-#             queryset = queryset.filter(uuid__in=uuids)
-#         queryset = queryset.order_by('-created_at')
-
-#         # Prepare dataset
-#         dataset = Dataset()
-#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-#         dataset.title = 'EntranceTestName'
-
-#         for obj in queryset:
-#             row = []
-#             for field in field_list:
-#                 value = getattr(obj, field, '')
-#                 if field in ['created_at', 'updated_at'] and value:
-#                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-#                 elif isinstance(value, bool):
-#                     value = int(value)
-#                 row.append(value if value is not None else '')
-#             dataset.append(row)
-
-#         # Export data
-#         if format_type == 'csv':
-#             file_data = dataset.export('csv')
-#             content_type = 'text/csv'
-#             file_name = 'entrance_test_name.csv'
-#         else:
-#             file_data = io.BytesIO(dataset.export('xlsx'))
-#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-#             file_name = 'entrance_test_name.xlsx'
-
-#         response = HttpResponse(
-#             file_data if format_type == 'csv' else file_data.getvalue(),
-#             content_type=content_type
-#         )
-#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
-#         return response
 
 
 class EntranceTestNameExportAPIView(APIView):
@@ -4671,7 +4752,7 @@ class EntranceTestNameExportAPIView(APIView):
         # ---------------------------
         if search:
             queryset = queryset.filter(
-                Q(fullname__istartswith=search)
+                Q(shortname__istartswith=search)
             )
 
         # ---------------------------
