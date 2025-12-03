@@ -541,8 +541,9 @@ const CityList = () => {
 
     // For country, state and district filter, filter by name
     return options.filter((option) =>
-      option.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+      option.name.toLowerCase().startsWith(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => a.name.localeCompare(b.name));
   };
 
   const handleSort = (field) => {

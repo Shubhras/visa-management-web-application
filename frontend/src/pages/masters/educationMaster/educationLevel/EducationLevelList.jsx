@@ -99,7 +99,7 @@ const EducationLevelList = () => {
         return options.filter(o =>
             o.name !== null &&
             o.name !== undefined &&
-            o.name.toString().toLowerCase().includes(searchTerm)
+            o.name.toString().toLowerCase().startsWith(searchTerm)
         );
     };
 
