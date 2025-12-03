@@ -15999,10 +15999,11 @@ td.fc-header-center {
 
 
 .comman-active-btn-reset {
- border: 1px solid var(--input-form-light);
+  border: 1px solid var(--input-form-light);
   color: var(--text-primary-light) !important;
   background-color: var(--white);
 }
+
 .comman-inactive-btn-reset {
   background: #5a6c5b;
   color: #fff !important;
@@ -16014,6 +16015,7 @@ td.fc-header-center {
   color: #fff !important;
   border: 1px solid #658e67;
 }
+
 .comman-active-btn-reset:hover {
   background: #5a6c5b;
   color: #fff !important;
@@ -16025,7 +16027,7 @@ td.fc-header-center {
   display: block;
   background-color: rgba(0, 0, 0, 0.5);
 }
-  
+
 
 /* .common-ctl-popup .react-datepicker-wrapper {
   width: 100% !important;
@@ -16052,12 +16054,13 @@ td.fc-header-center {
 
 
 
- .modal-scrollable-content {
-  max-height: 260px;
+.modal-scrollable-content {
+  /* max-height: 260px; */
+  max-height: 65vh;
   overflow-y: auto;
   overflow-x: hidden;
   /* scrollbar-width: none;  */
-} 
+}
 
 .common-ctl-popup .export-file {
   cursor: grab;
