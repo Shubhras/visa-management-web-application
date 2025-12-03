@@ -1432,35 +1432,6 @@ class LanguageTestImportAPIView(APIView):
 
 
 
-
-# class LanguagetestmoduleNameListAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
-
-#     def get(self, request):
-#         search = request.GET.get('search', '').strip()
-#         sort_by = request.GET.get('sortBy', 'created_at')
-#         sort_order = request.GET.get('sortOrder', 'desc')
-#         allowed_sort_fields = ['name', 'description', 'created_at']
-
-#         if sort_by not in allowed_sort_fields:
-#             sort_by = 'created_at'
-#         if sort_order == 'desc':
-#             sort_by = f'-{sort_by}'
-
-#         queryset = LanguagetestmoduleName.objects.filter(is_deleted=False)
-#         if search:
-#             queryset = queryset.filter(
-#                 Q(name__istartswith=search) |
-#                 Q(description__istartswith=search)
-#             )
-
-#         queryset = queryset.order_by(sort_by)
-#         paginator = CustomPagination()
-#         result_page = paginator.paginate_queryset(queryset, request)
-#         serializer = LanguagetestmoduleNameSerializer(result_page, many=True)
-#         return paginator.get_paginated_response(serializer.data)
-
-
 class LanguagetestmoduleNameListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -3816,54 +3787,201 @@ class StudyLanguageBanchmarkDeleteAPIView(APIView):
 
 
 
+# class StudyLanguageBenchmarkExportAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         format_type = request.GET.get('format', 'xlsx').lower()
+#         fields = request.GET.get('fields')  # comma-separated fields
+#         uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
+
+#         uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+#         # Field to header mapping
+#         field_header_map = {
+#             'uuid': 'UUID',
+#             'name': 'Language Banchmark Level',
+#             'description': 'Description',
+#             'is_deleted': 'Deleted',
+#             'created_at': 'Created On',
+#             'updated_at': 'Modified On',
+#         }
+
+#         # Determine which fields to export
+#         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+#         # Fetch queryset
+#         queryset = StudyLanguageBanchmark.objects.filter(is_deleted=False)
+#         if uuids:
+#             queryset = queryset.filter(uuid__in=uuids)
+#         queryset = queryset.order_by('-created_at')
+
+#         # Prepare dataset
+#         dataset = Dataset()
+#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+#         dataset.title = 'LanguageBenchmarkLevel'
+
+#         for obj in queryset:
+#             row = []
+#             for field in field_list:
+#                 value = getattr(obj, field, '')
+
+#                 if field in ['created_at', 'updated_at'] and value:
+#                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+#                 elif isinstance(value, bool):
+#                     value = int(value)
+
+#                 row.append(value if value is not None else '')
+#             dataset.append(row)
+
+#         # Export data
+#         if format_type == 'csv':
+#             file_data = dataset.export('csv')
+#             content_type = 'text/csv'
+#             file_name = 'study_language_benchmark.csv'
+#         else:
+#             file_data = io.BytesIO(dataset.export('xlsx'))
+#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+#             file_name = 'study_language_benchmark.xlsx'
+
+#         response = HttpResponse(
+#             file_data if format_type == 'csv' else file_data.getvalue(),
+#             content_type=content_type
+#         )
+#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+#         return response
+
+
 class StudyLanguageBenchmarkExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
-        fields = request.GET.get('fields')  # comma-separated fields
-        uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
+        fields = request.GET.get('fields')
+        search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at').strip()
+        sort_order = request.GET.get('sortOrder', 'desc').strip().lower()
 
+        uuids_param = request.GET.get('uuids', '')
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
-        # Field to header mapping
+        # ---------------------------
+        # FIELD → HEADER MAP
+        # ---------------------------
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Language Banchmark Level',
+            'name': 'Language Benchmark Level',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'created_at': 'Created On',
             'updated_at': 'Modified On',
         }
 
-        # Determine which fields to export
+        # ---------------------------
+        # FIELDS TO EXPORT
+        # ---------------------------
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
-        # Fetch queryset
+        # ---------------------------
+        # BASE QUERYSET
+        # ---------------------------
         queryset = StudyLanguageBanchmark.objects.filter(is_deleted=False)
+
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
 
-        # Prepare dataset
+        # ---------------------------
+        # SEARCH
+        # ---------------------------
+        if search:
+            queryset = queryset.filter(
+                Q(name__istartswith=search)
+            )
+
+        # ---------------------------
+        # SORT MAPPING
+        # ---------------------------
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        sort_fields = []
+
+        # ---------------------------
+        # CUSTOM SORT (multi-field)
+        # ---------------------------
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # text fields → case insensitive
+                    if field in ["name", "description"]:
+                        expr = Lower(orm_field)
+                    else:
+                        expr = F(orm_field)
+
+                    sort_fields.append(
+                        expr.asc(nulls_last=True) if order == "asc" else expr.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+
+        else:
+            # ---------------------------
+            # NORMAL SORT (single-field)
+            # ---------------------------
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+
+            if sort_by in ["name", "description"]:
+                expr = Lower(orm_field)
+            else:
+                expr = F(orm_field)
+
+            sort_fields.append(
+                expr.asc(nulls_last=True) if sort_order == "asc" else expr.desc(nulls_last=True)
+            )
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ---------------------------
+        # PREPARE DATASET
+        # ---------------------------
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'LanguageBenchmarkLevel'
+        dataset.title = 'StudyLanguageBenchmarkLevel'
 
         for obj in queryset:
             row = []
             for field in field_list:
                 value = getattr(obj, field, '')
 
+                # Date to IST
                 if field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+
+                # Boolean → int
                 elif isinstance(value, bool):
                     value = int(value)
 
                 row.append(value if value is not None else '')
+
             dataset.append(row)
 
-        # Export data
+        # ---------------------------
+        # EXPORT TO CSV/XLSX
+        # ---------------------------
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
@@ -3879,6 +3997,8 @@ class StudyLanguageBenchmarkExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+
+
 
 
 class StudyLanguageBenchmarkImportAPIView(APIView):
