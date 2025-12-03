@@ -94,8 +94,8 @@ const AddImportEntranceTestAbilityGroupModal = ({ show, handleClose }) => {
               const prepareData = {
                 data: response.duplicates || [],
                 headers: ["Entrance Test Ability Group"],
-                sheetName: "Entrance Test Ability Group",
-                fileName: "Entrance Test Ability Group",
+                sheetName: "EntranceTestAbilityGroup",
+                fileName: "EntranceTestAbilityGroup",
               };
               exportToExcelDuplicate(
                 prepareData.data,
@@ -108,8 +108,8 @@ const AddImportEntranceTestAbilityGroupModal = ({ show, handleClose }) => {
               const prepareData = {
                 data: response.skipped_rows || [],
                 headers: ["Entrance Test Ability Group", "Reason"],
-                sheetName: "Entrance Test Ability Group",
-                fileName: "Entrance Test Ability GroupGapGroup",
+                sheetName: "EntranceTestAbilityGroup",
+                fileName: "EntranceTestAbilityGroup",
               };
               exportToExcelWrongData(
                 prepareData.data,
@@ -191,9 +191,8 @@ const AddImportEntranceTestAbilityGroupModal = ({ show, handleClose }) => {
                     </label>
                     <input
                       type="file"
-                      className={`form-control radius-8 ${
-                        error && !selectedSheet ? "is-invalid" : ""
-                      }`}
+                      className={`form-control radius-8 ${error && !selectedSheet ? "is-invalid" : ""
+                        }`}
                       onChange={handleFileChange}
                       accept=".csv,.xlsx,.xls,.pdf,.docx"
                       style={{ height: "auto" }}
@@ -280,7 +279,7 @@ const AddImportEntranceTestAbilityGroupModal = ({ show, handleClose }) => {
           show={showSampleExcelDownload}
           handleClose={handleCloseSampleExcelDownload}
           prepareData={{
-            downloadFileName: "Entrance Test Ability Group",
+            downloadFileName: "EntranceTestAbilityGroup",
             items: ["Entrance Test Ability Group", "Description"],
             selectedItems: ["Entrance Test Ability Group"],
             ItemsRequired: ["Entrance Test Ability Group"],

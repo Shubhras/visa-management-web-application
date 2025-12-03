@@ -134,7 +134,17 @@ const MasterLayout = ({ children }) => {
     "Occupation Type",
     "Occupation Prospect",
     "Occupation Category",
-    "Occupation Version"
+    "Occupation Version",
+    "Occupation Level Code",
+    "Occupation Level",
+    "Occupation Code",
+    "Occupation Name",
+    "Designation (Job Title)",
+    "Job Prospect",
+    "Related Occupation",
+    "Compare : Occupation To Occupation",
+    "Eligibility for Occupation Name"
+
   ]);
 
 
@@ -298,6 +308,7 @@ const MasterLayout = ({ children }) => {
             { name: "Job Prospect", path: "/job-prospect" },
             { name: "Related Occupation", path: "/related-occupation" },
             { name: "Compare : Occupation To Occupation", path: "/occupation-to-occupation" },
+            {name: "Eligibility for Occupation Name",path: "/eligibility-for-occupation-name"},
           ],
         },
         {

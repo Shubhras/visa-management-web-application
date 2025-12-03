@@ -280,7 +280,7 @@ const AddImportLanguageAbilityGroupModal = ({ show, handleClose }) => {
           show={showSampleExcelDownload}
           handleClose={handleCloseSampleExcelDownload}
           prepareData={{
-            downloadFileName: "Language Ability Group",
+            downloadFileName: "LanguageAbilityGroup",
             items: ["Language Ability Group", "Description"],
             selectedItems: ["Language Ability Group"],
             ItemsRequired: ["Language Ability Group"],

@@ -109,8 +109,8 @@ const AddImportJobProspectModal = ({ show, handleClose }) => {
                   "Occupation Type",
                   "Job Prospect",
                 ],
-                sheetName: "Job Prospect ",
-                fileName: "Job Prospect",
+                sheetName: "JobProspect ",
+                fileName: "JobProspect",
               };
               exportToExcelDuplicate(
                 prepareData.data,
@@ -132,8 +132,8 @@ const AddImportJobProspectModal = ({ show, handleClose }) => {
                   "Job Prospect",
                   "Reason",
                 ],
-                sheetName: "Job Prospect",
-                fileName: "Job Prospect",
+                sheetName: "JobProspect",
+                fileName: "JobProspect",
               };
               exportToExcelWrongData(
                 prepareData.data,
@@ -304,7 +304,7 @@ const AddImportJobProspectModal = ({ show, handleClose }) => {
           show={showSampleExcelDownload}
           handleClose={handleCloseSampleExcelDownload}
           prepareData={{
-            downloadFileName: "Job Prospect",
+            downloadFileName: "JobProspect",
             items: [
               "Country",
               "Occupation Version",

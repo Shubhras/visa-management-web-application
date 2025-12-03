@@ -6,11 +6,12 @@ import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
 import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
-import {  entranceTestAbilityGroupDelete, entranceTestAbilityGroupExportData, entranceTestAbilityGroupList} from '../../../../store/actions';
+import { entranceTestAbilityGroupDelete, entranceTestAbilityGroupExportData, entranceTestAbilityGroupList } from '../../../../store/actions';
 import AddEditEntranceTestAbilityGroupModal from './AddEditEntranceTestAbilityGroupModal';
 import AddImportEntranceTestAbilityGroupModal from './AddImportEntranceTestAbilityGroupModal';
+import ResetButton from '../../../../components/comman/ResetButton';
 const EntranceTestAbilityGroupList = () => {
-  const { globalSearch ,setGlobalSearch} = useGlobalSearch();
+  const { globalSearch, setGlobalSearch } = useGlobalSearch();
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({
     show: false,
@@ -104,8 +105,11 @@ const EntranceTestAbilityGroupList = () => {
     limit: 25,
     search: '',
     status: '',
-    sortBy: 'created_at',
-    sortOrder: 'desc',
+    sortBy: '', // Field to sort by
+    sortOrder: '', // 'asc' or 'desc'
+    sort: [
+      { field: "created_at", order: "desc" }
+    ],
     total: 0,
     totalPages: 0,
     currentPage: 1,
@@ -128,7 +132,7 @@ const EntranceTestAbilityGroupList = () => {
 
   useEffect(() => {
     fetchEntranceTestAbilityGroupList();
-  }, [tableState.page, tableState.limit, tableState.status, tableState.sortBy, tableState.sortOrder]);
+  }, [tableState.page, tableState.limit, tableState.status, tableState.sort]);
 
   const fetchEntranceTestAbilityGroupList = () => {
     setLoading(true);
@@ -138,7 +142,8 @@ const EntranceTestAbilityGroupList = () => {
       search: tableState.search || '',
       status: tableState.status || '',
       sortBy: tableState.sortBy || '',
-      sortOrder: tableState.sortOrder || ''
+      sortOrder: tableState.sortOrder || '',
+      sort: tableState.sort,
     };
 
     dispatch(entranceTestAbilityGroupList(params, (response, error) => {
@@ -176,40 +181,59 @@ const EntranceTestAbilityGroupList = () => {
     }));
   };
 
+  // Handle sorting
   const handleSort = (field) => {
     setTableState(prev => {
-      if (prev.sortBy === field) {
-        if (prev.sortOrder === 'asc') {
-          return { ...prev, sortOrder: 'desc', page: 1 };
-        } else if (prev.sortOrder === 'desc') {
-          return { ...prev, sortBy: '', sortOrder: '', page: 1 };
+      let newSort = [...prev.sort];
+      const existingIndex = newSort.findIndex(s => s.field === field);
+      if (existingIndex === -1) {
+        newSort.push({ field, order: "asc" });
+      }
+      else {
+        const existing = newSort[existingIndex];
+        if (existing.order === "asc") {
+          newSort[existingIndex].order = "desc";
+        }
+        else if (existing.order === "desc") {
+          newSort.splice(existingIndex, 1);
         }
       }
-      return { ...prev, sortBy: field, sortOrder: 'asc', page: 1 };
+      return { ...prev, sort: newSort, page: 1 };
     });
   };
 
   const getSortIcon = (field) => {
-    if (tableState.sortBy !== field) {
+    const sortObj = tableState.sort.find(s => s.field === field);
+    if (!sortObj) {
       return <Icon icon="ri:menu-line" className="sorting-th-icone" />;
     }
-    if (tableState.sortOrder === 'asc') {
-      return <Icon icon="ri:sort-asc" className='sorting-th-icone' />;
+    if (sortObj.order === "asc") {
+      return <Icon icon="ri:sort-asc" className="sorting-th-icone" />;
     }
-    return <Icon icon="ri:sort-desc" className='sorting-th-icone' />;
+    return <Icon icon="ri:sort-desc" className="sorting-th-icone" />;
   };
 
-  // // Clear all filters
   const clearAllFilters = () => {
     setTableState(prev => ({
       ...prev,
       page: 1,
+      limit: 25,
+      search: '',
       status: '',
-      sortBy: 'created_at',
-      sortOrder: 'desc',
+      sortBy: '',
+      sortOrder: '',
+      sort: [
+        { field: "created_at", order: "desc" }   // default sort
+      ],
+      total: 0,
+      totalPages: 0,
+      currentPage: 1,
+      hasNext: false,
+      hasPrevious: false
     }));
-    // Reset Global Search also
+    // Reset Global Search
     setGlobalSearch('');
+    setSelectedRows([]);
   };
 
   const handlePageLengthChange = (value) => {
@@ -314,10 +338,16 @@ const EntranceTestAbilityGroupList = () => {
   const confirmDelete = () => {
     const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
-      toast.error("No entrance test ability group selected for deletion.");
+      toast.error("No Document Category selected for deletion.");
       return;
     }
-    dispatch(entranceTestAbilityGroupDelete(sendPayload, (response, error) => {
+    const deleteAll = tableState.search?.trim() !== "";
+    const payloadSend = {
+      deleteAll: deleteAll,
+      id: deleteAll == true ? "" : sendPayload,
+      search: tableState.search || '',
+    };
+    dispatch(entranceTestAbilityGroupDelete(payloadSend, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
@@ -409,6 +439,9 @@ const EntranceTestAbilityGroupList = () => {
       file: "xlsx",
       fields: fieldsString,
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
+      search: tableState.search || '', // Add search parameter
+      sort: tableState.sort, // Add sort parameter
+
     };
     setLoadingExport(true);
     dispatch(entranceTestAbilityGroupExportData(sendPayload, (response, error) => {
@@ -451,6 +484,7 @@ const EntranceTestAbilityGroupList = () => {
         <div className="card basic-data-table main-container-data">
           <div className="card-body container-data">
             <div className="row align-items-center gy-3 gx-2 flex-wrap filter-action-btn">
+              {/* Left Section: Import / Export / Delete */}
               <div className="col-xl-6 col-lg-4 col-md-12">
                 <div className="d-flex flex-wrap align-items-center gap-2">
                   <button
@@ -492,16 +526,15 @@ const EntranceTestAbilityGroupList = () => {
                       </button>
                     </>
                   )}
-                  <button
+                  <ResetButton
                     onClick={clearAllFilters}
-                    className="btn btn-sm py-1 comman-inactive-btn"
-                  >
-                    <Icon icon="mdi:filter-off" width="16" /> Clear Filters
-                  </button>
-
+                    tableState={tableState}
+                    globalSearch={globalSearch}
+                    selectedRows={selectedRows}
+                  />
                 </div>
               </div>
-
+              {/* Right Section: Select / Search / +Add New */}
               <div className="col-xl-6 col-lg-8 col-md-12">
                 <div className="d-flex flex-wrap align-items-center justify-content-end gap-2">
                   <select

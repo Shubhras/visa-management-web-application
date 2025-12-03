@@ -101,8 +101,8 @@ const AddImportOccupationCode = ({ show, handleClose }) => {
               const prepareData = {
                 data: response.duplicates || [],
                 headers: ["Country", "Occupation Version", "Occupation Code"],
-                sheetName: "Occupation Code",
-                fileName: "Occupation Code",
+                sheetName: "OccupationCode",
+                fileName: "OccupationCode",
               };
               exportToExcelDuplicate(
                 prepareData.data,
@@ -120,8 +120,8 @@ const AddImportOccupationCode = ({ show, handleClose }) => {
                   "Occupation Code",
                   "Reason",
                 ],
-                sheetName: "Occupation Code",
-                fileName: "Occupation Code",
+                sheetName: "OccupationCode",
+                fileName: "OccupationCode",
               };
               exportToExcelWrongData(
                 prepareData.data,
@@ -292,7 +292,7 @@ const AddImportOccupationCode = ({ show, handleClose }) => {
           show={showSampleExcelDownload}
           handleClose={handleCloseSampleExcelDownload}
           prepareData={{
-            downloadFileName: "Occupation Code",
+            downloadFileName: "OccupationCode",
             items: [
               "Country",
               "Occupation Version",

@@ -4,8 +4,8 @@ import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
 import { exportToExcelDuplicate, exportToExcelWrongData } from '../../../../helper/utils/commanHelper';
-import { ageImportData, occupationToOccupationImportData, studyFactorGapImportData, studyFactorLanguageAbilityImportData } from '../../../../store/actions';
-const AddImportOccupationToOccupationModal = ({ show, handleClose }) => {
+import { eligibilityOccupationNameImportData } from "../../../../store/master/occupationMaster/action";
+const AddImportEligibilityforOccupationNameModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
     const [file, setFile] = useState(null);
@@ -65,7 +65,7 @@ const AddImportOccupationToOccupationModal = ({ show, handleClose }) => {
             formData.append('sheet_name', selectedSheet);
         }
         setLoading(true);
-        dispatch(occupationToOccupationImportData(formData, (response, error) => {
+        dispatch(eligibilityOccupationNameImportData(formData, (response, error) => {
             setLoading(false);
             if (error) {
                 toast.error(error?.response?.data?.message || "Server error");
@@ -88,9 +88,9 @@ const AddImportOccupationToOccupationModal = ({ show, handleClose }) => {
                     if (response?.duplicates?.length > 0) {
                         const prepareData = {
                             data: response.duplicates || [],
-                            headers: ["Country","Occupation Version","Occupation Name","Occupation Code","Compare : Country","Compare : Occupation Version","Compare : Occupation Name","Compare : Occupation Code",],
-                            sheetName: "OccupationtoOccupation",
-                            fileName: "OccupationtoOccupation",
+                            headers: ["Country", "Occupation Version", "Occupation Name", "Occupation Code"],
+                            sheetName: "EligibilityforOccupationName",
+                            fileName: "EligibilityforOccupationName",
                         };
                         exportToExcelDuplicate(
                             prepareData.data,
@@ -102,9 +102,8 @@ const AddImportOccupationToOccupationModal = ({ show, handleClose }) => {
                      if (response?.skipped_rows?.length > 0) {
                         const prepareData = {
                             data: response.skipped_rows || [],
-                            headers: ["Country","Occupation Version","Occupation Name","Occupation Code","Compare : Country","Compare : Occupation Version","Compare : Occupation Name","Compare : Occupation Code","Reason"],
-                            sheetName: "OccupationtoOccupation",
-                            fileName: "OccupationtoOccupation",
+                            headers: ["Country", "Occupation Version", "Occupation Name", "Occupation Code"],
+                            fileName: "EligibilityforOccupationName",
                         };
                         exportToExcelWrongData(
                             prepareData.data,
@@ -254,10 +253,10 @@ const AddImportOccupationToOccupationModal = ({ show, handleClose }) => {
             </div>
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                    downloadFileName: "OccupationtoOccupation",
-                    items: ["Country","Occupation Version","Occupation Name","Occupation Code","Compare : Country","Compare : Occupation Version","Compare : Occupation Name","Compare : Occupation Code","Description"],
-                    selectedItems: ["Country","Occupation Version","Occupation Name","Occupation Code","Compare : Country","Compare : Occupation Version","Compare : Occupation Name","Compare : Occupation Code"],
-                    ItemsRequired: ["Country","Occupation Version","Occupation Name","Occupation Code","Compare : Country","Compare : Occupation Version","Compare : Occupation Name","Compare : Occupation Code"]
+                    downloadFileName: "EligibilityforOccupationName",
+                    items: ["Country","Occupation Version","Occupation Name","Occupation Code","Required Study Main Area","Required Study Major Area","Modified On"],
+                    selectedItems: ["Country", "Occupation Version", "Occupation Name", "Occupation Code"],
+                    ItemsRequired: ["Country", "Occupation Version", "Occupation Name", "Occupation Code"]
                 }
                 } />
             )}
@@ -265,4 +264,4 @@ const AddImportOccupationToOccupationModal = ({ show, handleClose }) => {
     );
 };
 
-export default AddImportOccupationToOccupationModal;
+export default AddImportEligibilityforOccupationNameModal;
