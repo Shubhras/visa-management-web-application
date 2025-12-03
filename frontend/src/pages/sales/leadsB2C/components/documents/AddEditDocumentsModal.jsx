@@ -7,7 +7,7 @@ const AddEditDocumentsModal = ({ show, handleClose, mode, rowData }) => {
   const [formData, setFormData] = useState({
     documentCategory: "",
     documentName: "",
-    attachment: null,
+    attachments: [], // Use array for multi-file
   });
 
   const [errors, setErrors] = useState({});
@@ -34,15 +34,25 @@ const AddEditDocumentsModal = ({ show, handleClose, mode, rowData }) => {
   const handleInput = (e) => {
     const { name, value, files } = e.target;
 
-    if (name === "attachment") {
-      setFormData({ ...formData, attachment: files[0] });
+    if (files) {
+      // If it's a file input
+      setFormData((prev) => ({
+        ...prev,
+        [name]: Array.from(files), // Convert FileList to array
+      }));
     } else {
-      setFormData({ ...formData, [name]: value });
+      // If it's a text input
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
     }
 
-    if (errors[name]) {
-      setErrors({ ...errors, [name]: "" });
-    }
+    // Clear errors if any
+    setErrors((prev) => ({
+      ...prev,
+      [name]: "",
+    }));
   };
 
   const validateForm = () => {
@@ -57,8 +67,9 @@ const AddEditDocumentsModal = ({ show, handleClose, mode, rowData }) => {
       temp.documentName = "Document Name is required";
       valid = false;
     }
-    if (!formData.attachment) {
-      temp.attachment = "Attachment is required";
+
+    if (!formData.attachments || formData.attachments.length === 0) {
+      temp.attachments = "Attachments are required";
       valid = false;
     }
 
@@ -71,7 +82,8 @@ const AddEditDocumentsModal = ({ show, handleClose, mode, rowData }) => {
 
     if (!validateForm()) return;
 
-    const payload = mode === "edit" ? { uuid: rowData?.uuid, ...formData } : { ...formData };
+    const payload =
+      mode === "edit" ? { uuid: rowData?.uuid, ...formData } : { ...formData };
 
     setLoading(true);
 
@@ -94,10 +106,17 @@ const AddEditDocumentsModal = ({ show, handleClose, mode, rowData }) => {
   if (!show) return null;
 
   return (
-    <div className="modal fade show common-ctl-popup" tabIndex="-1" role="dialog" aria-hidden={!show}>
-      <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
+    <div
+      className="modal fade show common-ctl-popup"
+      tabIndex="-1"
+      role="dialog"
+      aria-hidden={!show}
+    >
+      <div
+        className="modal-dialog modal-xl modal-dialog-centered"
+        role="document"
+      >
         <div className="modal-content radius-16 bg-base">
-          
           {/* HEADER */}
           <div className="modal-header py-16 px-20 border border-top-0 border-start-0 border-end-0">
             <h1 className="modal-title fs-5">
@@ -110,50 +129,68 @@ const AddEditDocumentsModal = ({ show, handleClose, mode, rowData }) => {
           <div className="modal-body p-24 pt-10">
             <form onSubmit={handleSubmit}>
               <div className="row gx-2">
-
                 {/* Document Category */}
                 <div className="col-6 mb-3">
-                  <label className="form-label fw-semibold text-sm mb-0">Document Category <span className="text-danger">*</span></label>
+                  <label className="form-label fw-semibold text-sm mb-0">
+                    Document Category <span className="text-danger">*</span>
+                  </label>
                   <input
                     type="text"
                     name="documentCategory"
                     value={formData.documentCategory}
                     onChange={handleInput}
                     placeholder="Enter document category"
-                    className={`form-control radius-8 ${errors.documentCategory ? "is-invalid" : ""}`}
+                    className={`form-control radius-8 ${
+                      errors.documentCategory ? "is-invalid" : ""
+                    }`}
                   />
-                  {errors.documentCategory && <div className="text-danger text-sm mt-1">{errors.documentCategory}</div>}
+                  {errors.documentCategory && (
+                    <div className="text-danger text-sm mt-1">
+                      {errors.documentCategory}
+                    </div>
+                  )}
                 </div>
 
                 {/* Document Name */}
                 <div className="col-6 mb-3">
-                  <label className="form-label fw-semibold text-sm mb-0">Document Name <span className="text-danger">*</span></label>
+                  <label className="form-label fw-semibold text-sm mb-0">
+                    Document Name <span className="text-danger">*</span>
+                  </label>
                   <input
                     type="text"
                     name="documentName"
                     value={formData.documentName}
                     onChange={handleInput}
                     placeholder="Enter document name"
-                    className={`form-control radius-8 ${errors.documentName ? "is-invalid" : ""}`}
+                    className={`form-control radius-8 ${
+                      errors.documentName ? "is-invalid" : ""
+                    }`}
                   />
-                  {errors.documentName && <div className="text-danger text-sm mt-1">{errors.documentName}</div>}
+                  {errors.documentName && (
+                    <div className="text-danger text-sm mt-1">
+                      {errors.documentName}
+                    </div>
+                  )}
                 </div>
 
                 {/* Attachment */}
                 <div className="col-12 mb-3">
-                  <label className="form-label fw-semibold text-sm mb-0">Attachment <span className="text-danger">*</span></label>
+                  <label className="form-label fw-semibold text-sm mb-0">
+                    Attachments <span className="text-danger">*</span>
+                  </label>
                   <input
                     type="file"
-                    name="attachment"
+                    name="attachments"
                     accept="image/*,application/pdf"
+                    multiple
                     onChange={handleInput}
-                    className={`form-control radius-8 ${errors.attachment ? "is-invalid" : ""}`}
+                    className={`form-control radius-8 ${
+                      errors.attachments ? "is-invalid" : ""
+                    }`}
                   />
-                  {errors.attachment && <div className="text-danger text-sm mt-1">{errors.attachment}</div>}
-
-                  {formData.attachment && (
-                    <div className="mt-2">
-                      <strong>Selected file:</strong> {formData.attachment.name}
+                  {errors.attachments && (
+                    <div className="text-danger text-sm mt-1">
+                      {errors.attachments}
                     </div>
                   )}
                 </div>
@@ -185,7 +222,6 @@ const AddEditDocumentsModal = ({ show, handleClose, mode, rowData }) => {
                     )}
                   </button>
                 </div>
-
               </div>
             </form>
           </div>

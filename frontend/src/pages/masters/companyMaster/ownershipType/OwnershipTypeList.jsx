@@ -666,7 +666,8 @@ const OwnershipTypeList = () => {
 
     const fieldMapping = {
       "Ownership Type": "name",
-      "Company Type": "company_type_name",
+      // "Company Type": "company_type_name",
+      "Company Type": "company_type",
       "Modified On": "updated_at",
       Description: "description",
     };

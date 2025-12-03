@@ -12,7 +12,6 @@ import Documents from "./components/documents/Documents";
 import AddEditActionModal from "./components/leadB2CSidebar/AddEditActionModal";
 import AddEditOfficeModal from "./components/leadB2CSidebar/AddEditOfficeModal";
 import { Link } from "react-router-dom";
-
 const LeadB2CForm = () => {
   const dispatch = useDispatch();
   const [leadFor, setLeadFor] = useState(null);
@@ -33,11 +32,11 @@ const LeadB2CForm = () => {
   };
 
   const mainTabBtnClass = (tab) =>
-    `btn border border-primary-600 text-md px-16 py-6  ${
-      activeMainTab === tab
-        ? "comman-btn-color text-white"
-        : "bg-white text-primary-600"
-    }`;
+  `btn btn-sm px-3 py-1 fw-medium ${
+    activeMainTab === tab
+      ? "comman-btn-color text-white"
+      : "bg-white text-primary-600 border border-primary-600"
+  }`;
 
   const renderActiveTab = () => {
     switch (activeMainTab) {
@@ -241,7 +240,6 @@ const LeadB2CForm = () => {
       <div className="card basic-data-table main-container-data">
         <div className="card-body container-data">
           <div className="d-flex flex-wrap align-items-center justify-content-between w-100 gap-3">
-            {/* LEFT BUTTON GROUP */}
             <div className="d-flex align-items-center gap-2 flex-wrap">
               <button className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color">
                 Create Inquiry
@@ -257,27 +255,26 @@ const LeadB2CForm = () => {
             </div>
 
             <div className="d-flex align-items-center gap-3 flex-wrap">
-              <div className="lead-stat-box d-flex align-items-center gap-2 px-3 py-2 rounded-3 shadow-sm bg-white">
-                <p className="fs-4 fw-bold mb-0">04</p>
-                <span className="text-muted fs-6">Quick Assessment</span>
+              <div className="lead-stat-box d-flex gap-2 align-items-center px-3 py-2 rounded-3 shadow-sm bg-white">
+                <p className=" fw-medium mb-0">04</p>
+                <span className="">Quick Assessment</span>
               </div>
 
-              <div className="lead-stat-box d-flex align-items-center gap-2 px-3 py-2 rounded-3 shadow-sm bg-white">
-                <p className="fs-4 fw-bold mb-0">12</p>
-                <span className="text-muted fs-6">Schedule Meeting</span>
+              <div className=" lead-stat-box d-flex gap-2 align-items-center px-3 py-2 rounded-3 shadow-sm bg-white">
+                <p className=" fw-medium mb-0">12</p>
+                <span className="">Schedule Meeting</span>
               </div>
 
-              <div className="lead-stat-box d-flex align-items-center gap-2 px-3 py-2 rounded-3 shadow-sm bg-white">
-                <p className="fs-4 fw-bold mb-0">20</p>
-                <span className="text-muted fs-6">Follow Ups</span>
+              <div className=" lead-stat-box d-flex gap-2 align-items-center px-3 py-2 rounded-3 shadow-sm bg-white">
+                <p className=" fw-medium mb-0">20</p>
+                <span className="">Follow Ups</span>
               </div>
               <div
                 style={{ cursor: "pointer" }}
                 data-bs-toggle="offcanvas"
                 data-bs-target="#leadSidebar"
               >
-                {/* <Icon icon="mdi:view-grid" width="26" /> */}
-                <Icon icon="material-symbols:menu" width="30"  />
+                <Icon icon="material-symbols:menu" width="30" />
               </div>
             </div>
           </div>
@@ -358,11 +355,9 @@ const LeadB2CForm = () => {
                       >
                         {/* LEFT CONTENT */}
                         <div>
-                          <strong>
-                            {note.note}
-                          </strong>
+                          <strong>{note.note}</strong>
                           <br />
-                          <span className="text-muted small"> 
+                          <span className="text-muted small">
                             {note.createdAt ? note.createdAt : "Internal Note"}
                           </span>
                         </div>
@@ -480,7 +475,11 @@ const LeadB2CForm = () => {
                               handleEditAction(action);
                             }}
                           >
-                            <Icon icon="lucide:edit" width="18" />
+                            <Icon
+                              icon="lucide:edit"
+                              width="18"
+                              style={{ color: "#059669" }}
+                            />
                           </button>
 
                           <button
@@ -562,8 +561,27 @@ const LeadB2CForm = () => {
                               handleEditOffice(item);
                             }}
                           >
-                            <Icon icon="lucide:edit" width="18" />
+                            <Icon
+                              icon="lucide:edit"
+                              width="18"
+                              style={{ color: "#059669" }}
+                            />
                           </button>
+
+                          {/* <Link
+                            to="#"
+                            className="edit-btn-icone"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditOffice(item);
+                            }}
+                          >
+                            <Icon
+                              icon="lucide:edit"
+                              width="18"
+                              className="icone"
+                            />
+                          </Link> */}
 
                           <button
                             className="btn btn-link text-danger p-0 m-0"
@@ -600,90 +618,95 @@ const LeadB2CForm = () => {
         </div>
 
         <div className="card-body pt-0 container-table">
-          <div className="container-table-div">
-            <div className="section-block mb-3">
-              <div className="row g-3">
-                <div className="col-md-4">
-                  <label className="form-label ">Lead Date &amp; Time</label>
-                  <div className="d-flex gap-2">
+          <div className="container-table-div ">
+            {activeMainTab === "basic" && (
+              <div className="section-block mb-3 no-overflow compact-inputs">
+                <div className="row gx-5">
+                  <div className="col-md-4">
+                    <label className="form-label">Lead Date &amp; Time</label>
+                    <div className="d-flex gap-2">
+                      <input
+                        type="text"
+                        className="form-control form-control-sm "
+                        placeholder="Date (Auto)"
+                      />
+                      <input
+                        type="text"
+                        className="form-control form-control-sm"
+                        placeholder="Time (Auto)"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="col-md-4">
+                    <label className="form-label">Lead ID</label>
                     <input
                       type="text"
                       className="form-control form-control-sm"
-                      placeholder="Date (Auto)"
+                      placeholder="Auto As per Company Formate"
                     />
-                    <input
-                      type="text"
-                      className="form-control form-control-sm"
-                      placeholder="Time (Auto)"
+                  </div>
+
+                  <div className="col-md-4">
+                    <label className="form-label">Lead For</label>
+
+                    <Select
+                      options={leadForOptions}
+                      value={leadForOptions.find((o) => o.value === leadFor)}
+                      onChange={(opt) => setLeadFor(opt?.value || null)}
+                      placeholder="Select"
+                      isClearable
+                      classNamePrefix="custom-select"
+                      className={`custom-select-container`}
                     />
                   </div>
                 </div>
 
-                <div className="col-md-4">
-                  <label className="form-label ">Lead ID</label>
-                  <input
-                    type="text"
-                    className="form-control form-control-sm"
-                    placeholder="Auto As per Company Formate"
-                  />
-                </div>
+                <div className="row gx-5 mt-1">
+                  <div className="col-md-4">
+                    <label className="form-label">Test (Exam) Name</label>
+                    <input
+                      type="text"
+                      className="form-control form-control-sm"
+                      placeholder="Master (Language Test Name)"
+                    />
+                  </div>
 
-                <div className="col-md-4">
-                  <label className="form-label">Lead For</label>
+                  <div className="col-md-4">
+                    <label className="form-label">
+                      Interested Visa Category
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control form-control-sm"
+                      placeholder="Master (Visa Main Category) - Multiple"
+                    />
+                  </div>
 
-                  <Select
-                    options={leadForOptions}
-                    value={leadForOptions.find((o) => o.value === leadFor)}
-                    onChange={(opt) => setLeadFor(opt?.value || null)}
-                    placeholder="Select"
-                    isClearable
-                    classNamePrefix="custom-select"
-                    className={`custom-select-container`}
-                  />
-                </div>
-              </div>
-
-              <div className="row g-3 mt-1">
-                <div className="col-md-4">
-                  <label className="form-label ">Test (Exam) Name</label>
-                  <input
-                    type="text"
-                    className="form-control form-control-sm"
-                    placeholder="Master (Language Test Name)"
-                  />
-                </div>
-
-                <div className="col-md-4">
-                  <label className="form-label ">
-                    Interested Visa Category
-                  </label>
-                  <input
-                    type="text"
-                    className="form-control form-control-sm"
-                    placeholder="Master (Visa Main Category) - Multiple"
-                  />
-                </div>
-
-                <div className="col-md-4">
-                  <label className="form-label ">Interested Country</label>
-                  <input
-                    type="text"
-                    className="form-control form-control-sm"
-                    placeholder="Master (Rep. Country) - Multiple"
-                  />
+                  <div className="col-md-4">
+                    <label className="form-label">Interested Country</label>
+                    <input
+                      type="text"
+                      className="form-control form-control-sm"
+                      placeholder="Master (Rep. Country) - Multiple"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
-            <div className="d-flex align-items-center justify-content-center border-top border-bottom py-3">
+            <div
+              className="px-3 d-flex align-items-center justify-content-between border-top border-bottom py-3"
+              style={{ backgroundColor: "#e5f0ef" }}
+            >
               <div role="group" className="d-flex align-items-center">
-                <button
+                {/* <button
                   type="button"
                   className="btn btn-sm me-1"
                   onClick={scrollLeft}
                 >
                   <Icon icon="mdi:chevron-left" width="25" height="25" />
-                </button>
+                </button> */}
 
                 <div
                   ref={scrollRef}
@@ -721,6 +744,7 @@ const LeadB2CForm = () => {
                   >
                     Spouse Details
                   </button>
+
                   <button
                     type="button"
                     className={`${mainTabBtnClass("documents")} me-1`}
@@ -728,6 +752,7 @@ const LeadB2CForm = () => {
                   >
                     Documents
                   </button>
+
                   <button
                     type="button"
                     className={`${mainTabBtnClass("quick")} me-1`}
@@ -737,13 +762,13 @@ const LeadB2CForm = () => {
                   </button>
                 </div>
 
-                <button
+                {/* <button
                   type="button"
                   className="btn btn-sm"
                   onClick={scrollRight}
                 >
                   <Icon icon="mdi:chevron-right" width="25" height="25" />
-                </button>
+                </button> */}
               </div>
               <div>
                 <button

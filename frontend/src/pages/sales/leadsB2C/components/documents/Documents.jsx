@@ -124,26 +124,20 @@ const ReusableTable = ({
   };
 
   return (
-    <div className={`${tableSize}-table-container`}>
-      <div className="card-header d-flex justify-content-between align-items-center py-3 px-4 border-bottom">
-        <h6 className="mb-0 fw-semibold fs-5" style={{ color: "#5a6c5b" }}>
+    <div className={`${tableSize}-table-container my-3`}>
+      <div className="py-2 px-4 border-bottom">
+        {/* <h6 className="mb-0 fw-semibold fs-6" style={{ color: "#5a6c5b" }}>
           {title}
-        </h6>
-        <button
-          onClick={handleAddNew}
-          className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
-        >
-          New
-        </button>
+        </h6> */}
       </div>
 
-      <div className="card-body pt-0 container-table">
-        <div className="principle-table-div">
-          <table className="table mb-0">
-            <thead>
+      <div className="card-body pt-0 container-table mb-0 min-height">
+        <div className="mb-2">
+          <table className="table mb-0 ">
+            <thead className="colored-table-head">
               <tr>
-                <th scope="col" className="sl-numbar-th">
-                  <div className="d-flex align-items-center gap-2">
+                <th scope="col" className="sl-numbar-th ">
+                  <div className="d-flex align-items-center gap-2 ">
                     <input
                       className="form-check-input"
                       type="checkbox"
@@ -169,7 +163,7 @@ const ReusableTable = ({
                       >
                         <div className="d-flex align-items-center">
                           {col.label}
-                          {enableSorting && getSortIcon(col.field)}
+                          {/* {enableSorting && getSortIcon(col.field)} */}
                         </div>
                       </th>
                     )
@@ -280,6 +274,13 @@ const ReusableTable = ({
           </table>
         </div>
       </div>
+
+      <button
+        onClick={handleAddNew}
+        className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
+      >
+        New
+      </button>
     </div>
   );
 };
