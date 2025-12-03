@@ -15770,6 +15770,12 @@ td.fc-header-center {
   padding: 0px 0px;
 }
 
+.main-container-data .container-table .min-height thead th,
+.main-container-data .container-table .min-height tbody td {
+  padding: 3px 6px !important;   /* Reduce row height */
+  line-height: 1.8 !important;   /* Reduce vertical height */
+}
+
 /* .main-container-data .container-table-div {
   background-color: white;
   border-radius: 8px;
@@ -15851,6 +15857,12 @@ td.fc-header-center {
 .basic-data-table .container-table .sl-numbar-th {
   width: 80px;
 }
+
+.colored-table-head th {
+  background-color: #f5f5ef !important;
+  border-bottom: 1px solid #d3e4e3 !important;
+}
+
 
 .basic-data-table .container-table .action-th {
   width: 90px;
@@ -16467,3 +16479,31 @@ td.fc-header-center {
   pointer-events: none;
   opacity: 0.5;
 }
+
+.no-overflow {
+  overflow-x: hidden;
+}
+
+.compact-inputs input.form-control,
+.compact-inputs .custom-select__control {
+  height: 2.2rem !important;
+  font-size: 0.9rem !important;
+  padding: 0.5rem !important;
+}
+
+.compact-inputs .form-label {
+  margin-bottom: 2px !important;
+}
+
+.compact-inputs .row {
+  margin-bottom: 3px; /* reduce vertical gap */
+}
+
+.compact-inputs .custom-select__control {
+  min-height: 2.2rem !important;
+    padding: 0rem !important;
+
+}
+
+
+

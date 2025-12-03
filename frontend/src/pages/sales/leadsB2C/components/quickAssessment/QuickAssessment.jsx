@@ -396,7 +396,7 @@ const QuickAssessment = () => {
 
   return (
     <div
-      className="section-block p-3 bg-white border"
+      className="section-block p-3 bg-white border no-overflow"
       style={{ minWidth: 320 }}
     >
       {/* CREATE BUTTON */}
@@ -410,7 +410,7 @@ const QuickAssessment = () => {
       </div>
 
       {/* ===================== MAIN SELECTORS ===================== */}
-      <div className="row g-3 mb-3">
+      <div className="row gx-5 gy-3 mb-3">
         {/* Visa Main Category */}
         <div className="col-md-4">
           <label className="form-label fw-semibold">
@@ -436,7 +436,7 @@ const QuickAssessment = () => {
         </div>
 
         {/* Visa Name */}
-        <div className="col-4">
+        <div className="col-md-4">
           <label className="form-label fw-semibold">
             Visa Name <span className="text-danger">*</span>
           </label>
@@ -455,7 +455,7 @@ const QuickAssessment = () => {
       {/* ===================== STUDENT FORM ===================== */}
       {visaType === "student" && (
         <div className="mt-4">
-          <div className="row g-3 mb-20">
+          <div className="row gx-5 gy-3 mb-20">
             <div className="col-4">
               <label className="form-label">State</label>
               <Select
@@ -472,7 +472,7 @@ const QuickAssessment = () => {
               />
             </div>
           </div>
-          <div className="row g-3 mb-20">
+          <div className="row gx-5 gy-3 mb-20">
             <div className="col-4">
               <label className="form-label">Course Level</label>
               <Select
@@ -498,7 +498,7 @@ const QuickAssessment = () => {
             </div>
           </div>
 
-          <div className="row g-3 mb-20">
+          <div className="row gx-5 gy-3 mb-20">
             <div className="col-md-12">
               <label className="form-label">Study Main Areas</label>
               <Select
@@ -522,7 +522,7 @@ const QuickAssessment = () => {
             </div>
           </div>
 
-          <div className="row g-3 mb-20">
+          <div className="row gx-5 gy-3 mb-20">
             {/* Intake */}
             <div className="col-md-2">
               <label className="form-label">Intake Name</label>
@@ -565,7 +565,7 @@ const QuickAssessment = () => {
               </div>{" "}
             </div>
           </div>
-          <div className="row g-3 mb-20">
+          <div className="row gx-5 gy-3 mb-20">
             {/* Scholarship */}
             <div className="col-md-4">
               <label className="form-label">Scholarship</label>
@@ -610,7 +610,7 @@ const QuickAssessment = () => {
         visaType === "condition" ||
         visaType === "work") && (
         <div className="mt-4">
-          <div className="row g-3">
+          <div className="row gx-5 gy-3">
             <div className="col-md-4 mb-10">
               <label className="form-label">With Job Offer?</label>
               <Select

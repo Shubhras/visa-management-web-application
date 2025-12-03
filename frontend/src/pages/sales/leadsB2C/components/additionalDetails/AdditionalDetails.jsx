@@ -128,26 +128,20 @@ const ReusableTable = ({
   };
 
   return (
-    <div className={`${tableSize}-table-container`}>
-      <div className="card-header d-flex justify-content-between align-items-center py-3 px-4 border-bottom">
-        <h6 className="mb-0 fw-semibold fs-5" style={{ color: "#5a6c5b" }}>
+    <div className={`${tableSize}-table-container my-3`}>
+      <div className="py-2 px-4 border-bottom">
+        <h6 className="mb-0 fw-semibold fs-6" style={{ color: "#5a6c5b" }}>
           {title}
         </h6>
-        <button
-          onClick={handleAddNew}
-          className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
-        >
-          New
-        </button>
       </div>
 
-      <div className="card-body pt-0 container-table">
-        <div className="principle-table-div">
-          <table className="table mb-0">
-            <thead>
+      <div className="card-body pt-0 container-table mb-0 min-height">
+        <div className="mb-2">
+          <table className="table mb-0 ">
+            <thead className="colored-table-head">
               <tr>
-                <th scope="col" className="sl-numbar-th">
-                  <div className="d-flex align-items-center gap-2">
+                <th scope="col" className="sl-numbar-th ">
+                  <div className="d-flex align-items-center gap-2 ">
                     <input
                       className="form-check-input"
                       type="checkbox"
@@ -173,7 +167,7 @@ const ReusableTable = ({
                       >
                         <div className="d-flex align-items-center">
                           {col.label}
-                          {enableSorting && getSortIcon(col.field)}
+                          {/* {enableSorting && getSortIcon(col.field)} */}
                         </div>
                       </th>
                     )
@@ -284,6 +278,13 @@ const ReusableTable = ({
           </table>
         </div>
       </div>
+
+      <button
+        onClick={handleAddNew}
+        className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
+      >
+        New
+      </button>
     </div>
   );
 };
@@ -588,7 +589,7 @@ const AdditionalDetails = () => {
     <div className="section-block container-fluid">
       {/* RELATIVES TABLE */}
       <div className="card mb-4">
-        <div className="card-header bg-light py-3 d-flex align-items-center gap-2">
+        <div className="card-header bg-light py-1 d-flex align-items-center gap-2">
           <input
             type="checkbox"
             className="form-check-input"
@@ -597,7 +598,7 @@ const AdditionalDetails = () => {
               handleInputChange("hasRelatives", e.target.checked ? "yes" : "no")
             }
           />
-          <h6 style={{ color: '#5a6c5b' }} className="mb-0 fw-semibold fs-6 " >
+          <h6 style={{ color: '#5a6c5b' }} className="mb-0 fw-medium fs-6 " >
             Have you/spouse's RELATIVE in interested country?
           </h6>
         </div>
@@ -618,7 +619,7 @@ const AdditionalDetails = () => {
 
       {/* VISITED TABLE */}
       <div className="card mb-4">
-        <div className="card-header bg-light py-3 d-flex align-items-center gap-2">
+        <div className="card-header bg-light py-1 d-flex align-items-center gap-2">
           <input
             type="checkbox"
             className="form-check-input"
@@ -627,7 +628,7 @@ const AdditionalDetails = () => {
               handleInputChange("hasVisited", e.target.checked ? "yes" : "no")
             }
           />
-          <h6 className="mb-0 fw-semibold fs-6"style={{ color: '#5a6c5b' }}>
+          <h6 className="mb-0 fw-medium fs-6"style={{ color: '#5a6c5b' }}>
             Have you/spouse ever VISITED any country?
           </h6>
         </div>
@@ -648,7 +649,7 @@ const AdditionalDetails = () => {
 
       {/* REFUSED TABLE */}
       <div className="card mb-4">
-        <div className="card-header bg-light py-3 d-flex align-items-center gap-2">
+        <div className="card-header bg-light py-1 d-flex align-items-center gap-2">
           <input
             type="checkbox"
             className="form-check-input"
@@ -657,7 +658,7 @@ const AdditionalDetails = () => {
               handleInputChange("hasRefused", e.target.checked ? "yes" : "no")
             }
           />
-          <h6 className="mb-0 fw-semibold fs-6"style={{ color: '#5a6c5b' }}>
+          <h6 className="mb-0 fw-medium fs-6"style={{ color: '#5a6c5b' }}>
             Have you/spouse ever been REFUSED by any country?
           </h6>
         </div>
@@ -678,7 +679,7 @@ const AdditionalDetails = () => {
 
       {/* BUSINESS EXPERIENCE TABLE */}
       <div className="card mb-4">
-        <div className="card-header bg-light py-3 d-flex align-items-center gap-2">
+        <div className="card-header bg-light py-1 d-flex align-items-center gap-2">
           <input
             type="checkbox"
             className="form-check-input"
@@ -690,7 +691,7 @@ const AdditionalDetails = () => {
               )
             }
           />
-          <h6 className="mb-0 fw-semibold fs-6 "style={{ color: '#5a6c5b' }}>
+          <h6 className="mb-0 fw-medium fs-6 "style={{ color: '#5a6c5b' }}>
             Do you have experience managing a business?
           </h6>
         </div>
@@ -710,7 +711,7 @@ const AdditionalDetails = () => {
       </div>
 
       <div className="card mb-4">
-        <div className="card-header bg-light py-3 d-flex align-items-center gap-2">
+        <div className="card-header bg-light py-1 d-flex align-items-center gap-2">
           <input
             type="checkbox"
             className="form-check-input"
@@ -722,7 +723,7 @@ const AdditionalDetails = () => {
             //   )
             // }
           />
-          <h6 className="mb-0 fw-semibold fs-6 "style={{ color: '#5a6c5b' }}>
+          <h6 className="mb-0 fw-medium fs-6 "style={{ color: '#5a6c5b' }}>
             Your Networth & Investment
           </h6>
         </div>
@@ -763,7 +764,7 @@ const AdditionalDetails = () => {
                 checked={formData[field]}
                 onChange={() => handleCheckboxChange(field)}
               />
-              <label className="form-check-label fw-medium" htmlFor={field}>
+              <label className="form-check-label fw-medium" htmlFor={field} style={{ color: '#5a6c5b' }}>
                 {label}
               </label>
             </div>
