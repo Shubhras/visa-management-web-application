@@ -13964,7 +13964,7 @@ class AccreditationNameListAPIView(APIView):
             'valid_date': 'valid_date',
             'created_at': 'created_at',
             'updated_at': 'updated_at',
-            'category': 'category__name',
+            'categoryId': 'category__name',
         }
 
         sort_fields = []
