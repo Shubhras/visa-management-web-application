@@ -2780,7 +2780,7 @@ class LanguageTestResultExportAPIView(APIView):
             queryset = queryset.filter(language_test__uuid__in=language_test_names)
 
         if language_module_names:
-            queryset = queryset.filter(languagetest_module_name__uuid__in=language_module_names)
+            queryset = queryset.filter(module_name__uuid__in=language_module_names)
 
         # ---------------------------------------------------
         # SEARCH
@@ -3892,7 +3892,8 @@ class StudyLanguageBanchmarkUpdateAPIView(APIView):
         except StudyLanguageBanchmark.DoesNotExist:
             return Response({"statusCode": 404, "status": False, "message": "Not found", "data": None}, status=404)
 
-        serializer = StudyLanguageBanchmarkSerializer(obj, data=request.data)
+        serializer = StudyLanguageBanchmarkSerializer(obj, data=request.data, partial=True)
+
         if serializer.is_valid():
             serializer.save()
             return Response({"statusCode": 200, "status": True, "message": "Updated successfully", "data": serializer.data})
@@ -4452,7 +4453,7 @@ class EntranceTestNameListAPIView(APIView):
         #  search filter
         if search:
             queryset = queryset.filter(
-                Q(fullname__istartswith=search)
+                Q(shortname__istartswith=search)
             )
 
         #  sorting map
@@ -4703,67 +4704,7 @@ class EntranceTestNameDeleteAPIView(APIView):
 
 # -------------------- Export -------------------- #
 
-# class EntranceTestNameExportAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
 
-#     def get(self, request):
-#         format_type = request.GET.get('format', 'xlsx').lower()
-#         fields = request.GET.get('fields')
-#         uuids_param = request.GET.get('uuids', '')
-#         uuids = [u.strip() for u in uuids_param.split(',') if u]
-
-#         # Field to header mapping
-#         field_header_map = {
-#             'uuid': 'UUID',
-#             'fullname': 'Entrance Test Full Name',
-#             'shortname': 'Entrance Test Name',
-#             'description': 'Description',
-#             'is_deleted': 'Deleted',
-#             'created_at': 'Created On',
-#             'updated_at': 'Modified On',
-#         }
-
-#         # Determine fields to export
-#         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
-
-#         # Fetch queryset
-#         queryset = EntranceTestName.objects.filter(is_deleted=False)
-#         if uuids:
-#             queryset = queryset.filter(uuid__in=uuids)
-#         queryset = queryset.order_by('-created_at')
-
-#         # Prepare dataset
-#         dataset = Dataset()
-#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-#         dataset.title = 'EntranceTestName'
-
-#         for obj in queryset:
-#             row = []
-#             for field in field_list:
-#                 value = getattr(obj, field, '')
-#                 if field in ['created_at', 'updated_at'] and value:
-#                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-#                 elif isinstance(value, bool):
-#                     value = int(value)
-#                 row.append(value if value is not None else '')
-#             dataset.append(row)
-
-#         # Export data
-#         if format_type == 'csv':
-#             file_data = dataset.export('csv')
-#             content_type = 'text/csv'
-#             file_name = 'entrance_test_name.csv'
-#         else:
-#             file_data = io.BytesIO(dataset.export('xlsx'))
-#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-#             file_name = 'entrance_test_name.xlsx'
-
-#         response = HttpResponse(
-#             file_data if format_type == 'csv' else file_data.getvalue(),
-#             content_type=content_type
-#         )
-#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
-#         return response
 
 
 class EntranceTestNameExportAPIView(APIView):
@@ -4811,7 +4752,7 @@ class EntranceTestNameExportAPIView(APIView):
         # ---------------------------
         if search:
             queryset = queryset.filter(
-                Q(fullname__istartswith=search)
+                Q(shortname__istartswith=search)
             )
 
         # ---------------------------

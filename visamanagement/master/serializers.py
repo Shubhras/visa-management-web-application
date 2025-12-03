@@ -980,7 +980,20 @@ class StudyLanguageBanchmarkSerializer(serializers.ModelSerializer):
         model = StudyLanguageBanchmark
         fields = ['id', 'uuid', 'name', 'description', 'is_deleted', 'created_at', 'updated_at']
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
+    
+    def validate_name(self, value):
+        value = value.strip()
 
+        # Exclude the current object itself using uuid
+        exists = StudyLanguageBanchmark.objects.filter(
+            name__iexact=value,
+            is_deleted=False
+        ).exclude(uuid=self.instance.uuid).exists()
+
+        if exists:
+            raise serializers.ValidationError("This name already exists")
+
+        return value
 
 
 class LanguageTestResultSerializer(serializers.ModelSerializer):
