@@ -979,7 +979,7 @@ export const exportOwnershipTypeDataAPI = (payload) => {
       .map((item) => `${item.field}:${item.order}`)
       .join(",");
   }
-  const apiUrl = `${url.EXPORT_OWNERSHIP_TYPE_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
+  const apiUrl = `${url.EXPORT_OWNERSHIP_TYPE_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&company_type=${payload?.company_type}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -3777,8 +3777,11 @@ export const editInstituteTypeDataAPI = (payload) => {
 };
 
 export const deleteInstituteTypeDataAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_INSTITUTE_TYPE_API}delete/`;
+    const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_INSTITUTE_TYPE_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 

@@ -2072,7 +2072,7 @@ const MasterLayout = ({ children }) => {
                 <div className="d-flex flex-wrap align-items-center gap-3">
                   {/* Alarm Icon */}
                   <div className="dropdown">
-                    <button className="has-indicator w-32-px h-32-px bg-neutral-200 rounded-circle d-flex justify-content-center align-items-center">
+                    <button className="has-indicator w-24-px h-24-px bg-neutral-200 rounded-circle d-flex justify-content-center align-items-center">
                       <Icon
                         icon="solar:alarm-linear"
                         className="text-primary-light text-md"
@@ -2083,7 +2083,7 @@ const MasterLayout = ({ children }) => {
                   {/* Notification Icon */}
                   <div className="dropdown">
                     <button
-                      className="has-indicator w-32-px h-32-px bg-neutral-200 rounded-circle d-flex justify-content-center align-items-center"
+                      className="has-indicator w-24-px h-24-px bg-neutral-200 rounded-circle d-flex justify-content-center align-items-center"
                       type="button"
                       data-bs-toggle="dropdown"
                     >
@@ -2115,7 +2115,7 @@ const MasterLayout = ({ children }) => {
                       <img
                         src="assets/images/users/avatar-4.jpg"
                         alt="image_user"
-                        className="w-32-px h-32-px object-fit-cover rounded-circle"
+                        className="w-24-px h-24-px object-fit-cover rounded-circle"
                       />
                     </button>
                     <div className="dropdown-menu to-top dropdown-menu-sm">
