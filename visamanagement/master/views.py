@@ -18324,7 +18324,7 @@ class TagsUpdateAPIView(APIView):
         return Response({
             "statusCode": 400,
             "status": False,
-            "message": serializer.errors
+            "message": first_error
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
