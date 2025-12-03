@@ -1,102 +1,109 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
-import { civilIdNameEdit, civilIdNameAdd } from '../../../../store/master/generalMasters/actions';
-import DatePicker from "react-datepicker";
-import { format } from "date-fns";
-import "react-datepicker/dist/react-datepicker.css";
-const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
+import {
+  civilIdNameEdit,
+  civilIdNameAdd,
+} from "../../../../store/master/generalMasters/actions";
+import { CalendarBlank } from "@phosphor-icons/react";
+import CommonDatePicker from "../../../../helper/utils/DatePicker";
+const AddEditCivilIDNameModal = ({
+  show,
+  handleClose,
+  mode = "add",
+  rowData = null,
+}) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
-    uuid: '',
-    name: '',
-    full_name: '',
-    short_name: '',
-    valid_upto: '',
-    valid_upto_type: '', // Permanent/Date/Valid Upto
-    valid_upto_numeric: '',
-    valid_upto_unit: '', // Weeks/Months/Year
-    description: '',
+    uuid: "",
+    name: "",
+    full_name: "",
+    short_name: "",
+    valid_upto: "",
+    valid_upto_type: "", // Permanent/Date/Valid Upto
+    valid_upto_numeric: "",
+    valid_upto_unit: "", // Weeks/Months/Year
+    description: "",
   });
 
   // Validation errors state
   const [errors, setErrors] = useState({
-    name: '',
-    full_name: '',
-    short_name: '',
-    valid_upto: '',
-    valid_upto_type: '',
-    valid_upto_numeric: '',
-    valid_upto_unit: '',
-    description: '',
+    name: "",
+    full_name: "",
+    short_name: "",
+    valid_upto: "",
+    valid_upto_type: "",
+    valid_upto_numeric: "",
+    valid_upto_unit: "",
+    description: "",
   });
 
   // Populate form data when in edit mode
   useEffect(() => {
-    if (mode === 'edit' && rowData) {
+    if (mode === "edit" && rowData) {
       setFormData({
-        uuid: rowData.uuid || '',
-        name: rowData.civil_id_name || '',
-        full_name: rowData.authority_full_name || '',
-        short_name: rowData.authority_short_name || '',
-        valid_upto_type: rowData.valid_type || '',
-        valid_upto: rowData.valid_date || '',
-        valid_upto_numeric: rowData.valid_duration_value || '',
-        valid_upto_unit: rowData.valid_duration_unit || '',
-        description: rowData.description || '',
+        uuid: rowData.uuid || "",
+        name: rowData.civil_id_name || "",
+        full_name: rowData.authority_full_name || "",
+        short_name: rowData.authority_short_name || "",
+        valid_upto_type: rowData.valid_type || "",
+        valid_upto: rowData.valid_date || "",
+        valid_upto_numeric: rowData.valid_duration_value || "",
+        valid_upto_unit: rowData.valid_duration_unit || "",
+        description: rowData.description || "",
       });
+      console.log("rowData", rowData);
     } else {
       // Reset form when switching to add mode
       setFormData({
-        uuid: '',
-        name: '',
-        full_name: '',
-        short_name: '',
-        valid_upto: '',
-        valid_upto_type: '',
-        valid_upto_numeric: '',
-        valid_upto_unit: '',
-        description: '',
+        uuid: "",
+        name: "",
+        full_name: "",
+        short_name: "",
+        valid_upto: "",
+        valid_upto_type: "",
+        valid_upto_numeric: "",
+        valid_upto_unit: "",
+        description: "",
       });
     }
   }, [mode, rowData, show]);
-
 
   // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
 
     // If valid_upto_type changes, reset related fields
-    if (name === 'valid_upto_type') {
-      setFormData(prev => ({
+    if (name === "valid_upto_type") {
+      setFormData((prev) => ({
         ...prev,
         [name]: value,
-        valid_upto: '',
-        valid_upto_numeric: '',
-        valid_upto_unit: ''
+        valid_upto: "",
+        valid_upto_numeric: "",
+        valid_upto_unit: "",
       }));
       // Clear related errors when type changes
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        valid_upto: '',
-        valid_upto_numeric: '',
-        valid_upto_unit: ''
+        valid_upto: "",
+        valid_upto_numeric: "",
+        valid_upto_unit: "",
       }));
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        [name]: value
+        [name]: value,
       }));
     }
 
     // Clear error when user starts typing
     if (errors[name]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [name]: ''
+        [name]: "",
       }));
     }
   };
@@ -107,24 +114,24 @@ const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = nu
 
     // country validation
     if (!formData.name) {
-      newErrors.name = 'Civil ID name is required';
+      newErrors.name = "Civil ID name is required";
       isValid = false;
     }
     // Valid Upto Type specific validations
-    if (formData.valid_upto_type === 'Date') {
+    if (formData.valid_upto_type === "Date") {
       if (!formData.valid_upto) {
-        newErrors.valid_upto = 'Date is required';
+        newErrors.valid_upto = "Date is required";
         isValid = false;
       }
     }
 
-    if (formData.valid_upto_type === 'Valid Upto') {
+    if (formData.valid_upto_type === "Valid Upto") {
       if (!formData.valid_upto_numeric) {
-        newErrors.valid_upto_numeric = 'Numeric value is required';
+        newErrors.valid_upto_numeric = "Numeric value is required";
         isValid = false;
       }
       if (!formData.valid_upto_unit) {
-        newErrors.valid_upto_unit = 'Period is required';
+        newErrors.valid_upto_unit = "Period is required";
         isValid = false;
       }
     }
@@ -138,87 +145,70 @@ const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = nu
     e.preventDefault();
 
     if (validateForm()) {
-      // const sendPayload = mode === 'edit'
-      //   ? {
-      //     uuid: formData.uuid,
-      //     civil_id_name: formData.name,
-      //     authority_full_name: formData.full_name || null,
-      //     authority_short_name: formData.short_name || null,
-      //     valid_date: formData.valid_upto || null,
-      //     valid_type: formData.valid_upto_type || null,
-      //     valid_duration_value: formData.valid_upto_numeric || null,
-      //     valid_duration_unit: formData.valid_upto_unit ? formData.valid_upto_unit : null,
-      //     description: formData.description || null,
-      //   }
-      //   : {
-      //     civil_id_name: formData.name,
-      //     authority_full_name: formData.full_name || null,
-      //     authority_short_name: formData.short_name || null,
-      //     valid_date: formData.valid_upto || null,
-      //     valid_type: formData.valid_upto_type || null,
-      //     valid_duration_value: formData.valid_upto_numeric || null,
-      //     valid_duration_unit: formData.valid_upto_unit ? formData.valid_upto_unit : null,
-      //     description: formData.description || null,
-      //   };
-
-      const sendPayload = mode === 'edit'
-        ? {
-          uuid: formData.uuid,
-          civil_id_name: formData.name,
-          authority_full_name: formData.full_name || "",
-          authority_short_name: formData.short_name || "",
-          valid_date: formData.valid_upto || "",
-          valid_type: formData.valid_upto_type || "",
-          valid_duration_value: formData.valid_upto_numeric || null,
-          valid_duration_unit: formData.valid_upto_unit ? formData.valid_upto_unit : "",
-          description: formData.description || null,
-        }
-        : {
-          civil_id_name: formData.name,
-          authority_full_name: formData.full_name || "",
-          authority_short_name: formData.short_name || "",
-          valid_date: formData.valid_upto || "",
-          valid_type: formData.valid_upto_type || "",
-          valid_duration_value: formData.valid_upto_numeric || null,
-          valid_duration_unit: formData.valid_upto_unit ? formData.valid_upto_unit : "",
-          description: formData.description || "",
-        };
-
+      const sendPayload =
+        mode === "edit"
+          ? {
+              uuid: formData.uuid,
+              civil_id_name: formData.name,
+              authority_full_name: formData.full_name || "",
+              authority_short_name: formData.short_name || "",
+              valid_date: formData.valid_upto || "",
+              valid_type: formData.valid_upto_type || "",
+              valid_duration_value: formData.valid_upto_numeric || null,
+              valid_duration_unit: formData.valid_upto_unit
+                ? formData.valid_upto_unit
+                : "",
+              description: formData.description || null,
+            }
+          : {
+              civil_id_name: formData.name,
+              authority_full_name: formData.full_name || "",
+              authority_short_name: formData.short_name || "",
+              valid_date: formData.valid_upto || "",
+              valid_type: formData.valid_upto_type || "",
+              valid_duration_value: formData.valid_upto_numeric || null,
+              valid_duration_unit: formData.valid_upto_unit
+                ? formData.valid_upto_unit
+                : "",
+              description: formData.description || "",
+            };
 
       setLoading(true);
 
-      const action = mode === 'edit' ? civilIdNameEdit : civilIdNameAdd;
+      const action = mode === "edit" ? civilIdNameEdit : civilIdNameAdd;
 
-      dispatch(action(sendPayload, (response, error) => {
-        setLoading(false);
-        if (error) {
-          toast.error(error?.response?.data?.message || "Server error");
-        } else {
-          if (response?.statusCode === 200 && response?.status === true) {
-            toast.success(response?.message);
-            resetForm();
-            handleClose();
+      dispatch(
+        action(sendPayload, (response, error) => {
+          setLoading(false);
+          if (error) {
+            toast.error(error?.response?.data?.message || "Server error");
           } else {
-            toast.error("Something went wrong.");
+            if (response?.statusCode === 200 && response?.status === true) {
+              toast.success(response?.message);
+              resetForm();
+              handleClose();
+            } else {
+              toast.error("Something went wrong.");
+            }
           }
-        }
-      }));
+        })
+      );
     }
   };
 
   // Reset form
   const resetForm = () => {
     setFormData({
-      uuid: '',
-      name: '',
-      full_name: '',
-      short_name: '',
-      issuing_authority: '',
-      valid_upto: '',
-      valid_upto_type: '',
-      valid_upto_numeric: '',
-      valid_upto_unit: '',
-      description: '',
+      uuid: "",
+      name: "",
+      full_name: "",
+      short_name: "",
+      issuing_authority: "",
+      valid_upto: "",
+      valid_upto_type: "",
+      valid_upto_numeric: "",
+      valid_upto_unit: "",
+      description: "",
     });
     setErrors({});
   };
@@ -241,11 +231,14 @@ const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = nu
       aria-labelledby="CivilIDNameModalLabel"
       aria-hidden={!show}
     >
-      <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
+      <div
+        className="modal-dialog modal-lg modal-dialog-centered"
+        role="document"
+      >
         <div className="modal-content radius-16 bg-base">
           <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
             <h1 className="modal-title fs-5" id="CivilIDNameModalLabel">
-              {mode === 'edit' ? 'Edit Civil ID Name' : 'Add Civil ID Name'}
+              {mode === "edit" ? "Edit Civil ID Name" : "Add Civil ID Name"}
             </h1>
             <button
               type="button"
@@ -258,8 +251,7 @@ const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = nu
           <div className="modal-body p-24 pt-10">
             <form onSubmit={handleSubmit}>
               <div className="row">
-                <div className='modal-scrollable-content'>
-
+                <div className="modal-scrollable-content">
                   <div className="col-12 mb-10">
                     <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                       Civil ID Name<span className="text-danger">*</span>
@@ -269,7 +261,9 @@ const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                       name="name"
                       value={formData.name}
                       onChange={handleChange}
-                      className={`form-control radius-8 ${errors.name ? 'is-invalid' : ''}`}
+                      className={`form-control radius-8 ${
+                        errors.name ? "is-invalid" : ""
+                      }`}
                       placeholder="Enter civil ID name"
                     />
                     {errors.name && (
@@ -327,38 +321,34 @@ const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                         </select>
                       </div>
 
-                      {/* Show Date Picker if Date is selected */}
-                      {/* {formData.valid_upto_type === 'Date' && (
-                        <div className="col-md-8">
-                          <input
-                            type="date"
-                            name="valid_upto"
+                      {formData.valid_upto_type === "Date" && (
+                        <div
+                          className="col-md-8"
+                          style={{ position: "relative", zIndex: 99999 }}
+                        >
+                          <CommonDatePicker
                             value={formData.valid_upto}
-                            onChange={handleChange}
-                            className={`form-control radius-8 ${errors.valid_upto ? 'is-invalid' : ''}`}
-                          />
-                          {errors.valid_upto && (
-                            <div className="text-danger text-sm mt-1">
-                              {errors.valid_upto}
-                            </div>
-                          )}
-                        </div>
-                      )} */}
-                      {formData.valid_upto_type === 'Date' && (
-                        <div className="col-md-8" style={{ zIndex: 99999, position: "relative" }}>
-                          <DatePicker
-                            selected={formData.valid_upto ? new Date(formData.valid_upto) : null}
-                            onChange={(date) => {
-                              const formatted = date ? format(date, "yyyy-MM-dd") : "";
+                            onChange={(val) =>
                               setFormData((prev) => ({
                                 ...prev,
-                                valid_upto: formatted
-                              }));
-                            }}
-                            dateFormat="dd/MM/yy"
-                            placeholderText="dd/mm/yy"
-                            className={`form-control radius-8 ${errors.valid_upto ? "is-invalid" : ""}`}
+                                valid_upto: val,
+                              }))
+                            }
+                            error={errors.valid_upto}
                           />
+                          <CalendarBlank
+                            size={22}
+                            style={{
+                              position: "relative",
+                              right: "30px",
+                              top: "7%",
+                              transform: "translateY(-50%)",
+                              pointerEvents: "none",
+                              color: "#6c757d",
+                              cursor: "pointer",
+                            }}
+                          />
+
                           {errors.valid_upto && (
                             <div className="text-danger text-sm mt-1">
                               {errors.valid_upto}
@@ -368,7 +358,7 @@ const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                       )}
 
                       {/* Show Numeric and Unit fields if Valid Upto is selected */}
-                      {formData.valid_upto_type === 'Valid Upto' && (
+                      {formData.valid_upto_type === "Valid Upto" && (
                         <>
                           <div className="col-md-4">
                             <input
@@ -376,7 +366,9 @@ const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                               name="valid_upto_numeric"
                               value={formData.valid_upto_numeric}
                               onChange={handleChange}
-                              className={`form-control radius-8 ${errors.valid_upto_numeric ? 'is-invalid' : ''}`}
+                              className={`form-control radius-8 ${
+                                errors.valid_upto_numeric ? "is-invalid" : ""
+                              }`}
                               placeholder="Enter number"
                             />
                             {errors.valid_upto_numeric && (
@@ -390,7 +382,9 @@ const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                               name="valid_upto_unit"
                               value={formData.valid_upto_unit}
                               onChange={handleChange}
-                              className={`form-control form-select radius-8 ${errors.valid_upto_unit ? 'is-invalid' : ''}`}
+                              className={`form-control form-select radius-8 ${
+                                errors.valid_upto_unit ? "is-invalid" : ""
+                              }`}
                             >
                               <option value="">Select Period</option>
                               <option value="Weeks">Weeks</option>
@@ -417,7 +411,9 @@ const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                       Description
                     </label>
                     <textarea
-                      className={`form-control ${errors.description ? 'is-invalid' : ''}`}
+                      className={`form-control ${
+                        errors.description ? "is-invalid" : ""
+                      }`}
                       id="desc"
                       name="description"
                       value={formData.description}
@@ -443,7 +439,7 @@ const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                     className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                     disabled={loading}
                   >
-                    {loading ? 'Saving...' : 'Save'}
+                    {loading ? "Saving..." : "Save"}
                   </button>
                 </div>
               </div>
