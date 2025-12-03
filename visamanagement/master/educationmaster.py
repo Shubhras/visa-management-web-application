@@ -873,7 +873,7 @@ class EducationLevelCodeImportAPIView(APIView):
             imported_count = 0
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get('education level code')).strip() if row.get('education level code') else None
+                name = str(row.get('education level code')).strip() if row.get('education level code') else ''
                 description = str(row.get('description')).strip() if row.get('description') else ''
 
                 

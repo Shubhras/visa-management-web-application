@@ -998,7 +998,7 @@ class CLBLevel(models.Model):
 class LanguageTestResult(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    language = models.ForeignKey('Language',on_delete=models.PROTECT,null=True,blank=True,related_name='test_results')
+    language = models.ForeignKey(Language,on_delete=models.PROTECT,null=True,blank=True,related_name='test_results')
     language_test = models.ForeignKey('LanguageTest',on_delete=models.PROTECT,null=True,blank=True,related_name='results')
     module_name = models.ForeignKey('LanguagetestmoduleName',  on_delete=models.PROTECT,null=True,blank=True,related_name='test_results')
     lb_level = models.ForeignKey('StudyLanguageBanchmark', on_delete=models.PROTECT,null=True,blank=True,related_name='language_test_results')
