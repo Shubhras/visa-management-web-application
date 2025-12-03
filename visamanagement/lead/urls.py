@@ -62,5 +62,18 @@ urlpatterns = [
     path('businessexperience/get/',BusinessExperienceListAPIView.as_view(),name='Business_Experience-List'),
     path('businessexperience/<uuid:uuid>/',BusinessExperienceDetailAPIView.as_view(),name='Business_Experience-get-uuid'),
     path('businessexperience/<uuid:uuid>/update/',BusinessExperienceUpdateAPIView.as_view(),name='Business_Experience-Update'),
-     path('businessexperience/delete/',BusinessExperienceDeleteAPIView.as_view(),name='Business_Experience-Delete'),
+    path('businessexperience/delete/',BusinessExperienceDeleteAPIView.as_view(),name='Business_Experience-Delete'),
+
+    #<---------------------------------Networth-------------------------------->
+    path('networth/create/',NetworthCreateAPIView().as_view(),name = 'Networth-create'),
+    path('networth/get/',NetworthListAPIView().as_view(),name = 'Networth-get'),
+    path('networth/<uuid:uuid>/',NetworthDetailAPIView().as_view(),name = 'Networth-get-uuid'),
+    path('networth/<uuid:uuid>/update/',NetworthUpdateAPIView().as_view(),name = 'Networth-update'),
+    path('networth/delete/',NetworthDeleteAPIView().as_view(),name = 'Networth-delete'),
+
+    #<------------------------------EligibilityFlags--------------------------->
+    path('eligibilityflags/<uuid:applicant_uuid>/get/',EligibilityFlagsRetrieveAPIView.as_view(),name = 'EligibilityFlags-get'),
+    path('eligibilityflags/<uuid:applicant_uuid>/update/',EligibilityFlagsUpdateAPIView.as_view(),name='EligibilityFlags-Update'),
+    path('eligibilityflags/create/',EligibilityFlagsCreateAPIView.as_view(),name='EligibilityFlags-create'),
+
 ]

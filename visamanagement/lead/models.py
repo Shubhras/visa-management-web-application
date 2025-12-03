@@ -365,8 +365,6 @@ class Networth(models.Model):
         return f"{self.applicant}"
 
 
-
-
 class EligibilityFlags(models.Model):
     applicant = models.OneToOneField(
         Applicant,
@@ -385,34 +383,5 @@ class EligibilityFlags(models.Model):
 
     def __str__(self):
         return f"{self.applicant}"
-
-
-class documents(models.Model):
-    applicant = models.OneToOneField(
-        Applicant,
-        on_delete=models.CASCADE,
-        related_name="documents"
-    )
-    documentcategory = models.OneToOneField(
-        DocumentCategory,
-        on_delete=models.CASCADE,
-        related_name="documents"
-    )
-    documentname = models.OneToOneField(
-        DocumentName,
-        on_delete=models.CASCADE,
-        related_name="documents"
-    )
-    attachment = models.FileField(upload_to='documents/')
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.name
-
-
-
+    
+ 

@@ -123,6 +123,8 @@ from rest_framework import serializers
 from lead.models import *
 from master.models import *
 import datetime
+from django.core.files.storage import default_storage
+
 
 class UUIDRefField(serializers.PrimaryKeyRelatedField):
     def to_internal_value(self, data):
@@ -594,3 +596,112 @@ class BusinessExperienceSerializer(serializers.ModelSerializer):
                 "end_date": "End date cannot be earlier than start date."
             })
         return attrs
+    
+
+    
+class NetworthSerializer(serializers.ModelSerializer):
+
+    applicant = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=Applicant.objects.all()
+    )
+    applicant_type = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=ApplicantType.objects.all(),
+        required=False,
+        allow_null=True
+    )
+    country = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=Country.objects.all(),
+        required=False,
+        allow_null=True
+    )
+    currency = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=Country.objects.all(),
+        required=False,
+        allow_null=True
+    )
+
+    class Meta:
+        model = Networth
+        fields = [
+            "uuid",
+            "applicant",
+            "applicant_type",
+            "country",
+            "currency",
+            "immovable_property",
+            "movable_property",
+            "liquid_amount",
+            "total_networth",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ("uuid", "total_networth", "created_at", "updated_at")
+
+    def validate(self, data):
+        immovable = data.get("immovable_property", 0)
+        movable = data.get("movable_property", 0)
+        liquid = data.get("liquid_amount", 0)
+
+        # Validation: Negative values not allowed
+        if immovable < 0 or movable < 0 or liquid < 0:
+            raise serializers.ValidationError("Amount values cannot be negative.")
+
+        return data
+
+    def create(self, validated_data):
+        # Auto calculate total
+        validated_data["total_networth"] = (
+            validated_data.get("immovable_property", 0)
+            + validated_data.get("movable_property", 0)
+            + validated_data.get("liquid_amount", 0)
+        )
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        # Update values
+        instance.immovable_property = validated_data.get("immovable_property", instance.immovable_property)
+        instance.movable_property = validated_data.get("movable_property", instance.movable_property)
+        instance.liquid_amount = validated_data.get("liquid_amount", instance.liquid_amount)
+
+        # Auto update total
+        instance.total_networth = (
+            instance.immovable_property
+            + instance.movable_property
+            + instance.liquid_amount
+        )
+
+        # Update other fields
+        instance.applicant_type = validated_data.get("applicant_type", instance.applicant_type)
+        instance.country = validated_data.get("country", instance.country)
+        instance.currency = validated_data.get("currency", instance.currency)
+
+        instance.save()
+        return instance
+
+#<============================EligibilityFlags============================>
+class EligibilityFlagsSerializer(serializers.ModelSerializer):
+    # Applicant ko show karne ke liye -> UUID
+    applicant = serializers.SlugRelatedField(
+        slug_field='uuid',
+        queryset=Applicant.objects.all()   
+        #read_only=True     # user isko update nahi karega
+    )
+
+    class Meta:
+        model = EligibilityFlags
+        fields = [
+            "applicant",
+            "trade_certificate",
+            "educational_credential_assessment",
+            "ita_province",
+            "tech_startup_founder",
+            "reside_outside_greater_city",
+            "created_at",
+            "updated_at"
+        ]
+        read_only_fields = ["created_at", "updated_at"]
+
