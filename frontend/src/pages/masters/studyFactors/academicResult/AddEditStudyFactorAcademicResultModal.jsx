@@ -21,6 +21,7 @@ const AddEditStudyFactorAcademicResultModal = ({
   const [factorForData, setFactorForData] = useState([]);
   const [academicResultGroupData, setAcademicResultGroupData] = useState([]);
   const [academicResultTypeData, setAcademicResultTypeData] = useState([]);
+  const [selectedDatatype, setSelectedDatatype] = useState("");
 
   // Form state
   const [formData, setFormData] = useState({
@@ -32,7 +33,7 @@ const AddEditStudyFactorAcademicResultModal = ({
     description: "",
   });
 
-  // Validation errors state
+  // Validation errors
   const [errors, setErrors] = useState({
     factorForName: "",
     studyAcademicResultGroup: "",
@@ -40,26 +41,44 @@ const AddEditStudyFactorAcademicResultModal = ({
     minimumAcademicResult: "",
   });
 
-  // Populate form data when in edit mode
+  // Datatype options for the dropdown
+  const datatypeOptions = [
+    { value: "Numeric", label: "Numeric" },
+    { value: "Text", label: "Text" },
+  ];
+
+  // ========= EDIT MODE: POPULATE DATA =========
   useEffect(() => {
     if (mode === "edit" && rowData) {
       setFormData({
         uuid: rowData.uuid || "",
         factorForName: rowData.factor_for_uuid || "",
         studyAcademicResultGroup: rowData.studyAcademicResultGroup || "",
-        minimumAcademicResultType: rowData.minimumAcademicResultType || "",
-        minimumAcademicResult: rowData.minimumAcademicResult || "", //formData.state === "STATE" ? "State" : "Territory" || '',
+        minimumAcademicResultType: rowData.minimum_academic_result_type || "",
+        minimumAcademicResult: rowData.minimumAcademicResult || "",
         description: rowData.description || "",
       });
     } else {
       resetForm();
     }
-    fetchCountryList();
+
+    fetchDropdowns();
   }, [mode, rowData, show]);
 
-  // Fetch country list
-  const fetchCountryList = () => {
-    // setLoading(true);
+  // ========= SET DATATYPE WHEN TYPE IS SELECTED =========
+  useEffect(() => {
+    if (formData.minimumAcademicResultType && academicResultTypeData.length > 0) {
+      const selectedType = academicResultTypeData.find(
+        (type) => type.uuid === formData.minimumAcademicResultType
+      );
+      if (selectedType) {
+        setSelectedDatatype(selectedType.datatype);
+      }
+    }
+  }, [formData.minimumAcademicResultType, academicResultTypeData]);
+
+  // ========= FETCH DROPDOWNS =========
+  const fetchDropdowns = () => {
     const params = {
       page: 1,
       limit: 2000,
@@ -70,24 +89,23 @@ const AddEditStudyFactorAcademicResultModal = ({
     };
 
     dispatch(
-      factorForList(params, (response, error) => {
-        setLoading(false);
+      factorForList(params, (response) => {
         if (response?.statusCode === 200 && response?.status === true) {
           setFactorForData(response?.data || []);
         }
       })
     );
+
     dispatch(
-      academicResultGroupList(params, (response, error) => {
-        setLoading(false);
+      academicResultGroupList(params, (response) => {
         if (response?.statusCode === 200 && response?.status === true) {
           setAcademicResultGroupData(response?.data || []);
         }
       })
     );
+
     dispatch(
-      academicResultTypeList(params, (response, error) => {
-        setLoading(false);
+      academicResultTypeList(params, (response) => {
         if (response?.statusCode === 200 && response?.status === true) {
           setAcademicResultTypeData(response?.data || []);
         }
@@ -95,45 +113,70 @@ const AddEditStudyFactorAcademicResultModal = ({
     );
   };
 
-  // Handle input changes
+  // ========= INPUT CHANGE =========
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
-
-    // Clear error when user starts typing
     if (errors[name]) {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: "",
-      }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
-  // Handle Select changes for Country
-  //   const handleSelectChange = (selectedOption) => {
-  //     setFormData((prev) => ({
-  //       ...prev,
-  //       country: selectedOption ? selectedOption.value : ""
-  //     }));
-  //     if (errors.country) {
-  //       setErrors((prev) => ({ ...prev, country: "" }));
-  //     }
-  //   };
-  // Custom filter function for search from start
+  // ========= HANDLE ACADEMIC RESULT TYPE CHANGE =========
+  const handleAcademicResultTypeChange = (selectedOption) => {
+    const newValue = selectedOption ? selectedOption.value : "";
+    
+    setFormData((prev) => ({
+      ...prev,
+      minimumAcademicResultType: newValue,
+      minimumAcademicResult: "", // Clear the datatype value when type changes
+    }));
+
+    if (errors.minimumAcademicResultType) {
+      setErrors((prev) => ({ ...prev, minimumAcademicResultType: "" }));
+    }
+
+    // Find the selected type to get its datatype
+    if (selectedOption) {
+      const selectedType = academicResultTypeData.find(
+        (type) => type.uuid === selectedOption.value
+      );
+      if (selectedType) {
+        setSelectedDatatype(selectedType.datatype);
+        // Auto-select the datatype in the dropdown
+        setFormData(prev => ({ ...prev, minimumAcademicResult: selectedType.datatype }));
+      }
+    } else {
+      setSelectedDatatype("");
+      setFormData(prev => ({ ...prev, minimumAcademicResult: "" }));
+    }
+  };
+
+  // ========= HANDLE DATATYPE CHANGE =========
+  const handleDatatypeChange = (selectedOption) => {
+    const newValue = selectedOption ? selectedOption.value : "";
+    setFormData((prev) => ({
+      ...prev,
+      minimumAcademicResult: newValue,
+    }));
+    if (errors.minimumAcademicResult) {
+      setErrors((prev) => ({ ...prev, minimumAcademicResult: "" }));
+    }
+  };
 
   const customFilterOption = (option, inputValue) => {
     if (!inputValue) return true;
     return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
   };
-  // Validate form
+
+  // ========= VALIDATION =========
   const validateForm = () => {
     const newErrors = {};
     let isValid = true;
 
-    // State name validation
     if (!formData.factorForName.trim()) {
       newErrors.factorForName = "Factor For name is required";
       isValid = false;
@@ -145,12 +188,10 @@ const AddEditStudyFactorAcademicResultModal = ({
     }
 
     if (!formData.minimumAcademicResultType.trim()) {
-      newErrors.minimumAcademicResultType =
-        "Minimum Academic Result Type is required";
+      newErrors.minimumAcademicResultType = "Minimum Academic Result Type is required";
       isValid = false;
     }
 
-    // State name validation
     if (!formData.minimumAcademicResult.trim()) {
       newErrors.minimumAcademicResult = "Minimum Academic Result is required";
       isValid = false;
@@ -160,56 +201,49 @@ const AddEditStudyFactorAcademicResultModal = ({
     return isValid;
   };
 
-  // Handle form submission
+  // ========= SAVE =========
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!validateForm()) return;
 
-    if (validateForm()) {
-      const sendPayload =
-        mode === "edit"
-          ? {
-              uuid: formData.uuid,
-              factor_for: formData.factorForName,
-              studyAcademicResultGroup: formData.studyAcademicResultGroup,
-              minimumAcademicResult: formData.minimumAcademicResult,
-              minimumAcademicResultType: formData.minimumAcademicResultType,
-              description: formData.description.trim(),
-            }
-          : {
-              factor_for: formData.factorForName,
-              studyAcademicResultGroup: formData.studyAcademicResultGroup,
-              minimumAcademicResult: formData.minimumAcademicResult,
-              minimumAcademicResultType: formData.minimumAcademicResultType,
-              description: formData.description.trim(),
-            };
-
-      setLoading(true);
-      const action =
-        mode === "edit"
-          ? studyFactorAcademicResultEdit
-          : studyFactorAcademicResultAdd;
-
-      dispatch(
-        action(sendPayload, (response, error) => {
-          setLoading(false);
-          if (error) {
-            toast.error(error?.response?.data?.message || "Server error");
-          } else if (
-            response?.statusCode === 200 &&
-            response?.status === true
-          ) {
-            toast.success(response?.message);
-            resetForm();
-            handleClose(true);
-          } else {
-            toast.error("Something went wrong.");
+    const sendPayload =
+      mode === "edit"
+        ? {
+            uuid: formData.uuid,
+            factor_for: formData.factorForName,
+            studyAcademicResultGroup: formData.studyAcademicResultGroup,
+            minimumAcademicResult: formData.minimumAcademicResult,
+            minimumAcademicResultType: formData.minimumAcademicResultType,
+            description: formData.description.trim(),
           }
-        })
-      );
-    }
+        : {
+            factor_for: formData.factorForName,
+            studyAcademicResultGroup: formData.studyAcademicResultGroup,
+            minimumAcademicResult: formData.minimumAcademicResult,
+            minimumAcademicResultType: formData.minimumAcademicResultType,
+            description: formData.description.trim(),
+          };
+
+    setLoading(true);
+    const action = mode === "edit" ? studyFactorAcademicResultEdit : studyFactorAcademicResultAdd;
+
+    dispatch(
+      action(sendPayload, (response, error) => {
+        setLoading(false);
+        if (error) {
+          toast.error(error?.response?.data?.message || "Server error");
+        } else if (response?.statusCode === 200 && response?.status === true) {
+          toast.success(response?.message);
+          resetForm();
+          handleClose(true);
+        } else {
+          toast.error("Something went wrong.");
+        }
+      })
+    );
   };
 
-  // Reset form
+  // ========= RESET =========
   const resetForm = () => {
     setFormData({
       uuid: "",
@@ -219,252 +253,164 @@ const AddEditStudyFactorAcademicResultModal = ({
       minimumAcademicResult: "",
       description: "",
     });
+    setSelectedDatatype("");
     setErrors({});
   };
 
-  // Handle modal close
   const onClose = () => {
     resetForm();
     setLoading(false);
     handleClose(false);
   };
 
-  // Conditional render
   if (!show) return null;
 
   return (
-    <div
-      className="modal fade show common-ctl-popup"
-      tabIndex={-1}
-      role="dialog"
-      aria-labelledby="AddEditStateModalLabel"
-      aria-hidden={!show}
-    >
-      <div
-        className="modal-dialog modal-lg modal-dialog-centered"
-        role="document"
-      >
+    <div className="modal fade show common-ctl-popup" tabIndex={-1}>
+      <div className="modal-dialog modal-lg modal-dialog-centered">
         <div className="modal-content radius-16 bg-base">
-          <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-            <h1 className="modal-title fs-5" id="AddEditStateModalLabel">
-              {mode === "edit" ? "Edit Age" : "Add Age"}
+          <div className="modal-header py-16 px-24 border-0 border-bottom">
+            <h1 className="modal-title fs-5">
+              {mode === "edit" ? "Edit Academic Result" : "Add Academic Result"}
             </h1>
-            <button
-              type="button"
-              className="btn-close"
-              onClick={onClose}
-              aria-label="Close"
-            />
+            <button type="button" className="btn-close" onClick={onClose} />
           </div>
 
-          <div className="modal-body p-24">
+          <div className="modal-body ">
             <form onSubmit={handleSubmit}>
               <div className="row">
-                {/* Country Dropdown */}
-                {/* <div className="col-12 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Country Name <span className="text-danger">*</span>
-                  </label>
-                  <Select
-                    options={countryListData.map((option) => ({
-                      value: option.uuid,
-                      label: option.name + " (" + option?.continent?.name + ")",
-                    }))}
-                    value={
-                      formData.country
-                        ? countryListData
-                          .map((option) => ({
-                            value: option.uuid,
-                            label: option.name + " (" + option?.continent?.name + ")",
-                          }))
-                          .find((opt) => opt.value === formData.country)
-                        : null
-                    }
-                    onChange={(selectedOption) =>
-                      handleChange({
-                        target: {
-                          name: "occupationVersion",
-                          value: selectedOption ? selectedOption.value : "",
-                        },
-                      })
-                    }
-                    filterOption={customFilterOption}
-                    placeholder="Select Country"
-                    isClearable
-                    isSearchable
-                    className={`custom-select-container ${errors.country ? "is-invalid" : ""
-                      }`}
-                    classNamePrefix="custom-select"
-                  />
-                  {errors.country && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.country}
-                    </div>
-                  )}
-                </div> */}
-
+                {/* FACTOR FOR */}
                 <div className="col-12 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                  <label className="form-label fw-semibold text-sm">
                     Factor For <span className="text-danger">*</span>
                   </label>
                   <Select
-                    options={factorForData.map((option) => ({
-                      value: option.uuid,
-                      label: option.name,
+                    options={factorForData.map((o) => ({
+                      value: o.uuid,
+                      label: o.name,
                     }))}
                     value={
                       formData.factorForName
                         ? factorForData
-                            .map((option) => ({
-                              value: option.uuid,
-                              label: option.name,
-                            }))
+                            .map((o) => ({ value: o.uuid, label: o.name }))
                             .find((opt) => opt.value === formData.factorForName)
                         : null
                     }
-                    onChange={(selectedOption) =>
+                    onChange={(selected) =>
                       handleChange({
                         target: {
                           name: "factorForName",
-                          value: selectedOption ? selectedOption.value : "",
+                          value: selected ? selected.value : "",
                         },
                       })
                     }
                     filterOption={customFilterOption}
                     placeholder="Select Factor For"
                     isClearable
-                    isSearchable
-                    className={`custom-select-container ${
-                      errors.factorForName ? "is-invalid" : ""
-                    }`}
-                    classNamePrefix="custom-select"
+                    className={`custom-select-container ${errors.factorForName ? "is-invalid" : ""}`}
                   />
                   {errors.factorForName && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.factorForName}
-                    </div>
+                    <div className="text-danger">{errors.factorForName}</div>
                   )}
                 </div>
 
+                {/* Academic Result Group */}
                 <div className="col-12 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Study : Academic Result Group{" "}
-                    <span className="text-danger">*</span>
+                  <label className="form-label fw-semibold text-sm">
+                    Study : Academic Result Group <span className="text-danger">*</span>
                   </label>
                   <Select
-                    options={academicResultGroupData.map((option) => ({
-                      value: option.uuid,
-                      label: option.name,
+                    options={academicResultGroupData.map((o) => ({
+                      value: o.uuid,
+                      label: o.name,
                     }))}
                     value={
                       formData.studyAcademicResultGroup
                         ? academicResultGroupData
-                            .map((option) => ({
-                              value: option.uuid,
-                              label: option.name,
-                            }))
-                            .find(
-                              (opt) =>
-                                opt.value === formData.studyAcademicResultGroup
-                            )
+                            .map((o) => ({ value: o.uuid, label: o.name }))
+                            .find((opt) => opt.value === formData.studyAcademicResultGroup)
                         : null
                     }
-                    onChange={(selectedOption) =>
+                    onChange={(selected) =>
                       handleChange({
                         target: {
                           name: "studyAcademicResultGroup",
-                          value: selectedOption ? selectedOption.value : "",
+                          value: selected ? selected.value : "",
                         },
                       })
                     }
                     filterOption={customFilterOption}
                     placeholder="Select Academic Result Group"
                     isClearable
-                    isSearchable
-                    className={`custom-select-container ${
-                      errors.studyAcademicResultGroup ? "is-invalid" : ""
-                    }`}
-                    classNamePrefix="custom-select"
+                    className={`custom-select-container ${errors.studyAcademicResultGroup ? "is-invalid" : ""}`}
                   />
                   {errors.studyAcademicResultGroup && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.studyAcademicResultGroup}
-                    </div>
+                    <div className="text-danger">{errors.studyAcademicResultGroup}</div>
                   )}
                 </div>
 
+                {/* Minimum Academic Result */}
                 <div className="col-12 mb-20">
-                  {/* Main Label */}
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Minimum Academic Result Required{" "}
-                    <span className="text-danger">*</span>
+                  <label className="form-label fw-semibold text-sm">
+                    Minimum Academic Result Required <span className="text-danger">*</span>
                   </label>
-
                   <div className="row">
-                    {/* Select Box */}
+                    {/* Type Select */}
                     <div className="col-6">
                       <Select
-                        options={academicResultTypeData.map((option) => ({
-                          value: option.uuid,
-                          label: option.name,
+                        options={academicResultTypeData.map((o) => ({
+                          value: o.uuid,
+                          label: o.name,
+                          datatype: o.datatype,
                         }))}
                         value={
                           formData.minimumAcademicResultType
                             ? academicResultTypeData
-                                .map((option) => ({
-                                  value: option.uuid,
-                                  label: option.name,
+                                .map((o) => ({
+                                  value: o.uuid,
+                                  label: o.name,
+                                  datatype: o.datatype,
                                 }))
-                                .find(
-                                  (opt) =>
-                                    opt.value ===
-                                    formData.minimumAcademicResultType
-                                )
+                                .find((opt) => opt.value === formData.minimumAcademicResultType)
                             : null
                         }
-                        onChange={(selectedOption) =>
-                          handleChange({
-                            target: {
-                              name: "minimumAcademicResultType",
-                              value: selectedOption ? selectedOption.value : "",
-                            },
-                          })
-                        }
+                        onChange={handleAcademicResultTypeChange}
                         filterOption={customFilterOption}
                         placeholder="Select Academic Result Type"
                         isClearable
-                        isSearchable
-                        className={`custom-select-container ${
-                          errors.minimumAcademicResultType ? "is-invalid" : ""
-                        }`}
-                        classNamePrefix="custom-select"
+                        className={`custom-select-container ${errors.minimumAcademicResultType ? "is-invalid" : ""}`}
                       />
-
                       {errors.minimumAcademicResultType && (
-                        <div className="text-danger text-sm mt-1">
-                          {errors.minimumAcademicResultType}
-                        </div>
+                        <div className="text-danger">{errors.minimumAcademicResultType}</div>
                       )}
                     </div>
 
-                    {/* Text Input */}
+                    {/* Datatype Select */}
                     <div className="col-6">
-                      <input
-                        type="text"
-                        id="desc"
-                        name="minimumAcademicResult"
-                        value={formData.minimumAcademicResult}
-                        onChange={handleChange}
-                        placeholder="Minimum Academic Result"
-                        className={`form-control custom-select-container ${
-                          errors.minimumAcademicResult ? "is-invalid" : ""
-                        }`}
+                      <Select
+                        options={datatypeOptions}
+                        value={
+                          formData.minimumAcademicResult
+                            ? datatypeOptions.find(
+                                (opt) => opt.value === formData.minimumAcademicResult
+                              )
+                            : null
+                        }
+                        onChange={handleDatatypeChange}
+                        placeholder={selectedDatatype ? `Select datatype` : "Select type first"}
+                        isClearable
+                        isSearchable
+                        isDisabled={!formData.minimumAcademicResultType}
+                        className={`custom-select-container ${errors.minimumAcademicResult ? "is-invalid" : ""}`}
+                        classNamePrefix="custom-select"
                       />
-
+                      {formData.minimumAcademicResultType && !formData.minimumAcademicResult && (
+                        <small className="text-muted mt-1 d-block">
+                          Expected datatype from selected type: <strong>{selectedDatatype}</strong>
+                        </small>
+                      )}
                       {errors.minimumAcademicResult && (
-                        <div className="text-danger text-sm mt-1">
-                          {errors.minimumAcademicResult}
-                        </div>
+                        <div className="text-danger">{errors.minimumAcademicResult}</div>
                       )}
                     </div>
                   </div>
@@ -472,15 +418,9 @@ const AddEditStudyFactorAcademicResultModal = ({
 
                 {/* Description */}
                 <div className="col-12 mb-20">
-                  <label
-                    htmlFor="desc"
-                    className="form-label fw-semibold text-primary-light text-sm mb-8"
-                  >
-                    Description
-                  </label>
+                  <label className="form-label fw-semibold text-sm">Description</label>
                   <textarea
                     className="form-control"
-                    id="desc"
                     name="description"
                     value={formData.description}
                     onChange={handleChange}
@@ -490,27 +430,23 @@ const AddEditStudyFactorAcademicResultModal = ({
                 </div>
 
                 {/* Buttons */}
-                <div className="d-flex align-items-center justify-content-center gap-3 mt-24">
+                <div className="d-flex justify-content-center gap-3 mt-24">
                   <button
                     type="button"
                     onClick={onClose}
-                    className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-16 py-4 radius-6"
+                    className="border border-danger-600 text-danger-600 px-16 py-4 radius-6"
                     disabled={loading}
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
+                    className="btn comman-btn-color border border-primary-600 px-16 py-4 radius-6"
                     disabled={loading}
                   >
                     {loading ? (
                       <>
-                        <span
-                          className="spinner-border spinner-border-sm me-2"
-                          role="status"
-                          aria-hidden="true"
-                        ></span>
+                        <span className="spinner-border spinner-border-sm me-2"></span>
                         Saving...
                       </>
                     ) : (

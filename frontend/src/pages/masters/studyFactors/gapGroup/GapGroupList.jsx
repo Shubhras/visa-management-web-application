@@ -361,7 +361,8 @@ const GapGroupList = () => {
           setSelectedRows([]);
           setSelectAllOrNot('');
           setDeleteId(null);
-          fetchFactorForList();
+          // fetchFactorForList();
+            clearAllFilters();
         } else {
           toast.error("Something went wrong.");
         }

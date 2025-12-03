@@ -2,23 +2,14 @@ import React, { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import Select from "react-select";
-import { countryDemoList } from "../../../../store/master/companyMasters/actions";
 import {
   entranceTestAbilityGroupList,
   entranceTestNameList,
   entranceTestResultList,
   factorForList,
-  languageAbilityGroupList,
-  languageTestModuleNameList,
-  languageTestNameList,
-  languageTestResultList,
-  representingCountryList,
   studyFactorEntranceTestAbilityAdd,
   studyFactorEntranceTestAbilityEdit,
-  studyFactorLanguageAbilityAdd,
-  studyFactorLanguageAbilityEdit,
 } from "../../../../store/actions";
-import LanguageTestModuleNameList from "../../testMaster/languageTestModuleName/LanguageTestModuleNameList";
 
 const AddEditStudyFactorEntranceTestAbilityModal = ({
   show,
@@ -269,8 +260,8 @@ const AddEditStudyFactorEntranceTestAbilityModal = ({
           <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
             <h1 className="modal-title fs-5" id="AddEditStateModalLabel">
               {mode === "edit"
-                ? "Edit Language Ability"
-                : "Add Language Ability"}
+                ? "Edit Study Factor : Entrance Test Ability"
+                : "Add Study Factor : Entrance Test Ability"}
             </h1>
             <button
               type="button"
@@ -418,7 +409,7 @@ const AddEditStudyFactorEntranceTestAbilityModal = ({
                 
                 <div className="col-6 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Language Test Name {" "}
+                     Entrance Test Name {" "}
                     <span className="text-danger">*</span>
                   </label>
                   <Select

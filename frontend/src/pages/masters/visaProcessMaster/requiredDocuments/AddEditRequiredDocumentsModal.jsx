@@ -4,11 +4,13 @@ import { requiredDocumentGeneralAdd, requiredDocumentGeneralEdit, documentsForLi
 import { toast } from "react-toastify";
 import Select from "react-select";
 import { representingCountryList } from "../../../../store/master/occupationMaster/action";
+import { visaMainCategoryList } from "../../../../store/master/visaConditionsMaster/action";
 const AddEditRequiredDocumentsModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
     const [documentFor, setDocumentFor] = useState([]);
     const [representinfCountry, setRepresentingCountry] = useState([]);
+    const [visaMainCategory, setVisaMainCategory] = useState([]);
     // Form state
     const [formData, setFormData] = useState({
         uuid: '',
@@ -70,6 +72,12 @@ const AddEditRequiredDocumentsModal = ({ show, handleClose, mode = 'add', rowDat
         dispatch(representingCountryList(params, (response, error) => {
             if (response?.statusCode === 200 && response?.status === true) {
                 setRepresentingCountry(response?.data || []);
+
+            }
+        }));
+        dispatch(visaMainCategoryList(params, (response, error) => {
+            if (response?.statusCode === 200 && response?.status === true) {
+                setVisaMainCategory(response?.data || []);
 
             }
         }));
@@ -284,13 +292,35 @@ const AddEditRequiredDocumentsModal = ({ show, handleClose, mode = 'add', rowDat
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                                         Visa Main Category
                                     </label>
-                                    <input
-                                        type="text"
-                                        name="visaMain"
-                                        value={formData.visaMain}
-                                        onChange={handleChange}
-                                        className={`form-control radius-8 ${errors.visaMain ? 'is-invalid' : ''}`}
-                                        placeholder="Enter visa main category"
+                                    <Select
+                                        options={visaMainCategory.map((option) => ({
+                                            value: option.uuid,
+                                            label: option.name,
+                                        }))}
+                                        value={
+                                            formData.visaMain
+                                                ? visaMainCategory
+                                                    .map((option) => ({
+                                                        value: option.uuid,
+                                                        label: option.name,
+                                                    }))
+                                                    .find((opt) => opt.value === formData.visaMain)
+                                                : null
+                                        }
+                                        onChange={(selectedOption) =>
+                                            handleChange({
+                                                target: {
+                                                    name: "visaMain",
+                                                    value: selectedOption ? selectedOption.value : "",
+                                                },
+                                            })
+                                        }
+                                        placeholder="Select Visa Main Category"
+                                        isClearable
+                                        isSearchable
+                                        className={`custom-select-container ${errors.country ? "is-invalid" : ""
+                                            }`}
+                                        classNamePrefix="custom-select"
                                     />
                                     {errors.visaMain && (
                                         <div className="text-danger text-sm mt-1">

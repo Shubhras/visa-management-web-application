@@ -100,7 +100,7 @@ const AgeList = () => {
       if (response?.statusCode === 200 && response?.status === true) {
         const options = (response.data || []).map(item => ({
           id: item.uuid || item.id,
-          name: String(item.occupationcode ?? "")
+          name: String(item.name ?? "")
         }));
         const sortedOptions = options.sort((a, b) =>
           String(a.name).localeCompare(String(b.name), undefined, { numeric: true })
@@ -125,7 +125,7 @@ const AgeList = () => {
       if (response?.statusCode === 200 && response?.status === true) {
         const options = (response.data || []).map(item => ({
           id: item.uuid || item.id,
-          name: String(item.occupationname ?? "")
+          name: String(item.name ?? "")
         }));
         const sortedOptions = options.sort((a, b) =>
           String(a.name).localeCompare(String(b.name), undefined, { numeric: true })
@@ -254,11 +254,11 @@ const AgeList = () => {
   const [countryListData, setCountryListData] = useState([]);
   // Table columns configuration
   const [tableColumns] = useState([
-    { id: 'factorForName', label: 'Factor For', field: 'factorForName', visible: true, required: false, filterable: true },
+    { id: 'factorForName', label: 'Factor For', field: 'factorFor', visible: true, required: false, filterable: true },
     { id: 'studyAgeGroup', label: 'Study Age Group', field: 'studyAgeGroup', visible: true, required: false, filterable: true },
     { id: 'minimumAge', label: 'Minimum Age(Months)', field: 'minimumAge', visible: true, required: false, filterable: false },
     { id: 'maximumAge', label: 'Maximum Age(Months)', field: 'maximumAge', visible: true, required: false, filterable: false },
-    { id: 'countryName', label: 'Country', field: 'countryId', visible: true, required: false, filterable: true },
+    { id: 'countryName', label: 'Country', field: 'representingCountry', visible: true, required: false, filterable: true },
     { id: 'courseLevel', label: 'Course Level', field: 'courseLevel', visible: true, required: false, filterable: true },
     { id: 'description', label: 'Description', field: 'description', visible: false, required: false, filterable: false },
     { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false, filterable: false },
@@ -610,7 +610,8 @@ const AgeList = () => {
           setSelectedRows([]);
           setSelectAllOrNot('');
           setDeleteId(null);
-          fetchDepartmentList();
+          // fetchDepartmentList();
+          clearAllFilters();
         } else {
           toast.error("Something went wrong.");
         }

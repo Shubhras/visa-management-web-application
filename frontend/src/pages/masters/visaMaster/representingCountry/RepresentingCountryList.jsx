@@ -1132,7 +1132,7 @@ const RepresentingCountryList = () => {
                                                     </div>
                                                 </td>
                                                 {isColumnVisible('country_name') && (
-                                                    <td><span>{rowItem.country_name}</span></td>
+                                                    <td><span>{rowItem.name}</span></td>
                                                 )}
                                                 {isColumnVisible('official_name') && (
                                                     <td><span>{rowItem.official_name}</span></td>
@@ -1147,7 +1147,7 @@ const RepresentingCountryList = () => {
                                                     <td><span>{rowItem.capital_city}</span></td>
                                                 )}
                                                 {isColumnVisible('calling_code') && (
-                                                    <td><span>{rowItem.calling_code}</span></td>
+                                                    <td><span>{rowItem.dial_codes}</span></td>
                                                 )}
                                                 {isColumnVisible('currency_full_name') && (
                                                     <td><span>{rowItem.currency_full_name}</span></td>
@@ -1165,7 +1165,7 @@ const RepresentingCountryList = () => {
                                                     <td><span>{rowItem.no_of_territories}</span></td>
                                                 )}
                                                 {isColumnVisible('total_states_territories') && (
-                                                    <td><span>{rowItem.total_states_territories}</span></td>
+                                                    <td><span>{rowItem.total_states_and_territories}</span></td>
                                                 )}
                                                 {isColumnVisible('independence_day') && (
                                                     <td><span>{rowItem.independence_day}</span></td>
@@ -1177,13 +1177,13 @@ const RepresentingCountryList = () => {
                                                     <td><span>{rowItem.official_language}</span></td>
                                                 )}
                                                 {isColumnVisible('land_area') && (
-                                                    <td><span>{rowItem.land_area}</span></td>
+                                                    <td><span>{rowItem.land_area_sq_km}</span></td>
                                                 )}
                                                 {isColumnVisible('water_area') && (
-                                                    <td><span>{rowItem.water_area}</span></td>
+                                                    <td><span>{rowItem.water_area_sq_km}</span></td>
                                                 )}
                                                 {isColumnVisible('total_area') && (
-                                                    <td><span>{rowItem.total_area}</span></td>
+                                                    <td><span>{rowItem.total_area_sq_km}</span></td>
                                                 )}
                                                 {isColumnVisible('population') && (
                                                     <td><span>{rowItem.population}</span></td>
@@ -1198,7 +1198,7 @@ const RepresentingCountryList = () => {
                                                     <td><span>{rowItem.largest_state}</span></td>
                                                 )}
                                                 {isColumnVisible('smallest_state') && (
-                                                    <td><span>{rowItem.smallest_state}</span></td>
+                                                    <td><span>{rowItem.smallest_state_name}</span></td>
                                                 )}
                                                 {isColumnVisible('major_cities') && (
                                                     <td><span>{rowItem.major_cities}</span></td>
@@ -1219,7 +1219,7 @@ const RepresentingCountryList = () => {
                                                     <td><span>{rowItem.skilled_shortages}</span></td>
                                                 )}
                                                 {isColumnVisible('border_countries') && (
-                                                    <td><span>{rowItem.border_countries}</span></td>
+                                                    <td><span>{rowItem.border_countries_and_oceans}</span></td>
                                                 )}
                                                 {isColumnVisible('national_flag') && (
                                                     <td>
