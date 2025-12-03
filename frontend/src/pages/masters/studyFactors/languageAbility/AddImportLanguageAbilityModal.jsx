@@ -89,8 +89,8 @@ const AddImportStudyFactorLanguageAbilityModal = ({ show, handleClose }) => {
                         const prepareData = {
                             data: response.duplicates || [],
                             headers: ["Factor For", "Language Ability Group","Language Test Name","Module Name", "Mimimum Overall Score","In No of Modules",],
-                            sheetName: "Study Factor Language Ability",
-                            fileName: "Study Factor Language Ability",
+                            sheetName: "StudyFactorLanguageAbility",
+                            fileName: "StudyFactorLanguageAbility",
                         };
                         exportToExcelDuplicate(
                             prepareData.data,
@@ -103,8 +103,8 @@ const AddImportStudyFactorLanguageAbilityModal = ({ show, handleClose }) => {
                         const prepareData = {
                             data: response.skipped_rows || [],
                             headers: ["Factor For", "Language Ability Group","Language Test Name","Module Name", "Minimum Overall Score","In No of Modules","Reason"],
-                            sheetName: "Study Factor Language Ability",
-                            fileName: "Study Factor Language Ability",
+                            sheetName: "StudyFactorLanguageAbility",
+                            fileName: "StudyFactorLanguageAbility",
                         };
                         exportToExcelWrongData(
                             prepareData.data,
@@ -254,7 +254,7 @@ const AddImportStudyFactorLanguageAbilityModal = ({ show, handleClose }) => {
             </div>
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                    downloadFileName: "Study Factor Language Ability",
+                    downloadFileName: "StudyFactorLanguageAbility",
                     items: ["Factor For", "Language Ability Group","Language Test Name","Module Name", "Minimum Overall Score","In No. of Modules","Not Less Than", "Description"],
                     selectedItems: ["Factor For", "Language Ability Group","Language Test Name","Module Name", "Minimum Overall Score","In No. of Modules"],
                     ItemsRequired: ["Factor For", "Language Ability Group","Language Test Name","Module Name", "Minimum Overall Score","In No. of Modules"]

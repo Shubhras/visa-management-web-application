@@ -89,10 +89,40 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
             if (mode === 'edit' && rowData) {
                 setFormData({
                     uuid: rowData.uuid || '',
-                    country_name: rowData.name || '',
-                    description: rowData.description || '',
+                    country_name: rowData.country || '',
+                    official_name: rowData.official_name || '',
+                    short_name: rowData.short_name || '',
+                    continent: rowData.continent || '',
+                    capital_city: rowData.capital_city || '',
+                    calling_code: rowData.dial_codes || '',
+                    currency_full_name: rowData.currency_full_name || '',
+                    currency_short_name: rowData.currency_short_name || '',
+                    currency_code: rowData.currency_code || '',
+                    no_of_states: rowData.no_of_states || '',
+                    no_of_territories: rowData.no_of_territories || '',
+                    total_states_territories: rowData.total_states_and_territories || '',
+                    independence_day: rowData.independence_day || '',
+                    government_type: rowData.government_type || '',
+                    official_language: rowData.official_language || '',
+                    land_area: rowData.land_area_sq_km || '',
+                    water_area: rowData.water_area_sq_km || '',
+                    total_area: rowData.total_area_sq_km || '',
+                    population: rowData.population || '',
+                    religions: rowData.religions || '',
+                    monthly_living_cost_currency: rowData.monthly_living_cost_currency || '',
+                    monthly_living_cost_amount: rowData.monthly_living_cost_amount || '',
+                    largest_state: rowData.largest_state || '',
+                    smallest_state: rowData.smallest_state || '',
+                    major_cities: rowData.major_cities || '',
+                    national_animal: rowData.national_animal || '',
+                    national_bird: rowData.national_bird || '',
+                    national_flower: rowData.national_flower || '',
+                    unemployment: rowData.unemployment || '',
+                    skilled_shortages: rowData.skilled_shortages || '',
+                    border_countries: rowData.border_countries_and_oceans || '',
                     national_flag: rowData.national_flag || '',
                     country_map: rowData.country_map || '',
+                    description: rowData.description || '',
                 });
                 if (rowData.national_flag) {
                     setFilePreviews(prev => ({ ...prev, national_flag: rowData.national_flag }));
@@ -241,7 +271,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
             "short_name",
             "continent",
             "capital_city",
-            "calling_code",
+            // "calling_code",
             "currency_full_name",
             "currency_short_name"
         ];
@@ -275,7 +305,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
             formDataToSend.append('short_name', formData.short_name);
             formDataToSend.append('continent', formData.continent);
             formDataToSend.append('capital_city', formData.capital_city);
-            formDataToSend.append('dial_codes', formData.calling_code || [+91]);
+            formDataToSend.append('dial_codes', JSON.stringify(formData.calling_code));
             formDataToSend.append('currency_full_name', formData.currency_full_name);
             formDataToSend.append('currency_short_name', formData.currency_short_name);
             formDataToSend.append('currency_code', formData.currency_code);
@@ -305,8 +335,6 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
             if (files.country_map) {
                 formDataToSend.append('country_map', files.country_map);
             }
-
-
 
             formDataToSend.append('smallest_state', formData.smallest_state);
             formDataToSend.append('monthly_living_cost_currency', formData.monthly_living_cost_currency);
@@ -476,12 +504,6 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                                     (c) => c.uuid === selectedOption?.value
                                                 );
 
-                                                handleChange({
-                                                    target: {
-                                                        name: "country_name",
-                                                        value: selectedOption ? selectedOption.value : "",
-                                                    },
-                                                });
                                                 if (selectedCountry) {
                                                     setFormData((prev) => ({
                                                         ...prev,
@@ -513,7 +535,6 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                                         smallest_state: "",
                                                     }));
                                                 }
-                                                setStateListData([]);
                                             }}
                                             filterOption={customFilterOption}
                                             placeholder="Select country"
@@ -599,7 +620,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                             Calling Code <span className="text-danger">*</span>
                                         </label>
                                         <input
-                                            disabled
+                                            // disabled
                                             type="text"
                                             name="calling_code"
                                             value={formData.calling_code}

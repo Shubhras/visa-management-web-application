@@ -4,9 +4,8 @@ import { toast } from "react-toastify";
 import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
 import CommanSampleExcelDownloadModal from '../../../../components/comman/CommanSampleExcelDownloadModal';
-import { stateImportData } from '../../../../store/master/generalMasters/actions';
 import { exportToExcelDuplicate, exportToExcelWrongData } from '../../../../helper/utils/commanHelper';
-import { ageImportData, studyFactorGapImportData } from '../../../../store/actions';
+import { studyFactorGapImportData } from '../../../../store/actions';
 const AddImportStudyFactorGapModal = ({ show, handleClose }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
@@ -90,9 +89,9 @@ const AddImportStudyFactorGapModal = ({ show, handleClose }) => {
                     if (response?.duplicates?.length > 0) {
                         const prepareData = {
                             data: response.duplicates || [],
-                            headers: ["Factor For", "Study Age Group", "Maximum Age Accepted(Months)","Country","Intitude Type", "Course Level",],
-                            sheetName: "Study Factor Gap",
-                            fileName: "Study Factor Gap",
+                            headers: ["Factor For", "Study Age Group", "Maximum GAP Accepted (Months)", "Country", "Intitude Type", "Course Level",],
+                            sheetName: "StudyFactorGap",
+                            fileName: "StudyFactorGap",
                         };
                         exportToExcelDuplicate(
                             prepareData.data,
@@ -101,12 +100,12 @@ const AddImportStudyFactorGapModal = ({ show, handleClose }) => {
                             prepareData.fileName
                         );
                     }
-                     if (response?.skipped_rows?.length > 0) {
+                    if (response?.skipped_rows?.length > 0) {
                         const prepareData = {
                             data: response.skipped_rows || [],
-                            headers: ["Factor For", "Study Age Group", "Maximum Age Accepted(Months)","Country","Intitude Type", "Course Level","Reason"],
-                            sheetName: "Study Factor Gap",
-                            fileName: "Study Factor Gap",
+                            headers: ["Factor For", "Study Age Group", "Maximum GAP Accepted (Months)", "Country", "Intitude Type", "Course Level", "Reason"],
+                            sheetName: "StudyFactorGap",
+                            fileName: "StudyFactorGap",
                         };
                         exportToExcelWrongData(
                             prepareData.data,
@@ -238,7 +237,7 @@ const AddImportStudyFactorGapModal = ({ show, handleClose }) => {
                                             disabled={loading}
                                             className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
                                         >
-                                           {loading ? (
+                                            {loading ? (
                                                 <>
                                                     <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                                                     Uploading...
@@ -256,10 +255,10 @@ const AddImportStudyFactorGapModal = ({ show, handleClose }) => {
             </div>
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                    downloadFileName: "Study Factor Gap",
-                    items: ["Factor For", "Study Age Group", "Maximum Age Accepted(Months)","Country","Intitude Type", "Course Level", "Description"],
-                    selectedItems: ["Factor For", "Study Age Group", "Maximum Age Accepted(Months)","Country","Intitude Type", "Course Level",],
-                    ItemsRequired: ["Factor For", "Study Age Group", "Maximum Age Accepted(Months)","Country","Intitude Type", "Course Level",]
+                    downloadFileName: "StudyFactorGap",
+                    items: ["Factor For", "Study Age Group", "Maximum GAP Accepted (Months)", "Country", "Intitude Type", "Course Level", "Description"],
+                    selectedItems: ["Factor For", "Study Age Group", "Maximum GAP Accepted (Months)", "Country", "Intitude Type", "Course Level",],
+                    ItemsRequired: ["Factor For", "Study Age Group", "Maximum GAP Accepted (Months)", "Country", "Intitude Type", "Course Level",]
                 }
                 } />
             )}

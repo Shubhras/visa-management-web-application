@@ -359,7 +359,8 @@ const EntranceTestAbilityGroupList = () => {
           setSelectedRows([]);
           setSelectAllOrNot('');
           setDeleteId(null);
-          fetchEntranceTestAbilityGroupList();
+          // fetchEntranceTestAbilityGroupList();
+            clearAllFilters();
         } else {
           toast.error("Something went wrong.");
         }

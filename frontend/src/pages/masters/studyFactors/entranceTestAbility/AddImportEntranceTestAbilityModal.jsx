@@ -89,8 +89,8 @@ const AddImportStudyFactorEntranceTestAbilityModal = ({ show, handleClose }) => 
                         const prepareData = {
                             data: response.duplicates || [],
                             headers: ["Factor For", "Entrance Test Ability Group","Entrance Test Name","Minimum Score Required",],
-                            sheetName: "Entrance Test Ability",
-                            fileName: "Entrance Test Ability",
+                            sheetName: "EntranceTestAbility",
+                            fileName: "EntranceTestAbility",
                         };
                         exportToExcelDuplicate(
                             prepareData.data,
@@ -103,8 +103,8 @@ const AddImportStudyFactorEntranceTestAbilityModal = ({ show, handleClose }) => 
                         const prepareData = {
                             data: response.skipped_rows || [],
                             headers: ["Factor For", "Entrance Test Ability Group","Entrance Test Name","Minimum Score Required","Reason"],
-                            sheetName: "Entrance Test Ability",
-                            fileName: "Entrance Test Ability",
+                            sheetName: "EntranceTestAbility",
+                            fileName: "EntranceTestAbility",
                         };
                         exportToExcelWrongData(
                             prepareData.data,
@@ -254,7 +254,7 @@ const AddImportStudyFactorEntranceTestAbilityModal = ({ show, handleClose }) => 
             </div>
             {showSampleExcelDownload && (
                 <CommanSampleExcelDownloadModal show={showSampleExcelDownload} handleClose={handleCloseSampleExcelDownload} prepareData={{
-                    downloadFileName: "Entrance Test Ability",
+                    downloadFileName: "EntranceTestAbility",
                     items: ["Factor For", "Entrance Test Ability Group","Entrance Test Name","Minimum Score Required", "Description", ],
                     selectedItems: ["Factor For", "Entrance Test Ability Group","Entrance Test Name","Minimum Score Required",],
                     ItemsRequired: ["Factor For", "Entrance Test Ability Group","Entrance Test Name","Minimum Score Required",]

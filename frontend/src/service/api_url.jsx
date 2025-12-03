@@ -870,7 +870,7 @@ export const EXPORT_AGE_API = "/api/v1/master/study-factor-age/export/";
 export const IMPORT_AGE_API = "/api/v1/master/study-factor-age/import/";
 
 // Study Factor – Academic Result API Endpoints
-export const GET_STUDY_FACTOR_ACADEMIC_RESULT_LIST ="/api/v1/master/academic-result/list/";
+export const GET_STUDY_FACTOR_ACADEMIC_RESULT_LIST ="/api/v1/master/academic-result/";
 export const ADD_STUDY_FACTOR_ACADEMIC_RESULT_API ="/api/v1/master/academic-result/create/";
 export const EDIT_STUDY_FACTOR_ACADEMIC_RESULT_API ="/api/v1/master/academic-result/"; // +uuid/update/
 export const DELETE_STUDY_FACTOR_ACADEMIC_RESULT_API ="/api/v1/master/academic-result/"; // +delete/

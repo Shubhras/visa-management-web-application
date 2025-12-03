@@ -362,13 +362,19 @@ const DocumentsForList = () => {
     };
 
     const confirmDelete = () => {
-        // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
-        const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
+        const sendPayload =
+            selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
         if (!sendPayload || sendPayload.length === 0) {
-            toast.error("No Documents For selected for deletion.");
+            toast.error("No company type selected for deletion.");
             return;
         }
-        dispatch(documentsForDelete(sendPayload, (response, error) => {
+        const deleteAll = selectAllOrNot === "all" && Boolean(tableState.search?.trim());
+        const payloadSend = {
+            deleteAll: deleteAll,
+            id: deleteAll == true ? "" : sendPayload,
+            search: tableState.search || '',
+        };
+        dispatch(documentsForDelete(payloadSend, (response, error) => {
             if (error) {
                 toast.error(error?.response?.data?.message || "server error");
             } else {
@@ -380,7 +386,8 @@ const DocumentsForList = () => {
                     setSelectedRows([]);
                     setSelectAllOrNot('');
                     setDeleteId(null);
-                    fetchDepartmentList();
+                    // fetchDepartmentList();
+                    clearAllFilters();
                 } else {
                     toast.error("Something went wrong.");
                 }
