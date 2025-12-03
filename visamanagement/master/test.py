@@ -2156,39 +2156,148 @@ class LanguagetestmoduleNameImportAPIView(APIView):
 
 
 
+# -------------------- List -------------------- #
 
 # class LanguageTestResultListAPIView(APIView):
 #     permission_classes = [IsAuthenticated, IsAdminUser]
 
 #     def get(self, request):
 #         search = request.GET.get('search', '').strip()
+#         custom_sort = request.GET.get('customSort')
 #         sort_by = request.GET.get('sortBy', 'created_at')
 #         sort_order = request.GET.get('sortOrder', 'desc')
-#         allowed_sort_fields = ['numeric_score', 'description', 'created_at']
 
-#         if sort_by not in allowed_sort_fields:
-#             sort_by = 'created_at'
-#         if sort_order == 'desc':
-#             sort_by = f'-{sort_by}'
+#         # ---------------------------------------------------
+#         # Helper: Parse UUID list safely
+#         # ---------------------------------------------------
+#         def parse_uuid_list(param):
+#             raw = request.GET.get(param, '')
+#             final_list = []
+#             if raw:
+#                 for x in raw.split(','):
+#                     try:
+#                         final_list.append(UUID(x.strip()))
+#                     except:
+#                         pass
+#             return final_list
+
+#         # ---------------------------------------------------
+#         # Filters (UUID and text-based)
+#         # ---------------------------------------------------
+#         language_test_ids = parse_uuid_list('languageNameTest')
+#         benchmark_level_ids = parse_uuid_list('languageBenchmarkLevel')
+#         uuids_list = parse_uuid_list('uuids')
+
+#         language_test_names = parse_uuid_list('languageTestName')
+#         language_module_names = parse_uuid_list('languageModuleName')
 
 #         queryset = LanguageTestResult.objects.filter(is_deleted=False)
+
+#         # ---------------------------------------------------
+#         # Apply filters
+#         # ---------------------------------------------------
+#         if uuids_list:
+#             queryset = queryset.filter(uuid__in=uuids_list)
+
+#         if language_test_ids:
+#             queryset = queryset.filter(language__uuid__in=language_test_ids)
+
+#         if benchmark_level_ids:
+#             queryset = queryset.filter(lb_level__uuid__in=benchmark_level_ids)
+
+#         if language_test_names:
+#             queryset = queryset.filter(language_test__uuid__in=language_test_names)
+
+#         if language_module_names:
+#             queryset = queryset.filter(module_name__uuid__in=language_module_names)
+
+#         # ---------------------------------------------------
+#         # SEARCH block
+#         # ---------------------------------------------------
 #         if search:
 #             queryset = queryset.filter(
-#                 Q(numeric_score__istartswith=search) |
-#                 Q(description__istartswith=search) |
-#                 Q(language_test__name__istartswith=search) |
-#                 Q(languagetest_module_name__moduleName__istartswith=search)
+#                 Q(numeric_score__istartswith=search)
 #             )
 
-#         queryset = queryset.order_by(sort_by)
+#         # ---------------------------------------------------
+#         # Sorting Map
+#         # ---------------------------------------------------
+#         sort_field_map = {
+#             "numeric_score": "numeric_score",
+#             "description": "description",
+#             "languageTestName": "language_test__name",
+#             "languageModuleName": "languagetest_module_name__moduleName",
+#             "languageBenchmarkLevel": "languagetestbenchmark_level__level_name",
+#             "created_at": "created_at",
+#             "updated_at": "updated_at",
+#         }
+
+#         allowed_sort_fields = list(sort_field_map.keys())
+#         sort_fields = []
+
+#         # ---------------------------------------------------
+#         # CUSTOM SORT (like field:asc,field2:desc)
+#         # ---------------------------------------------------
+#         if custom_sort:
+#             for rule in custom_sort.split(","):
+#                 try:
+#                     field, order = rule.split(":")
+#                     field = field.strip()
+#                     order = order.strip().lower()
+
+#                     if field not in sort_field_map:
+#                         continue
+
+#                     orm_field = sort_field_map[field]
+
+#                     # Case-insensitive for text sorting
+#                     if field in [
+#                         "numeric_score",
+#                         "description",
+#                         "languageTestName",
+#                         "languageModuleName",
+#                         "languageBenchmarkLevel"
+#                     ]:
+#                         f = Lower(orm_field)
+#                     else:
+#                         f = F(orm_field)
+
+#                     sort_fields.append(
+#                         f.asc(nulls_last=True)
+#                         if order == "asc" else f.desc(nulls_last=True)
+#                     )
+
+#                 except ValueError:
+#                     continue
+
+#         else:
+#             # ---------------------------------------------------
+#             # DEFAULT SORT
+#             # ---------------------------------------------------
+#             if sort_by not in allowed_sort_fields:
+#                 sort_by = "created_at"
+
+#             orm_field = sort_field_map.get(sort_by, "created_at")
+#             f = F(orm_field)
+
+#             sort_fields = [
+#                 f.asc(nulls_last=True) if sort_order == "asc" else f.desc(nulls_last=True)
+#             ]
+
+#         queryset = queryset.order_by(*sort_fields)
+
+#         # ---------------------------------------------------
+#         # Pagination + Serialization
+#         # ---------------------------------------------------
 #         paginator = CustomPagination()
 #         result_page = paginator.paginate_queryset(queryset, request)
 #         serializer = LanguageTestResultSerializer(result_page, many=True)
+
 #         return paginator.get_paginated_response(serializer.data)
 
 
 class LanguageTestResultListAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
@@ -2196,67 +2305,59 @@ class LanguageTestResultListAPIView(APIView):
         sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')
 
-        # ---------------------------------------------------
-        # Helper: Parse UUID list safely
-        # ---------------------------------------------------
-        def parse_uuid_list(param):
-            raw = request.GET.get(param, '')
-            final_list = []
+        uuid_languageNameTest = request.GET.get('languageNameTest', '')
+        uuid_languageTestName = request.GET.get('languageTestName', '')
+        uuid_languageModuleName = request.GET.get('languageModuleName', '')
+        uuid_languageBanchMarkLevel = request.GET.get('languageBanchMarkLevel', '')
+
+        queryset = LanguageTestResult.objects.all()
+
+        # ----------------------
+        # UUID FILTERING HELPERS
+        # ----------------------
+        def parse_uuid_list(raw):
+            valid = []
             if raw:
                 for x in raw.split(','):
                     try:
-                        final_list.append(UUID(x.strip()))
+                        valid.append(UUID(x.strip()))
                     except:
                         pass
-            return final_list
+            return valid
 
-        # ---------------------------------------------------
-        # Filters (UUID and text-based)
-        # ---------------------------------------------------
-        language_test_ids = parse_uuid_list('languageNameTest')
-        benchmark_level_ids = parse_uuid_list('languageBenchmarkLevel')
-        uuids_list = parse_uuid_list('uuids')
+        languageNameTest_name_list = parse_uuid_list(uuid_languageNameTest)
+        languageTestName_name_list = parse_uuid_list(uuid_languageTestName)
+        languageModuleName_name_list = parse_uuid_list(uuid_languageModuleName)
+        languageBanchMarkLevel_name_list = parse_uuid_list(uuid_languageBanchMarkLevel)
 
-        language_test_names = parse_uuid_list('languageTestName')
-        language_module_names = parse_uuid_list('languageModuleName')
+        if languageNameTest_name_list:
+            queryset = queryset.filter(language__uuid__in=languageNameTest_name_list)
 
-        queryset = LanguageTestResult.objects.filter(is_deleted=False)
+        if languageTestName_name_list:
+            queryset = queryset.filter(language_test__uuid__in=languageTestName_name_list)
 
-        # ---------------------------------------------------
-        # Apply filters
-        # ---------------------------------------------------
-        if uuids_list:
-            queryset = queryset.filter(uuid__in=uuids_list)
+        if languageModuleName_name_list:
+            queryset = queryset.filter(module_name__uuid__in=languageModuleName_name_list)
 
-        if language_test_ids:
-            queryset = queryset.filter(language__uuid__in=language_test_ids)
+        if languageBanchMarkLevel_name_list:
+            queryset = queryset.filter(lb_level__uuid__in=languageBanchMarkLevel_name_list)
 
-        if benchmark_level_ids:
-            queryset = queryset.filter(lb_level__uuid__in=benchmark_level_ids)
-
-        if language_test_names:
-            queryset = queryset.filter(language_test__uuid__in=language_test_names)
-
-        if language_module_names:
-            queryset = queryset.filter(module_name__uuid__in=language_module_names)
-
-        # ---------------------------------------------------
-        # SEARCH block
-        # ---------------------------------------------------
+        # ----------------------
+        # SEARCH FILTER
+        # ----------------------
         if search:
-            queryset = queryset.filter(
-                Q(numeric_score__istartswith=search)
-            )
+            queryset = queryset.filter(numeric_score__istartswith=search)
 
-        # ---------------------------------------------------
-        # Sorting Map
-        # ---------------------------------------------------
+        # ----------------------
+        # SORT FIELD MAP
+        # ----------------------
         sort_field_map = {
+            "languageNameTest": "language__name",
+            "languageTestName": "language_test__name",
+            "languageModuleName": "module_name__name",
+            "languageBanchMarkLevel": "lb_level__name",
             "numeric_score": "numeric_score",
             "description": "description",
-            "languageTestName": "language_test__name",
-            "languageModuleName": "languagetest_module_name__moduleName",
-            "languageBenchmarkLevel": "languagetestbenchmark_level__level_name",
             "created_at": "created_at",
             "updated_at": "updated_at",
         }
@@ -2264,9 +2365,9 @@ class LanguageTestResultListAPIView(APIView):
         allowed_sort_fields = list(sort_field_map.keys())
         sort_fields = []
 
-        # ---------------------------------------------------
-        # CUSTOM SORT (like field:asc,field2:desc)
-        # ---------------------------------------------------
+        # ----------------------
+        # CUSTOM SORT LOGIC
+        # ----------------------
         if custom_sort:
             for rule in custom_sort.split(","):
                 try:
@@ -2279,50 +2380,44 @@ class LanguageTestResultListAPIView(APIView):
 
                     orm_field = sort_field_map[field]
 
-                    # Case-insensitive for text sorting
-                    if field in [
-                        "numeric_score",
-                        "description",
-                        "languageTestName",
-                        "languageModuleName",
-                        "languageBenchmarkLevel"
-                    ]:
+                    # Case-insensitive fields
+                    if field in ["languageNameTest", "languageTestName", "languageModuleName", "description"]:
                         f = Lower(orm_field)
                     else:
                         f = F(orm_field)
 
                     sort_fields.append(
-                        f.asc(nulls_last=True)
-                        if order == "asc" else f.desc(nulls_last=True)
+                        f.asc(nulls_last=True) if order == "asc" else f.desc(nulls_last=True)
                     )
 
                 except ValueError:
                     continue
 
         else:
-            # ---------------------------------------------------
+            # ----------------------
             # DEFAULT SORT
-            # ---------------------------------------------------
+            # ----------------------
             if sort_by not in allowed_sort_fields:
                 sort_by = "created_at"
 
             orm_field = sort_field_map.get(sort_by, "created_at")
             f = F(orm_field)
-
             sort_fields = [
-                f.asc(nulls_last=True) if sort_order == "asc" else f.desc(nulls_last=True)
+                f.asc(nulls_last=True) if sort_order.lower() == "asc" else f.desc(nulls_last=True)
             ]
 
         queryset = queryset.order_by(*sort_fields)
 
-        # ---------------------------------------------------
-        # Pagination + Serialization
-        # ---------------------------------------------------
+        # ----------------------
+        # PAGINATION
+        # ----------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = LanguageTestResultSerializer(result_page, many=True)
 
         return paginator.get_paginated_response(serializer.data)
+    
+
 
 
 
@@ -2417,37 +2512,6 @@ class LanguageTestResultUpdateAPIView(APIView):
 
 
 # -------------------- Delete -------------------- #
-# class LanguageTestResultDeleteAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
-
-#     def delete(self, request):
-#         ids = request.data.get('id', None)
-#         if not ids:
-#             return Response({"statusCode": 400, "status": False, "message": "Provide 'id' field", "data": None}, status=400)
-
-#         if ids == "all":
-#             objs = LanguageTestResult.objects.filter(is_deleted=False)
-#             count = objs.count()
-#             objs.delete()
-#             return Response({"statusCode": 200, "status": True, "message": f"All {count} result(s) deleted", "data": None})
-
-#         if not isinstance(ids, list):
-#             return Response({"statusCode": 400, "status": False, "message": "Provide list of UUIDs", "data": None}, status=400)
-
-#         valid_uuids, invalid_uuids = [], []
-#         for u in ids:
-#             try:
-#                 valid_uuids.append(UUID(u))
-#             except ValueError:
-#                 invalid_uuids.append(u)
-
-#         objs = LanguageTestResult.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-#         count = objs.count()
-#         if count == 0:
-#             return Response({"statusCode": 404, "status": False, "message": "No matching result found", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None}, status=404)
-
-#         objs.delete()
-#         return Response({"statusCode": 200, "status": True, "message": f"{count} result(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
 
 
 class LanguageTestResultDeleteAPIView(APIView):
@@ -4626,32 +4690,140 @@ class EntranceTestNameImportAPIView(APIView):
 
 #---------------------------------------modulename-----------------------------    
 
+# class EntranceTestModuleNameListAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')
+#         allowed_sort_fields = ['moduleName', 'description', 'created_at']
+
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = 'created_at'
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
+
+#         queryset = EntranceTestModuleName.objects.filter(is_deleted=False)
+#         if search:
+#             queryset = queryset.filter(
+#                 Q(moduleName__istartswith=search) |
+#                 Q(description__istartswith=search)
+#             )
+
+#         queryset = queryset.order_by(sort_by)
+#         paginator = CustomPagination()
+#         result_page = paginator.paginate_queryset(queryset, request)
+#         serializer = EntranceTestModuleNameSerializer(result_page, many=True)
+#         return paginator.get_paginated_response(serializer.data)
+
+
+
 class EntranceTestModuleNameListAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort')
         sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['moduleName', 'description', 'created_at']
 
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        uuid_entrance_test_name = request.GET.get('entranceTestName', '')
+        
 
-        queryset = EntranceTestModuleName.objects.filter(is_deleted=False)
+        queryset = EntranceTestModuleName.objects.all()
+
+        # ----------------------
+        # UUID FILTERING HELPERS
+        # ----------------------
+        def parse_uuid_list(raw):
+            valid = []
+            if raw:
+                for x in raw.split(','):
+                    try:
+                        valid.append(UUID(x.strip()))
+                    except:
+                        pass
+            return valid
+
+        entrance_test_name_list = parse_uuid_list(uuid_entrance_test_name)
+
+        if entrance_test_name_list:
+            queryset = queryset.filter(entrancetest__uuid__in=entrance_test_name_list)
+
+        # ----------------------
+        # SEARCH FILTER
+        # ----------------------
         if search:
-            queryset = queryset.filter(
-                Q(moduleName__istartswith=search) |
-                Q(description__istartswith=search)
-            )
+            queryset = queryset.filter(moduleName__istartswith=search)
 
-        queryset = queryset.order_by(sort_by)
+        # ----------------------
+        # SORT FIELD MAP
+        # ----------------------
+        sort_field_map = {
+            "uuid": "uuid",
+            "entranceTestName": "entrancetest__fullname",
+            "moduleName": "moduleName",
+            "description": "description",
+            "created_at": "created_at",
+            "updated_at": "updated_at",
+        }
+
+        allowed_sort_fields = list(sort_field_map.keys())
+        sort_fields = []
+
+        # ----------------------
+        # CUSTOM SORT LOGIC
+        # ----------------------
+        if custom_sort:
+            for rule in custom_sort.split(","):
+                try:
+                    field, order = rule.split(":")
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive fields
+                    if field in ["moduleName", "entranceTestName", "description"]:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == "asc" else f.desc(nulls_last=True)
+                    )
+
+                except ValueError:
+                    continue
+
+        else:
+            # ----------------------
+            # DEFAULT SORT
+            # ----------------------
+            if sort_by not in allowed_sort_fields:
+                sort_by = "created_at"
+
+            orm_field = sort_field_map.get(sort_by, "created_at")
+            f = F(orm_field)
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order.lower() == "asc" else f.desc(nulls_last=True)
+            ]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ----------------------
+        # PAGINATION
+        # ----------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = EntranceTestModuleNameSerializer(result_page, many=True)
+
         return paginator.get_paginated_response(serializer.data)
+    
 
 
 # -------------------- Create -------------------- #
@@ -5138,34 +5310,150 @@ class EntranceTestModuleImportAPIView(APIView):
 
 
 #----------------------------result--------------
+# class EntranceTestResultListAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')
+#         allowed_sort_fields = ['testresult', 'description', 'created_at']
+
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = 'created_at'
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
+
+#         queryset = EntranceTestResult.objects.filter(is_deleted=False)
+#         if search:
+#             queryset = queryset.filter(
+#                 Q(testresult__istartswith=search) |
+#                 Q(description__istartswith=search) |
+#                 Q(entrancetest__fullname__istartswith=search) |
+#                 Q(moduleName__moduleName__istartswith=search)
+#             )
+
+#         queryset = queryset.order_by(sort_by)
+#         paginator = CustomPagination()
+#         result_page = paginator.paginate_queryset(queryset, request)
+#         serializer = EntranceTestResultSerializer(result_page, many=True)
+#         return paginator.get_paginated_response(serializer.data)
+
+
+
 class EntranceTestResultListAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort')
         sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['testresult', 'description', 'created_at']
 
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        uuid_entrance_test_name = request.GET.get('entranceTestName', '')
+        uuid_entrance_test_module_name = request.GET.get('entranceTestModuleName', '')
 
-        queryset = EntranceTestResult.objects.filter(is_deleted=False)
+        
+
+        queryset = EntranceTestResult.objects.all()
+
+        # ----------------------
+        # UUID FILTERING HELPERS
+        # ----------------------
+        def parse_uuid_list(raw):
+            valid = []
+            if raw:
+                for x in raw.split(','):
+                    try:
+                        valid.append(UUID(x.strip()))
+                    except:
+                        pass
+            return valid
+
+        entrance_test_name_list = parse_uuid_list(uuid_entrance_test_name)
+        entrance_test_module_name_list = parse_uuid_list(uuid_entrance_test_module_name)
+
+        if entrance_test_name_list:
+            queryset = queryset.filter(entrancetest__uuid__in=entrance_test_name_list)
+
+        if entrance_test_module_name_list:
+            queryset = queryset.filter(moduleName__uuid__in=entrance_test_module_name_list)
+
+        # ----------------------
+        # SEARCH FILTER
+        # ----------------------
         if search:
-            queryset = queryset.filter(
-                Q(testresult__istartswith=search) |
-                Q(description__istartswith=search) |
-                Q(entrancetest__fullname__istartswith=search) |
-                Q(moduleName__moduleName__istartswith=search)
-            )
+            queryset = queryset.filter(testresult__istartswith=search)
 
-        queryset = queryset.order_by(sort_by)
+        # ----------------------
+        # SORT FIELD MAP
+        # ----------------------
+        sort_field_map = {
+            "uuid": "uuid",
+            "entranceTestName": "entrancetest__fullname",
+            "entranceTestModuleName": "moduleName__moduleName",
+            "testresult": "testresult",
+            "description": "description",
+            "created_at": "created_at",
+            "updated_at": "updated_at",
+        }
+
+        allowed_sort_fields = list(sort_field_map.keys())
+        sort_fields = []
+
+        # ----------------------
+        # CUSTOM SORT LOGIC
+        # ----------------------
+        if custom_sort:
+            for rule in custom_sort.split(","):
+                try:
+                    field, order = rule.split(":")
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive fields
+                    if field in ["moduleName", "entranceTestName", "description"]:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == "asc" else f.desc(nulls_last=True)
+                    )
+
+                except ValueError:
+                    continue
+
+        else:
+            # ----------------------
+            # DEFAULT SORT
+            # ----------------------
+            if sort_by not in allowed_sort_fields:
+                sort_by = "created_at"
+
+            orm_field = sort_field_map.get(sort_by, "created_at")
+            f = F(orm_field)
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order.lower() == "asc" else f.desc(nulls_last=True)
+            ]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ----------------------
+        # PAGINATION
+        # ----------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = EntranceTestResultSerializer(result_page, many=True)
+
         return paginator.get_paginated_response(serializer.data)
+    
+
 
 # -------------------- Create -------------------- #
 class EntranceTestResultCreateAPIView(APIView):
