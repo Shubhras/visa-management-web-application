@@ -328,7 +328,7 @@ const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                       </div>
 
                       {/* Show Date Picker if Date is selected */}
-                      {formData.valid_upto_type === 'Date' && (
+                      {/* {formData.valid_upto_type === 'Date' && (
                         <div className="col-md-8">
                           <input
                             type="date"
@@ -343,8 +343,8 @@ const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                             </div>
                           )}
                         </div>
-                      )}
-                      {/* {formData.valid_upto_type === 'Date' && (
+                      )} */}
+                      {formData.valid_upto_type === 'Date' && (
                         <div className="col-md-8" style={{ zIndex: 99999, position: "relative" }}>
                           <DatePicker
                             selected={formData.valid_upto ? new Date(formData.valid_upto) : null}
@@ -365,7 +365,7 @@ const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                             </div>
                           )}
                         </div>
-                      )} */}
+                      )}
 
                       {/* Show Numeric and Unit fields if Valid Upto is selected */}
                       {formData.valid_upto_type === 'Valid Upto' && (
