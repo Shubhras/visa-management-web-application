@@ -199,6 +199,97 @@ class DocumentCategoryUpdateAPIView(APIView):
     
 
 
+# class DocumentCategoryDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request):
+#         try:
+#             search = request.GET.get("search", "").strip()
+#             delete_all = request.data.get("deleteAll", False)
+#             ids = request.data.get("id", None)
+
+#             # ----------------------------------
+#             # CASE 1: DELETE ENTIRE TABLE (id = "all")
+#             # ----------------------------------
+#             if ids == "all":
+#                 count = DocumentCategory.objects.count()
+#                 DocumentCategory.objects.all().delete()
+#                 return Response({
+#                     "statusCode": 200,
+#                     "status": True,
+#                     "message": f"All {count} document category(s) deleted from the table.",
+#                 })
+
+#             # ----------------------------------
+#             # BASE QUERYSET
+#             # ----------------------------------
+#             queryset = DocumentCategory.objects.all()
+
+#             # ----------------------------------
+#             # SEARCH FILTER (APPLIED FIRST)
+#             # ----------------------------------
+#             if search:
+#                 queryset = queryset.filter(name__istartswith=search)
+
+#             # ---------------------------------------------------
+#             # CASE 2: DELETE ALL MATCHING SEARCH RESULTS
+#             # ---------------------------------------------------
+#             if delete_all:
+#                 count = queryset.count()
+#                 queryset.delete()
+
+#                 msg = (
+#                     f"{count} document category(s) deleted based on search filter."
+#                     if search else 
+#                     f"All {count} document category(s) deleted."
+#                 )
+
+#                 return Response({
+#                     "statusCode": 200,
+#                     "status": True,
+#                     "message": msg
+#                 }, status=200)
+
+#             # ---------------------------------------------------
+#             # CASE 3: DELETE SPECIFIC UUID LIST (ONLY FROM SEARCH RESULT)
+#             # ---------------------------------------------------
+#             if not ids or not isinstance(ids, list):
+#                 return Response({
+#                     "statusCode": 400,
+#                     "status": False,
+#                     "message": "Please provide a list of UUIDs in 'id'."
+#                 }, status=400)
+
+#             valid_uuids = []
+#             invalid_uuids = []
+
+#             for u in ids:
+#                 try:
+#                     valid_uuids.append(UUID(u))
+#                 except:
+#                     invalid_uuids.append(u)
+
+#             # Only delete IDs that also exist in the SEARCHED queryset
+#             filtered_objects = queryset.filter(uuid__in=valid_uuids)
+#             count = filtered_objects.count()
+
+#             filtered_objects.delete()
+
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"{count} document category(s) deleted.",
+#                 "invalid_uuids": invalid_uuids if invalid_uuids else None
+#             }, status=200)
+
+#         except Exception as e:
+#             return Response({
+#                 "statusCode": 500,
+#                 "status": False,
+#                 "message": f"Internal server error: {str(e)}"
+#             }, status=500)
+
+
 class DocumentCategoryDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -212,12 +303,27 @@ class DocumentCategoryDeleteAPIView(APIView):
             # CASE 1: DELETE ENTIRE TABLE (id = "all")
             # ----------------------------------
             if ids == "all":
-                count = DocumentCategory.objects.count()
-                DocumentCategory.objects.all().delete()
+                queryset = DocumentCategory.objects.all()
+
+                deletable = []
+                non_deletable = []
+
+                for obj in queryset:
+                    if DocumentName.objects.filter(document_category=obj).exists():
+                        non_deletable.append(obj)
+                    else:
+                        deletable.append(obj)
+
+                deleted_count = len(deletable)
+                not_deleted_count = len(non_deletable)
+
+                # delete only safe ones
+                DocumentCategory.objects.filter(id__in=[o.id for o in deletable]).delete()
+
                 return Response({
                     "statusCode": 200,
                     "status": True,
-                    "message": f"All {count} document category(s) deleted from the table.",
+                    "message": f"{deleted_count} data deleted; {not_deleted_count} data not deleted, they are connected to another table."
                 })
 
             # ----------------------------------
@@ -226,7 +332,7 @@ class DocumentCategoryDeleteAPIView(APIView):
             queryset = DocumentCategory.objects.all()
 
             # ----------------------------------
-            # SEARCH FILTER (APPLIED FIRST)
+            # SEARCH FILTER
             # ----------------------------------
             if search:
                 queryset = queryset.filter(name__istartswith=search)
@@ -235,23 +341,29 @@ class DocumentCategoryDeleteAPIView(APIView):
             # CASE 2: DELETE ALL MATCHING SEARCH RESULTS
             # ---------------------------------------------------
             if delete_all:
-                count = queryset.count()
-                queryset.delete()
 
-                msg = (
-                    f"{count} document category(s) deleted based on search filter."
-                    if search else 
-                    f"All {count} document category(s) deleted."
-                )
+                deletable = []
+                non_deletable = []
+
+                for obj in queryset:
+                    if DocumentName.objects.filter(document_category=obj).exists():
+                        non_deletable.append(obj)
+                    else:
+                        deletable.append(obj)
+
+                deleted_count = len(deletable)
+                not_deleted_count = len(non_deletable)
+
+                DocumentCategory.objects.filter(id__in=[o.id for o in deletable]).delete()
 
                 return Response({
                     "statusCode": 200,
                     "status": True,
-                    "message": msg
-                }, status=200)
+                    "message": f"{deleted_count} data is deleted ; {not_deleted_count} data is not deleted ,they are connected to another table",
+                })
 
             # ---------------------------------------------------
-            # CASE 3: DELETE SPECIFIC UUID LIST (ONLY FROM SEARCH RESULT)
+            # CASE 3: DELETE SPECIFIC UUID LIST
             # ---------------------------------------------------
             if not ids or not isinstance(ids, list):
                 return Response({
@@ -269,16 +381,44 @@ class DocumentCategoryDeleteAPIView(APIView):
                 except:
                     invalid_uuids.append(u)
 
-            # Only delete IDs that also exist in the SEARCHED queryset
             filtered_objects = queryset.filter(uuid__in=valid_uuids)
-            count = filtered_objects.count()
 
-            filtered_objects.delete()
+            deletable = []
+            non_deletable = []
 
+            for obj in filtered_objects:
+                if DocumentName.objects.filter(document_category=obj).exists():
+                    non_deletable.append(obj)
+                else:
+                    deletable.append(obj)
+
+            # delete safe ones
+            DocumentCategory.objects.filter(id__in=[o.id for o in deletable]).delete()
+
+            # -----------------------------
+            # SINGLE DELETE MESSAGE
+            # -----------------------------
+            if len(valid_uuids) == 1:
+                if len(non_deletable) == 1:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Could not delete the data, it is connected to another table."
+                    })
+                else:
+                    return Response({
+                        "statusCode": 200,
+                        "status": True,
+                        "message": "1 data deleted successfully."
+                    })
+
+            # -----------------------------
+            # MULTIPLE DELETE MESSAGE
+            # -----------------------------
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"{count} document category(s) deleted.",
+                "message": f"{len(deletable)} data is deleted ; {len(non_deletable)} data is not deleted ,they are connected to another table",
                 "invalid_uuids": invalid_uuids if invalid_uuids else None
             }, status=200)
 
@@ -288,6 +428,7 @@ class DocumentCategoryDeleteAPIView(APIView):
                 "status": False,
                 "message": f"Internal server error: {str(e)}"
             }, status=500)
+
 
 
 
@@ -2586,6 +2727,95 @@ class DocumentTypeUpdateAPIView(APIView):
 
 
 
+# class DocumentTypeDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request):
+#         ids = request.data.get('id', None)
+#         search = request.GET.get("search", "").strip()
+
+#         if not ids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide 'id' (UUID list or 'all')."
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # -----------------------------
+#         # IF "all" → delete all matched by search
+#         # -----------------------------
+#         if ids == "all":
+#             objs = DocumentType.objects.filter(is_deleted=False)
+
+#             # Apply search
+#             if search:
+#                 objs = objs.filter(name__icontains=search)
+
+#             count = objs.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No Document Types found to delete."
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#             objs.update(is_deleted=True)
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"{count} Document Types deleted successfully."
+#             }, status=status.HTTP_200_OK)
+
+#         # -----------------------------
+#         # NORMAL DELETE → only delete selected UUIDs
+#         # -----------------------------
+#         if not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Provide list of UUIDs in 'id' field or 'all'."
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         valid_uuids, invalid_uuids = [], []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Apply selected UUIDs + search (search should NOT delete extra items)
+#         objs = DocumentType.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+
+#         # Apply search filter (optional)
+#         if search:
+#             objs = objs.filter(name__icontains=search)
+
+#         count = objs.count()
+
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching Document Types found to delete."
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         objs.update(is_deleted=True)
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} Document Type(s) deleted successfully.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         }, status=status.HTTP_200_OK)
+
+
 class DocumentTypeDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2600,17 +2830,18 @@ class DocumentTypeDeleteAPIView(APIView):
                 "message": "Please provide 'id' (UUID list or 'all')."
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # -----------------------------
-        # IF "all" → delete all matched by search
-        # -----------------------------
+        # --------------------------------------------------------------
+        # CASE 1: DELETE ALL → ONLY DELETE ITEMS MATCHING SEARCH + NOT DELETED
+        # --------------------------------------------------------------
         if ids == "all":
             objs = DocumentType.objects.filter(is_deleted=False)
 
-            # Apply search
+            # Search must apply ONLY on Document Type column (name)
             if search:
                 objs = objs.filter(name__icontains=search)
 
             count = objs.count()
+
             if count == 0:
                 return Response({
                     "statusCode": 404,
@@ -2619,15 +2850,16 @@ class DocumentTypeDeleteAPIView(APIView):
                 }, status=status.HTTP_404_NOT_FOUND)
 
             objs.update(is_deleted=True)
+
             return Response({
                 "statusCode": 200,
                 "status": True,
                 "message": f"{count} Document Types deleted successfully."
             }, status=status.HTTP_200_OK)
 
-        # -----------------------------
-        # NORMAL DELETE → only delete selected UUIDs
-        # -----------------------------
+        # --------------------------------------------------------------
+        # CASE 2: NORMAL DELETE (Selected IDs Only)
+        # --------------------------------------------------------------
         if not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
@@ -2636,6 +2868,7 @@ class DocumentTypeDeleteAPIView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         valid_uuids, invalid_uuids = [], []
+
         for u in ids:
             try:
                 valid_uuids.append(UUID(u))
@@ -2650,10 +2883,10 @@ class DocumentTypeDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Apply selected UUIDs + search (search should NOT delete extra items)
+        # Base queryset → selected UUIDs ONLY
         objs = DocumentType.objects.filter(uuid__in=valid_uuids, is_deleted=False)
 
-        # Apply search filter (optional)
+        # Apply search ONLY on Document Type name
         if search:
             objs = objs.filter(name__icontains=search)
 
@@ -2667,12 +2900,14 @@ class DocumentTypeDeleteAPIView(APIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
         objs.update(is_deleted=True)
+
         return Response({
             "statusCode": 200,
             "status": True,
             "message": f"{count} Document Type(s) deleted successfully.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
+
 
 
 class DocumentTypeExportAPIView(APIView):
@@ -2686,7 +2921,6 @@ class DocumentTypeExportAPIView(APIView):
             'uuid': 'UUID',
             'name': 'Document Type',
             'description': 'Description',
-            'is_deleted': 'Deleted',
             'created_at': 'Created On',
             'updated_at': 'Modified On'  # fixed header
         }
@@ -2729,28 +2963,41 @@ class DocumentTypeExportAPIView(APIView):
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
+
+
 # class DocumentTypeImportAPIView(APIView):
 #     permission_classes = [IsAuthenticated, IsAdminUser]
 
+#     IMPORT_HEADERS_ORDER = [
+#         "uuid",
+#         "document type",
+#         "description",
+#         "created on",
+#         "modified on"
+#     ]
+
+#     REQUIRED_HEADERS = {"document type"}
+#     OPTIONAL_HEADERS = {"description"}
+
 #     def post(self, request):
-#         file = request.FILES.get('file')
-#         sheet_name = request.data.get('sheet_name')
+#         file = request.FILES.get("file")
+#         sheet_name = request.data.get("sheet_name")
 
 #         if not file:
-#             return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No file uploaded"
+#             }, status=400)
 
-#         format_type = file.name.split('.')[-1].lower()
-
+#         format_type = file.name.split(".")[-1].lower()
+#         data = []
 #         duplicates = []
 #         skipped_rows = []
-#         imported_count = 0
-
-#         required_headers = {"document type"}
-#         optional_headers = {"description"}
+#         to_create = []
+#         seen_in_file = set()
 
 #         try:
-#             data = []
-
 #             # ---------------- XLSX ----------------
 #             if format_type == "xlsx":
 #                 wb = openpyxl.load_workbook(file, read_only=True)
@@ -2758,18 +3005,23 @@ class DocumentTypeExportAPIView(APIView):
 
 #                 if not sheet_name:
 #                     return Response({
-#                         "error": "Please provide sheet_name",
+#                         "statusCode": 400,
+#                         "status": False,
+#                         "message": "Please provide sheet_name",
 #                         "available_sheets": available_sheets
 #                     }, status=400)
 
 #                 if sheet_name not in available_sheets:
 #                     return Response({
-#                         "error": f'Sheet "{sheet_name}" not found',
+#                         "statusCode": 400,
+#                         "status": False,
+#                         "message": f'Sheet "{sheet_name}" not found',
 #                         "available_sheets": available_sheets
 #                     }, status=400)
 
 #                 ws = wb[sheet_name]
 
+#                 # if sheet empty
 #                 if ws.max_row <= 1:
 #                     return Response({
 #                         "statusCode": 400,
@@ -2777,20 +3029,17 @@ class DocumentTypeExportAPIView(APIView):
 #                         "message": f'Sheet "{sheet_name}" is empty.'
 #                     }, status=400)
 
-#                 # Read headers
-#                 headers = [
-#                     str(c.value).strip().lower() if c.value else ''
-#                     for c in next(ws.iter_rows(min_row=1, max_row=1))
-#                 ]
+#                 # Read and normalize headers
+#                 headers = [str(c.value).strip().lower() if c.value else "" for c in next(ws.iter_rows(min_row=1, max_row=1))]
 
-#                 if not required_headers.issubset(set(headers)):
+#                 if not self.REQUIRED_HEADERS.issubset(set(headers)):
 #                     return Response({
 #                         "statusCode": 400,
 #                         "status": False,
-#                         "message": f"Missing required headers. Required: {required_headers}, Found: {set(headers)}"
+#                         "message": f"Missing required headers. Required: {self.REQUIRED_HEADERS}, Found: {set(headers)}"
 #                     }, status=400)
 
-#                 # Read rows
+#                 # read rows
 #                 for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
 #                     if not any(row):
 #                         continue
@@ -2808,11 +3057,11 @@ class DocumentTypeExportAPIView(APIView):
 #                     row_lower = {k.strip().lower(): v for k, v in row.items()}
 #                     row_lower["_row_number"] = idx
 
-#                     if not required_headers.issubset(set(row_lower.keys())):
+#                     if not self.REQUIRED_HEADERS.issubset(set(row_lower.keys())):
 #                         return Response({
 #                             "statusCode": 400,
 #                             "status": False,
-#                             "message": f"Missing required headers. Required: {required_headers}. Found: {set(row_lower.keys())}"
+#                             "message": f"Missing required headers. Required: {self.REQUIRED_HEADERS}, Found: {set(row_lower.keys())}"
 #                         }, status=400)
 
 #                     data.append(row_lower)
@@ -2821,81 +3070,115 @@ class DocumentTypeExportAPIView(APIView):
 #                 return Response({
 #                     "statusCode": 400,
 #                     "status": False,
-#                     "error": "Unsupported file format. Use .xlsx or .csv"
+#                     "message": "Unsupported file format. Use .xlsx or .csv"
 #                 }, status=400)
 
-#             # ---------------- IMPORT LOGIC ----------------
-#             for row in reversed(data):
-#                 row_number = row.get("_row_number", "Unknown")
+#             # ------------ Pre-load existing ------------
+#             existing_map = {dt.name.lower(): dt for dt in DocumentType.objects.all()}
+#             imported_count = 0
 
-#                 # Extract fields
+#             # ------------ PROCESS ROWS IN REVERSED ORDER ------------
+#             for row in reversed(data):
+#                 row_no = row.get("_row_number", "Unknown")
+#                 # Collect wrong values in the export-header order
+#                 wrong_values = []
+
+#                 # Raw reads (may be None)
+#                 # uuid_val = row.get("uuid")
 #                 name_raw = row.get("document type")
 #                 description_raw = row.get("description")
+#                 # created_val = row.get("created on")
+#                 # modified_val = row.get("modified on")
 
-#                 name = str(name_raw).strip() if name_raw else None
-#                 description = str(description_raw).strip() if description_raw else ""
+#                 # Normalize
+#                 name = str(name_raw).strip() if name_raw not in [None, ""] else ""
+#                 description = str(description_raw).strip() if description_raw not in [None, ""] else ""
 
-#                 # ---------------- VALIDATION FIRST ----------------
+#                 # ---------- VALIDATIONS (in same order as export headers) ----------
+#                 # UUID: allow string or uuid.UUID, empty is allowed
+#                 import uuid as _uuid
+#                 import datetime
+#                 # if uuid_val not in [None, ""] and not isinstance(uuid_val, (str, _uuid.UUID)):
+#                 #     wrong_values.append({"UUID": uuid_val})
 
-#                 # 1. Empty value
+#                 # Document Type (required) — show wrong value if empty or numeric-only
 #                 if not name:
+#                     wrong_values.append({"Document Type": name_raw})
+#                 elif isinstance(name, str) and name.isdigit():
+#                     wrong_values.append({"Document Type": name_raw})
+
+#                 # Description (optional) — allow text or number
+#                 if description_raw not in [None, ""] and not isinstance(description_raw, (str, int, float, bool)):
+#                     wrong_values.append({"Description": description_raw})
+
+#                 # Deleted - expect boolean-like (0/1/True/False/"0"/"1" or blank)
+#                 # allowed_deleted = {None, "", 0, 1, "0", "1", True, False}
+#                 # if deleted_val not in allowed_deleted:
+#                 #     wrong_values.append({"Deleted": deleted_val})
+
+#                 # Created On - expect datetime or blank
+#                 # if created_val not in [None, ""] and not isinstance(created_val, datetime.datetime):
+#                 #     wrong_values.append({"Created On": created_val})
+
+#                 # # Modified On - expect datetime or blank
+#                 # if modified_val not in [None, ""] and not isinstance(modified_val, datetime.datetime):
+#                 #     wrong_values.append({"Modified On": modified_val})
+
+#                 # If any wrong values — add to skipped_rows (Value is list of key:value dicts in export order)
+#                 if wrong_values:
 #                     skipped_rows.append({
-#                         "Row": row_number,
-#                         "Reason": "Document Type is empty"
+#                         "Row": row_no,
+#                         "Value": wrong_values,
+#                         "Reason": "Invalid or missing data"
 #                     })
 #                     continue
 
-#                 # 2. Name must contain alphabets (NO pure numbers allowed)
-#                 if name.isdigit():
-#                     skipped_rows.append({
-#                         "Row": row_number,
-#                         "Document Type": name,
-#                         "Reason": "Invalid value (numbers-only not allowed)"
-#                     })
-#                     continue
-
-#                 # 3. Invalid description datatype
-#                 if description_raw is not None and not isinstance(description_raw, (str, int, float, bool)):
-#                     skipped_rows.append({
-#                         "Row": row_number,
-#                         "Reason": "Invalid description data"
-#                     })
-#                     continue
-
-#                 # ---------------- DUPLICATE CHECK ----------------
-#                 existing = DocumentType.objects.filter(name__iexact=name).first()
-
-#                 if existing and not existing.is_deleted:
+#                 # ------------ DUPLICATE IN FILE ------------
+#                 key = name.lower()
+#                 if key in seen_in_file:
 #                     duplicates.append({
-#                         "Row": row_number,
+#                         "Row": row_no,
 #                         "Document Type": name,
-#                         "Reason": "Already exists"
+#                         "Description": description,
+#                         "Reason": "Duplicate in uploaded file"
 #                     })
 #                     continue
+#                 seen_in_file.add(key)
 
-#                 # ---------------- RESTORE IF DELETED ----------------
-#                 if existing and existing.is_deleted:
-#                     existing.description = description
-#                     existing.is_deleted = False
-#                     existing.save()
-#                     imported_count += 1
-#                     continue
+#                 # ------------ DUPLICATE IN DB ------------
+#                 existing = existing_map.get(key)
+#                 if existing:
+#                     if not existing.is_deleted:
+#                         duplicates.append({
+#                             "Row": row_no,
+#                             "Document Type": name,
+#                             "Description": description,
+#                             "Reason": "Already exists in database"
+#                         })
+#                         continue
+#                     else:
+#                         # restore deleted
+#                         existing.description = description
+#                         existing.is_deleted = False
+#                         existing.save()
+#                         imported_count += 1
+#                         continue
 
-#                 # ---------------- CREATE NEW ----------------
-#                 try:
-#                     DocumentType.objects.create(
+#                 # ------------ Prepare for bulk create ------------
+#                 to_create.append(
+#                     DocumentType(
 #                         name=name,
 #                         description=description,
 #                         is_deleted=False
 #                     )
-#                     imported_count += 1
+#                 )
 
-#                 except Exception as e:
-#                     skipped_rows.append({
-#                         "Row": row_number,
-#                         "Reason": str(e)
-#                     })
-#                     continue
+#             # ------------ Bulk Create (batched) ------------
+#             if to_create:
+#                 batch_size = 500
+#                 for i in range(0, len(to_create), batch_size):
+#                     DocumentType.objects.bulk_create(to_create[i:i + batch_size])
+#                 imported_count += len(to_create)
 
 #         except Exception as e:
 #             return Response({
@@ -2904,14 +3187,14 @@ class DocumentTypeExportAPIView(APIView):
 #                 "message": str(e)
 #             }, status=400)
 
-#         # ---------------- FINAL RESPONSE ----------------
+#         # ------------ Final Response (original file order) ------------
 #         return Response({
 #             "statusCode": 200,
 #             "status": True,
-#             "message": f'Sheet \"{sheet_name}\" imported successfully' if sheet_name else "Import successful",
+#             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
 #             "imported_count": imported_count,
-#             "duplicates": reversed(duplicates),
-#             "skipped_rows": reversed(skipped_rows)
+#             "duplicates": list(reversed(duplicates)),
+#             "skipped_rows": list(reversed(skipped_rows))
 #         }, status=200)
 
 
@@ -2923,7 +3206,6 @@ class DocumentTypeImportAPIView(APIView):
         "uuid",
         "document type",
         "description",
-        "deleted",
         "created on",
         "modified on"
     ]
@@ -3029,55 +3311,36 @@ class DocumentTypeImportAPIView(APIView):
             existing_map = {dt.name.lower(): dt for dt in DocumentType.objects.all()}
             imported_count = 0
 
-            # ------------ PROCESS ROWS IN REVERSED ORDER ------------
+            # ------------ PROCESS ROWS IN REVERSED ORDER (so we can reverse result lists later) ------------
             for row in reversed(data):
                 row_no = row.get("_row_number", "Unknown")
-                # Collect wrong values in the export-header order
+                # Collect wrong values in export-header order
                 wrong_values = []
 
                 # Raw reads (may be None)
-                uuid_val = row.get("uuid")
                 name_raw = row.get("document type")
                 description_raw = row.get("description")
-                deleted_val = row.get("deleted")
-                created_val = row.get("created on")
-                modified_val = row.get("modified on")
 
-                # Normalize
+                # Normalize for DB insertion (empty string if blank)
                 name = str(name_raw).strip() if name_raw not in [None, ""] else ""
                 description = str(description_raw).strip() if description_raw not in [None, ""] else ""
 
-                # ---------- VALIDATIONS (in same order as export headers) ----------
-                # UUID: allow string or uuid.UUID, empty is allowed
-                import uuid as _uuid
-                import datetime
-                if uuid_val not in [None, ""] and not isinstance(uuid_val, (str, _uuid.UUID)):
-                    wrong_values.append({"UUID": uuid_val})
-
-                # Document Type (required) — show wrong value if empty or numeric-only
+                # ---------- VALIDATIONS (ORDERED) ----------
+                # Document Type (required) — only letters & spaces allowed
                 if not name:
+                    # missing
                     wrong_values.append({"Document Type": name_raw})
-                elif isinstance(name, str) and name.isdigit():
-                    wrong_values.append({"Document Type": name_raw})
+                else:
+                    # allow only letters and spaces (no digits, no special chars)
+                    if not all((c.isalpha() or c.isspace()) for c in name):
+                        # contains digits or special characters -> invalid
+                        wrong_values.append({"Document Type": name_raw})
 
-                # Description (optional) — allow text or number
+                # Description (optional) — accept str/int/float/bool; otherwise flag
                 if description_raw not in [None, ""] and not isinstance(description_raw, (str, int, float, bool)):
                     wrong_values.append({"Description": description_raw})
 
-                # Deleted - expect boolean-like (0/1/True/False/"0"/"1" or blank)
-                allowed_deleted = {None, "", 0, 1, "0", "1", True, False}
-                if deleted_val not in allowed_deleted:
-                    wrong_values.append({"Deleted": deleted_val})
-
-                # Created On - expect datetime or blank
-                if created_val not in [None, ""] and not isinstance(created_val, datetime.datetime):
-                    wrong_values.append({"Created On": created_val})
-
-                # Modified On - expect datetime or blank
-                if modified_val not in [None, ""] and not isinstance(modified_val, datetime.datetime):
-                    wrong_values.append({"Modified On": modified_val})
-
-                # If any wrong values — add to skipped_rows (Value is list of key:value dicts in export order)
+                # If any wrong values — add to skipped_rows with Value list in order
                 if wrong_values:
                     skipped_rows.append({
                         "Row": row_no,
@@ -3144,7 +3407,7 @@ class DocumentTypeImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "message": f'Sheet \"{sheet_name}\" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
             "duplicates": list(reversed(duplicates)),
             "skipped_rows": list(reversed(skipped_rows))
@@ -3308,7 +3571,7 @@ class PurposeOfVisitDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request):
-        ids = request.data.get('uuids', None)
+        ids = request.data.get('id', None)
         search = request.GET.get("search", "").strip()   # <-- added search
 
         if not ids:
