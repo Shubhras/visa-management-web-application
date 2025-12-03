@@ -12872,116 +12872,313 @@ class StakeholderTypeDeleteAPIView(APIView):
 
 # ----------------- EXPORT -----------------
 
+# class StakeholderTypeExportAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         format_type = request.GET.get('format', 'xlsx').lower()
+#         fields = request.GET.get('fields')  # comma-separated
+#         uuids_param = request.GET.get('uuids', '')
+#         custom_sort = request.GET.get('customSort')  # e.g., name:asc,created_at:desc
+#         search = request.GET.get('search', '').strip()
+
+#         # --- Parse UUIDs ---
+#         uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+#         # --- Field headers ---
+#         field_header_map = {
+#             'uuid': 'UUID',
+#             'name': 'Stakeholder Type',
+#             'description': 'Description',
+#             'category': 'Category UUID',
+#             'category_name': 'Stakeholder Category',
+#             'is_deleted': 'Deleted',
+#             'updated_at': 'Modified On',
+#             'created_at': 'Created On'
+#         }
+
+#         # --- Fields to export ---
+#         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+#         # --- Fetch queryset ---
+#         queryset = StakeholderType.objects.filter(is_deleted=False)
+#         if uuids:
+#             queryset = queryset.filter(uuid__in=uuids)
+#         if search:
+#             queryset = queryset.filter(Q(name__istartswith=search))
+
+#         # --- Custom sorting logic ---
+#         sort_field_map = {
+#             'name': 'name',
+#             'description': 'description',
+#             'created_at': 'created_at',
+#             'updated_at': 'updated_at',
+#             'category_name': 'category__name',
+#         }
+
+#         sort_fields = []
+#         if custom_sort:
+#             for rule in custom_sort.split(','):
+#                 try:
+#                     field, order = rule.split(':')
+#                     field = field.strip()
+#                     order = order.strip().lower()
+#                     if field not in sort_field_map:
+#                         continue
+
+#                     orm_field = sort_field_map[field]
+
+#                     # Case-insensitive sorting for string fields
+#                     if field in ['name', 'description', 'category_name']:
+#                         f = Lower(orm_field)
+#                     else:
+#                         f = F(orm_field)
+
+#                     sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+
+#                 except ValueError:
+#                     continue
+#         else:
+#             # Default sorting by created_at desc
+#             sort_order = request.GET.get('sortOrder', 'desc')
+#             f = F('created_at')
+#             sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
+
+#         queryset = queryset.order_by(*sort_fields)
+
+#         # --- Prepare dataset ---
+#         dataset = Dataset()
+#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+#         dataset.title = 'StakeholderType'
+
+#         for obj in queryset:
+#             row = []
+#             for field in field_list:
+#                 if field == 'category_name':
+#                     value = obj.category.name if obj.category else ''
+#                 else:
+#                     value = getattr(obj, field, '')
+#                     if field in ['created_at', 'updated_at'] and value:
+#                         value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+#                     elif isinstance(value, bool):
+#                         value = int(value)
+#                 row.append(value if value is not None else '')
+#             dataset.append(row)
+
+#         # --- Export data ---
+#         if format_type == 'csv':
+#             file_data = dataset.export('csv')
+#             content_type = 'text/csv'
+#             file_name = 'stakeholder_types.csv'
+#         else:
+#             file_data = io.BytesIO(dataset.export('xlsx'))
+#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+#             file_name = 'stakeholder_types.xlsx'
+
+#         # --- Return response ---
+#         response = HttpResponse(
+#             file_data if format_type == 'csv' else file_data.getvalue(),
+#             content_type=content_type
+#         )
+#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+#         return response
+
+
 class StakeholderTypeExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
-        format_type = request.GET.get('format', 'xlsx').lower()
-        fields = request.GET.get('fields')  # comma-separated
-        uuids_param = request.GET.get('uuids', '')
-        custom_sort = request.GET.get('customSort')  # e.g., name:asc,created_at:desc
-        search = request.GET.get('search', '').strip()
+        # ---------------------------
+        # Query Params
+        # ---------------------------
+        format_type = request.GET.get("format", "xlsx").lower()
+        fields = request.GET.get("fields")
+        search = request.GET.get("search", "").strip()
+        sort_by = request.GET.get("sortBy", "created_at")
+        sort_order = request.GET.get("sortOrder", "desc")
+        custom_sort = request.GET.get("customSort")
 
-        # --- Parse UUIDs ---
-        uuids = [u.strip() for u in uuids_param.split(',') if u]
+        # ---------------------------
+        # Helper: Parse & Validate UUIDs
+        # ---------------------------
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, "")
+            if raw:
+                items = [x.strip() for x in raw.split(",") if x.strip()]
+            else:
+                items = request.GET.getlist(param_name)
+            return items
 
-        # --- Field headers ---
+        def validate_uuid_list(uuid_list):
+            valid = []
+            for u in uuid_list:
+                try:
+                    valid.append(UUID(u))
+                except:
+                    pass
+            return valid
+
+        try:
+            uuids_list = validate_uuid_list(parse_ids("uuids"))
+            category_list = validate_uuid_list(parse_ids("category"))
+        except ValueError as e:
+            return Response({
+                "status": False,
+                "statusCode": 400,
+                "message": str(e),
+            }, status=400)
+
+        # ---------------------------
+        # FIELD → HEADER MAP
+        # ---------------------------
         field_header_map = {
-            'uuid': 'UUID',
-            'name': 'Stakeholder Type',
-            'description': 'Description',
-            'category': 'Category UUID',
-            'category_name': 'Stakeholder Category',
-            'is_deleted': 'Deleted',
-            'updated_at': 'Modified On',
-            'created_at': 'Created On'
+            "uuid": "UUID",
+            "name": "Stakeholder Type",
+            "description": "Description",
+            "category_name": "Stakeholder Category",
+            "is_deleted": "Deleted",
+            "created_at": "Created On",
+            "updated_at": "Modified On",
         }
 
-        # --- Fields to export ---
-        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+        # Determine export fields
+        field_list = (
+            [f.strip() for f in fields.split(",")]
+            if fields else list(field_header_map.keys())
+        )
 
-        # --- Fetch queryset ---
+        # ---------------------------
+        # BASE QUERYSET
+        # ---------------------------
         queryset = StakeholderType.objects.filter(is_deleted=False)
-        if uuids:
-            queryset = queryset.filter(uuid__in=uuids)
+
+        if uuids_list:
+            queryset = queryset.filter(uuid__in=uuids_list)
+
+        if category_list:
+            queryset = queryset.filter(category__uuid__in=category_list)
+
         if search:
             queryset = queryset.filter(Q(name__istartswith=search))
 
-        # --- Custom sorting logic ---
+        # ---------------------------
+        # SORT FIELD MAP
+        # ---------------------------
         sort_field_map = {
-            'name': 'name',
-            'description': 'description',
-            'created_at': 'created_at',
-            'updated_at': 'updated_at',
-            'category_name': 'category__name',
+            "name": "name",
+            "description": "description",
+            "created_at": "created_at",
+            "updated_at": "updated_at",
+            "category_name": "category__name",
         }
 
         sort_fields = []
+
+        # ---------------------------
+        # CUSTOM SORT LOGIC
+        # ---------------------------
         if custom_sort:
-            for rule in custom_sort.split(','):
+            for rule in custom_sort.split(","):
                 try:
-                    field, order = rule.split(':')
+                    field, order = rule.split(":")
                     field = field.strip()
                     order = order.strip().lower()
+
                     if field not in sort_field_map:
                         continue
 
                     orm_field = sort_field_map[field]
 
-                    # Case-insensitive sorting for string fields
-                    if field in ['name', 'description', 'category_name']:
+                    # Case-insensitive string fields
+                    if field in ["name", "description", "category_name"]:
                         f = Lower(orm_field)
                     else:
                         f = F(orm_field)
 
-                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
-
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == "asc" else f.desc(nulls_last=True)
+                    )
                 except ValueError:
                     continue
+
         else:
-            # Default sorting by created_at desc
-            sort_order = request.GET.get('sortOrder', 'desc')
-            f = F('created_at')
-            sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
+            # ---------------------------
+            # DEFAULT SORT
+            # ---------------------------
+            orm_field = sort_field_map.get(sort_by, "created_at")
+
+            if sort_by in ["name", "description", "category_name"]:
+                f = Lower(orm_field)
+            else:
+                f = F(orm_field)
+
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order == "asc" else f.desc(nulls_last=True)
+            ]
 
         queryset = queryset.order_by(*sort_fields)
 
-        # --- Prepare dataset ---
+        # ---------------------------
+        # PREPARE EXPORT DATA
+        # ---------------------------
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'StakeholderType'
+        dataset.title = "StakeholderType"
 
         for obj in queryset:
             row = []
+
             for field in field_list:
-                if field == 'category_name':
-                    value = obj.category.name if obj.category else ''
+
+                # FK name field
+                if field == "category_name":
+                    value = obj.category.name if obj.category else ""
+
+                # FK UUID field
+                elif field == "category":
+                    value = obj.category.uuid if obj.category else ""
+
+                # Normal fields
                 else:
-                    value = getattr(obj, field, '')
-                    if field in ['created_at', 'updated_at'] and value:
-                        value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-                    elif isinstance(value, bool):
+                    value = getattr(obj, field, "")
+
+                    # Datetime formatting
+                    if field in ["created_at", "updated_at"] and value:
+                        value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
+
+                    # Boolean handling
+                    if isinstance(value, bool):
                         value = int(value)
-                row.append(value if value is not None else '')
+
+                row.append(value if value is not None else "")
+
             dataset.append(row)
 
-        # --- Export data ---
-        if format_type == 'csv':
-            file_data = dataset.export('csv')
-            content_type = 'text/csv'
-            file_name = 'stakeholder_types.csv'
-        else:
-            file_data = io.BytesIO(dataset.export('xlsx'))
-            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'stakeholder_types.xlsx'
+        # ---------------------------
+        # EXPORT LOGIC
+        # ---------------------------
+        if format_type == "csv":
+            file_data = dataset.export("csv")
+            content_type = "text/csv"
+            file_name = "stakeholder_types.csv"
 
-        # --- Return response ---
+        else:
+            file_data = io.BytesIO(dataset.export("xlsx"))
+            content_type = (
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+            file_name = "stakeholder_types.xlsx"
+
+        # ---------------------------
+        # RESPONSE
+        # ---------------------------
         response = HttpResponse(
-            file_data if format_type == 'csv' else file_data.getvalue(),
-            content_type=content_type
+            file_data if format_type == "csv" else file_data.getvalue(),
+            content_type=content_type,
         )
-        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        response["Content-Disposition"] = f'attachment; filename="{file_name}"'
         return response
+
 
 # ----------------- IMPORT -----------------
 class StakeholderTypeImportAPIView(APIView):
@@ -14082,24 +14279,35 @@ class AccreditationNameDeleteAPIView(APIView):
 
 # -------------------- EXPORT API --------------------
 
+
 # class AccreditationNameExportAPIView(APIView):
+#     """
+#     Export AccreditationName data to XLSX or CSV with category info
+#     and support for single/multiple/null category filtering and custom sorting.
+#     """
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
 #     def get(self, request):
 #         format_type = request.GET.get('format', 'xlsx').lower()
 #         fields = request.GET.get('fields')
 #         uuids_param = request.GET.get('uuids', '')
 #         search = request.GET.get('search', '').strip()
+#         category_param = request.GET.get('category', '')  # single or multiple comma-separated UUIDs
+#         custom_sort = request.GET.get('customSort', '')
+
 #         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
+#         # --- Field headers ---
 #         field_header_map = {
 #             'uuid': 'UUID',
-#             'category': 'Accrediation Category',
-#             'full_name': 'Accrediation',
-#             'short_name': 'Accrediation Short Name',
-#             'issuing_authority': 'Accrediation Issuing Authority Name',
-#             'valid_type': 'Accrediation Valid Upto',
-#             'valid_duration_value': 'Accrediation Valid Duration Value',
-#             'valid_duration_unit': 'Accrediation Valid Duration Unit',
-#             'valid_date': 'Accrediation Valid Date',
+#             'category': 'Accreditation Category',
+#             'full_name': 'Accreditation Full Name',
+#             'short_name': 'Accreditation Short Name',
+#             'issuing_authority': 'Accreditation Issuing Authority Name',
+#             'valid_type': 'Accreditation Valid Upto',
+#             'valid_duration_value': 'Accreditation Valid Duration Value',
+#             'valid_duration_unit': 'Accreditation Valid Duration Unit',
+#             'valid_date': 'Accreditation Valid Date',
 #             'description': 'Description',
 #             'created_at': 'Created On',
 #             'updated_at': 'Modified On'
@@ -14107,16 +14315,73 @@ class AccreditationNameDeleteAPIView(APIView):
 
 #         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
+#         # --- Fetch queryset ---
 #         queryset = AccreditationName.objects.all()
+
+#         # --- Filter by UUIDs ---
 #         if uuids:
 #             queryset = queryset.filter(uuid__in=uuids)
 
-#         # Search filter
+#         # --- Filter by search ---
 #         if search:
-#             queryset = queryset.filter(Q(name__istartswith=search))
+#             queryset = queryset.filter(full_name__istartswith=search)
 
-#         queryset = queryset.order_by('-created_at')
+#         # --- Filter by category (single, multiple, null-safe) ---
+#         if category_param:
+#             category_list = [
+#                 c.strip() for c in category_param.split(',')
+#                 if c and c.lower() != 'null'
+#             ]
+#             if category_list:
+#                 queryset = queryset.filter(category__uuid__in=category_list)
 
+#         # --- Sorting fields mapping ---
+#         sort_field_map = {
+#             'full_name': 'full_name',
+#             'short_name': 'short_name',
+#             'valid_date': 'valid_date',
+#             'created_at': 'created_at',
+#             'updated_at': 'updated_at',
+#             'category': 'category__name',
+#         }
+
+#         sort_fields = []
+
+#         # --- Custom sort logic ---
+#         if custom_sort:
+#             for rule in custom_sort.split(','):
+#                 try:
+#                     field, order = rule.split(':')
+#                     field = field.strip()
+#                     order = order.strip().lower()
+
+#                     if field not in sort_field_map:
+#                         continue
+
+#                     orm_field = sort_field_map[field]
+
+#                     # Case-insensitive sorting for string fields
+#                     if field in ['full_name', 'short_name', 'category']:
+#                         f = Lower(orm_field)
+#                     else:
+#                         f = F(orm_field)
+
+#                     sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+#                 except ValueError:
+#                     continue
+
+#         # --- Fallback sorting ---
+#         if not sort_fields:
+#             sort_by = request.GET.get('sortBy', 'created_at')
+#             sort_order = request.GET.get('sortOrder', 'desc')
+#             orm_field = sort_field_map.get(sort_by, 'created_at')
+#             f = F(orm_field)
+#             sort_fields.append(f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True))
+
+#         # --- Apply ordering ---
+#         queryset = queryset.order_by(*sort_fields)
+
+#         # --- Prepare dataset ---
 #         dataset = Dataset()
 #         dataset.headers = [field_header_map.get(f, f) for f in field_list]
 #         dataset.title = 'AccreditationName'
@@ -14124,22 +14389,20 @@ class AccreditationNameDeleteAPIView(APIView):
 #         for accred in queryset:
 #             row = []
 #             for field in field_list:
-#                 value = getattr(accred, field, '')
-
-#                 # Format date fields
-#                 if field in ['created_at', 'updated_at'] and value:
-#                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-#                 elif field == 'category' and accred.category:
-#                     value = accred.category.name
-#                 if field == "valid_date" and value:
-#                     value = value.strftime("%d-%m-%Y")
-
-#                 elif isinstance(value, bool):
-#                     value = int(value)
-
+#                 if field == 'category':
+#                     value = accred.category.name if accred.category else ''
+#                 else:
+#                     value = getattr(accred, field, '')
+#                     if field in ['created_at', 'updated_at'] and value:
+#                         value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
+#                     elif field == "valid_date" and value:
+#                         value = value.strftime("%d-%m-%Y")
+#                     elif isinstance(value, bool):
+#                         value = int(value)
 #                 row.append(value if value is not None else '')
 #             dataset.append(row)
 
+#         # --- Export file ---
 #         if format_type == 'csv':
 #             file_data = dataset.export('csv')
 #             content_type = 'text/csv'
@@ -14158,76 +14421,112 @@ class AccreditationNameDeleteAPIView(APIView):
 
 class AccreditationNameExportAPIView(APIView):
     """
-    Export AccreditationName data to XLSX or CSV with category info
-    and support for single/multiple/null category filtering and custom sorting.
+    Export AccreditationName data to XLSX or CSV with proper filtering,
+    UUID validation, category filtering, custom sorting, and consistent structure.
     """
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
-        format_type = request.GET.get('format', 'xlsx').lower()
-        fields = request.GET.get('fields')
-        uuids_param = request.GET.get('uuids', '')
-        search = request.GET.get('search', '').strip()
-        category_param = request.GET.get('category', '')  # single or multiple comma-separated UUIDs
-        custom_sort = request.GET.get('customSort', '')
 
-        uuids = [u.strip() for u in uuids_param.split(',') if u]
+        # ---------------------------
+        # Query Params
+        # ---------------------------
+        format_type = request.GET.get("format", "xlsx").lower()
+        fields = request.GET.get("fields")
+        search = request.GET.get("search", "").strip()
+        sort_by = request.GET.get("sortBy", "created_at")
+        sort_order = request.GET.get("sortOrder", "desc")
+        custom_sort = request.GET.get("customSort")
 
-        # --- Field headers ---
+        # ---------------------------
+        # Helper: Parse & Validate UUIDs
+        # ---------------------------
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, "")
+            if raw:
+                items = [x.strip() for x in raw.split(",") if x.strip()]
+            else:
+                items = request.GET.getlist(param_name)
+            return items
+
+        def validate_uuid_list(uuid_list):
+            valid = []
+            for u in uuid_list:
+                try:
+                    valid.append(UUID(u))
+                except:
+                    pass
+            return valid
+
+        try:
+            uuids_list = validate_uuid_list(parse_ids("uuids"))
+            category_list = validate_uuid_list(parse_ids("category"))
+        except ValueError as e:
+            return Response({
+                "status": False,
+                "statusCode": 400,
+                "message": str(e),
+            }, status=400)
+
+        # ---------------------------
+        # FIELD → HEADER MAP
+        # ---------------------------
         field_header_map = {
-            'uuid': 'UUID',
-            'category': 'Accreditation Category',
-            'full_name': 'Accreditation Full Name',
-            'short_name': 'Accreditation Short Name',
-            'issuing_authority': 'Accreditation Issuing Authority Name',
-            'valid_type': 'Accreditation Valid Upto',
-            'valid_duration_value': 'Accreditation Valid Duration Value',
-            'valid_duration_unit': 'Accreditation Valid Duration Unit',
-            'valid_date': 'Accreditation Valid Date',
-            'description': 'Description',
-            'created_at': 'Created On',
-            'updated_at': 'Modified On'
+            "uuid": "UUID",
+            "category": "Accreditation Category",
+            "full_name": "Accreditation Full Name",
+            "short_name": "Accreditation Short Name",
+            "issuing_authority": "Accreditation Issuing Authority Name",
+            "valid_type": "Accreditation Valid Upto",
+            "valid_duration_value": "Accreditation Valid Duration Value",
+            "valid_duration_unit": "Accreditation Valid Duration Unit",
+            "valid_date": "Accreditation Valid Date",
+            "description": "Description",
+            "created_at": "Created On",
+            "updated_at": "Modified On",
         }
 
-        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+        # Determine export fields
+        field_list = (
+            [f.strip() for f in fields.split(",")]
+            if fields else list(field_header_map.keys())
+        )
 
-        # --- Fetch queryset ---
+        # ---------------------------
+        # BASE QUERYSET
+        # ---------------------------
         queryset = AccreditationName.objects.all()
 
-        # --- Filter by UUIDs ---
-        if uuids:
-            queryset = queryset.filter(uuid__in=uuids)
+        if uuids_list:
+            queryset = queryset.filter(uuid__in=uuids_list)
 
-        # --- Filter by search ---
+        if category_list:
+            queryset = queryset.filter(category__uuid__in=category_list)
+
         if search:
             queryset = queryset.filter(full_name__istartswith=search)
 
-        # --- Filter by category (single, multiple, null-safe) ---
-        if category_param:
-            category_list = [
-                c.strip() for c in category_param.split(',')
-                if c and c.lower() != 'null'
-            ]
-            if category_list:
-                queryset = queryset.filter(category__uuid__in=category_list)
-
-        # --- Sorting fields mapping ---
+        # ---------------------------
+        # SORT FIELD MAP
+        # ---------------------------
         sort_field_map = {
-            'full_name': 'full_name',
-            'short_name': 'short_name',
-            'valid_date': 'valid_date',
-            'created_at': 'created_at',
-            'updated_at': 'updated_at',
-            'category': 'category__name',
+            "full_name": "full_name",
+            "short_name": "short_name",
+            "valid_date": "valid_date",
+            "created_at": "created_at",
+            "updated_at": "updated_at",
+            "categoryId": "category__name",
         }
 
         sort_fields = []
 
-        # --- Custom sort logic ---
+        # ---------------------------
+        # CUSTOM SORT LOGIC
+        # ---------------------------
         if custom_sort:
-            for rule in custom_sort.split(','):
+            for rule in custom_sort.split(","):
                 try:
-                    field, order = rule.split(':')
+                    field, order = rule.split(":")
                     field = field.strip()
                     order = order.strip().lower()
 
@@ -14236,64 +14535,99 @@ class AccreditationNameExportAPIView(APIView):
 
                     orm_field = sort_field_map[field]
 
-                    # Case-insensitive sorting for string fields
-                    if field in ['full_name', 'short_name', 'category']:
+                    # case-insensitive sorting
+                    if field in ["full_name", "short_name", "categoryId"]:
                         f = Lower(orm_field)
                     else:
                         f = F(orm_field)
 
-                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+                    sort_fields.append(
+                        f.asc(nulls_last=True)
+                        if order == "asc"
+                        else f.desc(nulls_last=True)
+                    )
+
                 except ValueError:
                     continue
 
-        # --- Fallback sorting ---
-        if not sort_fields:
-            sort_by = request.GET.get('sortBy', 'created_at')
-            sort_order = request.GET.get('sortOrder', 'desc')
-            orm_field = sort_field_map.get(sort_by, 'created_at')
-            f = F(orm_field)
-            sort_fields.append(f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True))
+        else:
+            # ---------------------------
+            # DEFAULT SORT
+            # ---------------------------
+            orm_field = sort_field_map.get(sort_by, "created_at")
 
-        # --- Apply ordering ---
+            if sort_by in ["full_name", "short_name", "categoryId"]:
+                f = Lower(orm_field)
+            else:
+                f = F(orm_field)
+
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order == "asc" else f.desc(nulls_last=True)
+            ]
+
         queryset = queryset.order_by(*sort_fields)
 
-        # --- Prepare dataset ---
+        # ---------------------------
+        # PREPARE EXPORT DATA
+        # ---------------------------
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'AccreditationName'
+        dataset.title = "AccreditationName"
 
-        for accred in queryset:
+        for obj in queryset:
             row = []
+
             for field in field_list:
-                if field == 'category':
-                    value = accred.category.name if accred.category else ''
+
+                # FK Name (Category Name)
+                if field == "categoryId":
+                    value = obj.category.name if obj.category else ""
+
                 else:
-                    value = getattr(accred, field, '')
-                    if field in ['created_at', 'updated_at'] and value:
+                    value = getattr(obj, field, "")
+
+                    # Format datetime
+                    if field in ["created_at", "updated_at"] and value:
                         value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
-                    elif field == "valid_date" and value:
+
+                    # Format valid_date
+                    if field == "valid_date" and value:
                         value = value.strftime("%d-%m-%Y")
-                    elif isinstance(value, bool):
+
+                    # Boolean → int
+                    if isinstance(value, bool):
                         value = int(value)
-                row.append(value if value is not None else '')
+
+                row.append(value if value is not None else "")
+
             dataset.append(row)
 
-        # --- Export file ---
-        if format_type == 'csv':
-            file_data = dataset.export('csv')
-            content_type = 'text/csv'
-            file_name = 'accreditations.csv'
-        else:
-            file_data = io.BytesIO(dataset.export('xlsx'))
-            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'accreditations.xlsx'
+        # ---------------------------
+        # EXPORT LOGIC
+        # ---------------------------
+        if format_type == "csv":
+            file_data = dataset.export("csv")
+            content_type = "text/csv"
+            file_name = "accreditations.csv"
 
+        else:
+            file_data = io.BytesIO(dataset.export("xlsx"))
+            content_type = (
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+            file_name = "accreditations.xlsx"
+
+        # ---------------------------
+        # RESPONSE
+        # ---------------------------
         response = HttpResponse(
-            file_data if format_type == 'csv' else file_data.getvalue(),
-            content_type=content_type
+            file_data if format_type == "csv" else file_data.getvalue(),
+            content_type=content_type,
         )
-        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        response["Content-Disposition"] = f'attachment; filename="{file_name}"'
         return response
+
+
 
 #-------------------------------------------import---------------------------------
 
