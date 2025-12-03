@@ -2656,6 +2656,7 @@ class LanguageTestResultExportAPIView(APIView):
         sort_field_map = {
             "numeric_score": "numeric_score",
             "description": "description",
+            "language":"language__name",
             "languageTestName": "language_test__name",
             "languageModuleName": "languagetest_module_name__moduleName",
             "languageBenchmarkLevel": "lb_level__level_name",
@@ -3244,37 +3245,180 @@ class CLBLevelDeleteAPIView(APIView):
 
 
 
+# class CLBLevelExportAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         format_type = request.GET.get('format', 'xlsx').lower()
+#         fields = request.GET.get('fields')  
+#         uuids_param = request.GET.get('uuids', '') 
+#         uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+     
+#         field_header_map = {
+#             'uuid': 'UUID',
+#             'name': 'CLB Level',  
+#             'description': 'Description',
+#             'is_deleted': 'Deleted',
+#             'created_at': 'Created On',
+#             'updated_at': 'Modified On',
+#         }
+
+#         if fields:
+#             field_list = [f.strip() for f in fields.split(',')]
+#         else:
+#             field_list = list(field_header_map.keys())
+
+#         # --- Fetch queryset ---
+#         queryset = CLBLevel.objects.filter(is_deleted=False)
+#         if uuids:
+#             queryset = queryset.filter(uuid__in=uuids)
+#         queryset = queryset.order_by('-created_at')
+
+#         # --- Prepare dataset ---
+#         dataset = Dataset()
+#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+#         dataset.title = 'CLBLevel'
+
+#         for obj in queryset:
+#             row = []
+#             for field in field_list:
+#                 value = getattr(obj, field, '')
+
+#                 if field in ['created_at', 'updated_at'] and value:
+#                     # Convert UTC to IST and format
+#                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+#                 elif isinstance(value, bool):
+#                     value = int(value)
+
+#                 row.append(value if value is not None else '')
+#             dataset.append(row)
+
+#         # --- Export data ---
+#         if format_type == 'csv':
+#             file_data = dataset.export('csv')
+#             content_type = 'text/csv; charset=utf-8'
+#             file_name = 'clblevel.csv'
+#         else:
+#             # XLSX export using BytesIO
+#             file_data = io.BytesIO(dataset.export('xlsx'))
+#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+#             file_name = 'clblevel.xlsx'
+
+#         # --- Return response ---
+#         response = HttpResponse(
+#             file_data if format_type == 'csv' else file_data.getvalue(),
+#             content_type=content_type
+#         )
+#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+#         return response
+
 class CLBLevelExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
-        fields = request.GET.get('fields')  
-        uuids_param = request.GET.get('uuids', '') 
+        fields = request.GET.get('fields')
+        search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at').strip()
+        sort_order = request.GET.get('sortOrder', 'desc').strip().lower()
+
+        uuids_param = request.GET.get('uuids', '')
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
-     
+        # ---------------------------
+        # FIELD → HEADER MAP
+        # ---------------------------
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'CLB Level',  
+            'name': 'CLB Level',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'created_at': 'Created On',
             'updated_at': 'Modified On',
         }
 
-        if fields:
-            field_list = [f.strip() for f in fields.split(',')]
-        else:
-            field_list = list(field_header_map.keys())
+        # ---------------------------
+        # FIELDS TO EXPORT
+        # ---------------------------
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
-        # --- Fetch queryset ---
+        # ---------------------------
+        # BASE QUERYSET
+        # ---------------------------
         queryset = CLBLevel.objects.filter(is_deleted=False)
+
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
 
-        # --- Prepare dataset ---
+        # ---------------------------
+        # SEARCH
+        # ---------------------------
+        if search:
+            queryset = queryset.filter(
+                Q(name__istartswith=search)
+            )
+
+        # ---------------------------
+        # SORT MAPPING
+        # ---------------------------
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        sort_fields = []
+
+        # ---------------------------
+        # CUSTOM SORT (multi-field)
+        # ---------------------------
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # case-insensitive ordering for text fields
+                    if field in ['name', 'description']:
+                        expr = Lower(orm_field)
+                    else:
+                        expr = F(orm_field)
+
+                    sort_fields.append(
+                        expr.asc(nulls_last=True) if order == 'asc' else expr.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+
+        else:
+            # ---------------------------
+            # NORMAL SORT (single-field)
+            # ---------------------------
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+
+            if sort_by in ['name', 'description']:
+                expr = Lower(orm_field)
+            else:
+                expr = F(orm_field)
+
+            sort_fields.append(
+                expr.asc(nulls_last=True) if sort_order == 'asc' else expr.desc(nulls_last=True)
+            )
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ---------------------------
+        # PREPARE DATASET
+        # ---------------------------
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'CLBLevel'
@@ -3284,27 +3428,30 @@ class CLBLevelExportAPIView(APIView):
             for field in field_list:
                 value = getattr(obj, field, '')
 
+                # Date → IST
                 if field in ['created_at', 'updated_at'] and value:
-                    # Convert UTC to IST and format
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+
+                # Boolean → int
                 elif isinstance(value, bool):
                     value = int(value)
 
                 row.append(value if value is not None else '')
+
             dataset.append(row)
 
-        # --- Export data ---
+        # ---------------------------
+        # EXPORT DATA
+        # ---------------------------
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv; charset=utf-8'
             file_name = 'clblevel.csv'
         else:
-            # XLSX export using BytesIO
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'clblevel.xlsx'
 
-        # --- Return response ---
         response = HttpResponse(
             file_data if format_type == 'csv' else file_data.getvalue(),
             content_type=content_type
@@ -4150,35 +4297,6 @@ class StudyLanguageBenchmarkImportAPIView(APIView):
 
 
 
-# class EntranceTestNameListAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
-
-#     def get(self, request):
-#         search = request.GET.get('search', '').strip()
-#         sort_by = request.GET.get('sortBy', 'created_at')
-#         sort_order = request.GET.get('sortOrder', 'desc')
-#         allowed_sort_fields = ['fullname', 'shortname', 'description', 'updated_at']
-
-#         if sort_by not in allowed_sort_fields:
-#             sort_by = 'created_at'
-#         if sort_order == 'desc':
-#             sort_by = f'-{sort_by}'
-
-#         queryset = EntranceTestName.objects.filter(is_deleted=False)
-#         if search:
-#             queryset = queryset.filter(
-#                 Q(fullname__istartswith=search) |
-#                 Q(shortname__istartswith=search) |
-#                 Q(description__istartswith=search)
-#             )
-
-#         queryset = queryset.order_by(sort_by)
-#         paginator = CustomPagination()
-#         result_page = paginator.paginate_queryset(queryset, request)
-#         serializer = EntranceTestNameSerializer(result_page, many=True)
-#         return paginator.get_paginated_response(serializer.data)
-
-
 class EntranceTestNameListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -4306,38 +4424,6 @@ class EntranceTestNameUpdateAPIView(APIView):
         errors = " ".join([msg for msgs in serializer.errors.values() for msg in msgs])
         return Response({"statusCode": 400, "status": False, "message": errors}, status=400)
 
-
-# class EntranceTestNameDeleteAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
-
-#     def delete(self, request):
-#         ids = request.data.get('id', None)
-#         if not ids:
-#             return Response({"statusCode": 400, "status": False, "message": "Provide 'id' field", "data": None}, status=400)
-
-#         if ids == "all":
-#             objs = EntranceTestName.objects.filter(is_deleted=False)
-#             count = objs.count()
-#             objs.delete()
-#             return Response({"statusCode": 200, "status": True, "message": f"All {count} entrance test(s) deleted", "data": None})
-
-#         if not isinstance(ids, list):
-#             return Response({"statusCode": 400, "status": False, "message": "Provide list of UUIDs", "data": None}, status=400)
-
-#         valid_uuids, invalid_uuids = [], []
-#         for u in ids:
-#             try:
-#                 valid_uuids.append(UUID(u))
-#             except ValueError:
-#                 invalid_uuids.append(u)
-
-#         objs = EntranceTestName.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-#         count = objs.count()
-#         if count == 0:
-#             return Response({"statusCode": 404, "status": False, "message": "No matching entrance test found", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None}, status=404)
-
-#         objs.delete()
-#         return Response({"statusCode": 200, "status": True, "message": f"{count} entrance test(s) deleted", "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None})
 
 class EntranceTestNameDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -4477,16 +4563,86 @@ class EntranceTestNameDeleteAPIView(APIView):
 
 # -------------------- Export -------------------- #
 
+# class EntranceTestNameExportAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         format_type = request.GET.get('format', 'xlsx').lower()
+#         fields = request.GET.get('fields')
+#         uuids_param = request.GET.get('uuids', '')
+#         uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+#         # Field to header mapping
+#         field_header_map = {
+#             'uuid': 'UUID',
+#             'fullname': 'Entrance Test Full Name',
+#             'shortname': 'Entrance Test Name',
+#             'description': 'Description',
+#             'is_deleted': 'Deleted',
+#             'created_at': 'Created On',
+#             'updated_at': 'Modified On',
+#         }
+
+#         # Determine fields to export
+#         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+#         # Fetch queryset
+#         queryset = EntranceTestName.objects.filter(is_deleted=False)
+#         if uuids:
+#             queryset = queryset.filter(uuid__in=uuids)
+#         queryset = queryset.order_by('-created_at')
+
+#         # Prepare dataset
+#         dataset = Dataset()
+#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+#         dataset.title = 'EntranceTestName'
+
+#         for obj in queryset:
+#             row = []
+#             for field in field_list:
+#                 value = getattr(obj, field, '')
+#                 if field in ['created_at', 'updated_at'] and value:
+#                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+#                 elif isinstance(value, bool):
+#                     value = int(value)
+#                 row.append(value if value is not None else '')
+#             dataset.append(row)
+
+#         # Export data
+#         if format_type == 'csv':
+#             file_data = dataset.export('csv')
+#             content_type = 'text/csv'
+#             file_name = 'entrance_test_name.csv'
+#         else:
+#             file_data = io.BytesIO(dataset.export('xlsx'))
+#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+#             file_name = 'entrance_test_name.xlsx'
+
+#         response = HttpResponse(
+#             file_data if format_type == 'csv' else file_data.getvalue(),
+#             content_type=content_type
+#         )
+#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+#         return response
+
+
 class EntranceTestNameExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
+        search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at').strip()
+        sort_order = request.GET.get('sortOrder', 'desc').strip().lower()
+
         uuids_param = request.GET.get('uuids', '')
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
-        # Field to header mapping
+        # ---------------------------
+        # FIELD → HEADER MAP
+        # ---------------------------
         field_header_map = {
             'uuid': 'UUID',
             'fullname': 'Entrance Test Full Name',
@@ -4497,16 +4653,87 @@ class EntranceTestNameExportAPIView(APIView):
             'updated_at': 'Modified On',
         }
 
-        # Determine fields to export
+        # ---------------------------
+        # FIELDS TO EXPORT
+        # ---------------------------
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
-        # Fetch queryset
+        # ---------------------------
+        # BASE QUERYSET
+        # ---------------------------
         queryset = EntranceTestName.objects.filter(is_deleted=False)
+
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
 
-        # Prepare dataset
+        # ---------------------------
+        # SEARCH
+        # ---------------------------
+        if search:
+            queryset = queryset.filter(
+                Q(fullname__istartswith=search)
+            )
+
+        # ---------------------------
+        # SORT MAPPING
+        # ---------------------------
+        sort_field_map = {
+            'fullname': 'fullname',
+            'shortname': 'shortname',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        sort_fields = []
+
+        # ---------------------------
+        # CUSTOM SORT (multi-field)
+        # ---------------------------
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # text fields → case insensitive
+                    if field in ["fullname", "shortname", "description"]:
+                        expr = Lower(orm_field)
+                    else:
+                        expr = F(orm_field)
+
+                    sort_fields.append(
+                        expr.asc(nulls_last=True) if order == "asc" else expr.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+
+        else:
+            # ---------------------------
+            # NORMAL SORT (single-field)
+            # ---------------------------
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+
+            if sort_by in ["fullname", "shortname", "description"]:
+                expr = Lower(orm_field)
+            else:
+                expr = F(orm_field)
+
+            sort_fields.append(
+                expr.asc(nulls_last=True) if sort_order == "asc" else expr.desc(nulls_last=True)
+            )
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ---------------------------
+        # PREPARE DATASET
+        # ---------------------------
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'EntranceTestName'
@@ -4515,14 +4742,22 @@ class EntranceTestNameExportAPIView(APIView):
             row = []
             for field in field_list:
                 value = getattr(obj, field, '')
+
+                # Date to IST
                 if field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+
+                # Boolean → int
                 elif isinstance(value, bool):
                     value = int(value)
+
                 row.append(value if value is not None else '')
+
             dataset.append(row)
 
-        # Export data
+        # ---------------------------
+        # EXPORT TO CSV/XLSX
+        # ---------------------------
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
@@ -4538,6 +4773,8 @@ class EntranceTestNameExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+
+
 
 
 class EntranceTestNameImportAPIView(APIView):
@@ -5114,15 +5351,114 @@ class EntranceTestModuleNameDeleteAPIView(APIView):
         
 
 
+# class EntranceTestModuleExportAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         format_type = request.GET.get('format', 'xlsx').lower()
+#         fields = request.GET.get('fields')
+#         uuids_param = request.GET.get('uuids', '')
+#         uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+#         field_header_map = {
+#             'uuid': 'UUID',
+#             'entrancetest': 'Entrance Test Name',
+#             'moduleName': 'Entrance Test Module Name',
+#             'description': 'Description',
+#             'is_deleted': 'Deleted',
+#             'created_at': 'Created On',
+#             'updated_at': 'Modified On',
+#         }
+
+#         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+#         queryset = EntranceTestModuleName.objects.filter(is_deleted=False)
+#         if uuids:
+#             queryset = queryset.filter(uuid__in=uuids)
+#         queryset = queryset.order_by('-created_at')
+
+#         dataset = Dataset()
+#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+#         dataset.title = 'EntranceTestModules'
+
+#         for obj in queryset:
+#             row = []
+#             for field in field_list:
+#                 value = getattr(obj, field, '')
+#                 # Foreign key handling
+#                 if field == 'entrancetest' and value:
+#                     value = value.shortname if hasattr(value, 'shortname') else str(value)
+#                 # Datetime formatting
+#                 elif field in ['created_at', 'updated_at'] and value:
+#                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+#                 # Boolean formatting
+#                 elif isinstance(value, bool):
+#                     value = int(value)
+#                 row.append(value if value is not None else '')
+#             dataset.append(row)
+
+#         if format_type == 'csv':
+#             file_data = dataset.export('csv')
+#             content_type = 'text/csv'
+#             file_name = 'entrance_test_modules.csv'
+#         else:
+#             file_data = io.BytesIO(dataset.export('xlsx'))
+#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+#             file_name = 'entrance_test_modules.xlsx'
+
+#         response = HttpResponse(
+#             file_data if format_type == 'csv' else file_data.getvalue(),
+#             content_type=content_type
+#         )
+#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+#         return response
+
+
 class EntranceTestModuleExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
+        # --- Get query params ---
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
-        uuids_param = request.GET.get('uuids', '')
-        uuids = [u.strip() for u in uuids_param.split(',') if u]
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')
+        custom_sort = request.GET.get('customSort')
 
+        # ---------------------------
+        # Helper: Parse & Validate UUIDs
+        # ---------------------------
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, '')
+            if raw:
+                items = [x.strip() for x in raw.split(',') if x.strip()]
+            else:
+                items = request.GET.getlist(param_name)
+            return items
+
+        def validate_uuid_list(uuid_list):
+            valid = []
+            for u in uuid_list:
+                try:
+                    valid.append(UUID(u))
+                except:
+                    pass
+            return valid
+
+        try:
+            entrancetest_list = validate_uuid_list(parse_ids('entranceTestName'))
+            uuids_list = validate_uuid_list(parse_ids('uuids'))
+        except ValueError as e:
+            return Response({
+                "status": False,
+                "statusCode": 400,
+                "message": str(e)
+            }, status=400)
+
+        # ---------------------------
+        # FIELD → HEADER MAPPING
+        # ---------------------------
         field_header_map = {
             'uuid': 'UUID',
             'entrancetest': 'Entrance Test Name',
@@ -5133,13 +5469,90 @@ class EntranceTestModuleExportAPIView(APIView):
             'updated_at': 'Modified On',
         }
 
+        # Determine list of fields to export
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
+        # ---------------------------
+        # BASE QUERYSET
+        # ---------------------------
         queryset = EntranceTestModuleName.objects.filter(is_deleted=False)
-        if uuids:
-            queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
 
+        if uuids_list:
+            queryset = queryset.filter(uuid__in=uuids_list)
+
+        if entrancetest_list:
+            queryset = queryset.filter(entrancetest__uuid__in=entrancetest_list)
+
+        # ---------------------------
+        # SEARCH LOGIC
+        # ---------------------------
+        if search:
+            queryset = queryset.filter(
+                Q(moduleName__istartswith=search)
+            )
+
+        # ---------------------------
+        # SORT FIELD MAP
+        # ---------------------------
+        sort_field_map = {
+            'entranceTestName': 'entrancetest__fullname',
+            'fullname': 'moduleName',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        sort_fields = []
+
+        # ---------------------------
+        # CUSTOM SORT (multi-field)
+        # ---------------------------
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # text fields → case-insensitive
+                    if field in ["fullname", "description"]:
+                        f = Lower(orm_field)
+                    elif field == "entranceTestName":
+                        f = Lower('entrancetest__fullname')
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+
+        else:
+            # ---------------------------
+            # NORMAL SORT FLOW
+            # ---------------------------
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'desc')
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+
+            if sort_by in ["fullname", "description"]:
+                f = Lower(orm_field)
+            else:
+                f = F(orm_field)
+
+            sort_fields = [f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ---------------------------
+        # PREPARE EXPORT DATASET
+        # ---------------------------
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'EntranceTestModules'
@@ -5148,18 +5561,25 @@ class EntranceTestModuleExportAPIView(APIView):
             row = []
             for field in field_list:
                 value = getattr(obj, field, '')
-                # Foreign key handling
-                if field == 'entrancetest' and value:
-                    value = value.shortname if hasattr(value, 'shortname') else str(value)
-                # Datetime formatting
+
+                # FK field: entrancetest
+                if field == 'entrancetest' and obj.entrancetest:
+                    value = obj.entrancetest.shortname
+
+                # datetime formatting
                 elif field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-                # Boolean formatting
+
+                # boolean formatting
                 elif isinstance(value, bool):
                     value = int(value)
+
                 row.append(value if value is not None else '')
             dataset.append(row)
 
+        # ---------------------------
+        # EXPORT LOGIC
+        # ---------------------------
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
@@ -5169,6 +5589,9 @@ class EntranceTestModuleExportAPIView(APIView):
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'entrance_test_modules.xlsx'
 
+        # ---------------------------
+        # RESPONSE
+        # ---------------------------
         response = HttpResponse(
             file_data if format_type == 'csv' else file_data.getvalue(),
             content_type=content_type
@@ -5801,20 +6224,127 @@ class EntranceTestResultDeleteAPIView(APIView):
 
 
 # -------------------- Export -------------------- #
+# class EntranceTestResultExportAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         format_type = request.GET.get('format', 'xlsx').lower()
+#         fields = request.GET.get('fields')
+#         uuids_param = request.GET.get('uuids', '')
+#         uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+#         # Field to header mapping
+#         field_header_map = {
+#             'uuid': 'UUID',
+#             'entrancetest': 'Entrance Test Name',
+#             'moduleName': 'Entrance Test Module Name',
+#             'testresult': 'Entrance Test Result',
+#             'description': 'Description',
+#             'is_deleted': 'Deleted',
+#             'created_at': 'Created On',
+#             'updated_at': 'Modified On',
+#         }
+
+#         # Fields to export
+#         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+#         # Fetch queryset
+#         queryset = EntranceTestResult.objects.filter(is_deleted=False)
+#         if uuids:
+#             queryset = queryset.filter(uuid__in=uuids)
+#         queryset = queryset.order_by('-created_at')
+
+#         # Prepare dataset
+#         dataset = Dataset()
+#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+#         dataset.title = 'EntranceTestResults'
+
+#         for obj in queryset:
+#             row = []
+#             for field in field_list:
+#                 value = getattr(obj, field, '')
+#                 # Foreign keys
+#                 if field == 'entrancetest' and value:
+#                     value = value.shortname
+#                 elif field == 'moduleName' and value:
+#                     value = value.moduleName
+#                 # Datetime formatting
+#                 elif field in ['created_at', 'updated_at'] and value:
+#                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+#                 # Boolean formatting
+#                 elif isinstance(value, bool):
+#                     value = int(value)
+#                 row.append(value if value is not None else '')
+#             dataset.append(row)
+
+#         # Export data
+#         if format_type == 'csv':
+#             file_data = dataset.export('csv')
+#             content_type = 'text/csv'
+#             file_name = 'entrance_test_results.csv'
+#         else:
+#             file_data = io.BytesIO(dataset.export('xlsx'))
+#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+#             file_name = 'entrance_test_results.xlsx'
+
+#         response = HttpResponse(
+#             file_data if format_type == 'csv' else file_data.getvalue(),
+#             content_type=content_type
+#         )
+#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+#         return response
+
+
 class EntranceTestResultExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
+        # --- Get query params ---
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
-        uuids_param = request.GET.get('uuids', '')
-        uuids = [u.strip() for u in uuids_param.split(',') if u]
+        search = request.GET.get('search', '').strip()
+        sort_by = request.GET.get('sortBy', 'created_at')
+        sort_order = request.GET.get('sortOrder', 'desc')
+        custom_sort = request.GET.get('customSort')
 
-        # Field to header mapping
+        # ---------------------------
+        # Helper: Parse & Validate UUIDs
+        # ---------------------------
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, '')
+            if raw:
+                items = [x.strip() for x in raw.split(',') if x.strip()]
+            else:
+                items = request.GET.getlist(param_name)
+            return items
+
+        def validate_uuid_list(uuid_list):
+            valid = []
+            for u in uuid_list:
+                try:
+                    valid.append(UUID(u))
+                except:
+                    pass
+            return valid
+
+        try:
+            uuids_list = validate_uuid_list(parse_ids('uuids'))
+            entrancetest_list = validate_uuid_list(parse_ids('entranceTestName'))
+            module_list = validate_uuid_list(parse_ids('entranceTestModuleName'))
+        except ValueError as e:
+            return Response({
+                "status": False,
+                "statusCode": 400,
+                "message": str(e)
+            }, status=400)
+
+        # ---------------------------
+        # FIELD → HEADER MAP
+        # ---------------------------
         field_header_map = {
             'uuid': 'UUID',
             'entrancetest': 'Entrance Test Name',
-            'moduleName': 'Entrance Test Module Name',
+            'moduleName': 'Entrance Test Module',
             'testresult': 'Entrance Test Result',
             'description': 'Description',
             'is_deleted': 'Deleted',
@@ -5825,13 +6355,93 @@ class EntranceTestResultExportAPIView(APIView):
         # Fields to export
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
-        # Fetch queryset
+        # ---------------------------
+        # BASE QUERYSET
+        # ---------------------------
         queryset = EntranceTestResult.objects.filter(is_deleted=False)
-        if uuids:
-            queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
 
-        # Prepare dataset
+        if uuids_list:
+            queryset = queryset.filter(uuid__in=uuids_list)
+
+        if entrancetest_list:
+            queryset = queryset.filter(entrancetest__uuid__in=entrancetest_list)
+
+        if module_list:
+            queryset = queryset.filter(moduleName__uuid__in=module_list)
+
+        # ---------------------------
+        # SEARCH LOGIC
+        # ---------------------------
+        if search:
+            queryset = queryset.filter(
+                Q(testresult__istartswith=search)
+            )
+
+        # ---------------------------
+        # SORT FIELD MAP
+        # ---------------------------
+        sort_field_map = {
+            'entranceTestName': 'entrancetest__fullname',
+            'entranceTestModuleName': 'moduleName__moduleName',
+            'testresult': 'testresult',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        sort_fields = []
+
+        # ---------------------------
+        # CUSTOM SORT (multi-field)
+        # ---------------------------
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # text fields → case-insensitive sorting
+                    if field in ["testresult", "description"]:
+                        f = Lower(orm_field)
+                    elif field == "entranceTestName":
+                        f = Lower('entrancetest__fullname')
+                    elif field == "moduleName":
+                        f = Lower('moduleName__moduleName')
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+
+        else:
+            # ---------------------------
+            # NORMAL SORT
+            # ---------------------------
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+
+            if sort_by in ["testresult", "description"]:
+                f = Lower(orm_field)
+            else:
+                f = F(orm_field)
+
+            sort_fields.append(
+                f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)
+            )
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ---------------------------
+        # PREPARE EXPORT DATASET
+        # ---------------------------
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'EntranceTestResults'
@@ -5840,21 +6450,28 @@ class EntranceTestResultExportAPIView(APIView):
             row = []
             for field in field_list:
                 value = getattr(obj, field, '')
-                # Foreign keys
-                if field == 'entrancetest' and value:
-                    value = value.shortname
-                elif field == 'moduleName' and value:
-                    value = value.moduleName
-                # Datetime formatting
+
+                # FK fields
+                if field == 'entrancetest' and obj.entrancetest:
+                    value = obj.entrancetest.shortname
+
+                elif field == 'moduleName' and obj.moduleName:
+                    value = obj.moduleName.moduleName
+
+                # datetime formatting
                 elif field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-                # Boolean formatting
+
+                # boolean formatting
                 elif isinstance(value, bool):
                     value = int(value)
+
                 row.append(value if value is not None else '')
             dataset.append(row)
 
-        # Export data
+        # ---------------------------
+        # EXPORT LOGIC
+        # ---------------------------
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
@@ -5870,138 +6487,6 @@ class EntranceTestResultExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-
-
-# class EntranceTestResultImportAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
-
-#     def post(self, request):
-#         file = request.FILES.get('file')
-#         sheet_name = request.data.get('sheet_name')
-
-#         if not file:
-#             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
-
-#         format_type = file.name.split('.')[-1].lower()
-#         duplicate_entries = []
-#         skipped_rows = []
-
-#         required_headers = {'entrance test name', 'entrance test module name', 'entrance test result'}
-#         optional_headers = {'description'}
-
-#         try:
-#             data = []
-
-#             # XLSX handling
-#             if format_type == 'xlsx':
-#                 wb = openpyxl.load_workbook(file, read_only=True)
-#                 available_sheets = wb.sheetnames
-
-#                 if not sheet_name:
-#                     return Response({'error': 'Provide sheet_name', 'available_sheets': available_sheets}, status=400)
-#                 if sheet_name not in available_sheets:
-#                     return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
-
-#                 ws = wb[sheet_name]
-#                 if ws.max_row <= 1:
-#                     return Response({'error': f'Sheet "{sheet_name}" is empty.'}, status=400)
-
-#                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-#                 if not required_headers.issubset(set(headers)):
-#                     return Response({
-#                         'error': f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
-#                     }, status=400)
-
-#                 for row in ws.iter_rows(min_row=2, values_only=True):
-#                     if not any(row):
-#                         continue
-#                     row_dict = dict(zip(headers, row))
-#                     data.append(row_dict)
-
-#             # CSV handling
-#             elif format_type == 'csv':
-#                 dataset = Dataset()
-#                 dataset.load(file.read().decode('utf-8'), format='csv')
-#                 for row in dataset.dict:
-#                     row_lower = {k.strip().lower(): v for k, v in row.items()}
-#                     if not required_headers.issubset(set(row_lower.keys())):
-#                         return Response({
-#                             'error': f'Missing required headers. Required: {", ".join(required_headers)}. Found: {", ".join(row_lower.keys())}'
-#                         }, status=400)
-#                     data.append(row_lower)
-#             else:
-#                 return Response({'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
-
-#             imported_count = 0
-
-#             for row in reversed(data):
-#                 entrancetest_name = str(row.get('entrance test name')).strip() if row.get('entrance test name') else None
-#                 moduleName_name = str(row.get('entrance test module name')).strip() if row.get('entrance test module name') else None
-#                 testresult = str(row.get('entrance test result')).strip() if row.get('entrance test result') else None
-#                 description = str(row.get('description')).strip() if row.get('description') else ''
-
-#                 if not entrancetest_name or not moduleName_name or not testresult:
-#                     skipped_rows.append({
-#                         "row": row,
-#                         "reason": "Required field(s) missing"
-#                     })
-#                     continue
-
-#                 existing = EntranceTestResult.objects.filter(
-#                     entrancetest__shortname__iexact=entrancetest_name,
-#                     moduleName__moduleName__iexact=moduleName_name
-#                 ).first()
-
-#                 if existing:
-#                     if not existing.is_deleted:
-#                         duplicate_entries.append(f"{entrancetest_name} - {moduleName_name}")
-#                         continue
-#                     else:
-#                         existing.testresult = testresult
-#                         existing.description = description
-#                         existing.is_deleted = False
-#                         existing.save()
-#                         imported_count += 1
-#                 else:
-#                     # Gracefully handle missing EntranceTestName or ModuleName
-#                     entrance_obj = EntranceTestName.objects.filter(shortname__iexact=entrancetest_name).first()
-#                     module_obj = EntranceTestModuleName.objects.filter(moduleName__iexact=moduleName_name).first()
-
-#                     if not entrance_obj:
-#                         skipped_rows.append({
-#                             "row": row,
-#                             "reason": f'EntranceTestName "{entrancetest_name}" does not exist'
-#                         })
-#                         continue
-
-#                     if not module_obj:
-#                         skipped_rows.append({
-#                             "row": row,
-#                             "reason": f'EntranceTestModuleName "{moduleName_name}" does not exist'
-#                         })
-#                         continue
-
-#                     # Create new record
-#                     EntranceTestResult.objects.create(
-#                         entrancetest=entrance_obj,
-#                         moduleName=module_obj,
-#                         testresult=testresult,
-#                         description=description,
-#                         is_deleted=False
-#                     )
-#                     imported_count += 1
-
-#         except Exception as e:
-#             return Response({'error': str(e)}, status=400)
-
-#         return Response({
-#             "statusCode": 200,
-#             "status": True,
-#             "duplicates": list(set(duplicate_entries)),
-#             "skipped_rows": skipped_rows,
-#             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
-#             "imported_count": imported_count
-#         }, status=200)
 
 
 
