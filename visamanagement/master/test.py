@@ -1173,26 +1173,20 @@ class LanguageTestDeleteAPIView(APIView):
         
 
 
-
 class LanguageTestExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
-
+ 
     def get(self, request):
         # --- Get query params ---
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')  # comma-separated fields
-        uuids_param = request.GET.get('uuids', '')  # comma-separated UUIDs
         search = request.GET.get('search', '').strip()
         sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')
         custom_sort = request.GET.get('customSort')
-        print("=== DEBUG EXPORT API ===")
-        print("Search term:", repr(search))
-        print("Search length:", len(search))
-        print("All params:", dict(request.GET))
-
-        uuids = [u.strip() for u in uuids_param.split(',') if u]
-
+     
+ 
+ 
         # --- Field to header mapping ---
         field_header_map = {
             'uuid': 'UUID',
@@ -1204,39 +1198,63 @@ class LanguageTestExportAPIView(APIView):
             'created_at': 'Created On',
             'updated_at': 'Modified On',
         }
-
-        # --- Determine fields to export ---
-        if fields:
-            field_list = [f.strip() for f in fields.split(',')]
-        else:
-            field_list = list(field_header_map.keys())
-
-        # --- Fetch queryset ---
-        queryset = LanguageTest.objects.filter(is_deleted=False) 
-        if uuids:
-            queryset = queryset.filter(uuid__in=uuids)
-
-        queryset = queryset.order_by('-created_at')
-        
-
  
-        allowed_sort_fields = ['name', 'language', 'fullname', 'description', 'created_at', 'updated_at']
+        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+
+        # ---------------------------
+        # Helper: Parse & Validate UUIDs
+        # ---------------------------
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, '')
+            if raw:
+                items = [x.strip() for x in raw.split(',') if x.strip()]
+            else:
+                items = request.GET.getlist(param_name)
+            return items
+
+        def validate_uuid_list(uuid_list):
+            valid = []
+            for u in uuid_list:
+                try:
+                    valid.append(UUID(u))
+                except:
+                    pass
+            return valid
+
+        try:
+           
+            languageNameTest_list = validate_uuid_list(parse_ids('languageNameTest'))
+            uuids_list = validate_uuid_list(parse_ids('uuids'))
+        except ValueError as e:
+            return Response({
+                "status": False,
+                "statusCode": 400,
+                "message": str(e)
+            }, status=400)
+ 
+        # --- Fetch queryset ---
         queryset = LanguageTest.objects.filter(is_deleted=False)
+
+        if uuids_list:
+            queryset = queryset.filter(uuid__in=uuids_list)
+
+        if languageNameTest_list:
+            queryset = queryset.filter(language__uuid__in=languageNameTest_list) 
 
         #searching
         if search:
-            queryset = queryset.filter(
-                    Q(name__istartswith=search)
-                ) 
+            queryset = queryset.filter(Q(name__istartswith=search))
             
         sort_field_map = {
             'name': 'name',
-            'language': 'language__name', #ForeignKey
+            'language': 'language__name', 
             'fullname': 'fullname',
             'description': 'description',
             'created_at': 'created_at',
             'updated_at': 'updated_at',
         }
+
         sort_fields = []
         if custom_sort:
             for rule in custom_sort.split(','):
@@ -1244,10 +1262,10 @@ class LanguageTestExportAPIView(APIView):
                     field,order = rule.split(':')
                     field = field.strip()
                     order = order.strip().lower()
-
+ 
                     if field not in sort_field_map:
                         continue
-
+ 
                     orm_field = sort_field_map[field]
                     if field in ['name','fullname','description']:
                         f = Lower(orm_field)
@@ -1267,37 +1285,36 @@ class LanguageTestExportAPIView(APIView):
              orm_field = sort_field_map.get(sort_by,'created_at')
              f = F(orm_field)
              sort_fields =  [f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)]
-
+ 
         queryset = queryset.order_by(*sort_fields)
-
-        print("SEARCH TERM:", search)
+ 
                     
         # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'LanguageTest'
-
+ 
         for obj in queryset:
             row = []
             for field in field_list:
                 value = getattr(obj, field, '')
-
+ 
                 # Special handling for language FK
                 if field == 'language' and obj.language:
                     value = obj.language.name
-
+ 
                 # Convert datetime to IST
                 elif field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-
+ 
                 # Boolean to int
                 elif isinstance(value, bool):
                     value = int(value)
-
+ 
                 row.append(value if value is not None else '')
-
+ 
             dataset.append(row)
-
+ 
         # --- Export logic ---
         if format_type == 'csv':
             file_data = dataset.export('csv')
@@ -1307,7 +1324,7 @@ class LanguageTestExportAPIView(APIView):
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'language_tests.xlsx'
-
+ 
         # --- Return response ---
         response = HttpResponse(
             file_data if format_type == 'csv' else file_data.getvalue(),
@@ -1316,7 +1333,6 @@ class LanguageTestExportAPIView(APIView):
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
     
-
 
 class LanguageTestImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
