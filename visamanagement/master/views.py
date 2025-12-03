@@ -17670,11 +17670,13 @@ class PriorityUpdateAPIView(APIView):
                 "message": "Priority details updated successfully",
                 "data": serializer.data
             }, status=status.HTTP_200_OK)
+        
+        first_error = next(iter(serializer.errors.values()))[0]
 
         return Response({
             "statusCode": 400,
             "status": False,
-            "message": serializer.errors
+            "message": first_error
         }, status=status.HTTP_400_BAD_REQUEST)
 
 # class PriorityDeleteAPIView(APIView):
@@ -18316,11 +18318,13 @@ class TagsUpdateAPIView(APIView):
                 "message": "Tags details updated successfully",
                 "data": serializer.data
             }, status=status.HTTP_200_OK)
+        
+        first_error = next(iter(serializer.errors.values()))[0]
 
         return Response({
             "statusCode": 400,
             "status": False,
-            "message": serializer.errors
+            "message": first_error
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -18987,11 +18991,13 @@ class ActivityTypeUpdateAPIView(APIView):
                 "message": "Activity Type details updated successfully",
                 "data": serializer.data
             }, status=status.HTTP_200_OK)
+        
+        first_error = next(iter(serializer.errors.values()))[0]
 
         return Response({
             "statusCode": 400,
             "status": False,
-            "message": serializer.errors
+            "message": first_error
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -19638,11 +19644,12 @@ class LostReasonUpdateAPIView(APIView):
                 "message": "Lost Reason  details updated successfully",
                 "data": serializer.data
             }, status=status.HTTP_200_OK)
-
+        
+        first_error = next(iter(serializer.errors.values()))[0]
         return Response({
             "statusCode": 400,
             "status": False,
-            "message": serializer.errors
+            "message": first_error
         }, status=status.HTTP_400_BAD_REQUEST)
 
 # class LostReasonDeleteAPIView(APIView):
@@ -20260,11 +20267,13 @@ class LostReasonB2BUpdateAPIView(APIView):
                 "message": "Lost Reason  details updated successfully",
                 "data": serializer.data
             }, status=status.HTTP_200_OK)
-
+        
+        first_error = next(iter(serializer.errors.values()))[0]
+        
         return Response({
             "statusCode": 400,
             "status": False,
-            "message": serializer.errors
+            "message": first_error
         }, status=status.HTTP_400_BAD_REQUEST)
 
 # class LostReasonB2BDeleteAPIView(APIView):
