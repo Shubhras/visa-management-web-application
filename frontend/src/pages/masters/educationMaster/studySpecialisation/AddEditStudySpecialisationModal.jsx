@@ -305,7 +305,7 @@ const AddEditStudySpecialisationModal = ({ show, handleClose, mode = 'add', rowD
                                                 },
                                             })
                                         }
-                                        filterOption={customFilterOptionMajor}
+                                        filterOption={customFilterOptionMain}
                                         placeholder="Select Study Major Area"
                                         isClearable
                                         isSearchable

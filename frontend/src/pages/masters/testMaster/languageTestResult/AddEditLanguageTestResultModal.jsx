@@ -259,6 +259,11 @@ const AddEditLanguageTestResultModal = ({ show, handleClose, mode = 'add', rowDa
         handleClose(false);
     };
 
+const customFilterOption = (option, inputValue) => {
+    if (!inputValue) return true;
+    return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
+  };
+
     // Conditional return after all hooks
     if (!show) return null;
 
@@ -315,6 +320,7 @@ const AddEditLanguageTestResultModal = ({ show, handleClose, mode = 'add', rowDa
                                         //         },
                                         //     })
                                         // }
+                                        filterOption={customFilterOption}
                                         onChange={handleTestChange}
                                         placeholder="Select language name(test)"
                                         isClearable
@@ -356,6 +362,7 @@ const AddEditLanguageTestResultModal = ({ show, handleClose, mode = 'add', rowDa
                                                 },
                                             })
                                         }
+                                        filterOption={customFilterOption}
                                         placeholder={
                                             languageTestLoading
                                                 ? "Loading language test name..."
@@ -404,6 +411,7 @@ const AddEditLanguageTestResultModal = ({ show, handleClose, mode = 'add', rowDa
                                                 },
                                             })
                                         }
+                                        filterOption={customFilterOption}
                                         placeholder="Select module name"
                                         isClearable
                                         isSearchable
@@ -462,6 +470,7 @@ const AddEditLanguageTestResultModal = ({ show, handleClose, mode = 'add', rowDa
                                                 },
                                             })
                                         }
+                                        filterOption={customFilterOption}
                                         placeholder="Select language banchmark level"
                                         isClearable
                                         isSearchable

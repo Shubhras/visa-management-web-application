@@ -137,6 +137,11 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
     handleClose(false);
   };
 
+  const customFilterOption = (option, inputValue) => {
+    if (!inputValue) return true;
+    return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
+  };
+
   // Conditional return after all hooks
   if (!show) return null;
 
@@ -204,6 +209,7 @@ const AddEditAcademicResultTypeModal = ({ show, handleClose, mode = 'add', rowDa
                         ].find((opt) => opt.value === formData.datatype)
                         : null
                     }
+                    filterOption={customFilterOption}
                     onChange={(selectedOption) =>
                       handleChange({
                         target: {

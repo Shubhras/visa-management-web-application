@@ -299,6 +299,7 @@ const AddEditStateModal = ({ show, handleClose, mode = 'add', rowData = null }) 
                           },
                         })
                       }
+                      filterOption={customFilterOption}
                       placeholder="State / Territory"
                       isClearable
                       isSearchable

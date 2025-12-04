@@ -175,6 +175,11 @@ const AddEditOccupationVersionModal = ({ show, handleClose, mode = 'add', rowDat
         handleClose();
     };
 
+const customFilterOption = (option, inputValue) => {
+    if (!inputValue) return true;
+    return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
+  };
+
     // Conditional return after all hooks
     if (!show) return null;
 
@@ -267,6 +272,7 @@ const AddEditOccupationVersionModal = ({ show, handleClose, mode = 'add', rowDat
                                                 },
                                             })
                                         }
+                                        filterOption={customFilterOption}
                                         placeholder="Select country"
                                         isClearable
                                         isSearchable

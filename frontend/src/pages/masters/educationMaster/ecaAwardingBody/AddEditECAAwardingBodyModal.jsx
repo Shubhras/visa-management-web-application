@@ -305,6 +305,7 @@ const AddEditECAAwardingBodyModal = ({ show, handleClose, mode = 'add', rowData 
                           .find((opt) => opt.value === formData.ecaFor)
                         : null
                     }
+                    filterOption={customFilterOptionCountry}
                     onChange={(selectedOption) =>
                       handleChange({
                         target: {

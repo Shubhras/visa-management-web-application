@@ -176,6 +176,12 @@ const AddEditEducationLevelModal = ({ show, handleClose, mode = 'add', rowData =
     handleClose(false);
   };
 
+const customFilterOption = (option, inputValue) => {
+  if (!inputValue) return true;
+  const label = option.label ?? "";
+  return label.toString().toLowerCase().startsWith(inputValue.toLowerCase());
+};
+
   // Conditional return after all hooks
   if (!show) return null;
 
@@ -232,6 +238,7 @@ const AddEditEducationLevelModal = ({ show, handleClose, mode = 'add', rowData =
                         },
                       })
                     }
+                    filterOption={customFilterOption}
                     placeholder="Select Education Level Code"
                     isClearable
                     isSearchable

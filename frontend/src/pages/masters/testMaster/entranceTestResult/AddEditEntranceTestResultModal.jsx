@@ -223,6 +223,11 @@ const AddEditEntranceTestResultModal = ({ show, handleClose, mode = 'add', rowDa
         handleClose(false);
     };
 
+    const customFilterOption = (option, inputValue) => {
+        if (!inputValue) return true;
+        return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
+    };
+
     // Conditional return after all hooks
     if (!show) return null;
 
@@ -279,6 +284,7 @@ const AddEditEntranceTestResultModal = ({ show, handleClose, mode = 'add', rowDa
                                         //         },
                                         //     })
                                         // }
+                                        filterOption={customFilterOption}
                                         onChange={handleTestChange}
                                         placeholder="Select entrance test name"
                                         isClearable
@@ -320,6 +326,7 @@ const AddEditEntranceTestResultModal = ({ show, handleClose, mode = 'add', rowDa
                                                 },
                                             })
                                         }
+                                        filterOption={customFilterOption}
                                         placeholder={
                                             moduleLoading
                                                 ? "Loading modules..."
