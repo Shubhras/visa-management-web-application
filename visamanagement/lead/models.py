@@ -384,4 +384,16 @@ class EligibilityFlags(models.Model):
     def __str__(self):
         return f"{self.applicant}"
     
- 
+class SpouseEducation(models.Model):
+    applicant = models.ForeignKey(Applicant,on_delete=models.CASCADE,related_name='spio')
+    education_level = models.ForeignKey(EducationLevel,on_delete=models.SET_NULL, null=True, related_name='education_level')
+    duration = models.ForeignKey(EducationDuration,on_delete=models.SET_NULL,null=True,related_name='duration')
+    study_main_area = models.ForeignKey(Studymainarea,on_delete=models.SET_NULL,null=True,related_name='study_main_area')
+    edu_type = models.ForeignKey(EducationType,on_delete=models.SET_NULL,null=True,related_name='education_type')
+
+    start_date = models.DateField(null=True,blank=True)
+    end_date = models.DateField(null=True,blank=True)
+    result = models.CharField(max_length=50,null=True,blank=True)
+    
+    def __str__(self):
+        return f"{self.applicant}"

@@ -76,4 +76,9 @@ urlpatterns = [
     path('eligibilityflags/<uuid:applicant_uuid>/update/',EligibilityFlagsUpdateAPIView.as_view(),name='EligibilityFlags-Update'),
     path('eligibilityflags/create/',EligibilityFlagsCreateAPIView.as_view(),name='EligibilityFlags-create'),
 
+    #<------------------------------SpouseEducation------------------------->
+   # path('spouseeducation/create/',SpouseEducationCreateAPIView.as_view(),name = 'SpouseEducation-create'),
+   # path('spouseeducation/get/',SpouseEducationListAPIView.as_view(),name = 'SpouseEducation-list'),
+   # path('spouseeducation/<uuid:uuid/',SpouseEducationDetailAPIView.as_view(),name = 'SpouseEducation-get-uuid'),
+
 ]

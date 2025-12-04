@@ -664,3 +664,57 @@ class EligibilityFlagsAdmin(admin.ModelAdmin):
             'fields': ('created_at', 'updated_at')
         }),
     )
+
+@admin.register(SpouseEducation)
+class SpouseEducationAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'applicant',
+        'education_level',
+        'duration',
+        'study_main_area',
+        'education_type',
+        'start_date',
+        'end_date',
+        'result'
+    )
+
+    search_fields = (
+        'applicant__name',
+        'result',
+        'education_level__name',
+        'study_main_area__name',
+    )
+
+    list_filter = (
+        'education_level',
+        'duration',
+        'education_type',
+        'start_date',
+        'end_date',
+    )
+
+    readonly_fields = ()
+
+    fieldsets = (
+        ('Applicant Information', {
+            'fields': ('applicant',)
+        }),
+
+        ('Education Details', {
+            'fields': (
+                'education_level',
+                'duration',
+                'study_main_area',
+                'education_type',
+            )
+        }),
+
+        ('Timeline', {
+            'fields': ('start_date', 'end_date')
+        }),
+
+        ('Result', {
+            'fields': ('result',)
+        }),
+    )

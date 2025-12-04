@@ -2010,4 +2010,78 @@ class EligibilityFlagsCreateAPIView(APIView):
                 "error": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-#<=========================Document======================>
+#<========================SpouseEducation=======================>
+class SpouseEducationCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self,request):
+        try:
+            serializer = SpouseEducationSerializer(data = request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({
+                    "statusCode":201,
+                    "status":True,
+                    "message":"Spouse Education create successfully. ",
+                    "data":serializer.data
+                },status=status.HTTP_201_CREATED)
+            else:
+                return Response({
+                    "statusCode":400,
+                    "status":False,
+                    "message":"Validation Faild. ",
+                    "error":serializer.errors
+                },status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                "statusCode":500,
+                "status":False,
+                "message":"Something went wrong.",
+                "error":str(e)
+            },status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+
+class SpouseEducationListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self,request):
+        queryset = SpouseEducation.objects.all()
+
+        #filter
+        uuids = request.GET.get("uuids")
+        if uuids:
+            uuid_list = []
+            for u in uuids.split(","):
+                try:
+                    uuid_list.append(UUID(u.strip()))
+                except:
+                    return Response({
+                        "status":False,
+                        "message":f"Invalid UUID:{u}"
+                    },status=status.HTTP_400_BAD_REQUEST)
+            queryset = queryset.filter(uuid_in=uuid_list)
+
+        serializer = SpouseEducationSerializer(queryset,many=True)
+        return Response({
+            "status":True,
+            "message":"Spouse Education data fatched successfully. ",
+            "data":serializer.data,
+        },status=status.HTTP_200_OK)
+
+class SpouseEducationDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self,request,uuid):
+        try:
+            valid_uuid = UUID(str(uuid))
+        except:
+            return Response({
+                "statusCode":400,
+                "status":False,
+                "message":"Invalide UUID format"
+            },status=status.HTTP_400_BAD_REQUEST)
+        spouse = get_object_or_404(SpouseEducation,uuid=valid_uuid)
+        serializer = SpouseEducationSerializer(spouse)
+        return Response({
+            "status":True,
+            "message":"Spouse Education fetched successfully. ",
+            "data":serializer.data
+        },status=status.HTTP_200_OK)
