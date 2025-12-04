@@ -516,16 +516,18 @@ class EducationLevelSerializer(serializers.ModelSerializer):
     def validate_educationlevel(self, value):
         value = value.strip()
 
-        # Exclude the current object itself using uuid
+        # ✅ Exclude the current object itself during update
+        current_uuid = self.instance.uuid if self.instance else None
+
         exists = EducationLevel.objects.filter(
             educationlevel__iexact=value,
             is_deleted=False
-        ).exists()
+        ).exclude(uuid=current_uuid).exists()
 
         if exists:
-            raise serializers.ValidationError("This name already exists")
+            raise serializers.ValidationError("This educationlevel already exists")
 
-        return value        
+        return value    
 
 
 class EducationDurationSerializer(serializers.ModelSerializer):

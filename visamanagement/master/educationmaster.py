@@ -987,9 +987,16 @@ class EducationLevelCodeImportAPIView(APIView):
             imported_count = 0
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get('education level code')).strip() if row.get('education level code') else ''
-                description = str(row.get('description')).strip() if row.get('description') else ''
+                raw_name = row.get('education level code')
 
+                # allow 0 also
+                name = str(raw_name).strip() if raw_name is not None else ''
+
+                # name = str(row.get('education level code')).strip() if row.get('education level code') else ''
+
+                # description = str(row.get('description')).strip() if row.get('description') else ''
+                raw_desc = row.get('description')
+            description = str(raw_desc).strip() if raw_desc is not None else ''
                 
                 if not name:
                     skipped_rows.append(
@@ -1013,7 +1020,9 @@ class EducationLevelCodeImportAPIView(APIView):
                 # Convert to int for database (optional if your model field is IntegerField)
                 name = int(name)
 
-                existing = EducationLevelCode.objects.filter(name__iexact=name).first()
+                # existing = EducationLevelCode.objects.filter(name__iexact=name).first()
+                existing = EducationLevelCode.objects.filter(name=name).first()
+
                 if existing:
                     if not existing.is_deleted:
                         duplicates.append({"Row": row_number,
@@ -1045,6 +1054,8 @@ class EducationLevelCodeImportAPIView(APIView):
             "duplicates": list(reversed(duplicates)),
             "skipped_rows": list(reversed(skipped_rows)),
         }, status=status.HTTP_200_OK)
+
+
 
 # -------------------- EducationLevel -------------------- #
 
