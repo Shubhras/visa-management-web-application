@@ -127,18 +127,18 @@ const ReusableTable = ({
 
   return (
     <div className={`${tableSize}-table-container my-3`}>
-      <div className="py-2 px-4 border-bottom">
-        <h6 className="mb-0 fw-semibold fs-6" style={{ color: "#5a6c5b" }}>
+      {/* <div className="py-2 px-4 border-bottom"> */}
+        {/* <h6 className="mb-0 fw-semibold fs-6" style={{ color: "#5a6c5b" }}>
           {title}
-        </h6>
-      </div>
+        </h6> */}
+      {/* </div> */}
 
       <div className="card-body pt-0 container-table mb-0 min-height">
         <div className="mb-2">
           <table className="table mb-0 ">
             <thead className="colored-table-head">
               <tr>
-                <th scope="col" className="sl-numbar-th ">
+                {/* <th scope="col" className="sl-numbar-th ">
                   <div className="d-flex align-items-center gap-2 ">
                     <input
                       className="form-check-input"
@@ -149,7 +149,7 @@ const ReusableTable = ({
                     />
                     <span>No.</span>
                   </div>
-                </th>
+                </th> */}
                 {columns.map(
                   (col) =>
                     visibleColumns.includes(col.id) && (
@@ -226,7 +226,7 @@ const ReusableTable = ({
               ) : (
                 sortedData.map((row, index) => (
                   <tr key={row.id}>
-                    <td>
+                    {/* <td>
                       <div className="d-flex align-items-center gap-2">
                         <input
                           className="form-check-input"
@@ -236,7 +236,7 @@ const ReusableTable = ({
                         />
                         <span>{String(index + 1).padStart(2, "0")}</span>
                       </div>
-                    </td>
+                    </td> */}
                     {columns.map(
                       (col) =>
                         visibleColumns.includes(col.id) && (
@@ -288,6 +288,10 @@ const ReusableTable = ({
 };
 
 const SpouseDetails = () => {
+  const [showSpouseEducation, setShowSpouseEducation] = useState(false);
+  const [showSpouseExperience, setShowSpouseExperience] = useState(false);
+  const [showSpouseLanguage, setShowSpouseLanguage] = useState(false);
+
   const [spouseEducation, setSpouseEducation] = useState([
     {
       id: 1,
@@ -467,43 +471,92 @@ const SpouseDetails = () => {
 
       <div className="container-fluid">
         {/* Education - Small Table */}
-        <ReusableTable
-          title="Spouse : Education"
-          data={spouseEducation}
-          setData={setSpouseEducation}
-          columns={spouseEducationColumns}
-          visibleColumns={spouseEduVisible}
-          setVisibleColumns={setSpouseEduVisible}
-          tableSize="small"
-          enableSorting={true}
-          onEditClick={handleEducationEdit}
-          onAddNew={handleAddNewEducation}
-        />
-        <ReusableTable
-          title="Spouse : Experience"
-          data={spouseExperience}
-          setData={setSpouseExperience}
-          columns={spouseExperienceColumns}
-          visibleColumns={spouseExperienceVisible}
-          setVisibleColumns={setSpouseExperienceVisible}
-          tableSize="small"
-          enableSorting={true}
-          onEditClick={handleExperienceEdit}
-          onAddNew={handleAddNewExperience}
-        />
+        <div className="card mb-4">
+          <div className="card-header bg-light py-1 d-flex align-items-center gap-2">
+            <input
+              type="checkbox"
+              className="form-check-input"
+              checked={showSpouseEducation}
+              onChange={(e) => setShowSpouseEducation(e.target.checked)}
+            />
+            <h6 className="mb-0 fw-medium fs-6" style={{ color: "#5a6c5b" }}>
+              Spouse : Education
+            </h6>
+          </div>
 
-        <ReusableTable
-          title="Spouse : Language Ability"
-          data={spouseLanguage}
-          setData={setSpouseLanguage}
-          columns={spouseLanguageColumns}
-          visibleColumns={spouseLanguageVisible}
-          setVisibleColumns={setSpouseLanguageVisible}
-          tableSize="small"
-          enableSorting={true}
-          onEditClick={handleLanguageEdit}
-          onAddNew={handleAddNewLanguage}
-        />
+          {showSpouseEducation && (
+            <ReusableTable
+              title="Spouse : Education"
+              data={spouseEducation}
+              setData={setSpouseEducation}
+              columns={spouseEducationColumns}
+              visibleColumns={spouseEduVisible}
+              setVisibleColumns={setSpouseEduVisible}
+              tableSize="small"
+              enableSorting={true}
+              onEditClick={handleEducationEdit}
+              onAddNew={handleAddNewEducation}
+            />
+          )}
+        </div>
+
+        <div className="card mb-4">
+          <div className="card-header bg-light py-1 d-flex align-items-center gap-2">
+            <input
+              type="checkbox"
+              className="form-check-input"
+              checked={showSpouseExperience}
+              onChange={(e) => setShowSpouseExperience(e.target.checked)}
+            />
+            <h6 className="mb-0 fw-medium fs-6" style={{ color: "#5a6c5b" }}>
+              Spouse : Experience
+            </h6>
+          </div>
+
+          {showSpouseExperience && (
+            <ReusableTable
+              title="Spouse : Experience"
+              data={spouseExperience}
+              setData={setSpouseExperience}
+              columns={spouseExperienceColumns}
+              visibleColumns={spouseExperienceVisible}
+              setVisibleColumns={setSpouseExperienceVisible}
+              tableSize="small"
+              enableSorting={true}
+              onEditClick={handleExperienceEdit}
+              onAddNew={handleAddNewExperience}
+            />
+          )}
+        </div>
+
+        <div className="card mb-4">
+          <div className="card-header bg-light py-1 d-flex align-items-center gap-2">
+            <input
+              type="checkbox"
+              className="form-check-input"
+              checked={showSpouseLanguage}
+              onChange={(e) => setShowSpouseLanguage(e.target.checked)}
+            />
+            <h6 className="mb-0 fw-medium fs-6" style={{ color: "#5a6c5b" }}>
+              Spouse : Language Ability
+            </h6>
+          </div>
+
+          {showSpouseLanguage && (
+            <ReusableTable
+              title="Spouse : Language Ability"
+              data={spouseLanguage}
+              setData={setSpouseLanguage}
+              columns={spouseLanguageColumns}
+              visibleColumns={spouseLanguageVisible}
+              setVisibleColumns={setSpouseLanguageVisible}
+              tableSize="small"
+              enableSorting={true}
+              onEditClick={handleLanguageEdit}
+              onAddNew={handleAddNewLanguage}
+            />
+          )}
+        </div>
       </div>
       <AddEditSpouseEducationModal
         show={educationModal.show}

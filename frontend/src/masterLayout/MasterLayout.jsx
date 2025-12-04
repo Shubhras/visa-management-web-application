@@ -5,7 +5,7 @@ import ThemeToggleButton from "../helper/ThemeToggleButton";
 // import Header from "./Header";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { useGlobalSearch } from '../components/comman/GlobalSearchContext';
+import { useGlobalSearch } from "../components/comman/GlobalSearchContext";
 const MasterLayout = ({ children }) => {
   const navigate = useNavigate();
   let [sidebarActive, seSidebarActive] = useState(false);
@@ -167,7 +167,6 @@ const MasterLayout = ({ children }) => {
         { name: "Leads B2C", path: "/leads-B2C" },
         { name: "Inquiry B2C", path: "/" },
       ],
-
     },
     {
       name: "Clients",
@@ -348,26 +347,42 @@ const MasterLayout = ({ children }) => {
             { name: "Visa Eligibility Type", path: "/visa-eligibility-type" },
             { name: "Visa Status", path: "/visa-status" },
             { name: "Possibility Level", path: "/possibility-level" },
-            { name: "Visa Name", path: "/visa-name" }
-
+            { name: "Visa Name", path: "/visa-name" },
           ],
         },
         {
           name: "Visa Conditions",
           children: [
             { name: "Work Rights", path: "/work-rights" },
-            { name: "Work Rights During Study", path: "/work-rights-during-study" },
-            { name: "Work Rights During Vacation", path: "/work-rights-during-vacation" },
-            { name: "Work Rights After Study", path: "/work-rights-after-study" },
+            {
+              name: "Work Rights During Study",
+              path: "/work-rights-during-study",
+            },
+            {
+              name: "Work Rights During Vacation",
+              path: "/work-rights-during-vacation",
+            },
+            {
+              name: "Work Rights After Study",
+              path: "/work-rights-after-study",
+            },
             { name: "PR Possibility", path: "/pr-possibility" },
-            { name: "Spouse Can Apply with Candidate?", path: "/spouse-can-apply-with-candidate" },
+            {
+              name: "Spouse Can Apply with Candidate?",
+              path: "/spouse-can-apply-with-candidate",
+            },
             // { name: "Visa Main Category", path: "/visa-main-category" },
-            { name: "Spouse Visa Category", path: '/spouse-visa-category' },
+            { name: "Spouse Visa Category", path: "/spouse-visa-category" },
             { name: "Spouse Work Rights", path: "/spouse-work-rights" },
-            { name: "Children Can Apply with Candidate?", path: "/children-can-apply-with-candidate" },
+            {
+              name: "Children Can Apply with Candidate?",
+              path: "/children-can-apply-with-candidate",
+            },
             { name: "Children Visa Category", path: "/children-visa-category" },
-            { name: "Children Study / Work Rights", path: "/children-study-work-rights" },
-
+            {
+              name: "Children Study / Work Rights",
+              path: "/children-study-work-rights",
+            },
           ],
         },
         {
@@ -378,9 +393,15 @@ const MasterLayout = ({ children }) => {
             { name: "Document Type", path: "/document-type" },
             { name: "Purpose of Visit", path: "/purpose-of-visit" },
             { name: "Documents For", path: "/documents-for" },
-            { name: "Required Documents (General)", path: "/required-documents-general" },
+            {
+              name: "Required Documents (General)",
+              path: "/required-documents-general",
+            },
             { name: "Process Status Name", path: "/process-status-name" },
-            { name: "Process Sub Status Name", path: "/process-sub-status-name" },
+            {
+              name: "Process Sub Status Name",
+              path: "/process-sub-status-name",
+            },
             { name: "Process Type", path: "/process-type" },
             { name: "Payment To", path: "/payment-to" },
             { name: "Payment Category", path: "/payment-category" },
@@ -392,18 +413,35 @@ const MasterLayout = ({ children }) => {
           children: [
             { name: "Factor For", path: "/factor-for" },
             { name: "Study : Age Group", path: "/age-group" },
-            { name: "Study : Academic Result Group", path: "/academic-result-group" },
+            {
+              name: "Study : Academic Result Group",
+              path: "/academic-result-group",
+            },
             { name: "Study : Gap Group", path: "/gap-group" },
             { name: "Study : Backlogs Group", path: "/backlogs-group" },
-            { name: "Study : Language Ability Group", path: "/language-ability-group" },
-            { name: "Study : Entrance Test Ability Group", path: "/entrance-test-ability-group" },
+            {
+              name: "Study : Language Ability Group",
+              path: "/language-ability-group",
+            },
+            {
+              name: "Study : Entrance Test Ability Group",
+              path: "/entrance-test-ability-group",
+            },
             { name: "Study Factor : Age", path: "/age" },
-            { name: "Study Factor : Academic Result", path: "/study-factor-academic-result" },
+            {
+              name: "Study Factor : Academic Result",
+              path: "/study-factor-academic-result",
+            },
             { name: "Study Factor : Backlogs", path: "/study-factor-backlogs" },
             { name: "Study Factor : Gap", path: "/study-factor-gap" },
-            { name: "Study Factor : Language Ability", path: "/study-factor-language-ability" },
-            { name: "Study Factor : Entrance Test Ability", path: "/study-factor-entrance-test-ability" },
-
+            {
+              name: "Study Factor : Language Ability",
+              path: "/study-factor-language-ability",
+            },
+            {
+              name: "Study Factor : Entrance Test Ability",
+              path: "/study-factor-entrance-test-ability",
+            },
           ],
         },
 
@@ -421,7 +459,6 @@ const MasterLayout = ({ children }) => {
 
         //   ],
         // },
-
 
         // { name: 'Education', path: '/' },
         // { name: 'Test', path: '/' },
@@ -486,7 +523,7 @@ const MasterLayout = ({ children }) => {
 
   useEffect(() => {
     // when changes pathname than blank GlobalSearch
-    setGlobalSearch('');
+    setGlobalSearch("");
     // Current path के basis पर menu item ढूंढो
     const findMenuItemByPath = (items, currentPath) => {
       for (const item of items) {
@@ -591,8 +628,8 @@ const MasterLayout = ({ children }) => {
           sidebarActive
             ? "sidebar active "
             : mobileMenu
-              ? "sidebar sidebar-open"
-              : "sidebar"
+            ? "sidebar sidebar-open"
+            : "sidebar"
         }
         style={{ display: "none" }}
       >
@@ -1873,6 +1910,8 @@ const MasterLayout = ({ children }) => {
                       <li>
                         <Link
                           className='dropdown-item text-black px-0 py-8 hover-bg-transparent hover-text-primary d-flex align-items-center gap-3'
+                   \
+                   
                           to='/'
                         >
                           <Icon

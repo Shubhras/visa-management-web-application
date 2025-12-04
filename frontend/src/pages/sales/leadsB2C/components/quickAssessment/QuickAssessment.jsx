@@ -145,13 +145,13 @@ const ReusableTable = ({
               <tr>
                 <th scope="col" className="sl-numbar-th">
                   <div className="d-flex align-items-center gap-2">
-                    <input
+                    {/* <input
                       className="form-check-input"
                       type="checkbox"
                       checked={isAllSelected}
                       onChange={handleSelectAll}
                       disabled={data.length === 0}
-                    />
+                    /> */}
                     <span>No.</span>
                   </div>
                 </th>
@@ -233,12 +233,12 @@ const ReusableTable = ({
                   <tr key={row.id}>
                     <td>
                       <div className="d-flex align-items-center gap-2">
-                        <input
+                        {/* <input
                           className="form-check-input"
                           type="checkbox"
                           checked={selectedRows.includes(row.id)}
                           onChange={() => handleRowSelect(row.id)}
-                        />
+                        /> */}
                         <span>{String(index + 1).padStart(2, "0")}</span>
                       </div>
                     </td>
@@ -396,7 +396,7 @@ const QuickAssessment = () => {
 
   return (
     <div
-      className="section-block p-3 bg-white border no-overflow"
+      className="section-block p-3 bg-white border compact-inputs"
       style={{ minWidth: 320 }}
     >
       {/* CREATE BUTTON */}
@@ -410,13 +410,17 @@ const QuickAssessment = () => {
       </div>
 
       {/* ===================== MAIN SELECTORS ===================== */}
-      <div className="row gx-5 gy-3 mb-3">
+      <div className="row gx-5 mb-2">
         {/* Visa Main Category */}
         <div className="col-md-4">
           <label className="form-label fw-semibold">
             Visa Main Category <span className="text-danger">*</span>
           </label>
-          <Select options={visaMainOptions} />
+          <Select
+            options={visaMainOptions}
+            classNamePrefix="custom-select"
+            className="custom-select-container"
+          />
         </div>
 
         {/* Visa Major Category */}
@@ -424,7 +428,11 @@ const QuickAssessment = () => {
           <label className="form-label fw-semibold">
             Visa Major Category <span className="text-danger">*</span>
           </label>
-          <Select options={visaMajorOptions} />
+          <Select
+            options={visaMajorOptions}
+            classNamePrefix="custom-select"
+            className="custom-select-container"
+          />
         </div>
 
         {/* Country */}
@@ -432,7 +440,11 @@ const QuickAssessment = () => {
           <label className="form-label fw-semibold">
             Country <span className="text-danger">*</span>
           </label>
-          <Select options={countryOptions} />
+          <Select
+            options={countryOptions}
+            classNamePrefix="custom-select"
+            className="custom-select-container"
+          />
         </div>
 
         {/* Visa Name */}
@@ -445,21 +457,23 @@ const QuickAssessment = () => {
             value={visaNameOptions.find((o) => o.value === visaType) || null}
             onChange={(option) => setVisaType(option?.value || null)}
             menuPortalTarget={document.body}
-            styles={{
-              menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-            }}
+            styles={{ menuPortal: (b) => ({ ...b, zIndex: 9999 }) }}
+            classNamePrefix="custom-select"
+            className="custom-select-container"
           />
         </div>
       </div>
 
       {/* ===================== STUDENT FORM ===================== */}
       {visaType === "student" && (
-        <div className="mt-4">
-          <div className="row gx-5 gy-3 mb-20">
+        <div className="">
+          <div className="row gx-5 gy-3 mb-10">
             <div className="col-4">
               <label className="form-label">State</label>
               <Select
                 options={[{ value: "", label: "Master (As per country)" }]}
+                classNamePrefix="custom-select"
+                className="custom-select-container"
               />
             </div>
 
@@ -469,16 +483,21 @@ const QuickAssessment = () => {
                 options={[
                   { value: "", label: "Master (As per Country & State)" },
                 ]}
+                classNamePrefix="custom-select"
+                className="custom-select-container"
               />
             </div>
           </div>
-          <div className="row gx-5 gy-3 mb-20">
+
+          <div className="row gx-5 gy-3 mb-10">
             <div className="col-4">
               <label className="form-label">Course Level</label>
               <Select
                 options={[
                   { value: "", label: "Master (Eligible Course Level)" },
                 ]}
+                classNamePrefix="custom-select"
+                className="custom-select-container"
               />
             </div>
 
@@ -488,17 +507,19 @@ const QuickAssessment = () => {
               <div className="d-flex gap-2">
                 <Select
                   options={[{ value: "", label: "Master" }]}
-                  className="flex-grow-1"
+                  classNamePrefix="custom-select"
+                  className="custom-select-container flex-grow-1"
                 />
                 <Select
                   options={[{ value: "months", label: "Months" }]}
-                  className="flex-grow-1"
+                  classNamePrefix="custom-select"
+                  className="custom-select-container flex-grow-1"
                 />
               </div>
             </div>
           </div>
 
-          <div className="row gx-5 gy-3 mb-20">
+          <div className="row gx-5 gy-3 mb-10">
             <div className="col-md-12">
               <label className="form-label">Study Main Areas</label>
               <Select
@@ -507,6 +528,8 @@ const QuickAssessment = () => {
                 value={mainAreas}
                 onChange={(selected) => setMainAreas(selected || [])}
                 placeholder="Select Study Main Areas"
+                classNamePrefix="custom-select"
+                className="custom-select-container"
               />
             </div>
 
@@ -518,33 +541,43 @@ const QuickAssessment = () => {
                 value={majorAreas}
                 onChange={(selected) => setMajorAreas(selected || [])}
                 placeholder="Select Study Major Areas"
+                classNamePrefix="custom-select"
+                className="custom-select-container"
               />
             </div>
           </div>
 
-          <div className="row gx-5 gy-3 mb-20">
-            {/* Intake */}
+          <div className="row gx-5 gy-3 mb-10">
             <div className="col-md-2">
               <label className="form-label">Intake Name</label>
-              <Select options={[{ value: "", label: "Master" }]} />
+              <Select
+                options={[{ value: "", label: "Master" }]}
+                classNamePrefix="custom-select"
+                className="custom-select-container"
+              />
             </div>
+
             <div className="col-md-2">
               <label className="form-label">Intake Month</label>
-              <Select options={[{ value: "", label: "Month Name" }]} />
+              <Select
+                options={[{ value: "", label: "Month Name" }]}
+                classNamePrefix="custom-select"
+                className="custom-select-container"
+              />
             </div>
 
             {/* Fees */}
-            <div className="col-md-4 ">
+            <div className="col-md-4">
               <label className="form-label">Max. Application Fee</label>
               <div className="d-flex gap-2">
                 <input
-                  className="form-control form-control-sm w-full"
+                  className="form-control form-control-sm custom-input w-full"
                   placeholder="(Currency)"
                 />
                 <input
-                  className="form-control form-control-sm w-full"
-                  placeholder="Numeric"
                   type="number"
+                  className="form-control form-control-sm custom-input w-full"
+                  placeholder="Numeric"
                 />
               </div>
             </div>
@@ -553,33 +586,36 @@ const QuickAssessment = () => {
               <label className="form-label">Max. Course Fee</label>
               <div className="d-flex gap-2">
                 <input
-                  className="form-control form-control-sm w-full"
-                  placeholder="Total Course Fee"
                   type="number"
+                  className="form-control form-control-sm custom-input w-full"
+                  placeholder="Total Course Fee"
                 />
                 <input
-                  className="form-control form-control-sm w-full"
-                  placeholder="Per Year Fee"
                   type="number"
+                  className="form-control form-control-sm custom-input w-full"
+                  placeholder="Per Year Fee"
                 />
-              </div>{" "}
+              </div>
             </div>
           </div>
-          <div className="row gx-5 gy-3 mb-20">
-            {/* Scholarship */}
+
+          <div className="row gx-5 gy-3 mb-10">
             <div className="col-md-4">
               <label className="form-label">Scholarship</label>
-
               <div className="row g-2">
-                <div className="col-md-6 ">
-                  <Select options={yesNoOptions} />
+                <div className="col-md-6">
+                  <Select
+                    options={yesNoOptions}
+                    classNamePrefix="custom-select"
+                    className="custom-select-container"
+                  />
                 </div>
 
-                <div className="col-md-6 ">
+                <div className="col-md-6">
                   <input
-                    className="form-control form-control-sm "
-                    placeholder="Amount"
                     type="number"
+                    className="form-control form-control-sm custom-input"
+                    placeholder="Amount"
                   />
                 </div>
               </div>
@@ -587,19 +623,31 @@ const QuickAssessment = () => {
 
             <div className="col-md-4">
               <label className="form-label">MOI Acceptable</label>
-              <Select options={yesNoOptions} />
+              <Select
+                options={yesNoOptions}
+                classNamePrefix="custom-select"
+                className="custom-select-container"
+              />
             </div>
 
-            {/* ESL */}
             <div className="col-md-4">
               <label className="form-label">With ESL Available</label>
-              <Select options={yesNoOptions} />
+              <Select
+                options={yesNoOptions}
+                classNamePrefix="custom-select"
+                className="custom-select-container"
+              />
             </div>
           </div>
-          <div className="row g-3 mb-20">
+
+          <div className="row g-3 mb-10">
             <div className="col-md-3">
               <label className="form-label">With Pre-Course</label>
-              <Select options={yesNoOptions} />
+              <Select
+                options={yesNoOptions}
+                classNamePrefix="custom-select"
+                className="custom-select-container"
+              />
             </div>
           </div>
         </div>
@@ -616,13 +664,12 @@ const QuickAssessment = () => {
               <Select
                 options={yesNoOptions}
                 menuPortalTarget={document.body}
-                styles={{
-                  menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                }}
+                styles={{ menuPortal: (b) => ({ ...b, zIndex: 9999 }) }}
+                classNamePrefix="custom-select"
+                className="custom-select-container"
               />
             </div>
 
-            {/* Table */}
             <ReusableTable
               data={data}
               setData={setData}

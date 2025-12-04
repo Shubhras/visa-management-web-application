@@ -4,7 +4,8 @@ import AddEditEducationModal from "./AddEditEducationModal";
 import AddEditWorkExperienceModal from "./AddEditWorkExperienceModal";
 import AddEditLanguageAbilityModal from "./AddEditLanguageAbilityModal";
 import AddEditEntranceTestModal from "./AddEditEntranceTestModal";
-import Select from "react-select"
+import Select from "react-select";
+
 const ReusableTable = ({
   title,
   data,
@@ -19,6 +20,7 @@ const ReusableTable = ({
 }) => {
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
+
   const dropdownRef = useRef(null);
 
   // Sorting state
@@ -128,12 +130,12 @@ const ReusableTable = ({
   };
 
   return (
-    <div className={`${tableSize}-table-container mb-3`}>
-      <div className="py-2 px-4 border-bottom ">
-        <h6 className="mb-0 fw-semibold fs-6" style={{ color: "#5a6c5b" }}>
+    <div className={`${tableSize}-table-container my-3`}>
+      {/* <div className="py-2 px-4 border-bottom "> */}
+        {/* <h6 className="mb-0 fw-semibold fs-6" style={{ color: "#5a6c5b" }}>
           {title}
-        </h6>
-      </div>
+        </h6> */}
+      {/* </div> */}
 
       <div className="card-body pt-0 container-table mb-0 min-height">
         <div className="mb-2">
@@ -141,17 +143,17 @@ const ReusableTable = ({
             <thead className="colored-table-head">
               <tr>
                 <th scope="col" className="sl-numbar-th ">
-                  <div className="d-flex align-items-center gap-2 ">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      checked={isAllSelected}
-                      onChange={handleSelectAll}
-                      disabled={data.length === 0}
-                    />
-                    <span>No.</span>
-                  </div>
-                </th>
+                    <div className="d-flex align-items-center gap-2 ">
+                      {/* <input
+                        className="form-check-input"
+                        type="checkbox"
+                        checked={isAllSelected}
+                        onChange={handleSelectAll}
+                        disabled={data.length === 0}
+                      /> */}
+                      <span>No.</span>
+                    </div>
+                  </th>
                 {columns.map(
                   (col) =>
                     visibleColumns.includes(col.id) && (
@@ -230,12 +232,12 @@ const ReusableTable = ({
                   <tr key={row.id}>
                     <td>
                       <div className="d-flex align-items-center gap-2">
-                        <input
+                        {/* <input
                           className="form-check-input"
                           type="checkbox"
                           checked={selectedRows.includes(row.id)}
                           onChange={() => handleRowSelect(row.id)}
-                        />
+                        /> */}
                         <span>{String(index + 1).padStart(2, "0")}</span>
                       </div>
                     </td>
@@ -291,6 +293,12 @@ const ReusableTable = ({
 
 const PrincipalApplicantTables = () => {
   // Data states
+
+  const [showEducation, setShowEducation] = useState(false);
+  const [showWorkExp, setShowWorkExp] = useState(false);
+  const [showLanguage, setShowLanguage] = useState(false);
+  const [showEntrance, setShowEntrance] = useState(false);
+
   const [educations, setEducations] = useState([
     {
       id: 1,
@@ -302,6 +310,39 @@ const PrincipalApplicantTables = () => {
       endDate: "02/04/2004",
       result: "67.04%",
     },
+    {
+      id: 2,
+      educationLevel: "Masters",
+      duration: "24",
+      studyMainArea: "Computer Science",
+      eduType: "Full-Time",
+      startDate: "01/08/2004",
+      endDate: "30/06/2006",
+      result: "78.50%",
+    },
+    ,
+    {
+      id: 2,
+      educationLevel: "Masters",
+      duration: "24",
+      studyMainArea: "Computer Science",
+      eduType: "Full-Time",
+      startDate: "01/08/2004",
+      endDate: "30/06/2006",
+      result: "78.50%",
+    },
+    ,
+    {
+      id: 2,
+      educationLevel: "Masters",
+      duration: "24",
+      studyMainArea: "Computer Science",
+      eduType: "Full-Time",
+      startDate: "01/08/2004",
+      endDate: "30/06/2006",
+      result: "78.50%",
+    },
+    ,
     {
       id: 2,
       educationLevel: "Masters",
@@ -363,7 +404,7 @@ const PrincipalApplicantTables = () => {
     },
   ]);
 
-  const [appearedEntranceTest, setAppearedEntranceTest] = useState("Yes");
+  const [appearedEntranceTest, setAppearedEntranceTest] = useState("No");
 
   // Modal states
   const [educationModal, setEducationModal] = useState({
@@ -533,124 +574,174 @@ const PrincipalApplicantTables = () => {
             `}</style>
 
       <div className="">
-        {/* Education - Small Table */}
-        <ReusableTable
-          title="Education (PA)"
-          data={educations}
-          setData={setEducations}
-          columns={educationColumns}
-          visibleColumns={eduVisible}
-          setVisibleColumns={setEduVisible}
-          tableSize="small"
-          enableSorting={true}
-          onEditClick={handleEducationEdit}
-          onAddNew={handleAddNewEducation}
-        />
+        <div className="card mb-4">
+          <div className="card-header bg-light py-1 d-flex align-items-center gap-2">
+            <input
+              type="checkbox"
+              className="form-check-input"
+              checked={showEducation}
+              onChange={(e) => setShowEducation(e.target.checked)}
+            />
+            <h6 className="mb-0 fw-medium fs-6" style={{ color: "#5a6c5b" }}>
+              Education (PA)
+            </h6>
+          </div>
+
+          {showEducation && (
+            <ReusableTable
+              title="Education (PA)"
+              data={educations}
+              setData={setEducations}
+              columns={educationColumns}
+              visibleColumns={eduVisible}
+              setVisibleColumns={setEduVisible}
+              tableSize="small"
+              enableSorting={true}
+              onEditClick={handleEducationEdit}
+              onAddNew={handleAddNewEducation}
+            />
+          )}
+        </div>
 
         {/* Work Experience - Small Table */}
-        <ReusableTable
-          title="Work Experience (PA)"
-          data={workExperiences}
-          setData={setWorkExperiences}
-          columns={workColumns}
-          visibleColumns={workVisible}
-          setVisibleColumns={setWorkVisible}
-          tableSize="small"
-          enableSorting={true}
-          onEditClick={handleWorkExperienceEdit}
-          onAddNew={handleAddNewWorkExperience}
-        />
+        <div className="card mb-4">
+          <div className="card-header bg-light py-1 d-flex align-items-center gap-2">
+            <input
+              type="checkbox"
+              className="form-check-input"
+              checked={showWorkExp}
+              onChange={(e) => setShowWorkExp(e.target.checked)}
+            />
+            <h6 className="mb-0 fw-medium fs-6" style={{ color: "#5a6c5b" }}>
+              Work Experience (PA)
+            </h6>
+          </div>
 
-        {/* Language Ability - Small Table */}
-        <ReusableTable
-          title="Language Ability (PA)"
-          data={languageAbilities}
-          setData={setLanguageAbilities}
-          columns={languageColumns}
-          visibleColumns={langVisible}
-          setVisibleColumns={setLangVisible}
-          tableSize="small"
-          enableSorting={true}
-          onEditClick={handleLanguageAbilityEdit}
-          onAddNew={handleAddNewLanguageAbility}
-        />
+          {showWorkExp && (
+            <ReusableTable
+              title="Work Experience (PA)"
+              data={workExperiences}
+              setData={setWorkExperiences}
+              columns={workColumns}
+              visibleColumns={workVisible}
+              setVisibleColumns={setWorkVisible}
+              tableSize="small"
+              enableSorting={true}
+              onEditClick={handleWorkExperienceEdit}
+              onAddNew={handleAddNewWorkExperience}
+            />
+          )}
+        </div>
+
+        <div className="card mb-4">
+          <div className="card-header bg-light py-1 d-flex align-items-center gap-2">
+            <input
+              type="checkbox"
+              className="form-check-input"
+              checked={showLanguage}
+              onChange={(e) => setShowLanguage(e.target.checked)}
+            />
+            <h6 className="mb-0 fw-medium fs-6" style={{ color: "#5a6c5b" }}>
+              Language Ability (PA)
+            </h6>
+          </div>
+
+          {showLanguage && (
+            <ReusableTable
+              title="Language Ability (PA)"
+              data={languageAbilities}
+              setData={setLanguageAbilities}
+              columns={languageColumns}
+              visibleColumns={langVisible}
+              setVisibleColumns={setLangVisible}
+              tableSize="small"
+              enableSorting={true}
+              onEditClick={handleLanguageAbilityEdit}
+              onAddNew={handleAddNewLanguageAbility}
+            />
+          )}
+        </div>
 
         {/* Entrance Test Section */}
-        <div className="mb-4 small-table-container compact-inputs">
-          <div className="card-header py-1 px-4 ">
-            <h6 className="mb-0 fw-semibold fs-6" style={{ color: "#5a6c5b" }}>
+        <div className="card mb-4">
+          <div className="card-header bg-light py-1 d-flex align-items-center gap-2">
+            <input
+              type="checkbox"
+              className="form-check-input"
+              checked={showEntrance}
+              onChange={(e) => setShowEntrance(e.target.checked)}
+            />
+            <h6 className="mb-0 fw-medium fs-6" style={{ color: "#5a6c5b" }}>
               Entrance Test Ability (PA)
             </h6>
           </div>
 
-          <div className="mt-1">
-            <div className="row g-3 align-items-end">
-              {/* Appeared Any Entrance Test */}
-              <div className="col-md-4">
-                <label className="form-label fw-medium">
-                  Appeared Any Entrance Test?
-                </label>
-
-                <Select
-                  classNamePrefix="custom-select"
-                  className="custom-select-container"
-                  options={[
-                    { value: "", label: "Select" },
-                    { value: "Yes", label: "Yes" },
-                    { value: "No", label: "No" },
-                  ]}
-                  value={
-                    appearedEntranceTest
-                      ? {
-                          value: appearedEntranceTest,
-                          label: appearedEntranceTest,
-                        }
-                      : { value: "", label: "Select" }
-                  }
-                  onChange={(opt) => setAppearedEntranceTest(opt?.value || "")}
-                />
-              </div>
-
-              {/* Entrance Test Name */}
-              {appearedEntranceTest === "Yes" && (
+          {showEntrance && (
+            <div className="p-3">
+              <div className="row g-3 align-items-end">
                 <div className="col-md-4">
                   <label className="form-label fw-medium">
-                    Entrance Test Name
+                    Appeared Any Entrance Test?
                   </label>
-
                   <Select
                     classNamePrefix="custom-select"
-                    className="custom-select-container"
                     options={[
-                      { value: "", label: "Select Test" },
-                      { value: "GRE", label: "GRE" },
-                      { value: "GMAT", label: "GMAT" },
-                      { value: "SAT", label: "SAT" },
-                      { value: "ACT", label: "ACT" },
+                      { value: "", label: "Select" },
+                      { value: "Yes", label: "Yes" },
+                      { value: "No", label: "No" },
                     ]}
-                    placeholder="Select Test"
+                    value={
+                      appearedEntranceTest
+                        ? {
+                            value: appearedEntranceTest,
+                            label: appearedEntranceTest,
+                          }
+                        : { value: "", label: "Select" }
+                    }
+                    onChange={(opt) =>
+                      setAppearedEntranceTest(opt?.value || "")
+                    }
+                  />
+                </div>
+
+                {appearedEntranceTest === "Yes" && (
+                  <div className="col-md-4">
+                    <label className="form-label fw-medium">
+                      Entrance Test Name
+                    </label>
+                    <Select
+                      options={[
+                        { value: "", label: "Select Test" },
+                        { value: "GRE", label: "GRE" },
+                        { value: "GMAT", label: "GMAT" },
+                        { value: "SAT", label: "SAT" },
+                        { value: "ACT", label: "ACT" },
+                      ]}
+                      placeholder="Select"
+                      classNamePrefix="custom-select"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {appearedEntranceTest === "Yes" && (
+                <div className="mt-3">
+                  <ReusableTable
+                    title="Entrance Test Results"
+                    data={entranceTests}
+                    setData={setEntranceTests}
+                    columns={entranceColumns}
+                    visibleColumns={entranceVisible}
+                    setVisibleColumns={setEntranceVisible}
+                    tableSize="small"
+                    enableSorting={true}
+                    onEditClick={handleEntranceTestEdit}
+                    onAddNew={handleAddNewEntranceTest}
                   />
                 </div>
               )}
             </div>
-
-            {appearedEntranceTest === "Yes" && (
-              <div className="mt-3">
-                <ReusableTable
-                  title="Entrance Test Results"
-                  data={entranceTests}
-                  setData={setEntranceTests}
-                  columns={entranceColumns}
-                  visibleColumns={entranceVisible}
-                  setVisibleColumns={setEntranceVisible}
-                  tableSize="small"
-                  enableSorting={true}
-                  onEditClick={handleEntranceTestEdit}
-                  onAddNew={handleAddNewEntranceTest}
-                />
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </div>
 

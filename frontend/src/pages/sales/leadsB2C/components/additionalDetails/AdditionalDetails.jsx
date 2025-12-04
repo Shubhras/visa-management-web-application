@@ -129,18 +129,18 @@ const ReusableTable = ({
 
   return (
     <div className={`${tableSize}-table-container my-3`}>
-      <div className="py-2 px-4 border-bottom">
-        <h6 className="mb-0 fw-semibold fs-6" style={{ color: "#5a6c5b" }}>
+      {/* <div className="py-2 px-4 border-bottom"> */}
+        {/* <h6 className="mb-0 fw-semibold fs-6" style={{ color: "#5a6c5b" }}>
           {title}
-        </h6>
-      </div>
+        </h6> */}
+      {/* </div> */}
 
       <div className="card-body pt-0 container-table mb-0 min-height">
         <div className="mb-2">
           <table className="table mb-0 ">
             <thead className="colored-table-head">
               <tr>
-                <th scope="col" className="sl-numbar-th ">
+                {/* <th scope="col" className="sl-numbar-th ">
                   <div className="d-flex align-items-center gap-2 ">
                     <input
                       className="form-check-input"
@@ -151,7 +151,7 @@ const ReusableTable = ({
                     />
                     <span>No.</span>
                   </div>
-                </th>
+                </th> */}
                 {columns.map(
                   (col) =>
                     visibleColumns.includes(col.id) && (
@@ -228,7 +228,7 @@ const ReusableTable = ({
               ) : (
                 sortedData.map((row, index) => (
                   <tr key={row.id}>
-                    <td>
+                    {/* <td>
                       <div className="d-flex align-items-center gap-2">
                         <input
                           className="form-check-input"
@@ -238,7 +238,7 @@ const ReusableTable = ({
                         />
                         <span>{String(index + 1).padStart(2, "0")}</span>
                       </div>
-                    </td>
+                    </td> */}
                     {columns.map(
                       (col) =>
                         visibleColumns.includes(col.id) && (
@@ -295,6 +295,7 @@ const AdditionalDetails = () => {
     hasVisited: "",
     hasRefused: "",
     hasBusinessExperience: "",
+    hasNetworkAndInvestment: "",
     tradeCertificate: false,
     educationalAssessment: false,
     itaProvince: false,
@@ -444,8 +445,8 @@ const AdditionalDetails = () => {
       country: "India",
       currency: "INR",
       immovable: 5000000, // Numeric
-      movable: 2000000,   // Numeric
-      liquid: 1000000,    // Numeric
+      movable: 2000000, // Numeric
+      liquid: 1000000, // Numeric
       totalNetWorth: 8000000, // Auto-calculated
     },
     {
@@ -519,6 +520,11 @@ const AdditionalDetails = () => {
     mode: "add",
     rowData: null,
   });
+  const [networkAndInvestmentModal, setNetworkAndInvestmentModal] = useState({
+    show: false,
+    mode: "add",
+    rowData: null,
+  });
 
   // Relatives Modal Handlers
   const handleRelativesShow = (mode = "add", rowData = null) => {
@@ -584,6 +590,25 @@ const AdditionalDetails = () => {
   const handleAddNewBusiness = () => {
     handleBusinessShow("add");
   };
+  const handleNetworkAndInvestmentShow = (mode = "add", rowData = null) => {
+    setNetworkAndInvestmentModal({ show: true, mode, rowData });
+  };
+
+  const handleNetworkAndInvestmentClose = () => {
+    setNetworkAndInvestmentModal({
+      show: false,
+      mode: "add",
+      rowData: null,
+    });
+  };
+
+  const handleNetworkAndInvestmentEdit = (rowData) => {
+    handleNetworkAndInvestmentShow("edit", rowData);
+  };
+
+  const handleAddNewNetworkAndInvestment = () => {
+    handleNetworkAndInvestmentShow("add");
+  };
 
   return (
     <div className="section-block container-fluid">
@@ -598,7 +623,7 @@ const AdditionalDetails = () => {
               handleInputChange("hasRelatives", e.target.checked ? "yes" : "no")
             }
           />
-          <h6 style={{ color: '#5a6c5b' }} className="mb-0 fw-medium fs-6 " >
+          <h6 style={{ color: "#5a6c5b" }} className="mb-0 fw-medium fs-6 ">
             Have you/spouse's RELATIVE in interested country?
           </h6>
         </div>
@@ -628,7 +653,7 @@ const AdditionalDetails = () => {
               handleInputChange("hasVisited", e.target.checked ? "yes" : "no")
             }
           />
-          <h6 className="mb-0 fw-medium fs-6"style={{ color: '#5a6c5b' }}>
+          <h6 className="mb-0 fw-medium fs-6" style={{ color: "#5a6c5b" }}>
             Have you/spouse ever VISITED any country?
           </h6>
         </div>
@@ -658,7 +683,7 @@ const AdditionalDetails = () => {
               handleInputChange("hasRefused", e.target.checked ? "yes" : "no")
             }
           />
-          <h6 className="mb-0 fw-medium fs-6"style={{ color: '#5a6c5b' }}>
+          <h6 className="mb-0 fw-medium fs-6" style={{ color: "#5a6c5b" }}>
             Have you/spouse ever been REFUSED by any country?
           </h6>
         </div>
@@ -691,7 +716,7 @@ const AdditionalDetails = () => {
               )
             }
           />
-          <h6 className="mb-0 fw-medium fs-6 "style={{ color: '#5a6c5b' }}>
+          <h6 className="mb-0 fw-medium fs-6 " style={{ color: "#5a6c5b" }}>
             Do you have experience managing a business?
           </h6>
         </div>
@@ -715,29 +740,30 @@ const AdditionalDetails = () => {
           <input
             type="checkbox"
             className="form-check-input"
-            // checked={formData.hasBusinessExperience === "yes"}
-            // onChange={(e) =>
-            //   handleInputChange(
-            //     "hasBusinessExperience",
-            //     e.target.checked ? "yes" : "no"
-            //   )
-            // }
+            checked={formData.hasNetworkAndInvestment === "yes"}
+            onChange={(e) =>
+              handleInputChange(
+                "hasNetworkAndInvestment",
+                e.target.checked ? "yes" : "no"
+              )
+            }
           />
-          <h6 className="mb-0 fw-medium fs-6 "style={{ color: '#5a6c5b' }}>
+          <h6 className="mb-0 fw-medium fs-6 " style={{ color: "#5a6c5b" }}>
             Your Networth & Investment
           </h6>
         </div>
-
-        <ReusableTable
-          title="Networth & Investment"
-          data={property}
-          setData={setProperty}
-          columns={propertyColumns}
-          visibleColumns={propertyVisible}
-          setVisibleColumns={setPropertyVisible}
-          // onEditClick={handleBusinessEdit}
-          // onAddNew={handleAddNewBusiness}
-        />
+        {formData.hasNetworkAndInvestment === "yes" && (
+          <ReusableTable
+            title="Networth & Investment"
+            data={property}
+            setData={setProperty}
+            columns={propertyColumns}
+            visibleColumns={propertyVisible}
+            setVisibleColumns={setPropertyVisible}
+            onEditClick={handleNetworkAndInvestmentEdit}
+            onAddNew={handleAddNewNetworkAndInvestment}
+          />
+        )}
       </div>
 
       {/* OTHER CHECKBOX QUESTIONS */}
@@ -764,7 +790,11 @@ const AdditionalDetails = () => {
                 checked={formData[field]}
                 onChange={() => handleCheckboxChange(field)}
               />
-              <label className="form-check-label fw-medium" htmlFor={field} style={{ color: '#5a6c5b' }}>
+              <label
+                className="form-check-label fw-medium"
+                htmlFor={field}
+                style={{ color: "#5a6c5b" }}
+              >
                 {label}
               </label>
             </div>
