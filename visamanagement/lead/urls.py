@@ -77,8 +77,13 @@ urlpatterns = [
     path('eligibilityflags/create/',EligibilityFlagsCreateAPIView.as_view(),name='EligibilityFlags-create'),
 
     #<------------------------------SpouseEducation------------------------->
-   # path('spouseeducation/create/',SpouseEducationCreateAPIView.as_view(),name = 'SpouseEducation-create'),
-   # path('spouseeducation/get/',SpouseEducationListAPIView.as_view(),name = 'SpouseEducation-list'),
-   # path('spouseeducation/<uuid:uuid/',SpouseEducationDetailAPIView.as_view(),name = 'SpouseEducation-get-uuid'),
+    path('spouseeducation/create/',SpouseEducationleadCreateAPIView.as_view(),name = 'SpouseEducation-create'),
+    path('spouseeducation/get/',SpouseEducationleadListAPIView.as_view(),name = 'SpouseEducation-list'),
+    path('spouseeducation/<uuid:uuid>/',SpouseEducationleadDetailAPIView.as_view(),name = 'SpouseEducation-get-uuid'),
+    path('spouseeducation/<uuid:uuid>/update/',SpouseEducationleadUpdateAPIView.as_view(),name = 'SpouseEducation-get-update'),
+    path('spouseeducation/delete/',SpouseEducationleadDeleteAPIView.as_view(),name = 'SpouseEducation-delete'),
+
+    path('document/create/',LeadDocumentCreateAPI.as_view(),name='document-create'),
+    
 
 ]

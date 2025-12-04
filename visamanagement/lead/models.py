@@ -339,7 +339,7 @@ class BusinessExperience(models.Model):
 
 
 class Networth(models.Model):
-    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    uuid = models.UUIDField(primary_key=True,default=uuid.uuid4, editable=False, unique=True)
 
     applicant = models.ForeignKey(
         Applicant,
@@ -366,6 +366,7 @@ class Networth(models.Model):
 
 
 class EligibilityFlags(models.Model):
+    uuid = models.UUIDField(primary_key=True,default=uuid.uuid4, editable=False, unique=True)
     applicant = models.OneToOneField(
         Applicant,
         on_delete=models.CASCADE,
@@ -383,8 +384,10 @@ class EligibilityFlags(models.Model):
 
     def __str__(self):
         return f"{self.applicant}"
-    
-class SpouseEducation(models.Model):
+ 
+
+class SpouseEducationlead(models.Model):
+    uuid = models.UUIDField(primary_key=True,default=uuid.uuid4, editable=False, unique=True)
     applicant = models.ForeignKey(Applicant,on_delete=models.CASCADE,related_name='spio')
     education_level = models.ForeignKey(EducationLevel,on_delete=models.SET_NULL, null=True, related_name='education_level')
     duration = models.ForeignKey(EducationDuration,on_delete=models.SET_NULL,null=True,related_name='duration')
@@ -397,3 +400,13 @@ class SpouseEducation(models.Model):
     
     def __str__(self):
         return f"{self.applicant}"
+
+class LeadDocument(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    applicant = models.ForeignKey(Applicant, on_delete=models.CASCADE)
+    documentcategory = models.ForeignKey(DocumentCategory, on_delete=models.CASCADE)
+    documentname = models.ForeignKey(DocumentName, on_delete=models.CASCADE)
+
+    attachments = models.JSONField(default=list)  # <-- multiple file URLs in list
+
+    created_at = models.DateTimeField(auto_now_add=True)

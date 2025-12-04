@@ -67,7 +67,7 @@ class ApplicantAdmin(admin.ModelAdmin):
 class EducationAdmin(admin.ModelAdmin):
     # Important columns in list view
     list_display = (
-    'id',
+    'uuid',
     'applicant',
     'education_level',
     'education_type',
@@ -129,7 +129,7 @@ class EducationAdmin(admin.ModelAdmin):
 class WorkExperienceAdmin(admin.ModelAdmin):
     # Important columns in list view
     list_display = (
-    'id',
+    'uuid',
     'applicant',
     'employer_name',
     'designation',
@@ -208,7 +208,7 @@ class WorkExperienceAdmin(admin.ModelAdmin):
 class LanguageAbilityAdmin(admin.ModelAdmin):
 # Important columns in list view
     list_display = (
-    'id',
+    'uuid',
     'applicant',
     'language',
     'test_name',
@@ -273,7 +273,7 @@ class LanguageAbilityAdmin(admin.ModelAdmin):
 class EntranceTestAbilityAdmin(admin.ModelAdmin):
 # Important columns in list view
     list_display = (
-    'id',
+    'uuid',
     'applicant',
     'appeared_test',
     'entrance_test_name',
@@ -329,7 +329,7 @@ class EntranceTestAbilityAdmin(admin.ModelAdmin):
 class RelativeAdmin(admin.ModelAdmin):
 # Important columns in list view
     list_display = (
-    'id',
+    'uuid',
     'applicant',
     'applicant_type',
     'relation',
@@ -387,7 +387,7 @@ class RelativeAdmin(admin.ModelAdmin):
 class VisitHistoryAdmin(admin.ModelAdmin):
 # Important columns in list view
     list_display = (
-    'id',
+    'uuid',
     'applicant',
     'applicant_type',
     'country',
@@ -447,7 +447,7 @@ class VisitHistoryAdmin(admin.ModelAdmin):
 class RefusalHistoryAdmin(admin.ModelAdmin):
 # Important columns in list view
     list_display = (
-    'id',
+    'uuid',
     'applicant',
     'applicant_type',
     'country',
@@ -501,7 +501,7 @@ class RefusalHistoryAdmin(admin.ModelAdmin):
 class BusinessExperienceAdmin(admin.ModelAdmin):
 # Columns to display in admin list view
     list_display = (
-    'id',
+    'uuid',
     'applicant',
     'company_name',
     'company_type',
@@ -559,7 +559,7 @@ class BusinessExperienceAdmin(admin.ModelAdmin):
 class NetworthAdmin(admin.ModelAdmin):
 # Columns to display in admin list view
     list_display = (
-    'id',
+    'uuid',
     'applicant',
     'applicant_type',
     'country',
@@ -617,7 +617,7 @@ class NetworthAdmin(admin.ModelAdmin):
 class EligibilityFlagsAdmin(admin.ModelAdmin):
 # Columns to display in admin list view
     list_display = (
-    'id',
+    'uuid',
     'applicant',
     'trade_certificate',
     'educational_credential_assessment',
@@ -665,56 +665,3 @@ class EligibilityFlagsAdmin(admin.ModelAdmin):
         }),
     )
 
-@admin.register(SpouseEducation)
-class SpouseEducationAdmin(admin.ModelAdmin):
-    list_display = (
-        'id',
-        'applicant',
-        'education_level',
-        'duration',
-        'study_main_area',
-        'education_type',
-        'start_date',
-        'end_date',
-        'result'
-    )
-
-    search_fields = (
-        'applicant__name',
-        'result',
-        'education_level__name',
-        'study_main_area__name',
-    )
-
-    list_filter = (
-        'education_level',
-        'duration',
-        'education_type',
-        'start_date',
-        'end_date',
-    )
-
-    readonly_fields = ()
-
-    fieldsets = (
-        ('Applicant Information', {
-            'fields': ('applicant',)
-        }),
-
-        ('Education Details', {
-            'fields': (
-                'education_level',
-                'duration',
-                'study_main_area',
-                'education_type',
-            )
-        }),
-
-        ('Timeline', {
-            'fields': ('start_date', 'end_date')
-        }),
-
-        ('Result', {
-            'fields': ('result',)
-        }),
-    )

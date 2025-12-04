@@ -9,6 +9,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, serializers 
 from uuid import UUID
 from django.shortcuts import get_object_or_404
+from django.core.files.storage import default_storage
+
 
 class ApplicantCreateAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -1899,7 +1901,7 @@ class NetworthDeleteAPIView(APIView):
                 return Response({
                     "statusCode": 404,
                     "status" :  False,
-                    "message": "Business Experience not found. ",
+                    "message": "Networth not found. ",
                     "data":None        
                         },status=status.HTTP_404_NOT_FOUND)
         #delete all
@@ -2011,11 +2013,11 @@ class EligibilityFlagsCreateAPIView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 #<========================SpouseEducation=======================>
-class SpouseEducationCreateAPIView(APIView):
+class SpouseEducationleadCreateAPIView(APIView):
     permission_classes = [IsAuthenticated]
     def post(self,request):
         try:
-            serializer = SpouseEducationSerializer(data = request.data)
+            serializer = SpouseEducationleadSerializer(data = request.data)
             if serializer.is_valid():
                 serializer.save()
                 return Response({
@@ -2041,10 +2043,10 @@ class SpouseEducationCreateAPIView(APIView):
         
 
 
-class SpouseEducationListAPIView(APIView):
+class SpouseEducationleadListAPIView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self,request):
-        queryset = SpouseEducation.objects.all()
+        queryset = SpouseEducationlead.objects.all()
 
         #filter
         uuids = request.GET.get("uuids")
@@ -2060,14 +2062,14 @@ class SpouseEducationListAPIView(APIView):
                     },status=status.HTTP_400_BAD_REQUEST)
             queryset = queryset.filter(uuid_in=uuid_list)
 
-        serializer = SpouseEducationSerializer(queryset,many=True)
+        serializer = SpouseEducationleadSerializer(queryset,many=True)
         return Response({
             "status":True,
             "message":"Spouse Education data fatched successfully. ",
             "data":serializer.data,
         },status=status.HTTP_200_OK)
 
-class SpouseEducationDetailAPIView(APIView):
+class SpouseEducationleadDetailAPIView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self,request,uuid):
         try:
@@ -2078,10 +2080,161 @@ class SpouseEducationDetailAPIView(APIView):
                 "status":False,
                 "message":"Invalide UUID format"
             },status=status.HTTP_400_BAD_REQUEST)
-        spouse = get_object_or_404(SpouseEducation,uuid=valid_uuid)
-        serializer = SpouseEducationSerializer(spouse)
+        spouse = get_object_or_404(SpouseEducationlead,uuid=valid_uuid)
+        serializer = SpouseEducationleadSerializer(spouse)
         return Response({
             "status":True,
             "message":"Spouse Education fetched successfully. ",
             "data":serializer.data
         },status=status.HTTP_200_OK)
+
+class SpouseEducationleadUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def put(self,request,uuid):
+        try: 
+            spouse = SpouseEducationlead.objects.get(uuid=uuid)
+        except SpouseEducationlead.DoesNotExist:
+               return Response({
+                "status": "error",
+                "message": "Spouse Educationlead not found."
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            serializer = SpouseEducationleadSerializer(spouse,data = request.data, partial = True)
+            serializer.is_valid(raise_exception=True)
+
+            with transaction.atomic():
+               spouse = serializer.save()
+            return Response({
+                "status":True,
+                "message":"Spouse Educationlead updated successfully.",
+                "data":SpouseEducationleadSerializer(spouse).data
+            },status = status.HTTP_200_OK)
+        except serializers.ValidationError as ve:
+            return Response({
+                "status": "error",
+                "message": "Validation failed.",
+                "errors": ve.detail
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        except IntegrityError as ie:
+            return Response({
+                "status": "error",
+                "message": "Database integrity error.",
+                "details": str(ie)
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        except ValidationError as ve:
+            return Response({
+                "status": "error",
+                "message": "Validation failed.",
+                "errors": ve.message_dict
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                "status": "error",
+                "message": "Something went wrong.",
+                "details": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+
+class SpouseEducationleadDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def delete(self,request,uuid=None):
+        id = request.data.get('id',None)
+        
+        #single delete via url
+        if uuid:
+            try:
+                obj = SpouseEducationlead.objects.get(uuid=uuid)
+                obj.delete()
+                return Response({
+                    "statusCode":204,
+                    "status":True,
+                    "message":"Spouse Educationlead deleted.",
+                    "data":None
+                },status=status.HTTP_204_NO_CONTENT)
+            except SpouseEducationlead.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status" :  False,
+                    "message": "Spouse Educationlead not found. ",
+                    "data":None        
+                        },status=status.HTTP_404_NOT_FOUND)
+        #delete all
+        if id == "all":
+            queryset = SpouseEducationlead.objects.all()
+            count = queryset.count()
+            queryset.delete()
+            return Response({
+                "statusCode":200,
+                "status":True,
+                "message": f"All {count} Spouse Educationlead permanently deleted. ",
+                "data":None
+            },status=status.HTTP_200_OK)
+        
+        #Bulk Delete
+        if not id or not isinstance(id,list):
+            return Response({
+                "statusCode":400,
+                "status":False,
+                "message":"Please provide a list of U"
+                "UIDs in 'id' field or 'all'.",
+                "data":None
+            },status= status.HTTP_400_BAD_REQUEST)
+        valid_uuids= []
+        invalid_uuids= []
+        for u in id:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(UUID(u))
+        queryset = SpouseEducationlead.objects.filter(uuid__in=valid_uuids)
+        count = queryset.count()
+        queryset.delete()
+        return Response({
+            "statusCode":200,
+            "status":True,
+            "message":f"{count} SpouseEducationlead permanently deleted.",
+            "data":{"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        },status = status.HTTP_200_OK)
+    
+class LeadDocumentCreateAPI(APIView):
+    
+    def post(self, request):
+        files = request.FILES.getlist("attachments")
+
+        # Convert uploaded files to URLs
+        file_urls = []
+        for f in files:
+            path = default_storage.save(f"documents/{f.name}", f)
+            file_urls.append(default_storage.url(path))
+
+        # Create serializer input
+        payload = {
+            "applicant": request.data.get("applicant"),
+            "documentcategory": request.data.get("documentcategory"),
+            "documentname": request.data.get("documentname"),
+            "attachments": file_urls
+        }
+
+        serializer = LeadDocumentSerializer(data=payload)
+        serializer.is_valid(raise_exception=True)
+
+        # Create model
+        lead_doc = LeadDocument.objects.create(
+            applicant_id = Applicant.objects.get(uuid=serializer.validated_data["applicant"]).id,
+            documentcategory_id = DocumentCategory.objects.get(uuid=serializer.validated_data["documentcategory"]).id,
+            documentname_id = DocumentName.objects.get(uuid=serializer.validated_data["documentname"]).id,
+            attachments = file_urls
+        )
+
+        return Response({
+            "uuid": lead_doc.uuid,
+            "applicant": str(lead_doc.applicant.uuid),
+            "documentcategory": str(lead_doc.documentcategory.uuid),
+            "documentname": str(lead_doc.documentname.uuid),
+            "attachments": file_urls,
+            "created_at": lead_doc.created_at
+        })
