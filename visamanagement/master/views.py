@@ -11451,7 +11451,7 @@ class OwnershipTypeDeleteAPIView(APIView):
             # CASE 2: ids = "all" + deleteAll = false → delete full table
             # ---------------------------------------
             if ids == "all" and not delete_all:
-                queryset = OwnershipType.objects.filter(is_deleted=False)
+                queryset = OwnershipType.objects.filter()
                 count = queryset.count()
                 if count == 0:
                     return Response({
@@ -11484,7 +11484,7 @@ class OwnershipTypeDeleteAPIView(APIView):
             # ---------------------------------------
             # Base queryset for filtered or bulk delete
             # ---------------------------------------
-            queryset = OwnershipType.objects.filter(is_deleted=False)
+            queryset = OwnershipType.objects.filter()
             applied_filters = []
 
             # Apply SEARCH filter
@@ -11555,7 +11555,7 @@ class OwnershipTypeDeleteAPIView(APIView):
                     "data": {"invalid_uuids": invalid_uuids}
                 }, status=400)
 
-            bulk_qs = OwnershipType.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+            bulk_qs = OwnershipType.objects.filter(uuid__in=valid_uuids)
             count = bulk_qs.count()
 
             if count == 0:
@@ -11604,121 +11604,6 @@ class OwnershipTypeDeleteAPIView(APIView):
 
 
 
-
-# class OwnershipTypeExportAPIView(APIView):
-#     """
-#     Export OwnershipType data to XLSX or CSV with company_type info and custom sorting.
-#     """
-#     # permission_classes = []  # Add IsAuthenticated if needed
-
-#     def get(self, request):
-#         format_type = request.GET.get('format', 'xlsx').lower()
-#         fields = request.GET.get('fields')
-#         uuids_param = request.GET.get('uuids', '')
-#         custom_sort = request.GET.get('customSort')  # e.g., name:asc,created_at:desc
-#         search = request.GET.get('search', '').strip()
-
-#         uuids = [u.strip() for u in uuids_param.split(',') if u]
-
-#         # --- Field headers ---
-#         field_header_map = {
-#             'uuid': 'UUID',
-#             'company_type_name': 'Company Type',
-#             'name': 'Ownership Type',
-#             'description': 'Description',
-#             'is_deleted': 'Deleted',
-#             'created_at': 'Created On',
-#             'updated_at': 'Modified On',
-#         }
-
-#         # Fields to export
-#         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
-
-#         # Fetch queryset
-#         queryset = OwnershipType.objects.all()
-#         if uuids:
-#             queryset = queryset.filter(uuid__in=uuids)
-
-#         if search:
-#             queryset = queryset.filter(Q(name__istartswith=search))    
-
-#         # --- Custom sorting logic ---
-#         sort_field_map = {
-#             'name': 'name',
-#             'description': 'description',
-#             'is_deleted': 'is_deleted',
-#             'created_at': 'created_at',
-#             'updated_at': 'updated_at',
-#             'company_type_name': 'company_type__name',
-#         }
-
-#         sort_fields = []
-
-#         if custom_sort:
-#             for rule in custom_sort.split(','):
-#                 try:
-#                     field, order = rule.split(':')
-#                     field = field.strip()
-#                     order = order.strip().lower()
-#                     if field not in sort_field_map:
-#                         continue
-
-#                     orm_field = sort_field_map[field]
-
-#                     # Case-insensitive sorting for string fields
-#                     if field in ['name', 'description', 'company_type_name']:
-#                         f = Lower(orm_field)
-#                     else:
-#                         f = F(orm_field)
-
-#                     sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
-
-#                 except ValueError:
-#                     continue
-#         else:
-#             # Default sort by created_at desc
-#             sort_order = request.GET.get('sortOrder', 'desc')
-#             f = F('created_at')
-#             sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
-
-#         queryset = queryset.order_by(*sort_fields)
-
-#         # --- Prepare dataset ---
-#         dataset = Dataset()
-#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-#         dataset.title = 'OwnershipType'
-
-#         for obj in queryset:
-#             row = []
-#             for field in field_list:
-#                 if field == 'company_type_name':
-#                     value = obj.company_type.name if obj.company_type else ''
-#                 else:
-#                     value = getattr(obj, field, '')
-#                     if field in ['created_at', 'updated_at'] and value:
-#                         value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
-#                     elif isinstance(value, bool):
-#                         value = int(value)
-#                 row.append(value if value is not None else '')
-#             dataset.append(row)
-
-#         # --- Export data ---
-#         if format_type == 'csv':
-#             file_data = dataset.export('csv')
-#             content_type = 'text/csv'
-#             file_name = 'ownership_types.csv'
-#         else:
-#             file_data = io.BytesIO(dataset.export('xlsx'))
-#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-#             file_name = 'ownership_types.xlsx'
-
-#         # --- Return response ---
-#         response = HttpResponse(
-#             file_data if format_type == 'csv' else file_data.getvalue(),
-#             content_type=content_type
-#         )
-#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
-#         return response
 
 
 
@@ -12945,82 +12830,6 @@ class StakeholderTypeUpdateAPIView(APIView):
 # ----------------- DELETE -----------------
 
 
-# class StakeholderTypeDeleteAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
-
-#     def delete(self, request, uuid=None):
-#         ids = request.data.get('id', None)
-
-#         if uuid:
-#             try:
-#                 obj = StakeholderType.objects.get(uuid=uuid)
-#                 obj.delete()
-#                 return Response({
-#                     "statusCode": 204,
-#                     "status": True,
-#                     "message": "StakeholderType permanently deleted.",
-#                     "data": None
-#                 }, status=status.HTTP_204_NO_CONTENT)
-#             except StakeholderType.DoesNotExist:
-#                 return Response({
-#                     "statusCode": 404,
-#                     "status": False,
-#                     "message": "StakeholderType not found.",
-#                     "data": None
-#                 }, status=status.HTTP_404_NOT_FOUND)
-
-#         if ids == "all":
-#             count = StakeholderType.objects.all().count()
-#             if count == 0:
-#                 return Response({
-#                     "statusCode": 404,
-#                     "status": False,
-#                     "message": "No StakeholderTypes found to delete.",
-#                     "data": None
-#                 }, status=status.HTTP_404_NOT_FOUND)
-#             StakeholderType.objects.all().delete()
-#             return Response({
-#                 "statusCode": 200,
-#                 "status": True,
-#                 "message": f"All {count} StakeholderType(s) permanently deleted.",
-#                 "data": None
-#             }, status=status.HTTP_200_OK)
-
-#         if not ids or not isinstance(ids, list):
-#             return Response({
-#                 "statusCode": 400,
-#                 "status": False,
-#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
-#                 "data": None
-#             }, status=status.HTTP_400_BAD_REQUEST)
-
-#         valid_uuids = []
-#         invalid_uuids = []
-#         for u in ids:
-#             try:
-#                 valid_uuids.append(UUID(u))
-#             except ValueError:
-#                 invalid_uuids.append(u)
-
-#         queryset = StakeholderType.objects.filter(uuid__in=valid_uuids)
-#         count = queryset.count()
-#         if count == 0:
-#             return Response({
-#                 "statusCode": 404,
-#                 "status": False,
-#                 "message": "No matching StakeholderTypes found.",
-#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-#             }, status=status.HTTP_404_NOT_FOUND)
-
-#         queryset.delete()
-#         return Response({
-#             "statusCode": 200,
-#             "status": True,
-#             "message": f"{count} StakeholderType(s) permanently deleted.",
-#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-#         }, status=status.HTTP_200_OK)
-
-
 class StakeholderTypeDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -13209,118 +13018,6 @@ class StakeholderTypeDeleteAPIView(APIView):
 
 
 # ----------------- EXPORT -----------------
-
-# class StakeholderTypeExportAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
-
-#     def get(self, request):
-#         format_type = request.GET.get('format', 'xlsx').lower()
-#         fields = request.GET.get('fields')  # comma-separated
-#         uuids_param = request.GET.get('uuids', '')
-#         custom_sort = request.GET.get('customSort')  # e.g., name:asc,created_at:desc
-#         search = request.GET.get('search', '').strip()
-
-#         # --- Parse UUIDs ---
-#         uuids = [u.strip() for u in uuids_param.split(',') if u]
-
-#         # --- Field headers ---
-#         field_header_map = {
-#             'uuid': 'UUID',
-#             'name': 'Stakeholder Type',
-#             'description': 'Description',
-#             'category': 'Category UUID',
-#             'category_name': 'Stakeholder Category',
-#             'is_deleted': 'Deleted',
-#             'updated_at': 'Modified On',
-#             'created_at': 'Created On'
-#         }
-
-#         # --- Fields to export ---
-#         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
-
-#         # --- Fetch queryset ---
-#         queryset = StakeholderType.objects.filter(is_deleted=False)
-#         if uuids:
-#             queryset = queryset.filter(uuid__in=uuids)
-#         if search:
-#             queryset = queryset.filter(Q(name__istartswith=search))
-
-#         # --- Custom sorting logic ---
-#         sort_field_map = {
-#             'name': 'name',
-#             'description': 'description',
-#             'created_at': 'created_at',
-#             'updated_at': 'updated_at',
-#             'category_name': 'category__name',
-#         }
-
-#         sort_fields = []
-#         if custom_sort:
-#             for rule in custom_sort.split(','):
-#                 try:
-#                     field, order = rule.split(':')
-#                     field = field.strip()
-#                     order = order.strip().lower()
-#                     if field not in sort_field_map:
-#                         continue
-
-#                     orm_field = sort_field_map[field]
-
-#                     # Case-insensitive sorting for string fields
-#                     if field in ['name', 'description', 'category_name']:
-#                         f = Lower(orm_field)
-#                     else:
-#                         f = F(orm_field)
-
-#                     sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
-
-#                 except ValueError:
-#                     continue
-#         else:
-#             # Default sorting by created_at desc
-#             sort_order = request.GET.get('sortOrder', 'desc')
-#             f = F('created_at')
-#             sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
-
-#         queryset = queryset.order_by(*sort_fields)
-
-#         # --- Prepare dataset ---
-#         dataset = Dataset()
-#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-#         dataset.title = 'StakeholderType'
-
-#         for obj in queryset:
-#             row = []
-#             for field in field_list:
-#                 if field == 'category_name':
-#                     value = obj.category.name if obj.category else ''
-#                 else:
-#                     value = getattr(obj, field, '')
-#                     if field in ['created_at', 'updated_at'] and value:
-#                         value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-#                     elif isinstance(value, bool):
-#                         value = int(value)
-#                 row.append(value if value is not None else '')
-#             dataset.append(row)
-
-#         # --- Export data ---
-#         if format_type == 'csv':
-#             file_data = dataset.export('csv')
-#             content_type = 'text/csv'
-#             file_name = 'stakeholder_types.csv'
-#         else:
-#             file_data = io.BytesIO(dataset.export('xlsx'))
-#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-#             file_name = 'stakeholder_types.xlsx'
-
-#         # --- Return response ---
-#         response = HttpResponse(
-#             file_data if format_type == 'csv' else file_data.getvalue(),
-#             content_type=content_type
-#         )
-#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
-#         return response
-
 
 class StakeholderTypeExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -13835,70 +13532,7 @@ class AccreditationCategoryUpdateAPIView(APIView):
 
 
 # ------------------ Delete API ------------------
-# class AccreditationCategoryDeleteAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
 
-#     def delete(self, request, uuid=None):
-#         ids = request.data.get('id', None)
-
-#         # Single delete via URL
-#         if uuid:
-#             try:
-#                 obj = AccreditationCategory.objects.get(uuid=uuid)
-#                 obj.delete()
-#                 return Response({
-#                     "statusCode": 204,
-#                     "status": True,
-#                     "message": "Accreditation category permanently deleted.",
-#                     "data": None
-#                 }, status=status.HTTP_204_NO_CONTENT)
-#             except AccreditationCategory.DoesNotExist:
-#                 return Response({
-#                     "statusCode": 404,
-#                     "status": False,
-#                     "message": "Accreditation category not found.",
-#                     "data": None
-#                 }, status=status.HTTP_404_NOT_FOUND)
-
-#         # Delete all
-#         if ids == "all":
-#             queryset = AccreditationCategory.objects.all()
-#             count = queryset.count()
-#             queryset.delete()
-#             return Response({
-#                 "statusCode": 200,
-#                 "status": True,
-#                 "message": f"All {count} accreditation category(s) permanently deleted.",
-#                 "data": None
-#             }, status=status.HTTP_200_OK)
-
-#         # Bulk delete
-#         if not ids or not isinstance(ids, list):
-#             return Response({
-#                 "statusCode": 400,
-#                 "status": False,
-#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
-#                 "data": None
-#             }, status=status.HTTP_400_BAD_REQUEST)
-
-#         valid_uuids = []
-#         invalid_uuids = []
-#         for u in ids:
-#             try:
-#                 valid_uuids.append(UUID(u))
-#             except ValueError:
-#                 invalid_uuids.append(u)
-
-#         queryset = AccreditationCategory.objects.filter(uuid__in=valid_uuids)
-#         count = queryset.count()
-#         queryset.delete()
-
-#         return Response({
-#             "statusCode": 200,
-#             "status": True,
-#             "message": f"{count} accreditation category(s) permanently deleted.",
-#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-#         }, status=status.HTTP_200_OK)
 
 class AccreditationCategoryDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -14048,28 +13682,135 @@ class AccreditationCategoryDeleteAPIView(APIView):
             }, status=500)
         
 # ------------------ Export API ------------------
+# class AccreditationCategoryExportAPIView(APIView):
+
+#     def get(self, request):
+#         format_type = request.GET.get('format', 'xlsx').lower()
+#         fields = request.GET.get('fields')
+#         uuids_param = request.GET.get('uuids', '')
+#         search = request.GET.get('search', '').strip()
+
+#         custom_sort = request.GET.get('customSort') 
+
+#         uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+#         field_header_map = {
+#             'uuid': 'UUID',
+#             'name': 'Accreditation Category',
+#             'description': 'Description',
+#             'is_deleted': 'Deleted',
+#             'updated_at': 'Modified On',
+#         }
+
+#         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+#         queryset = AccreditationCategory.objects.filter(is_deleted=False)
+#         if uuids:
+#             queryset = queryset.filter(uuid__in=uuids)
+
+#         # Search filter
+#         if search:
+#             queryset = queryset.filter(Q(name__istartswith=search))
+
+#         # --- Custom sorting logic ---
+#         sort_field_map = {
+#             'name': 'name',
+#             'description': 'description',
+#             'created_at': 'created_at',
+#             'updated_at': 'updated_at',
+#         }
+
+#         sort_fields = []
+#         if custom_sort:
+#             for rule in custom_sort.split(','):
+#                 try:
+#                     field, order = rule.split(':')
+#                     field = field.strip()
+#                     order = order.strip().lower()
+#                     if field not in sort_field_map:
+#                         continue
+#                     orm_field = sort_field_map[field]
+
+#                     # Case-insensitive sorting for string fields
+#                     if field in ['name', 'description']:
+#                         f = Lower(orm_field)
+#                     else:
+#                         f = F(orm_field)
+
+#                     sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+#                 except ValueError:
+#                     continue
+#         else:
+#             # Default sorting by created_at
+#             sort_order = request.GET.get('sortOrder', 'desc')
+#             f = F('created_at')
+#             sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
+
+    
+
+#         queryset = queryset.order_by('-created_at')
+
+#         dataset = Dataset()
+#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+#         dataset.title = 'AccreditationCategory'
+
+#         for obj in queryset:
+#             row = []
+#             for field in field_list:
+#                 value = getattr(obj, field, '')
+#                 if field in ['created_at', 'updated_at'] and value:
+#                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+#                 elif isinstance(value, bool):
+#                     value = int(value)
+#                 row.append(value if value is not None else '')
+#             dataset.append(row)
+
+#         if format_type == 'csv':
+#             file_data = dataset.export('csv')
+#             content_type = 'text/csv'
+#             file_name = 'accreditation_categories.csv'
+#         else:
+#             file_data = io.BytesIO(dataset.export('xlsx'))
+#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+#             file_name = 'accreditation_categories.xlsx'
+
+#         response = HttpResponse(
+#             file_data if format_type == 'csv' else file_data.getvalue(),
+#             content_type=content_type
+#         )
+#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+#         return response
+
+
 class AccreditationCategoryExportAPIView(APIView):
+    """
+    Export AccreditationCategory data to CSV or XLSX with custom sorting.
+    """
+    # permission_classes = [IsAuthenticated]  # Uncomment if authentication is required
 
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
         uuids_param = request.GET.get('uuids', '')
+        custom_sort = request.GET.get('customSort')  
         search = request.GET.get('search', '').strip()
-
-        custom_sort = request.GET.get('customSort') 
 
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
+        # --- Field to header mapping ---
         field_header_map = {
             'uuid': 'UUID',
             'name': 'Accreditation Category',
             'description': 'Description',
             'is_deleted': 'Deleted',
+            'created_at': 'Created On',
             'updated_at': 'Modified On',
         }
 
+        # Determine fields to export
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
+        # Fetch queryset
         queryset = AccreditationCategory.objects.filter(is_deleted=False)
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
@@ -14088,6 +13829,7 @@ class AccreditationCategoryExportAPIView(APIView):
         }
 
         sort_fields = []
+
         if custom_sort:
             for rule in custom_sort.split(','):
                 try:
@@ -14096,6 +13838,7 @@ class AccreditationCategoryExportAPIView(APIView):
                     order = order.strip().lower()
                     if field not in sort_field_map:
                         continue
+
                     orm_field = sort_field_map[field]
 
                     # Case-insensitive sorting for string fields
@@ -14108,15 +13851,14 @@ class AccreditationCategoryExportAPIView(APIView):
                 except ValueError:
                     continue
         else:
-            # Default sorting by created_at
+            # Default sort by created_at desc
             sort_order = request.GET.get('sortOrder', 'desc')
             f = F('created_at')
             sort_fields = [f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)]
 
-    
+        queryset = queryset.order_by(*sort_fields)
 
-        queryset = queryset.order_by('-created_at')
-
+        # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
         dataset.title = 'AccreditationCategory'
@@ -14126,28 +13868,26 @@ class AccreditationCategoryExportAPIView(APIView):
             for field in field_list:
                 value = getattr(obj, field, '')
                 if field in ['created_at', 'updated_at'] and value:
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
                     value = int(value)
                 row.append(value if value is not None else '')
             dataset.append(row)
 
-        if format_type == 'csv':
-            file_data = dataset.export('csv')
-            content_type = 'text/csv'
-            file_name = 'accreditation_categories.csv'
-        else:
-            file_data = io.BytesIO(dataset.export('xlsx'))
+        # --- Export data ---
+        if format_type == 'xlsx':
+            data = XLSX().export_data(dataset)
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'accreditation_categories.xlsx'
+            file_name = 'AccreditationCategory.xlsx'
+        else:
+            data = CSV().export_data(dataset)
+            content_type = 'text/csv; charset=utf-8'
+            file_name = 'AccreditationCategory.csv'
 
-        response = HttpResponse(
-            file_data if format_type == 'csv' else file_data.getvalue(),
-            content_type=content_type
-        )
+        response = HttpResponse(data, content_type=content_type)
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-
+    
 
 # ------------------ Import API ------------------
 class AccreditationCategoryImportAPIView(APIView):

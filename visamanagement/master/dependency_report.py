@@ -36,6 +36,8 @@ def generate_dependency_excel(data, filename="dependency_report.xlsx"):
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    response['X-Excel-Download'] = "true"
+    
     return response
 
 
