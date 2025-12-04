@@ -513,6 +513,31 @@ class EducationLevelSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['uuid', 'created_at', 'updated_at']
 
+    def validate_educationlevel(self, value):
+        value = value.strip()
+        current_uuid = self.instance.uuid if self.instance else None
+
+        level_code_uuid = self.initial_data.get("level_code")  # request me aaya uuid
+
+        # ✅ level_code object fetch karo
+        try:
+            level_code_obj = EducationLevelCode.objects.get(uuid=level_code_uuid)
+        except:
+            raise serializers.ValidationError("Invalid level_code UUID")
+
+        # ✅ Duplicate check educationlevel + same level_code ke andar
+        exists = EducationLevel.objects.filter(
+            educationlevel__iexact=value,
+            level_code=level_code_obj,
+            is_deleted=False
+        ).exclude(uuid=current_uuid).exists()
+
+        if exists:
+            raise serializers.ValidationError("This educationlevel already exists for the selected level_code")
+
+        return value
+
+
 
 class EducationDurationSerializer(serializers.ModelSerializer):
     # Optionally display the related EducationLevel's name
@@ -557,7 +582,19 @@ class StudymainareaSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
 
+    def validate_name(self, value):
+        value = value.strip()
+        current_uuid = self.instance.uuid if self.instance else None
 
+        exists = Studymainarea.objects.filter(
+            name__iexact=value,
+            is_deleted=False
+        ).exclude(uuid=current_uuid).exists()
+
+        if exists:
+            raise serializers.ValidationError("This study main area name already exists")
+
+        return value
 
 
 class StudyMajorAreaSerializer(serializers.ModelSerializer):
@@ -1572,9 +1609,9 @@ class JobProspectSerializer(serializers.ModelSerializer):
 
 class RepresentingCountrySerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='country.name', read_only=True)
-    largest_state_name = serializers.CharField(source='largest_state.name', read_only=True)
+    largest_state_name = serializers.CharField(source='largest_state.stateName', read_only=True)
     smallest_state_name = serializers.CharField(source='smallest_state.stateName', read_only=True)
-    largest_city_name = serializers.CharField(source='largest_city.name', read_only=True)
+    # largest_city_name = serializers.CharField(source='largest_city.name', read_only=True)
 
     class Meta:
         model = RepresentingCountry
@@ -1609,8 +1646,8 @@ class RepresentingCountrySerializer(serializers.ModelSerializer):
             'largest_state_name',
             'smallest_state',
             'smallest_state_name',
-            'largest_city',
-            'largest_city_name',
+            # 'largest_city',
+            # 'largest_city_name',
             'major_cities',
             'national_animal',
             'national_bird',
@@ -1626,7 +1663,7 @@ class RepresentingCountrySerializer(serializers.ModelSerializer):
         ]
         read_only_fields = [
             'created_at', 'updated_at',
-            'name', 'largest_state_name', 'largest_city_name','smallest_state_name'
+            'name', 'largest_state_name','smallest_state_name'
         ]
 
     def create(self, validated_data):
