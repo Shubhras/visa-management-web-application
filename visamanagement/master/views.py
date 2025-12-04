@@ -309,72 +309,81 @@ class GenderUpdateAPIView(APIView):
 #     permission_classes = [IsAuthenticated, IsAdminUser]
 
 #     def delete(self, request):
-#         try:
-#             ids = request.data.get('id', None)
-#             delete_all = request.data.get("deleteAll", False)
-#             search = request.GET.get("search", "").strip()
+#         ids = request.data.get("id", None)
+#         delete_all = request.data.get("deleteAll", False)
+#         search = request.GET.get("search", "").strip()
 
-#             # ---------------------------------------
-#             # CASE 2: id = "all" → Delete all rows
-#             # ---------------------------------------
-#             if ids == "all":
-#                 queryset = Gender.objects.filter(is_deleted=False)
-#                 count = queryset.count()
+#         queryset = Gender.objects.filter(is_deleted=False)
 
-#                 if count == 0:
-#                     return Response({
-#                         "statusCode": 404,
-#                         "status": False,
-#                         "message": "No gender(s) found to delete.",
-#                         "data": None
-#                     }, status=404)
+#         # ---------------------------------------------------
+#         # CASE 3: deleteAll = true AND search present → Search delete
+#         # ---------------------------------------------------
+#         if delete_all and search and (ids in [None, ""]):
+#             qs_search = queryset.filter(name__istartswith=search)
+#             count = qs_search.count()
 
-#                 with transaction.atomic():
-#                     queryset.delete()
-
+#             if count == 0:
 #                 return Response({
-#                     "statusCode": 200,
-#                     "status": True,
-#                     "message": f"All {count} gender(s) deleted successfully.",
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No genders found matching this search filter",
 #                     "data": None
-#                 }, status=200)
+#                 }, status=404)
 
-#             # ---------------------------------------
-#             # CASE 3: deleteAll=true + search filter → Delete filtered rows
-#             # ---------------------------------------
-#             if delete_all and not ids and search:
-#                 queryset = Gender.objects.filter(is_deleted=False, name__istartswith=search)
-#                 count = queryset.count()
-
-#                 if count == 0:
-#                     return Response({
-#                         "statusCode": 404,
-#                         "status": False,
-#                         "message": "No gender(s) matched this search filter.",
-#                         "data": None
-#                     }, status=404)
-
+#             try:
 #                 with transaction.atomic():
-#                     queryset.delete()
-
-#                 return Response({
-#                     "statusCode": 200,
-#                     "status": True,
-#                     "message": f"{count} gender(s) deleted based on search filter.",
-#                     "data": None
-#                 }, status=200)
-
-#             # ---------------------------------------
-#             # CASE 1: Bulk delete by UUID list
-#             # ---------------------------------------
-#             if not ids or not isinstance(ids, list):
+#                     qs_search.delete()
+#             except IntegrityError:
 #                 return Response({
 #                     "statusCode": 400,
 #                     "status": False,
-#                     "message": "Send UUID list in 'id', 'id: all', or 'deleteAll: true' with search.",
+#                     "message": "You can't delete selected gender(s) because they are used in child tables",
 #                     "data": None
 #                 }, status=400)
 
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"{count} gender(s) deleted based on search filter",
+#                 "data": None
+#             }, status=200)
+
+#         # ---------------------------------------------------
+#         # CASE 2: deleteAll = false AND id = "all" → Delete full table
+#         # ---------------------------------------------------
+#         if ids == "all" and delete_all is False and search == "":
+#             qs_all = queryset
+#             count = qs_all.count()
+
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No genders found to delete",
+#                     "data": None
+#                 }, status=404)
+
+#             deleted, skipped = [], []
+
+#             for g in qs_all:
+#                 try:
+#                     with transaction.atomic():
+#                         g.delete()
+#                     deleted.append(str(g.uuid))
+#                 except IntegrityError:
+#                     skipped.append(g.name)
+
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"Delete completed. {len(deleted)} deleted, {len(skipped)} skipped",
+#                 "data": {"deleted": deleted, "not_deleted": skipped}
+#             }, status=200)
+
+#         # ---------------------------------------------------
+#         # CASE 1: deleteAll = false AND id = [UUID list] → Bulk delete
+#         # ---------------------------------------------------
+#         if delete_all is False and isinstance(ids, list):
 #             valid_uuids, invalid_uuids = [], []
 
 #             for u in ids:
@@ -391,48 +400,52 @@ class GenderUpdateAPIView(APIView):
 #                     "data": {"invalid_uuids": invalid_uuids}
 #                 }, status=400)
 
-#             queryset = Gender.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-#             count = queryset.count()
+#             qs_ids = queryset.filter(uuid__in=valid_uuids)
+#             count = qs_ids.count()
 
 #             if count == 0:
 #                 return Response({
 #                     "statusCode": 404,
 #                     "status": False,
-#                     "message": "No matching gender(s) found.",
-#                     "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#                     "message": "No matching genders found for given ID list",
+#                     "data": None
 #                 }, status=404)
 
-#             with transaction.atomic():
-#                 queryset.delete()
+#             try:
+#                 with transaction.atomic():
+#                     qs_ids.delete()
+#             except IntegrityError:
+#                 return Response({
+#                     "statusCode": 400,
+#                     "status": False,
+#                     "message": "One or more gender(s) are used in child tables, cannot delete.",
+#                     "data": None
+#                 }, status=400)
 
 #             return Response({
 #                 "statusCode": 200,
 #                 "status": True,
-#                 "message": f"{count} gender(s) deleted successfully.",
+#                 "message": f"{count} gender(s) deleted.",
 #                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
 #             }, status=200)
 
-#         except IntegrityError:
-#             return Response({
-#                 "statusCode": 400,
-#                 "status": False,
-#                 "message": "You can't delete this gender because it's used in related child tables.",
-#                 "data": None
-#             }, status=400)
-
-#         except Exception as e:
-#             return Response({
-#                 "statusCode": 500,
-#                 "status": False,
-#                 "message": f"An unexpected error occurred: {str(e)}",
-#                 "data": None
-#             }, status=500)
+#         # ---------------------------------------------------
+#         # INVALID FORMAT
+#         # ---------------------------------------------------
+#         return Response({
+#             "statusCode": 400,
+#             "status": False,
+#             "message": "Invalid delete request format",
+#             "data": None
+#         }, status=400)
 
 
 class GenderDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request):
+        from master.dependency_report import find_dependencies, generate_dependency_excel
+
         ids = request.data.get("id", None)
         delete_all = request.data.get("deleteAll", False)
         search = request.GET.get("search", "").strip()
@@ -440,130 +453,163 @@ class GenderDeleteAPIView(APIView):
         queryset = Gender.objects.filter(is_deleted=False)
 
         # ---------------------------------------------------
-        # CASE 3: deleteAll = true AND search present → Search delete
+        # CASE 3: deleteAll = true + search → delete with search
         # ---------------------------------------------------
         if delete_all and search and (ids in [None, ""]):
             qs_search = queryset.filter(name__istartswith=search)
-            count = qs_search.count()
-
-            if count == 0:
+            if not qs_search.exists():
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No genders found matching this search filter",
-                    "data": None
-                }, status=404)
+                    "message": "No genders found matching this search",
+                })
 
-            try:
+            deleted = []
+            skipped = []
+            report = []
+
+            for g in qs_search:
+                deps = find_dependencies(g)
+
+                if deps:
+                    skipped.append(str(g.uuid))
+                    for d in deps:
+                        report.append({
+                            "parent_table": "Gender",
+                            "parent_field_value": g.name,
+                            "used_in_table": d["used_in_table"],
+                            "field": d["field"]
+                        })
+
+                    continue
+
                 with transaction.atomic():
-                    qs_search.delete()
-            except IntegrityError:
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "You can't delete selected gender(s) because they are used in child tables",
-                    "data": None
-                }, status=400)
+                    g.delete()
+                deleted.append(str(g.uuid))
+
+            if skipped:
+                return generate_dependency_excel(
+                    report,
+                    filename="gender_dependency_report.xlsx"
+                )
 
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"{count} gender(s) deleted based on search filter",
-                "data": None
-            }, status=200)
+                "message": f"{len(deleted)} deleted based on search",
+                "data": {"deleted": deleted}
+            })
 
         # ---------------------------------------------------
-        # CASE 2: deleteAll = false AND id = "all" → Delete full table
+        # CASE 2: id = "all" → delete full table
         # ---------------------------------------------------
-        if ids == "all" and delete_all is False and search == "":
+        if ids == "all" and not delete_all and search == "":
             qs_all = queryset
-            count = qs_all.count()
-
-            if count == 0:
+            if not qs_all.exists():
                 return Response({
                     "statusCode": 404,
                     "status": False,
                     "message": "No genders found to delete",
-                    "data": None
-                }, status=404)
+                })
 
-            deleted, skipped = [], []
+            deleted = []
+            skipped = []
+            report = []
 
             for g in qs_all:
-                try:
-                    with transaction.atomic():
-                        g.delete()
-                    deleted.append(str(g.uuid))
-                except IntegrityError:
-                    skipped.append(g.name)
+                deps = find_dependencies(g)
+
+                if deps:
+                    skipped.append(str(g.uuid))
+                    for d in deps:
+                        report.append({
+                            "parent_table": "Gender",
+                            "parent_field_value": g.name,
+                            "used_in_table": d["used_in_table"],
+                            "field": d["field"]
+                        })
+
+                    continue
+
+                with transaction.atomic():
+                    g.delete()
+                deleted.append(str(g.uuid))
+
+            if skipped:
+                return generate_dependency_excel(
+                    report,
+                    filename="gender_dependency_report.xlsx"
+                )
 
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"Delete completed. {len(deleted)} deleted, {len(skipped)} skipped",
-                "data": {"deleted": deleted, "not_deleted": skipped}
-            }, status=200)
+                "message": "All deletable genders removed",
+                "data": {"deleted": deleted}
+            })
 
         # ---------------------------------------------------
-        # CASE 1: deleteAll = false AND id = [UUID list] → Bulk delete
+        # CASE 1: id list → bulk delete
         # ---------------------------------------------------
-        if delete_all is False and isinstance(ids, list):
-            valid_uuids, invalid_uuids = [], []
+        if isinstance(ids, list):
+            deleted = []
+            skipped = []
+            invalid = []
+            report = []
 
+            valid_uuids = []
             for u in ids:
                 try:
                     valid_uuids.append(UUID(u))
-                except ValueError:
-                    invalid_uuids.append(u)
-
-            if not valid_uuids:
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "No valid UUIDs provided.",
-                    "data": {"invalid_uuids": invalid_uuids}
-                }, status=400)
+                except:
+                    invalid.append(u)
 
             qs_ids = queryset.filter(uuid__in=valid_uuids)
-            count = qs_ids.count()
-
-            if count == 0:
+            if not qs_ids:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No matching genders found for given ID list",
-                    "data": None
-                }, status=404)
+                    "message": "No valid UUIDs found",
+                })
 
-            try:
+            for g in qs_ids:
+                deps = find_dependencies(g)
+
+                if deps:
+                    skipped.append(str(g.uuid))
+                    for d in deps:
+                        report.append({
+                            "parent_table": "Gender",
+                            "parent_field_value": g.name,
+                            "used_in_table": d["used_in_table"],
+                            "field": d["field"]
+                        })
+
+                    continue
+
                 with transaction.atomic():
-                    qs_ids.delete()
-            except IntegrityError:
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "One or more gender(s) are used in child tables, cannot delete.",
-                    "data": None
-                }, status=400)
+                    g.delete()
+                deleted.append(str(g.uuid))
+
+            if skipped:
+                return generate_dependency_excel(
+                    report,
+                    filename="gender_dependency_report.xlsx"
+                )
 
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"{count} gender(s) deleted.",
-                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=200)
+                "message": f"{len(deleted)} gender(s) deleted",
+                "data": {"deleted": deleted, "invalid_uuids": invalid}
+            })
 
-        # ---------------------------------------------------
-        # INVALID FORMAT
         # ---------------------------------------------------
         return Response({
             "statusCode": 400,
             "status": False,
-            "message": "Invalid delete request format",
-            "data": None
-        }, status=400)
-
-
+            "message": "Invalid delete request format"
+        })
 
 
 class GenderExportAPIView(APIView):
@@ -1028,323 +1074,318 @@ class MaritalstatusUpdateAPIView(APIView):
             "data": None
         }, status=status.HTTP_400_BAD_REQUEST)
 
-# class MaritalstatusDeleteAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
-
-#     def delete(self, request):
-#         ids = request.data.get('id', None)
-
-#         if not ids:
-#             return Response({
-#                 "statusCode": 400,
-#                 "status": False,
-#                 "message": "Please provide 'id' field (UUID list or 'all').",
-#                 "data": None
-#             }, status=status.HTTP_400_BAD_REQUEST)
-
-#         # Delete all records
-#         if ids == "all":
-#             maritalstatuses = Maritalstatus.objects.filter(is_deleted=False)
-#             count = maritalstatuses.count()
-#             if count == 0:
-#                 return Response({
-#                     "statusCode": 404,
-#                     "status": False,
-#                     "message": "No marital statuses found to delete.",
-#                     "data": None
-#                 }, status=status.HTTP_404_NOT_FOUND)
-
-#             maritalstatuses.delete()
-#             return Response({
-#                 "statusCode": 200,
-#                 "status": True,
-#                 "message": f"All {count} marital status(es) deleted successfully.",
-#                 "data": None
-#             }, status=status.HTTP_200_OK)
-
-#         # Otherwise, treat as list of UUIDs
-#         if not isinstance(ids, list):
-#             return Response({
-#                 "statusCode": 400,
-#                 "status": False,
-#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
-#                 "data": None
-#             }, status=status.HTTP_400_BAD_REQUEST)
-
-#         # Validate UUIDs
-#         valid_uuids = []
-#         invalid_uuids = []
-#         for u in ids:
-#             try:
-#                 valid_uuids.append(UUID(u))
-#             except ValueError:
-#                 invalid_uuids.append(u)
-
-#         if not valid_uuids:
-#             return Response({
-#                 "statusCode": 400,
-#                 "status": False,
-#                 "message": "No valid UUIDs provided.",
-#                 "data": {"invalid_uuids": invalid_uuids}
-#             }, status=status.HTTP_400_BAD_REQUEST)
-
-#         maritalstatuses = Maritalstatus.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-#         count = maritalstatuses.count()
-
-#         if count == 0:
-#             return Response({
-#                 "statusCode": 404,
-#                 "status": False,
-#                 "message": "No matching marital statuses found.",
-#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-#             }, status=status.HTTP_404_NOT_FOUND)
-
-#         maritalstatuses.delete()
-
-#         return Response({
-#             "statusCode": 200,
-#             "status": True,
-#             "message": f"{count} marital status(es) deleted successfully.",
-#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-#         }, status=status.HTTP_200_OK)
 
 
 # class MaritalstatusDeleteAPIView(APIView):
 #     permission_classes = [IsAuthenticated, IsAdminUser]
 
 #     def delete(self, request):
-#         ids = request.data.get('id', None)
+#         ids = request.data.get("id", None)
+#         delete_all = request.data.get("deleteAll", False)
 #         search = request.GET.get("search", "").strip()
 
-#         # Base queryset (soft delete safety)
 #         queryset = Maritalstatus.objects.filter(is_deleted=False)
 
-#         # ----------------------------------
-#         # DELETE FULL TABLE when id == "all"
-#         # ----------------------------------
-#         if ids == "all":
-#             count = Maritalstatus.objects.count()
-#             Maritalstatus.objects.all().delete()
-#             return Response({
-#                 "statusCode": 200,
-#                 "status": True,
-#                 "message": f"All {count} marital status(es) deleted from the table.",
-#                 "data": None
-#             }, status=200)
-
-#         # ----------------------------------
-#         # SEARCH BASED DELETE (ONLY when deleteAll:true)
-#         # ----------------------------------
-#         if search:
-#             if not request.data.get("deleteAll", False):
-#                 return Response({
-#                     "statusCode": 400,
-#                     "status": False,
-#                     "message": "To delete based on search filter please send 'deleteAll: true' in body.",
-#                     "data": None
-#                 }, status=400)
-
-#             queryset = queryset.filter(Q(name__istartswith=search))
-#             count = queryset.count()
+#         # ---------------------------------------------------
+#         # CASE 3: deleteAll = true AND search present → Search delete
+#         # ---------------------------------------------------
+#         if delete_all and search and (ids in [None, ""]):
+#             qs_search = queryset.filter(name__istartswith=search)
+#             count = qs_search.count()
 
 #             if count == 0:
 #                 return Response({
 #                     "statusCode": 404,
 #                     "status": False,
-#                     "message": "No marital status(es) found matching search filter.",
+#                     "message": "No marital status(es) found matching this search filter",
 #                     "data": None
 #                 }, status=404)
 
-#             queryset.delete()
+#             try:
+#                 with transaction.atomic():
+#                     qs_search.delete()
+#             except IntegrityError:
+#                 return Response({
+#                     "statusCode": 400,
+#                     "status": False,
+#                     "message": "You can't delete selected marital status(es) because they are used in child tables",
+#                     "data": None
+#                 }, status=400)
+
 #             return Response({
 #                 "statusCode": 200,
 #                 "status": True,
-#                 "message": f"{count} marital status(es) deleted based on search filter.",
+#                 "message": f"{count} marital status(es) deleted based on search filter",
 #                 "data": None
 #             }, status=200)
 
-#         # ----------------------------------
-#         # BULK DELETE using UUID list
-#         # ----------------------------------
-#         if not ids or not isinstance(ids, list):
-#             return Response({
-#                 "statusCode": 400,
-#                 "status": False,
-#                 "message": "Please provide UUID list in 'id' field, or send 'id: all'.",
-#                 "data": None
-#             }, status=400)
+#         # ---------------------------------------------------
+#         # CASE 2: deleteAll = false AND id = "all" → Delete full table
+#         # ---------------------------------------------------
+#         if ids == "all" and delete_all is False and search == "":
+#             qs_all = queryset
+#             count = qs_all.count()
 
-#         valid_uuids = []
-#         invalid_uuids = []
-#         for u in ids:
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No marital status(es) found to delete",
+#                     "data": None
+#                 }, status=404)
+
+#             deleted, skipped = [], []
+
+#             for obj in qs_all:
+#                 try:
+#                     with transaction.atomic():
+#                         obj.delete()
+#                     deleted.append(str(obj.uuid))
+#                 except IntegrityError:
+#                     skipped.append(obj.name)
+
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"Delete completed. {len(deleted)} deleted, {len(skipped)} skipped",
+#                 "data": {"deleted": deleted, "not_deleted": skipped}
+#             }, status=200)
+
+#         # ---------------------------------------------------
+#         # CASE 1: deleteAll = false AND id = [UUID list] → Bulk delete
+#         # ---------------------------------------------------
+#         if delete_all is False and isinstance(ids, list):
+#             valid_uuids, invalid_uuids = [], []
+
+#             for u in ids:
+#                 try:
+#                     valid_uuids.append(UUID(u))
+#                 except ValueError:
+#                     invalid_uuids.append(u)
+
+#             if not valid_uuids:
+#                 return Response({
+#                     "statusCode": 400,
+#                     "status": False,
+#                     "message": "No valid UUIDs provided.",
+#                     "data": {"invalid_uuids": invalid_uuids}
+#                 }, status=400)
+
+#             qs_ids = queryset.filter(uuid__in=valid_uuids)
+#             count = qs_ids.count()
+
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No matching marital status(es) found for given ID list",
+#                     "data": None
+#                 }, status=404)
+
 #             try:
-#                 valid_uuids.append(UUID(u))
-#             except:
-#                 invalid_uuids.append(u)
+#                 with transaction.atomic():
+#                     qs_ids.delete()
+#             except IntegrityError:
+#                 return Response({
+#                     "statusCode": 400,
+#                     "status": False,
+#                     "message": "One or more marital status(es) are used in child tables, cannot delete.",
+#                     "data": None
+#                 }, status=400)
 
-#         if not valid_uuids:
 #             return Response({
-#                 "statusCode": 400,
-#                 "status": False,
-#                 "message": "No valid UUIDs provided.",
-#                 "data": {"invalid_uuids": invalid_uuids}
-#             }, status=400)
-
-#         bulk_qs = queryset.filter(uuid__in=valid_uuids)
-#         count = bulk_qs.count()
-
-#         if count == 0:
-#             return Response({
-#                 "statusCode": 404,
-#                 "status": False,
-#                 "message": "No matching marital status(es) found to delete.",
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"{count} marital status(es) deleted.",
 #                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-#             }, status=404)
+#             }, status=200)
 
-#         bulk_qs.delete()
-
+#         # ---------------------------------------------------
+#         # INVALID FORMAT
+#         # ---------------------------------------------------
 #         return Response({
-#             "statusCode": 200,
-#             "status": True,
-#             "message": f"{count} marital status(es) deleted.",
-#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-#         }, status=200)
-
+#             "statusCode": 400,
+#             "status": False,
+#             "message": "Invalid delete request format",
+#             "data": None
+#         }, status=400)
+    
 
 class MaritalstatusDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request):
+        from master.dependency_report import find_dependencies, generate_dependency_excel
+
         ids = request.data.get("id", None)
         delete_all = request.data.get("deleteAll", False)
         search = request.GET.get("search", "").strip()
 
         queryset = Maritalstatus.objects.filter(is_deleted=False)
 
-        # ---------------------------------------------------
-        # CASE 3: deleteAll = true AND search present → Search delete
-        # ---------------------------------------------------
+        # -------------------------------------------
+        # CASE 3: deleteAll = true + search
+        # -------------------------------------------
         if delete_all and search and (ids in [None, ""]):
             qs_search = queryset.filter(name__istartswith=search)
-            count = qs_search.count()
 
-            if count == 0:
+            if not qs_search.exists():
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No marital status(es) found matching this search filter",
-                    "data": None
-                }, status=404)
+                    "message": "No marital status found matching this search",
+                })
 
-            try:
+            deleted = []
+            skipped = []
+            report = []
+
+            for obj in qs_search:
+                deps = find_dependencies(obj)
+
+                if deps:
+                    skipped.append(str(obj.uuid))
+                    for d in deps:
+                        report.append({
+                            "parent_table": "Maritalstatus",
+                            "parent_field_value": obj.name,
+                            "used_in_table": d["used_in_table"],
+                            "field": d["field"]
+                        })
+                    continue
+
                 with transaction.atomic():
-                    qs_search.delete()
-            except IntegrityError:
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "You can't delete selected marital status(es) because they are used in child tables",
-                    "data": None
-                }, status=400)
+                    obj.delete()
+                deleted.append(str(obj.uuid))
+
+            if skipped:
+                return generate_dependency_excel(
+                    report,
+                    filename="maritalstatus_dependency_report.xlsx"
+                )
 
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"{count} marital status(es) deleted based on search filter",
-                "data": None
-            }, status=200)
+                "message": f"{len(deleted)} deleted based on search",
+                "data": {"deleted": deleted}
+            })
 
-        # ---------------------------------------------------
-        # CASE 2: deleteAll = false AND id = "all" → Delete full table
-        # ---------------------------------------------------
-        if ids == "all" and delete_all is False and search == "":
+        # -------------------------------------------
+        # CASE 2: id = "all" → delete entire table
+        # -------------------------------------------
+        if ids == "all" and not delete_all and search == "":
             qs_all = queryset
-            count = qs_all.count()
 
-            if count == 0:
+            if not qs_all.exists():
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No marital status(es) found to delete",
-                    "data": None
-                }, status=404)
+                    "message": "No marital status found to delete",
+                })
 
-            deleted, skipped = [], []
+            deleted = []
+            skipped = []
+            report = []
 
             for obj in qs_all:
-                try:
-                    with transaction.atomic():
-                        obj.delete()
-                    deleted.append(str(obj.uuid))
-                except IntegrityError:
+                deps = find_dependencies(obj)
+
+                if deps:
                     skipped.append(obj.name)
+                    for d in deps:
+                        report.append({
+                            "parent_table": "Maritalstatus",
+                            "parent_field_value": obj.name,
+                            "used_in_table": d["used_in_table"],
+                            "field": d["field"]
+                        })
+                    continue
+
+                with transaction.atomic():
+                    obj.delete()
+                deleted.append(str(obj.uuid))
+
+            if skipped:
+                return generate_dependency_excel(
+                    report,
+                    filename="maritalstatus_dependency_report.xlsx"
+                )
 
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"Delete completed. {len(deleted)} deleted, {len(skipped)} skipped",
-                "data": {"deleted": deleted, "not_deleted": skipped}
-            }, status=200)
+                "message": f"All deletable marital status removed",
+                "data": {"deleted": deleted}
+            })
 
-        # ---------------------------------------------------
-        # CASE 1: deleteAll = false AND id = [UUID list] → Bulk delete
-        # ---------------------------------------------------
-        if delete_all is False and isinstance(ids, list):
-            valid_uuids, invalid_uuids = [], []
+        # -------------------------------------------
+        # CASE 1: list of IDs (bulk delete)
+        # -------------------------------------------
+        if isinstance(ids, list):
+            deleted = []
+            skipped = []
+            invalid = []
+            report = []
 
+            # Validate UUIDs
+            valid_uuids = []
             for u in ids:
                 try:
                     valid_uuids.append(UUID(u))
-                except ValueError:
-                    invalid_uuids.append(u)
-
-            if not valid_uuids:
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "No valid UUIDs provided.",
-                    "data": {"invalid_uuids": invalid_uuids}
-                }, status=400)
+                except:
+                    invalid.append(u)
 
             qs_ids = queryset.filter(uuid__in=valid_uuids)
-            count = qs_ids.count()
 
-            if count == 0:
+            if not qs_ids.exists():
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No matching marital status(es) found for given ID list",
-                    "data": None
-                }, status=404)
+                    "message": "No marital status found for given ID list",
+                })
 
-            try:
+            for obj in qs_ids:
+                deps = find_dependencies(obj)
+
+                if deps:
+                    skipped.append(str(obj.uuid))
+                    for d in deps:
+                        report.append({
+                            "parent_table": "Maritalstatus",
+                            "parent_field_value": obj.name,
+                            "used_in_table": d["used_in_table"],
+                            "field": d["field"]
+                        })
+                    continue
+
                 with transaction.atomic():
-                    qs_ids.delete()
-            except IntegrityError:
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "One or more marital status(es) are used in child tables, cannot delete.",
-                    "data": None
-                }, status=400)
+                    obj.delete()
+                deleted.append(str(obj.uuid))
+
+            if skipped:
+                return generate_dependency_excel(
+                    report,
+                    filename="maritalstatus_dependency_report.xlsx"
+                )
 
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"{count} marital status(es) deleted.",
-                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=200)
+                "message": f"{len(deleted)} marital status deleted",
+                "data": {"deleted": deleted, "invalid_uuids": invalid}
+            })
 
-        # ---------------------------------------------------
-        # INVALID FORMAT
-        # ---------------------------------------------------
+        # -------------------------------------------
+        # INVALID REQUEST FORMAT
+        # -------------------------------------------
         return Response({
             "statusCode": 400,
             "status": False,
-            "message": "Invalid delete request format",
-            "data": None
-        }, status=400)
-    
+            "message": "Invalid delete request format"
+        })
+
+
 
 
 class MaritalstatusExportAPIView(APIView):

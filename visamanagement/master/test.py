@@ -24,7 +24,7 @@ import pytz
 from django.utils import timezone
 import io
 import csv
-from master.dependency_report import generate_dependency_report
+# from master.dependency_report import generate_dependency_report
 from django.db import DatabaseError, transaction, IntegrityError
 
 india_tz = pytz.timezone('Asia/Kolkata')
