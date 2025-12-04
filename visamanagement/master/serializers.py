@@ -513,6 +513,27 @@ class EducationLevelSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['uuid', 'created_at', 'updated_at']
 
+    def validate_educationlevel(self, value):
+        # instance = current object during update
+        instance = getattr(self, 'instance', None)
+
+        qs = EducationLevel.objects.filter(
+            educationlevel__iexact=value.strip(),
+            is_deleted=False
+        )
+
+        # Exclude self when updating
+        if instance:
+            qs = qs.exclude(uuid=instance.uuid)
+
+        if qs.exists():
+            raise serializers.ValidationError(
+                f"Education Level '{value}' already exists."
+            )
+
+        return value
+        
+
 
 class EducationDurationSerializer(serializers.ModelSerializer):
     # Optionally display the related EducationLevel's name
