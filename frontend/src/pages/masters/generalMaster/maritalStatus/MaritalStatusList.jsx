@@ -386,22 +386,45 @@ const MaritalStatusList = () => {
         if (error) {
           toast.error(error?.response?.data?.message || "server error");
         } else {
-          if (response?.statusCode === 200 && response?.status === true) {
-            toast.success(response?.message);
-            setDepartments((prevRowItems) =>
-              prevRowItems.filter((Item) => Item.uuid !== deleteId)
-            );
-            setSelectedRows((prevSelected) =>
-              prevSelected.filter((rowId) => rowId !== deleteId)
-            );
+          if (typeof response === "string") {
+            const blob = new Blob([response.data], {
+              type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            });
+
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = "MaritalStatusDependencyReport.xlsx";
+            document.body.appendChild(link);
+
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+            toast.success("Export successful");
             setShowDeleteConfirm(false);
             setSelectedRows([]);
             setSelectAllOrNot("");
             setDeleteId(null);
-            //fetchMaritalStatusList();
             clearAllFilters();
           } else {
-            toast.error("Something went wrong.");
+            if (response?.statusCode === 200 && response?.status === true) {
+              toast.success(response?.message);
+              setDepartments((prevRowItems) =>
+                prevRowItems.filter((Item) => Item.uuid !== deleteId)
+              );
+              setSelectedRows((prevSelected) =>
+                prevSelected.filter((rowId) => rowId !== deleteId)
+              );
+              setShowDeleteConfirm(false);
+              setSelectedRows([]);
+              setSelectAllOrNot("");
+              setDeleteId(null);
+              //fetchMaritalStatusList();
+              clearAllFilters();
+            } else {
+              toast.error("Something went wrong.");
+            }
+
           }
         }
       })
@@ -565,8 +588,8 @@ const MaritalStatusList = () => {
                         <button
                           onClick={() => handleSelectAllOrNot("onlySelected")}
                           className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "onlySelected"
-                              ? "comman-btn-color"
-                              : "comman-inactive-btn"
+                            ? "comman-btn-color"
+                            : "comman-inactive-btn"
                             }`}
                         >
                           {`Select (${selectedRows.length})`}
@@ -574,8 +597,8 @@ const MaritalStatusList = () => {
                         <button
                           onClick={() => handleSelectAllOrNot("all")}
                           className={`btn btn-sm py-1 fw-medium ${selectAllOrNot === "all"
-                              ? "comman-btn-color"
-                              : "comman-inactive-btn"
+                            ? "comman-btn-color"
+                            : "comman-inactive-btn"
                             }`}
                         >
                           {`Select All (${tableState.total})`}
