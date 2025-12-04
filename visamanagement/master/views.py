@@ -20376,7 +20376,7 @@ class LostReasonDeleteAPIView(APIView):
         # ---------------- CASE 3: Delete only Search Filter Data ----------------
         # ?search=A  +  "deleteAll": true  +  id:""
         if delete_all and search and (ids in [None, "", []]):
-            qs_search = queryset.filter(reason__istartswith=search)
+            qs_search = queryset.filter(name__istartswith=search)
             count = qs_search.count()
 
             if count == 0:
@@ -20816,98 +20816,6 @@ class LostReasonB2BUpdateAPIView(APIView):
             "message": first_error
         }, status=status.HTTP_400_BAD_REQUEST)
 
-# class LostReasonB2BDeleteAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
-
-#     def delete(self, request, uuid=None):
-#         uuids = request.data.get('id', None)
-
-#         #  Case 1: Single delete via URL UUID
-#         if uuid:
-#             try:
-#                 reason = LostReasonB2B.objects.get(uuid=uuid, is_deleted=False)
-#                 reason.is_deleted = True
-#                 reason.save()
-#                 return Response({
-#                     "statusCode": 200,
-#                     "status": True,
-#                     "message": "Lost Reason deleted successfully",
-#                     "data": None
-#                 }, status=status.HTTP_200_OK)
-#             except LostReasonB2B.DoesNotExist:
-#                 return Response({
-#                     "statusCode": 404,
-#                     "status": False,
-#                     "message": "Lost Reason not found",
-#                     "data": None
-#                 }, status=status.HTTP_404_NOT_FOUND)
-
-#         #  Case 2: Delete all
-#         if uuids == "all":
-#             reasons = LostReasonB2B.objects.filter(is_deleted=False)
-#             count = reasons.count()
-#             if count == 0:
-#                 return Response({
-#                     "statusCode": 404,
-#                     "status": False,
-#                     "message": "No Lost Reasons found to delete.",
-#                     "data": None
-#                 }, status=status.HTTP_404_NOT_FOUND)
-#             reasons.delete()
-#             return Response({
-#                 "statusCode": 200,
-#                 "status": True,
-#                 "message": f"All {count} Lost Reason(s) deleted successfully.",
-#                 "data": None
-#             }, status=status.HTTP_200_OK)
-
-#         #  Case 3: Bulk delete via UUIDs list
-#         if not uuids or not isinstance(uuids, list):
-#             return Response({
-#                 "statusCode": 400,
-#                 "status": False,
-#                 "message": "Please provide a list of UUIDs in 'uuids' field or 'all'.",
-#                 "data": None
-#             }, status=status.HTTP_400_BAD_REQUEST)
-
-#         # Validate UUIDs
-#         valid_uuids = []
-#         invalid_uuids = []
-#         for u in uuids:
-#             try:
-#                 valid_uuids.append(UUID(u))
-#             except ValueError:
-#                 invalid_uuids.append(u)
-
-#         if not valid_uuids:
-#             return Response({
-#                 "statusCode": 400,
-#                 "status": False,
-#                 "message": "No valid UUIDs provided.",
-#                 "data": {"invalid_uuids": invalid_uuids}
-#             }, status=status.HTTP_400_BAD_REQUEST)
-
-#         # Fetch LostReason entries that exist and are not deleted
-#         reasons = LostReasonB2B.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-#         count = reasons.count()
-
-#         if count == 0:
-#             return Response({
-#                 "statusCode": 404,
-#                 "status": False,
-#                 "message": "No matching Lost Reasons found.",
-#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-#             }, status=status.HTTP_404_NOT_FOUND)
-
-#         # Soft delete
-#         reasons.delete()
-
-#         return Response({
-#             "statusCode": 200,
-#             "status": True,
-#             "message": f"{count} Lost Reason(s) deleted successfully.",
-#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-#         }, status=status.HTTP_200_OK)
 
 
 class LostReasonB2BDeleteAPIView(APIView):
@@ -21000,7 +20908,7 @@ class LostReasonB2BDeleteAPIView(APIView):
         # ---------------- CASE 3: Delete Only Search Matched Data ----------------
         # ?search=A  +  { "deleteAll": true, "id":"" }
         if delete_all and search and (ids in [None, "", []]):
-            qs_search = queryset.filter(reason__istartswith=search)
+            qs_search = queryset.filter(name__istartswith=search)
             count = qs_search.count()
 
             if count == 0:
