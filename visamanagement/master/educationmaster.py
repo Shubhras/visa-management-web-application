@@ -996,7 +996,7 @@ class EducationLevelCodeImportAPIView(APIView):
 
                 # description = str(row.get('description')).strip() if row.get('description') else ''
                 raw_desc = row.get('description')
-            description = str(raw_desc).strip() if raw_desc is not None else ''
+                description = str(raw_desc).strip() if raw_desc is not None else ''
                 
                 if not name:
                     skipped_rows.append(
