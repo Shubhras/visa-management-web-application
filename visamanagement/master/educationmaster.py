@@ -919,10 +919,14 @@ class EducationLevelCodeExportAPIView(APIView):
                             }, status=400)
 
                         # Case-insensitive for string fields (name + description)
-                        if field in ['name', 'description']:
+                        # Numeric sorting for name if it's numeric
+                        if field == 'name':
+                            f = Cast(orm_field, IntegerField())
+                        elif field in ['description']:
                             f = Lower(orm_field)
                         else:
                             f = F(orm_field)
+
 
                         sort_fields.append(
                             f.asc(nulls_last=True) if order == 'asc'
