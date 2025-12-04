@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import { civilIdNameEdit, civilIdNameAdd } from '../../../../store/master/generalMasters/actions';
-
+import DatePicker from "react-datepicker";
+import { format } from "date-fns";
+import "react-datepicker/dist/react-datepicker.css";
 const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
@@ -326,7 +328,7 @@ const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                       </div>
 
                       {/* Show Date Picker if Date is selected */}
-                      {formData.valid_upto_type === 'Date' && (
+                      {/* {formData.valid_upto_type === 'Date' && (
                         <div className="col-md-8">
                           <input
                             type="date"
@@ -334,6 +336,28 @@ const AddEditCivilIDNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                             value={formData.valid_upto}
                             onChange={handleChange}
                             className={`form-control radius-8 ${errors.valid_upto ? 'is-invalid' : ''}`}
+                          />
+                          {errors.valid_upto && (
+                            <div className="text-danger text-sm mt-1">
+                              {errors.valid_upto}
+                            </div>
+                          )}
+                        </div>
+                      )} */}
+                      {formData.valid_upto_type === 'Date' && (
+                        <div className="col-md-8" style={{ zIndex: 99999, position: "relative" }}>
+                          <DatePicker
+                            selected={formData.valid_upto ? new Date(formData.valid_upto) : null}
+                            onChange={(date) => {
+                              const formatted = date ? format(date, "yyyy-MM-dd") : "";
+                              setFormData((prev) => ({
+                                ...prev,
+                                valid_upto: formatted
+                              }));
+                            }}
+                            dateFormat="dd/MM/yy"
+                            placeholderText="dd/mm/yy"
+                            className={`form-control radius-8 ${errors.valid_upto ? "is-invalid" : ""}`}
                           />
                           {errors.valid_upto && (
                             <div className="text-danger text-sm mt-1">

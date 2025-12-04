@@ -5,29 +5,224 @@ import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
 import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 import { countryDemoList } from '../../../../store/master/companyMasters/actions';
-import { useGlobalSearch, } from '../../../../components/comman/GlobalSearchContext';
 import MasterLayout from '../../../../masterLayout/MasterLayout';
-import {  occupationCategoryExportData, occupationToOccupationDelete, occupationToOccupationList, studyFactorLanguageAbilityDelete, studyFactorLanguageAbilityExportData, studyFactorLanguageAbilityList } from '../../../../store/actions';
+import { occupationToOccupationExportData, occupationToOccupationDelete, occupationToOccupationList } from "../../../../store/master/occupationMaster/action";
+import {
+  occupationVersionList,
+  representingCountryList,
+  occupationCodeList,
+  occupationNameList
+} from "../../../../store/master/occupationMaster/action";
 import AddEditOccupationToOccupationModal from './AddEditOccupationToOccupationModal';
 import AddImportOccupationToOccupationModal from './AddImportOccupationToOccupation';
+import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
 import ResetButton from '../../../../components/comman/ResetButton';
 const OccupationToOccupationList = () => {
   const dispatch = useDispatch();
   const { globalSearch, setGlobalSearch } = useGlobalSearch();
+  const [columnFilters, setColumnFilters] = useState({
+    occupationVersion: [],
+    representingCountry: [],
+    occupationName: [],
+    occupationCode: [],
+
+  });
+  const [activeFilterColumn, setActiveFilterColumn] = useState(null);
+  const [filterDropdownData, setFilterDropdownData] = useState({});
+  const [filterSearchTerms, setFilterSearchTerms] = useState({});
+  const filterDropdownRef = useRef(null);
+  useEffect(() => {
+    fetchOccupationVersionDropdown();
+    fetchRepresentingCountryDropdown();
+    fetchOccupationNameDropdown();
+    fetchOccupationCodeDropdown();
+  }, []);
+  const fetchOccupationVersionDropdown = () => {
+    const params = {
+      page: 1,
+      limit: 2000,
+      search: "",
+      sortBy: "name",
+      sortOrder: "asc"
+    };
+    dispatch(occupationVersionList(params, (response, error) => {
+      if (response?.statusCode === 200 && response?.status === true) {
+        const options = (response.data || []).map(item => ({
+          id: item.uuid || item.id,
+          name: String(item.occupation_version ?? "")
+        }));
+        const sortedOptions = options.sort((a, b) =>
+          String(a.name).localeCompare(String(b.name), undefined, { numeric: true })
+        );
+        // Update filter dropdown data
+        setFilterDropdownData(prev => ({
+          ...prev,
+          occupationVersion: sortedOptions
+        }));
+      }
+    }));
+  };
+  const fetchRepresentingCountryDropdown = () => {
+    const params = {
+      page: 1,
+      limit: 2000,
+      search: "",
+      sortBy: "name",
+      sortOrder: "asc"
+    };
+    dispatch(representingCountryList(params, (response, error) => {
+      if (response?.statusCode === 200 && response?.status === true) {
+        const options = (response.data || []).map(item => ({
+          id: item.uuid || item.id,
+          name: String(item.majorarea ?? "")
+        }));
+        // Sort A–Z by name, numeric safe
+        const sortedOptions = options.sort((a, b) =>
+          String(a.name).localeCompare(String(b.name), undefined, { numeric: true })
+        );
+        // Update filter dropdown data
+        setFilterDropdownData(prev => ({
+          ...prev,
+          representingCountry: sortedOptions
+        }));
+      }
+    }));
+  };
+  const fetchOccupationCodeDropdown = () => {
+    const params = {
+      page: 1,
+      limit: 2000,
+      search: "",
+      sortBy: "name",
+      sortOrder: "asc"
+    };
+    dispatch(occupationCodeList(params, (response, error) => {
+      if (response?.statusCode === 200 && response?.status === true) {
+        const options = (response.data || []).map(item => ({
+          id: item.uuid || item.id,
+          name: String(item.occupationcode ?? "")
+        }));
+        const sortedOptions = options.sort((a, b) =>
+          String(a.name).localeCompare(String(b.name), undefined, { numeric: true })
+        );
+        // Update filter dropdown data
+        setFilterDropdownData(prev => ({
+          ...prev,
+          occupationCode: sortedOptions
+        }));
+      }
+    }));
+  };
+  const fetchOccupationNameDropdown = () => {
+    const params = {
+      page: 1,
+      limit: 2000,
+      search: "",
+      sortBy: "name",
+      sortOrder: "asc"
+    };
+    dispatch(occupationNameList(params, (response, error) => {
+      if (response?.statusCode === 200 && response?.status === true) {
+        const options = (response.data || []).map(item => ({
+          id: item.uuid || item.id,
+          name: String(item.occupationname ?? "")
+        }));
+        const sortedOptions = options.sort((a, b) =>
+          String(a.name).localeCompare(String(b.name), undefined, { numeric: true })
+        );
+        // Update filter dropdown data
+        setFilterDropdownData(prev => ({
+          ...prev,
+          occupationName: sortedOptions
+        }));
+      }
+    }));
+  };
+
+  const toggleFilterDropdown = (e, columnField) => {
+    e.stopPropagation()
+    setActiveFilterColumn(activeFilterColumn === columnField ? null : columnField)
+    setFilterSearchTerms(prev => ({ ...prev, [columnField]: '' }))
+  }
+  const handleFilterCheckboxChange = (columnField, value, checked) => {
+    setColumnFilters(prev => {
+      const current = prev[columnField] || []
+      const updated = checked ? [...current, value] : current.filter(v => v !== value)
+      return { ...prev, [columnField]: updated }
+    })
+  }
+
+  const handleFilterSelectAll = (columnField) => {
+    const searchTerm = String(filterSearchTerms[columnField] || '').toLowerCase()
+    const available = (filterDropdownData[columnField] || [])
+      .filter(o => String(o.name).toLowerCase().includes(searchTerm))
+      .map(o => o.id)
+    setColumnFilters(prev => ({ ...prev, [columnField]: available }))
+  }
+
+
+  const handleFilterClearAll = (columnField) => {
+    setColumnFilters(prev => ({ ...prev, [columnField]: [] }))
+  }
+
+  const getFilteredOptions = (columnField) => {
+    const searchTerm = String(filterSearchTerms[columnField] || '').toLowerCase()
+    const options = filterDropdownData[columnField] || []
+    return options.filter(o =>
+      String(o.name ?? '').toLowerCase().includes(searchTerm)
+    )
+  }
+
+  const clearAllOnlyHeaderFilters = () => setColumnFilters({
+    occupationVersion: [],
+    representingCountry: [],
+    occupationName: [],
+    occupationCode: [],
+
+  })
+  const hasActiveFilters = () => Object.values(columnFilters).some(list => list.length > 0)
+  // Close filter when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target)) {
+        setActiveFilterColumn(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+  // Sort ascending (Smallest to Largest)
+  const applySortAsc = (field) => {
+    setTableState(prev => {
+      let newSort = [...prev.sort]
+      const existingIndex = newSort.findIndex(s => s.field === field)
+      if (existingIndex === -1) newSort.push({ field, order: 'asc' })
+      else newSort[existingIndex].order = 'asc'
+      return { ...prev, sort: newSort, page: 1 }
+    })
+  }
+
+  // Sort descending (Largest to Smallest)
+  const applySortDesc = (field) => {
+    setTableState(prev => {
+      let newSort = [...prev.sort]
+      const existingIndex = newSort.findIndex(s => s.field === field)
+      if (existingIndex === -1) newSort.push({ field, order: 'desc' })
+      else newSort[existingIndex].order = 'desc'
+      return { ...prev, sort: newSort, page: 1 }
+    })
+  }
+
+
+
+
+
   const [modalState, setModalState] = useState({
     show: false,
     mode: 'add', // 'add' or 'edit'
     rowData: null
   })
-  // Excel-style column filters - Now storing country , state and district IDs
-  const [columnFilters, setColumnFilters] = useState({
-    countryId: [], // Country filter
-  });
 
-  const [activeFilterColumn, setActiveFilterColumn] = useState(null);
-  const [filterDropdownData, setFilterDropdownData] = useState({});
-  const [filterSearchTerms, setFilterSearchTerms] = useState({});
-  const filterDropdownRef = useRef(null);
   const handleShow = () => {
     setModalState({
       show: true,
@@ -52,30 +247,30 @@ const OccupationToOccupationList = () => {
   const [showImport, setShowImport] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this department?");
+  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this occupation to occupation?");
   const [showExportPopop, setShowExportPopop] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [selectAllOrNot, setSelectAllOrNot] = useState('');
   const [stateListData, setStateListData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-const [items] = useState(["Country","Occupation Version","Occupation Name","Occupation Code","Compare : Country","Compare : Occupation Version","Compare : Occupation Name","Compare : Occupation Code","Description","Modified On"]);
-  const [selectedItems, setSelectedItems] = useState([ "Country","Occupation Version","Occupation Name","Occupation Code","Compare : Country","Compare : Occupation Version","Compare : Occupation Name","Compare : Occupation Code",]);
-  const [ItemsRequired] = useState([ "Country","Occupation Version","Occupation Name","Occupation Code","Compare : Country","Compare : Occupation Version","Compare : Occupation Name","Compare : Occupation Code",]);
+  const [items] = useState(["Country", "Occupation Version", "Occupation Name", "Occupation Code", "Compare : Country", "Compare : Occupation Version", "Compare : Occupation Name", "Compare : Occupation Code", "Description", "Modified On"]);
+  const [selectedItems, setSelectedItems] = useState(["Country", "Occupation Version", "Occupation Name", "Occupation Code", "Compare : Country", "Compare : Occupation Version", "Compare : Occupation Name", "Compare : Occupation Code",]);
+  const [ItemsRequired] = useState(["Country", "Occupation Version", "Occupation Name", "Occupation Code", "Compare : Country", "Compare : Occupation Version", "Compare : Occupation Name", "Compare : Occupation Code",]);
   const [countryListData, setCountryListData] = useState([]);
   // Table columns configuration
   const [tableColumns] = useState([
-  { id: 'country', label: 'Country', field: 'country', visible: true, required: true, filterable: false },
-  { id: 'occupationVersion', label: 'Occupation Version', field: 'occupationVersion', visible: true, required: true, filterable: false },
-  { id: 'occupationName', label: 'Occupation Name', field: 'occupationName', visible: true, required: true, filterable: false },
-  { id: 'occupationCode', label: 'Occupation Code', field: 'occupationCode', visible: true, required: true, filterable: false },
-  { id: 'compareCountry', label: 'Compare : Country', field: 'compareCountry', visible: true, required: false, filterable: false },
-  { id: 'compareOccupationVersion', label: 'Compare : Occupation Version', field: 'compareOccupationVersion', visible: true, required: false, filterable: false },
-  { id: 'compareOccupationName', label: 'Compare : Occupation Name', field: 'compareOccupationName', visible: true, required: false, filterable: false },
-  { id: 'compareOccupationCode', label: 'Compare : Occupation Code', field: 'compareOccupationCode', visible: true, required: false, filterable: false },
-  { id: 'description', label: 'Description', field: 'description', visible: false, required: false, filterable: false },
-  { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false, filterable: false }
-]);
+    { id: 'country', label: 'Country', field: 'representingCountry', visible: true, required: true, filterable: true },
+    { id: 'occupationVersion', label: 'Occupation Version', field: 'occupationVersion', visible: true, required: true, filterable: true },
+    { id: 'occupationName', label: 'Occupation Name', field: 'occupationName', visible: true, required: true, filterable: true },
+    { id: 'occupationCode', label: 'Occupation Code', field: 'occupationCode', visible: true, required: true, filterable: true },
+    { id: 'compareCountry', label: 'Compare : Country', field: 'compareCountry', visible: true, required: false, filterable: false },
+    { id: 'compareOccupationVersion', label: 'Compare : Occupation Version', field: 'compareOccupationVersion', visible: true, required: false, filterable: false },
+    { id: 'compareOccupationName', label: 'Compare : Occupation Name', field: 'compareOccupationName', visible: true, required: false, filterable: false },
+    { id: 'compareOccupationCode', label: 'Compare : Occupation Code', field: 'compareOccupationCode', visible: true, required: false, filterable: false },
+    { id: 'description', label: 'Description', field: 'description', visible: false, required: false, filterable: false },
+    { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false, filterable: false }
+  ]);
 
   const [visibleColumns, setVisibleColumns] = useState(
     tableColumns.filter(col => col.visible).map(col => col.id)
@@ -118,13 +313,15 @@ const [items] = useState(["Country","Occupation Version","Occupation Name","Occu
     };
   }, []);
 
+  // Updated state with sorting
   const [tableState, setTableState] = useState({
     page: 1,
     limit: 25,
     search: '',
     status: '',
+    sortBy: '', // Field to sort by
+    sortOrder: '', // 'asc' or 'desc'
     sort: [
-      // { field: "updated_at", order: "desc" }
       { field: "created_at", order: "desc" }
     ],
     total: 0,
@@ -133,14 +330,10 @@ const [items] = useState(["Country","Occupation Version","Occupation Name","Occu
     hasNext: false,
     hasPrevious: false
   });
-
   useEffect(() => {
     setTableState(prev => ({ ...prev, search: globalSearch, page: 1 }));
   }, [globalSearch]);
 
-  useEffect(() => {
-    fetchCountryList();
-  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -152,6 +345,10 @@ const [items] = useState(["Country","Occupation Version","Occupation Name","Occu
     return () => clearTimeout(timer);
   }, [tableState.search]);
 
+  useEffect(() => {
+    fetchGapList();
+  }, [tableState.page, tableState.limit, tableState.status, tableState.sort, columnFilters]);
+
   const fetchGapList = () => {
     setLoading(true);
     const params = {
@@ -159,13 +356,14 @@ const [items] = useState(["Country","Occupation Version","Occupation Name","Occu
       limit: tableState.limit,
       search: tableState.search || '',
       status: tableState.status || '',
-      // sortBy: tableState.sortBy || '',
-      // sortOrder: tableState.sortOrder || ''
+      sortBy: tableState.sortBy || '',
+      sortOrder: tableState.sortOrder || '',
       sort: tableState.sort,
-      // Send country, state and district IDs
-      country: columnFilters.countryId.length > 0 ? columnFilters.countryId : null,
+      occupationVersion: columnFilters.occupationVersion.length > 0 ? columnFilters.occupationVersion : null,
+      representingCountry: columnFilters.representingCountry.length > 0 ? columnFilters.representingCountry : null,
+      occupationName: columnFilters.occupationName.length > 0 ? columnFilters.occupationName : null,
+      occupationCode: columnFilters.occupationCode.length > 0 ? columnFilters.occupationCode : null,
     };
-
     dispatch(occupationToOccupationList(params, (response, error) => {
       setLoading(false);
       if (response?.statusCode === 200 && response?.status === true) {
@@ -199,132 +397,7 @@ const [items] = useState(["Country","Occupation Version","Occupation Name","Occu
       }
     }));
   };
-  useEffect(() => {
-    fetchGapList();
-  }, [tableState.page, tableState.limit, tableState.status, tableState.sort, columnFilters]);
-  // Prepare country and state filter options
-  useEffect(() => {
-    if (countryListData.length > 0) {
-      // Create filter options with country names from countryListData
-      setFilterDropdownData(prev => ({
-        ...prev,
-        countryId: countryListData.map(country => ({
-          id: country.uuid || country.id,
-          name: country.name || country.countryName
-        })).sort((a, b) => a.name.localeCompare(b.name))
-      }));
-    }
-  }, [countryListData]);
 
-
-  const fetchCountryList = () => {
-    const params = {
-      page: 1,
-      limit: 2000,
-      search: '',
-      status: '',
-      sortBy: 'name',
-      sortOrder: 'asc',
-    };
-
-    dispatch(countryDemoList(params, (response, error) => {
-      if (response?.statusCode === 200 && response?.status === true) {
-        setCountryListData(response?.data || []);
-      }
-    }));
-  };
-  // Toggle filter dropdown for a column
-  const toggleFilterDropdown = (e, columnField) => {
-    e.stopPropagation();
-    setActiveFilterColumn(activeFilterColumn === columnField ? null : columnField);
-    setFilterSearchTerms(prev => ({ ...prev, [columnField]: '' }));
-  };
-  // Handle filter checkbox change - now handles both IDs and regular values
-  const handleFilterCheckboxChange = (columnField, value, checked) => {
-    setColumnFilters(prev => {
-      const currentFilters = prev[columnField] || [];
-      let newFilters;
-      if (checked) {
-        newFilters = [...currentFilters, value];
-      } else {
-        newFilters = currentFilters.filter(v => v !== value);
-      }
-      return { ...prev, [columnField]: newFilters };
-    });
-  };
-
-  // Select all in filter
-  const handleFilterSelectAll = (columnField) => {
-    const searchTerm = filterSearchTerms[columnField] || '';
-
-    // For country, state and district filter, select IDs
-    const availableOptions = (filterDropdownData[columnField] || [])
-      .filter(option => option.name.toLowerCase().includes(searchTerm.toLowerCase()))
-      .map(option => option.id);
-
-    setColumnFilters(prev => ({
-      ...prev,
-      [columnField]: availableOptions
-    }));
-  };
-
-  // Clear all in filter
-  const handleFilterClearAll = (columnField) => {
-    setColumnFilters(prev => ({
-      ...prev,
-      [columnField]: []
-    }));
-  };
-
-  // Clear all filters
-  const clearAllOnlyHeaderFilters = () => {
-    setColumnFilters({
-      countryId: [],
-    });
-  };
-
-  // Clear all filters
-  const clearAllFilters = () => {
-    // Reset filter dropdowns
-    setColumnFilters({
-      countryId: []
-    });
-    // Reset table state (sorting + pagination)
-    setTableState(prev => ({
-      ...prev,
-      page: 1,
-      limit: 25,
-      search: '',
-      status: '',
-      sort: [
-        { field: "created_at", order: "desc" }   // default sort
-      ],
-      total: 0,
-      totalPages: 0,
-      currentPage: 1,
-      hasNext: false,
-      hasPrevious: false
-    }));
-    // Reset global search
-    setGlobalSearch('');
-  };
-
-  // Check if any filters are active
-  const hasActiveFilters = () => {
-    return Object.values(columnFilters).some(filters => filters.length > 0);
-  };
-
-  // Get filtered options based on search term
-  const getFilteredOptions = (columnField) => {
-    const searchTerm = filterSearchTerms[columnField] || '';
-    const options = filterDropdownData[columnField] || [];
-
-    // For country, state and district filter, filter by name
-    return options.filter(option =>
-      option.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  };
-  // Handle sorting
   const handleSort = (field) => {
     setTableState(prev => {
       let newSort = [...prev.sort];
@@ -345,12 +418,9 @@ const [items] = useState(["Country","Occupation Version","Occupation Name","Occu
     });
   };
 
-  // Get sort icon for a column
   const getSortIcon = (field) => {
     const sortObj = tableState.sort.find(s => s.field === field);
     if (!sortObj) {
-      // return <Icon icon="ri:arrow-up-down-line" className="sorting-th-icone" />;
-      //  return <Icon icon="ri:close-line" className="sorting-th-icone" />;
       return <Icon icon="ri:menu-line" className="sorting-th-icone" />;
     }
     if (sortObj.order === "asc") {
@@ -359,45 +429,29 @@ const [items] = useState(["Country","Occupation Version","Occupation Name","Occu
     return <Icon icon="ri:sort-desc" className="sorting-th-icone" />;
   };
 
-  // const handleSearchChange = (value) => {
-  //   setTableState(prev => ({
-  //     ...prev,
-  //     search: value,
-  //     page: 1
-  //   }));
-  // };
-
-  // Sort A–Z
-  const applySortAsc = (field) => {
-    setTableState(prev => {
-      let newSort = [...prev.sort];
-      const existingIndex = newSort.findIndex(s => s.field === field);
-
-      if (existingIndex === -1) {
-        newSort.push({ field, order: "asc" });
-      } else {
-        newSort[existingIndex].order = "asc";
-      }
-
-      return { ...prev, sort: newSort, page: 1 };
-    });
+  const clearAllFilters = () => {
+    setTableState(prev => ({
+      ...prev,
+      page: 1,
+      limit: 25,
+      search: '',
+      status: '',
+      sortBy: '',
+      sortOrder: '',
+      sort: [
+        { field: "created_at", order: "desc" }   // default sort
+      ],
+      total: 0,
+      totalPages: 0,
+      currentPage: 1,
+      hasNext: false,
+      hasPrevious: false
+    }));
+    // Reset Global Search
+    setGlobalSearch('');
+    setSelectedRows([]);
   };
 
-  // Sort Z–A
-  const applySortDesc = (field) => {
-    setTableState(prev => {
-      let newSort = [...prev.sort];
-      const existingIndex = newSort.findIndex(s => s.field === field);
-
-      if (existingIndex === -1) {
-        newSort.push({ field, order: "desc" });
-      } else {
-        newSort[existingIndex].order = "desc";
-      }
-
-      return { ...prev, sort: newSort, page: 1 };
-    });
-  };
 
   const handlePageLengthChange = (value) => {
     setTableState(prev => ({
@@ -478,10 +532,6 @@ const [items] = useState(["Country","Occupation Version","Occupation Name","Occu
     return pages;
   };
 
-  // const handleCloseEdit = () => {
-  //   setShowEdit(false);
-  //   fetchGapList();
-  // };
 
   const handleShowEdit = (rowData) => {
     setModalState({
@@ -511,13 +561,36 @@ const [items] = useState(["Country","Occupation Version","Occupation Name","Occu
   };
 
   const confirmDelete = () => {
-    // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
-    const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
-    if (!sendPayload || sendPayload.length === 0) {
-      toast.error("No gap selected for deletion.");
+    const sendPayload =
+      selectAllOrNot === "all"
+        ? "all"
+        : deleteId
+          ? [deleteId]
+          : selectedRows;
+
+    if (!sendPayload || (Array.isArray(sendPayload) && sendPayload.length === 0)) {
+      toast.error("No district selected for deletion.");
       return;
     }
-    dispatch(occupationToOccupationDelete(sendPayload, (response, error) => {
+    const deleteAll =
+      selectAllOrNot === "all" &&
+      (
+        (tableState.search && tableState.search.trim() !== '') ||
+        columnFilters.occupationVersion.length > 0 ||
+        columnFilters.representingCountry.length > 0 ||
+        columnFilters.occupationName.length > 0 ||
+        columnFilters.occupationCode.length > 0
+      );
+    const payloadSend = {
+      deleteAll: deleteAll,
+      occupationVersion: columnFilters.occupationVersion.length > 0 ? columnFilters.occupationVersion : '',
+      representingCountry: columnFilters.representingCountry.length > 0 ? columnFilters.representingCountry : '',
+      occupationName: columnFilters.occupationName.length > 0 ? columnFilters.occupationName : '',
+      occupationCode: columnFilters.occupationCode.length > 0 ? columnFilters.occupationCode : '',
+      id: deleteAll == true ? "" : sendPayload,
+      search: tableState.search || '',
+    };
+    dispatch(occupationToOccupationDelete(payloadSend, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
@@ -529,7 +602,8 @@ const [items] = useState(["Country","Occupation Version","Occupation Name","Occu
           setSelectedRows([]);
           setSelectAllOrNot('');
           setDeleteId(null);
-          fetchGapList();
+          // fetchGapList();
+          clearAllFilters();
         } else {
           toast.error("Something went wrong.");
         }
@@ -600,16 +674,16 @@ const [items] = useState(["Country","Occupation Version","Occupation Name","Occu
     // Map frontend labels to State field names
 
     const fieldMapping = {
-        "Country": "country",
-        "Occupation Version": "occupation_version",
-        "Occupation Name": "occupation_name",
-        "Occupation Code": "occupation_code",
-        "Compare : Country": "compare_country",
-        "Compare : Occupation Version": "compare_occupation_version",
-        "Compare : Occupation Name": "compare_occupation_name",
-        "Compare : Occupation Code": "compare_occupation_code",
-        "Description": "description",
-        "Modified On": "updated_at",
+      "Country": "country",
+      "Occupation Version": "occupation_version",
+      "Occupation Name": "occupation_name",
+      "Occupation Code": "occupation_code",
+      "Compare : Country": "compare_country",
+      "Compare : Occupation Version": "compare_occupation_version",
+      "Compare : Occupation Name": "compare_occupation_name",
+      "Compare : Occupation Code": "compare_occupation_code",
+      "Description": "description",
+      "Modified On": "updated_at",
     };
 
     // Convert selectedItems to State field names
@@ -620,13 +694,16 @@ const [items] = useState(["Country","Occupation Version","Occupation Name","Occu
       file: "xlsx",
       fields: fieldsString,
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
-      search: tableState.search || '',
-      sort: tableState.sort,
-      country: columnFilters.countryId.length > 0 ? columnFilters.countryId : null,
+      search: tableState.search || '', // Add search parameter
+      sort: tableState.sort, // Add sort parameter
+      occupationVersion: columnFilters.occupationVersion.length > 0 ? columnFilters.occupationVersion : null,
+      representingCountry: columnFilters.representingCountry.length > 0 ? columnFilters.representingCountry : null,
+      occupationName: columnFilters.occupationName.length > 0 ? columnFilters.occupationName : null,
+      occupationCode: columnFilters.occupationCode.length > 0 ? columnFilters.occupationCode : null,
     };
 
     setLoadingExport(true);
-    dispatch(occupationCategoryExportData(sendPayload, (response, error) => {
+    dispatch(occupationToOccupationExportData(sendPayload, (response, error) => {
       if (error) {
         setLoadingExport(false);
         toast.error(error?.response?.message || "server error");
@@ -710,20 +787,23 @@ const [items] = useState(["Country","Occupation Version","Occupation Name","Occu
                     </>
                   )}
                   {hasActiveFilters() && (
-                    <button
-                      onClick={clearAllOnlyHeaderFilters}
-                      className="btn btn-sm py-1 comman-inactive-btn">
+                    <button onClick={clearAllOnlyHeaderFilters} className="btn btn-sm py-1 comman-inactive-btn">
                       <Icon icon="mdi:filter-off" width="16" /> Clear Filters
                     </button>
                   )}
-                 <ResetButton
+                  {/* <button
+                                               onClick={clearAllFilters}
+                                               className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
+                                             >Reset </button> */}
+                  <ResetButton
                     onClick={clearAllFilters}
                     tableState={tableState}
+                    columnFilters={columnFilters}
+                    selectedRows={selectedRows}
                     globalSearch={globalSearch}
-                    />
+                  />
                 </div>
               </div>
-
               {/* Right Section: Select / Search / +Add New */}
               <div className="col-xl-6 col-lg-8 col-md-12">
                 <div className="d-flex flex-wrap align-items-center justify-content-end gap-2">
@@ -866,11 +946,7 @@ const [items] = useState(["Country","Occupation Version","Occupation Name","Occu
                     </th>
                     {tableColumns.map((column) => (
                       isColumnVisible(column.id) && (
-                        <th
-                          key={column.id}
-                          scope="col"
-                          className='sorting-th'
-                        >
+                        <th key={column.id} scope="col" className="sorting-th">
                           <div className="d-flex align-items-center justify-content-between position-relative">
                             <div
                               className="d-flex align-items-center flex-grow-1"
@@ -883,9 +959,14 @@ const [items] = useState(["Country","Occupation Version","Occupation Name","Occu
                               {column.filterable && (
                                 <div className="position-relative comman-filtter-all">
                                   <Icon
-                                    icon={columnFilters[column.field]?.length > 0 ? "mdi:filter" : "mdi:filter-outline"}
+                                    icon={
+                                      columnFilters[column.field]?.length > 0
+                                        ? 'mdi:filter'
+                                        : 'mdi:filter-outline'
+                                    }
                                     width="18"
-                                    className={`ms-2 ${columnFilters[column.field]?.length > 0 ? 'comman-btn-color' : ''}`}
+                                    className={`ms-2 ${columnFilters[column.field]?.length > 0 ? 'comman-btn-color' : ''
+                                      }`}
                                     style={{ cursor: 'pointer' }}
                                     onClick={(e) => toggleFilterDropdown(e, column.field)}
                                   />
@@ -894,45 +975,64 @@ const [items] = useState(["Country","Occupation Version","Occupation Name","Occu
                                     <div
                                       ref={filterDropdownRef}
                                       className="position-absolute bg-white border rounded shadow-sm p-3 main-div-dropdown"
-
                                       onClick={(e) => e.stopPropagation()}
                                     >
-                                      {/* Sort Options */}
-                                      <div className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(s => s.field === column.field)?.order === "asc"
-                                        ? "disabled-sort"
-                                        : ""
-                                        }`}
+                                      {/* Sort options */}
+                                      <div
+                                        className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(
+                                          (s) => s.field === column.field && s.order === 'asc'
+                                        )
+                                          ? 'disabled-sort'
+                                          : ''
+                                          }`}
                                         onClick={() => applySortAsc(column.field)}
                                       >
-                                        <Icon icon="ri:arrow-up-line" className="me-2 text-muted" width="18" />
+                                        <Icon
+                                          icon="ri:arrow-up-line"
+                                          className="me-2 text-muted"
+                                          width="18"
+                                        />
                                         Sort Smallest to Largest
                                       </div>
-                                      <div className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(s => s.field === column.field)?.order === "desc"
-                                        ? "disabled-sort"
-                                        : ""
-                                        }`}
+                                      <div
+                                        className={`filter-menu-item px-3 py-2 d-flex align-items-center ${tableState.sort.find(
+                                          (s) => s.field === column.field && s.order === 'desc'
+                                        )
+                                          ? 'disabled-sort'
+                                          : ''
+                                          }`}
                                         onClick={() => applySortDesc(column.field)}
                                       >
-                                        <Icon icon="ri:arrow-down-line" className="me-2 text-muted" width="18" />
+                                        <Icon
+                                          icon="ri:arrow-down-line"
+                                          className="me-2 text-muted"
+                                          width="18"
+                                        />
                                         Sort Largest to Smallest
                                       </div>
-                                      <div className="mb-2 ">
+
+                                      {/* Search box */}
+                                      <div className="mb-2">
                                         <input
                                           type="text"
                                           className="form-control form-control-sm input-search"
                                           placeholder="Search..."
                                           value={filterSearchTerms[column.field] || ''}
-                                          onChange={(e) => setFilterSearchTerms(prev => ({
-                                            ...prev,
-                                            [column.field]: e.target.value
-                                          }))}
+                                          onChange={(e) =>
+                                            setFilterSearchTerms((prev) => ({
+                                              ...prev,
+                                              [column.field]: e.target.value,
+                                            }))
+                                          }
                                         />
                                       </div>
 
-                                      <div className="gap-2 mb-2 select-clear-all" >
+                                      {/* Select/Clear all */}
+                                      <div className="gap-2 mb-2 select-clear-all">
                                         <button
                                           className="btn btn-sm py-1 btn-primary flex-grow-1 comman-btn-color mr-10"
-                                          onClick={() => handleFilterSelectAll(column.field)}>
+                                          onClick={() => handleFilterSelectAll(column.field)}
+                                        >
                                           Select All
                                         </button>
                                         <button
@@ -943,32 +1043,47 @@ const [items] = useState(["Country","Occupation Version","Occupation Name","Occu
                                         </button>
                                       </div>
 
-                                      <div className='select-all-dropdown' >
-                                        {/* Country and State filter - show names but store IDs */}
+                                      {/* Option list */}
+                                      <div className="select-all-dropdown">
                                         {getFilteredOptions(column.field).length > 0 ? (
                                           getFilteredOptions(column.field).map((option, idx) => (
-                                            <>
-                                              <div
-                                                key={idx}
-                                                className="bg-white rounded p-2 mb-2 d-flex align-items-center gap-2 form-check-div"
-                                              >
-                                                <input
-                                                  type="checkbox"
-                                                  id={`filter-${column.field}-${idx}`}
-                                                  checked={columnFilters[column.field]?.includes(option.id)}
-                                                  onChange={(e) => handleFilterCheckboxChange(
+                                            <div
+                                              key={idx}
+                                              className="bg-white rounded p-2 mb-2 d-flex align-items-center gap-2 form-check-div"
+
+                                            >
+                                              <input
+                                                type="checkbox"
+                                                id={`filter-${column.field}-${idx}`}
+                                                checked={columnFilters[column.field]?.includes(
+                                                  option.id
+                                                )}
+                                                onChange={(e) =>
+                                                  handleFilterCheckboxChange(
                                                     column.field,
                                                     option.id,
                                                     e.target.checked
-                                                  )}
-                                                  className="form-check-input"
-                                                />
-                                                <label htmlFor={`item-${idx}`} className="mb-0 flex-grow-1 form-check-label">
-                                                  {option.name}
-                                                </label>
-                                              </div>
-                                            </>
+                                                  )
+                                                }
+                                                className="form-check-input"
+                                              />
+                                              <label
+                                                htmlFor={`filter-${column.field}-${idx}`}
+                                                className="mb-0 flex-grow-1 form-check-label"
+                                                title={option.name}
+                                                style={{
+                                                  display: 'block',
+                                                  whiteSpace: 'nowrap',
+                                                  overflow: 'hidden',
+                                                  textOverflow: 'ellipsis',
+                                                  maxWidth: '200px',
+                                                  cursor: 'pointer',
+                                                }}
 
+                                              >
+                                                {option.name}
+                                              </label>
+                                            </div>
                                           ))
                                         ) : (
                                           <div className="no-records-found">
@@ -977,11 +1092,13 @@ const [items] = useState(["Country","Occupation Version","Occupation Name","Occu
                                         )}
                                       </div>
 
+                                      {/* Footer */}
                                       <div className="d-flex gap-2 mt-2 pt-2 border-top justify-content-end">
                                         <button
                                           className="btn btn-sm  py-1 btn-secondary flex-grow-1  mt-10"
                                           onClick={() => setActiveFilterColumn(null)}
-                                          style={{ maxWidth: "80px" }} >
+                                          style={{ maxWidth: '80px' }}
+                                        >
                                           Cancel
                                         </button>
                                       </div>
@@ -1054,44 +1171,44 @@ const [items] = useState(["Country","Occupation Version","Occupation Name","Occu
                             <span>{String(startIndex + index + 1).padStart(2, '0')}</span>
                           </div>
                         </td>
-                       {isColumnVisible('country') && (
-                        <td><span>{rowItem.country}</span></td>
+                        {isColumnVisible('country') && (
+                          <td><span>{rowItem.country}</span></td>
                         )}
 
                         {isColumnVisible('occupationVersion') && (
-                        <td><span>{rowItem.occupation_version}</span></td>
+                          <td><span>{rowItem.occupation_version}</span></td>
                         )}
 
                         {isColumnVisible('occupationName') && (
-                        <td><span>{rowItem.occupation_name}</span></td>
+                          <td><span>{rowItem.occupation_name}</span></td>
                         )}
 
                         {isColumnVisible('occupationCode') && (
-                        <td><span>{rowItem.occupation_code}</span></td>
+                          <td><span>{rowItem.occupation_code}</span></td>
                         )}
 
                         {isColumnVisible('compareCountry') && (
-                        <td><span>{rowItem.compare_country}</span></td>
+                          <td><span>{rowItem.compare_country}</span></td>
                         )}
 
                         {isColumnVisible('compareOccupationVersion') && (
-                        <td><span>{rowItem.compare_occupation_version}</span></td>
+                          <td><span>{rowItem.compare_occupation_version}</span></td>
                         )}
 
                         {isColumnVisible('compareOccupationName') && (
-                        <td><span>{rowItem.compare_occupation_name}</span></td>
+                          <td><span>{rowItem.compare_occupation_name}</span></td>
                         )}
 
                         {isColumnVisible('compareOccupationCode') && (
-                        <td><span>{rowItem.compare_occupation_code}</span></td>
+                          <td><span>{rowItem.compare_occupation_code}</span></td>
                         )}
 
                         {isColumnVisible('description') && (
-                        <td><span>{rowItem.description}</span></td>
+                          <td><span>{rowItem.description}</span></td>
                         )}
 
                         {isColumnVisible('updated_at') && (
-                        <td><span>{formatDateDDMMYYYYTime(rowItem.updated_at)}</span></td>
+                          <td><span>{formatDateDDMMYYYYTime(rowItem.updated_at)}</span></td>
                         )}
 
                         <td className='action-td'>

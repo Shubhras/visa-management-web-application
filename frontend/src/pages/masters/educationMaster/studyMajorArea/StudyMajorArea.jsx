@@ -82,8 +82,9 @@ const StudyMajorAreaList = () => {
         const searchTerm = String(filterSearchTerms[columnField] || '').toLowerCase()
         const options = filterDropdownData[columnField] || []
         return options.filter(o =>
-            String(o.name ?? '').toLowerCase().includes(searchTerm)
+            String(o.name ?? '').toLowerCase().startsWith(searchTerm)
         )
+        .sort((a, b) => a.name.localeCompare(b.name));
     }
 
     const clearAllOnlyHeaderFilters = () => setColumnFilters({ studyMainArea: [] })
@@ -346,6 +347,10 @@ const StudyMajorAreaList = () => {
         }));
         // Reset Global Search
         setGlobalSearch('');
+        setSelectedRows([]);
+        setColumnFilters({
+            studyMainArea: [],
+        });
     };
 
     const handleSearchChange = (value) => {
@@ -478,7 +483,14 @@ const StudyMajorAreaList = () => {
             toast.error("No study major area selected for deletion.");
             return;
         }
-        dispatch(studyMajorAreaDelete(sendPayload, (response, error) => {
+        const deleteAll = selectAllOrNot === "all" && ((tableState.search && tableState.search.trim() !== '') || columnFilters.studyMainArea.length > 0);
+        const payloadSend = {
+            deleteAll: deleteAll,
+            studyMainArea: columnFilters.studyMainArea.length > 0 ? columnFilters.studyMainArea : '',
+            id: deleteAll == true ? "" : sendPayload,
+            search: tableState.search || '',
+        };
+        dispatch(studyMajorAreaDelete(payloadSend, (response, error) => {
             if (error) {
                 toast.error(error?.response?.data?.message || "server error");
             } else {
@@ -490,7 +502,8 @@ const StudyMajorAreaList = () => {
                     setSelectedRows([]);
                     setSelectAllOrNot('');
                     setDeleteId(null);
-                    fetchDepartmentList();
+                    //fetchDepartmentList();
+                    clearAllFilters();
                 } else {
                     toast.error("Something went wrong.");
                 }
@@ -677,6 +690,7 @@ const StudyMajorAreaList = () => {
                                         tableState={tableState}
                                         columnFilters={columnFilters}
                                         globalSearch={globalSearch}
+                                        selectedRows={selectedRows}
                                     />
                                 </div>
                             </div>

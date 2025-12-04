@@ -134,7 +134,17 @@ const MasterLayout = ({ children }) => {
     "Occupation Type",
     "Occupation Prospect",
     "Occupation Category",
-    "Occupation Version"
+    "Occupation Version",
+    "Occupation Level Code",
+    "Occupation Level",
+    "Occupation Code",
+    "Occupation Name",
+    "Designation (Job Title)",
+    "Job Prospect",
+    "Related Occupation",
+    "Compare : Occupation To Occupation",
+    "Eligibility for Occupation Name"
+
   ]);
 
 
@@ -298,6 +308,7 @@ const MasterLayout = ({ children }) => {
             { name: "Job Prospect", path: "/job-prospect" },
             { name: "Related Occupation", path: "/related-occupation" },
             { name: "Compare : Occupation To Occupation", path: "/occupation-to-occupation" },
+            {name: "Eligibility for Occupation Name",path: "/eligibility-for-occupation-name"},
           ],
         },
         {
@@ -346,7 +357,7 @@ const MasterLayout = ({ children }) => {
             { name: "Work Rights After Study", path: "/work-rights-after-study" },
             { name: "PR Possibility", path: "/pr-possibility" },
             { name: "Spouse Can Apply with Candidate?", path: "/spouse-can-apply-with-candidate" },
-            { name: "Visa Main Category", path: "/visa-main-category" },
+            // { name: "Visa Main Category", path: "/visa-main-category" },
             { name: "Spouse Visa Category", path: '/spouse-visa-category' },
             { name: "Spouse Work Rights", path: "/spouse-work-rights" },
             { name: "Children Can Apply with Candidate?", path: "/children-can-apply-with-candidate" },
@@ -2061,7 +2072,7 @@ const MasterLayout = ({ children }) => {
                 <div className="d-flex flex-wrap align-items-center gap-3">
                   {/* Alarm Icon */}
                   <div className="dropdown">
-                    <button className="has-indicator w-32-px h-32-px bg-neutral-200 rounded-circle d-flex justify-content-center align-items-center">
+                    <button className="has-indicator w-24-px h-24-px bg-neutral-200 rounded-circle d-flex justify-content-center align-items-center">
                       <Icon
                         icon="solar:alarm-linear"
                         className="text-primary-light text-md"
@@ -2072,7 +2083,7 @@ const MasterLayout = ({ children }) => {
                   {/* Notification Icon */}
                   <div className="dropdown">
                     <button
-                      className="has-indicator w-32-px h-32-px bg-neutral-200 rounded-circle d-flex justify-content-center align-items-center"
+                      className="has-indicator w-24-px h-24-px bg-neutral-200 rounded-circle d-flex justify-content-center align-items-center"
                       type="button"
                       data-bs-toggle="dropdown"
                     >
@@ -2104,7 +2115,7 @@ const MasterLayout = ({ children }) => {
                       <img
                         src="assets/images/users/avatar-4.jpg"
                         alt="image_user"
-                        className="w-32-px h-32-px object-fit-cover rounded-circle"
+                        className="w-24-px h-24-px object-fit-cover rounded-circle"
                       />
                     </button>
                     <div className="dropdown-menu to-top dropdown-menu-sm">

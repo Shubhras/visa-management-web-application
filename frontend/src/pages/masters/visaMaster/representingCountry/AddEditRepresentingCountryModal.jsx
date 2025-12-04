@@ -3,11 +3,14 @@ import { useDispatch } from "react-redux";
 import { representingCountryAdd, representingCountryEdit } from '../../../../store/master/visaMaster/action';
 import { toast } from "react-toastify";
 import Select from "react-select";
-import { countryList } from "../../../../store/master/generalMasters/actions";
+import { countryList, stateListByCountry } from "../../../../store/master/generalMasters/actions";
+
 const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
     const [countryListData, setCountryListData] = useState([]);
+    const [stateLoading, setStateLoading] = useState(false);
+    const [stateListData, setStateListData] = useState([]);
     const [files, setFiles] = useState({
         national_flag: null,
         country_map: null
@@ -79,6 +82,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
         currency_short_name: '',
     });
 
+
     // Populate form data when in edit mode
     useEffect(() => {
         if (show) {
@@ -130,8 +134,8 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                     unemployment: '',
                     skilled_shortages: '',
                     border_countries: '',
-                    // national_flag: '',
-                    // country_map: '',
+                    national_flag: '',
+                    country_map: '',
                     description: '',
                 });
                 setFiles({ national_flag: null, country_map: null });
@@ -141,6 +145,25 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
             fetchCountrylList();
         }
     }, [mode, rowData, show]);
+
+    const handleSelectChange = (selectedOption, fieldName) => {
+        setFormData(prev => ({
+            ...prev,
+            [fieldName]: selectedOption ? selectedOption.value : ''
+        }));
+    };
+    useEffect(() => {
+        if (formData.country_name) {
+            fetchStateList(formData.country_name);
+        } else {
+            setStateListData([]);
+            setFormData(prev => ({
+                ...prev,
+                largest_state: '',
+                smallest_state: ''
+            }));
+        }
+    }, [formData.country_name]);
 
     const fetchCountrylList = () => {
         const params = {
@@ -159,6 +182,31 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
             }
         }));
 
+    };
+    const fetchStateList = (countryId) => {
+        if (!countryId) {
+            setStateListData([]);
+            return;
+        }
+        setStateLoading(true);
+        const params = {
+            page: 1,
+            limit: 2000,
+            search: '',
+            status: '',
+            sortBy: 'name',
+            sortOrder: 'asc',
+            countryId: countryId,
+        };
+
+        dispatch(stateListByCountry(params, (response, error) => {
+            setStateLoading(false);
+            if (response?.statusCode === 200 && response?.status === true) {
+                setStateListData(response?.data || []);
+            } else {
+                setStateListData([]);
+            }
+        }));
     };
     const customFilterOption = (option, inputValue) => {
         if (!inputValue) return true;
@@ -193,7 +241,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
             "short_name",
             "continent",
             "capital_city",
-            // "calling_code",
+            "calling_code",
             "currency_full_name",
             "currency_short_name"
         ];
@@ -204,6 +252,12 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                 isValid = false;
             }
         });
+
+        // if (formData.largest_state && formData.smallest_state &&
+        //     formData.largest_state === formData.smallest_state) {
+        //     toast.warning("Largest and smallest states cannot be the same");
+        //     isValid = false;
+        // }
 
         setErrors(newErrors);
         return isValid;
@@ -236,9 +290,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
             formDataToSend.append('total_area_sq_km', formData.total_area);
             formDataToSend.append('population', formData.population);
             formDataToSend.append('religions', formData.religions);
-            // formDataToSend.append('largest_state', formData.largest_state);
-             formDataToSend.append('largest_state', []);
-            formDataToSend.append('largest_city', []);
+            formDataToSend.append('largest_state', formData.largest_state);
             formDataToSend.append('major_cities', formData.major_cities);
             formDataToSend.append('national_animal', formData.national_animal);
             formDataToSend.append('national_bird', formData.national_bird);
@@ -257,27 +309,13 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
 
 
             formDataToSend.append('smallest_state', formData.smallest_state);
-            // Append monthly living cost fields
             formDataToSend.append('monthly_living_cost_currency', formData.monthly_living_cost_currency);
             formDataToSend.append('monthly_living_cost_amount', formData.monthly_living_cost_amount);
 
-            // Append files - exactly like you mentioned
 
             if (mode === 'edit') {
                 formDataToSend.append('uuid', formData.uuid);
             }
-
-
-            // const sendPayload = mode === 'edit'
-            //     ? {
-            //         uuid: formData.uuid,
-            //         country_name: formData.country_name,
-            //         description: formData.description,
-            //     }
-            //     : {
-            //         country_name: formData.country_name,
-            //         description: formData.description,
-            //     };
 
             setLoading(true);
 
@@ -409,7 +447,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                     <div className="modal-body ">
                         <form onSubmit={handleSubmit}>
                             <div className=""  >
-                                <div className="row modal-scrollable-content" 
+                                <div className="row modal-scrollable-content"
                                 // style={{ maxHeight: "500px", overflowY: "auto", scrollbarWidth: "none" }}  
                                 >
                                     {/* Country Name */}
@@ -456,8 +494,26 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                                         currency_full_name: selectedCountry.currencyfullname || "",
                                                         currency_short_name: selectedCountry.currencyshortname || "",
                                                         currency_code: selectedCountry.currencyCode || "",
+                                                        largest_state: "",
+                                                        smallest_state: "",
+                                                    }));
+                                                } else {
+                                                    setFormData((prev) => ({
+                                                        ...prev,
+                                                        country_name: "",
+                                                        official_name: "",
+                                                        short_name: "",
+                                                        continent: "",
+                                                        capital_city: "",
+                                                        calling_code: "",
+                                                        currency_full_name: "",
+                                                        currency_short_name: "",
+                                                        currency_code: "",
+                                                        largest_state: "",
+                                                        smallest_state: "",
                                                     }));
                                                 }
+                                                setStateListData([]);
                                             }}
                                             filterOption={customFilterOption}
                                             placeholder="Select country"
@@ -778,32 +834,86 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                             </div>
                                         </div>
                                     </div>
+
                                     {/* Largest State */}
                                     <div className="col-md-6 mb-10">
                                         <label className="form-label fw-semibold text-sm mb-8">Largest State</label>
-                                        <input
-                                            type="text"
-                                            name="largest_state"
-                                            value={formData.largest_state}
-                                            onChange={handleChange}
-                                            className="form-control radius-8"
-                                            placeholder="Enter largest state"
+                                        <Select
+                                            options={stateListData.map((option) => ({
+                                                value: option.uuid,
+                                                label: option.name,
+                                            }))}
+                                            value={
+                                                formData.largest_state
+                                                    ? stateListData
+                                                        .map((option) => ({
+                                                            value: option.uuid,
+                                                            label: option.name,
+                                                        }))
+                                                        .find((opt) => opt.value === formData.largest_state)
+                                                    : null
+                                            }
+                                            onChange={(selectedOption) =>
+                                                handleSelectChange(selectedOption, 'largest_state')
+                                            }
+                                            filterOption={customFilterOption}
+                                            placeholder={!formData.country_name ? "Select country first" : "Select largest state"}
+                                            isClearable
+                                            isSearchable
+                                            isDisabled={!formData.country_name || stateLoading}
+                                            isLoading={stateLoading}
+                                            loadingMessage={() => "Loading states..."}
+                                            noOptionsMessage={() =>
+                                                !formData.country_name
+                                                    ? "Please select a country first"
+                                                    : stateLoading
+                                                        ? "Loading states..."
+                                                        : "No states found"
+                                            }
+                                            className="custom-select-container"
+                                            classNamePrefix="custom-select"
                                         />
                                     </div>
 
                                     {/* Smallest State */}
                                     <div className="col-md-6 mb-10">
                                         <label className="form-label fw-semibold text-sm mb-8">Smallest State</label>
-                                        <input
-                                            type="text"
-                                            name="smallest_state"
-                                            value={formData.smallest_state}
-                                            onChange={handleChange}
-                                            className="form-control radius-8"
-                                            placeholder="Enter smallest state"
+                                        <Select
+                                            options={stateListData.map((option) => ({
+                                                value: option.uuid,
+                                                label: option.name,
+                                            }))}
+                                            value={
+                                                formData.smallest_state
+                                                    ? stateListData
+                                                        .map((option) => ({
+                                                            value: option.uuid,
+                                                            label: option.name,
+                                                        }))
+                                                        .find((opt) => opt.value === formData.smallest_state)
+                                                    : null
+                                            }
+                                            onChange={(selectedOption) =>
+                                                handleSelectChange(selectedOption, 'smallest_state')
+                                            }
+                                            filterOption={customFilterOption}
+                                            placeholder={!formData.country_name ? "Select country first" : "Select smallest state"}
+                                            isClearable
+                                            isSearchable
+                                            isDisabled={!formData.country_name || stateLoading}
+                                            isLoading={stateLoading}
+                                            loadingMessage={() => "Loading states..."}
+                                            noOptionsMessage={() =>
+                                                !formData.country_name
+                                                    ? "Please select a country first"
+                                                    : stateLoading
+                                                        ? "Loading states..."
+                                                        : "No states found"
+                                            }
+                                            className="custom-select-container"
+                                            classNamePrefix="custom-select"
                                         />
                                     </div>
-
                                     {/* Major Cities */}
                                     <div className="col-md-6 mb-10">
                                         <label className="form-label fw-semibold text-sm mb-8">Major Cities</label>

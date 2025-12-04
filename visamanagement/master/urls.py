@@ -400,7 +400,8 @@ urlpatterns = [
     path('degree-awarded-institute/', DegreeAwardedInstituteListAPIView.as_view(), name='degree_awarded_institute_list'),
     path('degree-awarded-institute/create/', DegreeAwardedInstituteCreateAPIView.as_view(), name='degree_awarded_institute_create'),
     path('degree-awarded-institute/<uuid:uuid>/retrieve/', DegreeAwardedInstituteRetrieveAPIView.as_view(), name='degree_awarded_institute_retrieve'),
-    path('degree-awarded-institute/<uuid:uuid>/update/', DegreeAwardedInstituteUpdateAPIView.as_view(), name='degree_awarded_institute_update'),    path('degree-awarded-institute/delete/', DegreeAwardedInstituteDeleteAPIView.as_view(), name='degree_awarded_institute_delete_bulk'),
+    path('degree-awarded-institute/<uuid:uuid>/update/', DegreeAwardedInstituteUpdateAPIView.as_view(), name='degree_awarded_institute_update'),    
+    path('degree-awarded-institute/delete/', DegreeAwardedInstituteDeleteAPIView.as_view(), name='degree_awarded_institute_delete_bulk'),
     path('degree-awarded-institute/export/', DegreeAwardedInstituteExportAPIView.as_view(), name='degree_awarded_institute_export'),
     path('degree-awarded-institute/import/', DegreeAwardedInstituteImportAPIView.as_view(), name='degree_awarded_institute_import'),
     path('degrees-by-education-level/', DegreeAwardedByEducationLevelAPIView.as_view(), name='degrees-by-education-level'),
@@ -478,7 +479,6 @@ urlpatterns = [
     path('entrancetestresult/import/', EntranceTestResultImportAPIView.as_view(), name='entrancetestresult-import'),
 
    #----------------------- process.py------------------
-
 
     path("documentcategory/create/", DocumentCategoryCreateAPIView.as_view(), name='DocumentCategory-create'),
     path("documentcategory/", DocumentCategoryListAPIView.as_view(), name='DocumentCategory-list'),
@@ -997,7 +997,6 @@ urlpatterns = [
     path('factor-for/<uuid:uuid>/', FactorForRetrieveAPIView.as_view(), name='factorfor-retrieve'),
     path('factor-for/<uuid:uuid>/update/', FactorForUpdateAPIView.as_view(), name='factorfor-update'),
     path('factor-for/delete/', FactorForDeleteAPIView.as_view(), name='factorfor-delete'),
-    path('factor-for/<uuid:uuid>/delete/', FactorForDeleteAPIView.as_view(), name='factorfor-delete-single'),
     path('factor-for/export/', FactorForExportAPIView.as_view(), name='factorfor-export'),
     path('factor-for/import/', FactorForImportAPIView.as_view(), name='factorfor-import'),
 
@@ -1006,7 +1005,7 @@ urlpatterns = [
     path('age-groups/<uuid:uuid>/', AgeGroupRetrieveAPIView.as_view(), name='agegroup-retrieve'),
     path('age-groups/<uuid:uuid>/update/', AgeGroupUpdateAPIView.as_view(), name='agegroup-update'),
     path('age-groups/delete/', AgeGroupDeleteAPIView.as_view(), name='agegroup-delete'),
-    path('age-groups/<uuid:uuid>/delete/', AgeGroupDeleteAPIView.as_view(), name='agegroup-delete-single'),
+    # path('age-groups/<uuid:uuid>/delete/', AgeGroupDeleteAPIView.as_view(), name='agegroup-delete-single'),
     path('age-groups/export/', AgeGroupExportAPIView.as_view(), name='agegroup-export'),
     path('age-groups/import/', AgeGroupImportAPIView.as_view(), name='agegroup-import'),
 

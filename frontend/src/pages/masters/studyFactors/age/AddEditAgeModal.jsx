@@ -2,15 +2,16 @@ import React, { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import Select from "react-select";
-import { countryDemoList } from "../../../../store/master/companyMasters/actions";
 import {
   ageAdd,
   ageEdit,
   ageGroupList,
   courseLevelList,
   factorForList,
-  representingCountryList,
 } from "../../../../store/actions";
+import {
+  representingCountryList,
+} from "../../../../store/master/occupationMaster/action";
 
 const AddEditAgeModal = ({
   show,
@@ -49,33 +50,33 @@ const AddEditAgeModal = ({
 
   // Populate form data when in edit mode
   useEffect(() => {
-  if (mode === "edit" && rowData) {
-    setFormData({
-      uuid: rowData.uuid || "",
-      factorForName: rowData.factor_for_uuid || "",
-      studyAgeGroup: rowData.study_age_group_uuid || "",
-      minimumAge: rowData.minimum_age_months || "",
-      maximumAge: rowData.maximum_age_months || "",
-      // 🔹 Convert UUID arrays → react-select format
-      countryName: Array.isArray(rowData.country_list_uuid)
-        ? rowData.country_list_uuid.map((uuid, i) => ({
+    if (mode === "edit" && rowData) {
+      setFormData({
+        uuid: rowData.uuid || "",
+        factorForName: rowData.factor_for_uuid || "",
+        studyAgeGroup: rowData.study_age_group_uuid || "",
+        minimumAge: rowData.minimum_age_months || "",
+        maximumAge: rowData.maximum_age_months || "",
+        // 🔹 Convert UUID arrays → react-select format
+        countryName: Array.isArray(rowData.country_list_uuid)
+          ? rowData.country_list_uuid.map((uuid, i) => ({
             value: uuid,
             label: rowData.country_names[i],
           }))
-        : [],
-      courseLevel: Array.isArray(rowData.course_level_list_uuid)
-        ? rowData.course_level_list_uuid.map((uuid, i) => ({
+          : [],
+        courseLevel: Array.isArray(rowData.course_level_list_uuid)
+          ? rowData.course_level_list_uuid.map((uuid, i) => ({
             value: uuid,
             label: rowData.course_level_names[i],
           }))
-        : [],
-      description: rowData.description || "",
-    });
-  } else {
-    resetForm();
-  }
-  fetchCountryList();
-}, [mode, rowData, show]);
+          : [],
+        description: rowData.description || "",
+      });
+    } else {
+      resetForm();
+    }
+    fetchCountryList();
+  }, [mode, rowData, show]);
 
 
   // Fetch country list
@@ -91,7 +92,7 @@ const AddEditAgeModal = ({
     };
 
     dispatch(
-      countryDemoList(params, (response, error) => {
+      representingCountryList(params, (response, error) => {
         setLoading(false);
         if (response?.statusCode === 200 && response?.status === true) {
           setCountryListData(response?.data || []);
@@ -207,24 +208,24 @@ const AddEditAgeModal = ({
       const sendPayload =
         mode === "edit"
           ? {
-              uuid: formData.uuid,
-              factor_for: formData.factorForName,
-              study_age_group: formData.studyAgeGroup,
-              minimum_age_months: formData.minimumAge,
-              maximum_age_months: formData.maximumAge,
-               country: formData.countryName.map((item) => item.value),
-        course_level: formData.courseLevel.map((item) => item.value),
-              description: formData.description.trim(),
-            }
+            uuid: formData.uuid,
+            factor_for: formData.factorForName,
+            study_age_group: formData.studyAgeGroup,
+            minimum_age_months: formData.minimumAge,
+            maximum_age_months: formData.maximumAge,
+            country: formData.countryName.map((item) => item.value),
+            course_level: formData.courseLevel.map((item) => item.value),
+            description: formData.description.trim(),
+          }
           : {
-              factor_for: formData.factorForName,
-              study_age_group: formData.studyAgeGroup,
-              minimum_age_months: formData.minimumAge,
-              maximum_age_months: formData.maximumAge,
-              country: formData.countryName,
-              course_level: formData.courseLevel,
-              description: formData.description.trim(),
-            };
+            factor_for: formData.factorForName,
+            study_age_group: formData.studyAgeGroup,
+            minimum_age_months: formData.minimumAge,
+            maximum_age_months: formData.maximumAge,
+            country: formData.countryName,
+            course_level: formData.courseLevel,
+            description: formData.description.trim(),
+          };
 
       setLoading(true);
       const action = mode === "edit" ? ageEdit : ageAdd;
@@ -345,7 +346,7 @@ const AddEditAgeModal = ({
                   )}
                 </div> */}
 
-                 <div className="col-6 mb-20">
+                <div className="col-6 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Factor For <span className="text-danger">*</span>
                   </label>
@@ -357,11 +358,11 @@ const AddEditAgeModal = ({
                     value={
                       formData.factorForName
                         ? factorForData
-                            .map((option) => ({
-                              value: option.uuid,
-                              label: option.name,
-                            }))
-                            .find((opt) => opt.value === formData.factorForName)
+                          .map((option) => ({
+                            value: option.uuid,
+                            label: option.name,
+                          }))
+                          .find((opt) => opt.value === formData.factorForName)
                         : null
                     }
                     onChange={(selectedOption) =>
@@ -376,9 +377,8 @@ const AddEditAgeModal = ({
                     placeholder="Select Factor For"
                     isClearable
                     isSearchable
-                    className={`custom-select-container ${
-                      errors.factorForName ? "is-invalid" : ""
-                    }`}
+                    className={`custom-select-container ${errors.factorForName ? "is-invalid" : ""
+                      }`}
                     classNamePrefix="custom-select"
                   />
                   {errors.factorForName && (
@@ -388,7 +388,7 @@ const AddEditAgeModal = ({
                   )}
                 </div>
 
-               <div className="col-6 mb-20">
+                <div className="col-6 mb-20">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                     Study Age Group <span className="text-danger">*</span>
                   </label>
@@ -400,11 +400,11 @@ const AddEditAgeModal = ({
                     value={
                       formData.studyAgeGroup
                         ? ageGroupData
-                            .map((option) => ({
-                              value: option.uuid,
-                              label: option.name,
-                            }))
-                            .find((opt) => opt.value === formData.studyAgeGroup)
+                          .map((option) => ({
+                            value: option.uuid,
+                            label: option.name,
+                          }))
+                          .find((opt) => opt.value === formData.studyAgeGroup)
                         : null
                     }
                     onChange={(selectedOption) =>
@@ -419,9 +419,8 @@ const AddEditAgeModal = ({
                     placeholder="Select Study Age Group"
                     isClearable
                     isSearchable
-                    className={`custom-select-container ${
-                      errors.studyAgeGroup ? "is-invalid" : ""
-                    }`}
+                    className={`custom-select-container ${errors.studyAgeGroup ? "is-invalid" : ""
+                      }`}
                     classNamePrefix="custom-select"
                   />
                   {errors.studyAgeGroup && (
@@ -441,9 +440,8 @@ const AddEditAgeModal = ({
                     name="minimumAge"
                     value={formData.minimumAge}
                     onChange={handleChange}
-                    className={`form-control radius-8 ${
-                      errors.minimumAge ? "is-invalid" : ""
-                    }`}
+                    className={`form-control radius-8 ${errors.minimumAge ? "is-invalid" : ""
+                      }`}
                     placeholder="Enter Minimum Age"
                   />
                   {errors.minimumAge && (
@@ -461,9 +459,8 @@ const AddEditAgeModal = ({
                     name="maximumAge"
                     value={formData.maximumAge}
                     onChange={handleChange}
-                    className={`form-control radius-8 ${
-                      errors.maximumAge ? "is-invalid" : ""
-                    }`}
+                    className={`form-control radius-8 ${errors.maximumAge ? "is-invalid" : ""
+                      }`}
                     placeholder="Enter Maximum Age"
                   />
                   {errors.maximumAge && (
@@ -478,25 +475,25 @@ const AddEditAgeModal = ({
                     Country Name <span className="text-danger">*</span>
                   </label>
                   <Select
-                      options={countryListData.map((option) => ({
-                        value: option.uuid,
-                        label: option.name,
-                      }))}
-                      isMulti
-                      value={formData.countryName}
-                      onChange={(selectedOptions) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          countryName: selectedOptions || [],
-                        }))
-                      }
-                      filterOption={customFilterOption}
-                      placeholder="Select Country Name"
-                      isClearable
-                      isSearchable
-                      className={`custom-select-container ${errors.countryName ? "is-invalid" : ""}`}
-                      classNamePrefix="custom-select"
-                    />
+                    options={countryListData.map((option) => ({
+                      value: option.uuid,
+                      label: option.name,
+                    }))}
+                    isMulti
+                    value={formData.countryName}
+                    onChange={(selectedOptions) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        countryName: selectedOptions || [],
+                      }))
+                    }
+                    filterOption={customFilterOption}
+                    placeholder="Select Country Name"
+                    isClearable
+                    isSearchable
+                    className={`custom-select-container ${errors.countryName ? "is-invalid" : ""}`}
+                    classNamePrefix="custom-select"
+                  />
                   {errors.countryName && (
                     <div className="text-danger text-sm mt-1">
                       {errors.countryName}
@@ -509,25 +506,25 @@ const AddEditAgeModal = ({
                     Course Level <span className="text-danger">*</span>
                   </label>
                   <Select
-                        options={courseLevelData.map((option) => ({
-                          value: option.uuid,
-                          label: option.name,
-                        }))}
-                        isMulti
-                        value={formData.courseLevel}
-                        onChange={(selectedOptions) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            courseLevel: selectedOptions || [],
-                          }))
-                        }
-                        filterOption={customFilterOption}
-                        placeholder="Select Course Level"
-                        isClearable
-                        isSearchable
-                        className={`custom-select-container ${errors.courseLevel ? "is-invalid" : ""}`}
-                        classNamePrefix="custom-select"
-                      />
+                    options={courseLevelData.map((option) => ({
+                      value: option.uuid,
+                      label: option.name,
+                    }))}
+                    isMulti
+                    value={formData.courseLevel}
+                    onChange={(selectedOptions) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        courseLevel: selectedOptions || [],
+                      }))
+                    }
+                    filterOption={customFilterOption}
+                    placeholder="Select Course Level"
+                    isClearable
+                    isSearchable
+                    className={`custom-select-container ${errors.courseLevel ? "is-invalid" : ""}`}
+                    classNamePrefix="custom-select"
+                  />
 
 
                   {errors.courseLevel && (

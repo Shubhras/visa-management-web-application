@@ -109,8 +109,9 @@ const AcademicResultToResultList = () => {
         const searchTerm = String(filterSearchTerms[columnField] || '').toLowerCase()
         const options = filterDropdownData[columnField] || []
         return options.filter(o =>
-            String(o.name ?? '').toLowerCase().includes(searchTerm)
+            String(o.name ?? '').toLowerCase().startsWith(searchTerm)
         )
+        .sort((a, b) => a.name.localeCompare(b.name));
     }
 
     const clearAllOnlyHeaderFilters = () => setColumnFilters({ academicResultType: [] })
@@ -379,6 +380,7 @@ const AcademicResultToResultList = () => {
         }));
         // Reset Global Search
         setGlobalSearch('');
+        setSelectedRows([]);
     };
 
     const handleSearchChange = (value) => {
@@ -708,6 +710,7 @@ const AcademicResultToResultList = () => {
                                         tableState={tableState}
                                         columnFilters={columnFilters}
                                         globalSearch={globalSearch}
+                                        selectedRows={selectedRows}
                                     />
                                 </div>
                             </div>

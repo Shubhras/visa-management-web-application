@@ -82,8 +82,9 @@ const AcademicResultList = () => {
         const searchTerm = String(filterSearchTerms[columnField] || '').toLowerCase()
         const options = filterDropdownData[columnField] || []
         return options.filter(o =>
-            String(o.name ?? '').toLowerCase().includes(searchTerm)
+            String(o.name ?? '').toLowerCase().startsWith(searchTerm)
         )
+        .sort((a, b) => a.name.localeCompare(b.name));
     }
 
     const clearAllOnlyHeaderFilters = () => setColumnFilters({ academicResultType: [] })
@@ -331,6 +332,11 @@ const AcademicResultList = () => {
     };
 
     const clearAllFilters = () => {
+        // Reset filter dropdowns
+        setColumnFilters({
+            academicResultType: [],
+
+        });
         setTableState(prev => ({
             ...prev,
             page: 1,
@@ -350,6 +356,7 @@ const AcademicResultList = () => {
         }));
         // Reset Global Search
         setGlobalSearch('');
+        setSelectedRows([]);
     };
 
     const handleSearchChange = (value) => {
@@ -482,7 +489,14 @@ const AcademicResultList = () => {
             toast.error("No academic result selected for deletion.");
             return;
         }
-        dispatch(academicResultDelete(sendPayload, (response, error) => {
+        const deleteAll = selectAllOrNot === "all" && ((tableState.search && tableState.search.trim() !== '') || columnFilters.academicResultType.length > 0);
+        const payloadSend = {
+            deleteAll: deleteAll,
+            academicResultType: columnFilters.academicResultType.length > 0 ? columnFilters.academicResultType : '',
+            id: deleteAll == true ? "" : sendPayload,
+            search: tableState.search || '',
+        };
+        dispatch(academicResultDelete(payloadSend, (response, error) => {
             if (error) {
                 toast.error(error?.response?.data?.message || "server error");
             } else {
@@ -494,7 +508,8 @@ const AcademicResultList = () => {
                     setSelectedRows([]);
                     setSelectAllOrNot('');
                     setDeleteId(null);
-                    fetchDepartmentList();
+                    //fetchDepartmentList();
+                    clearAllFilters();
                 } else {
                     toast.error("Something went wrong.");
                 }
@@ -678,6 +693,7 @@ const AcademicResultList = () => {
                                         tableState={tableState}
                                         columnFilters={columnFilters}
                                         globalSearch={globalSearch}
+                                        selectedRows={selectedRows}
                                     />
                                 </div>
                             </div>

@@ -111,8 +111,9 @@ const ECAAwardingBodyList = () => {
     const searchTerm = String(filterSearchTerms[columnField] || '').toLowerCase()
     const options = filterDropdownData[columnField] || []
     return options.filter(o =>
-      String(o.name ?? '').toLowerCase().includes(searchTerm)
+      String(o.name ?? '').toLowerCase().startsWith(searchTerm)
     )
+    .sort((a, b) => a.name.localeCompare(b.name));
   }
 
   const clearAllOnlyHeaderFilters = () => setColumnFilters({ country: [], educationLevel: [] })
@@ -362,6 +363,10 @@ const ECAAwardingBodyList = () => {
   };
 
   const clearAllFilters = () => {
+      setColumnFilters({
+      country: [],
+      ecaFor: [],
+    });
     setTableState(prev => ({
       ...prev,
       page: 1,
@@ -381,6 +386,7 @@ const ECAAwardingBodyList = () => {
     }));
     // Reset Global Search
     setGlobalSearch('');
+     setSelectedRows([]);
   };
 
 
@@ -514,7 +520,15 @@ const ECAAwardingBodyList = () => {
       toast.error("No eca awarding body selected for deletion.");
       return;
     }
-    dispatch(ecaAwardingBodyDelete(sendPayload, (response, error) => {
+    const deleteAll = selectAllOrNot === "all" && ((tableState.search && tableState.search.trim() !== '') || columnFilters.country.length > 0 || columnFilters.ecaFor.length > 0);
+    const payloadSend = {
+      deleteAll: deleteAll,
+      country: columnFilters.country.length > 0 ? columnFilters.country : '',
+      ecaFor: columnFilters.ecaFor.length > 0 ? columnFilters.ecaFor : '',
+      id: deleteAll == true ? "" : sendPayload,
+      search: tableState.search || '',
+    };
+    dispatch(ecaAwardingBodyDelete(payloadSend, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
@@ -526,7 +540,8 @@ const ECAAwardingBodyList = () => {
           setSelectedRows([]);
           setSelectAllOrNot('');
           setDeleteId(null);
-          fetchDepartmentList();
+          //fetchDepartmentList();
+          clearAllFilters();
         } else {
           toast.error("Something went wrong.");
         }
@@ -715,6 +730,7 @@ const ECAAwardingBodyList = () => {
                     tableState={tableState}
                     columnFilters={columnFilters}
                     globalSearch={globalSearch}
+                    selectedRows={selectedRows}
                   />
                 </div>
               </div>

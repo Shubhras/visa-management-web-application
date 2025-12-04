@@ -1,31 +1,44 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useDispatch } from "react-redux";
-import MasterLayout from "../../../../masterLayout/MasterLayout";
-// import Breadcrumb from "../../../components/Breadcrumb";
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
-import { courseLevelList, courseLevelDelete, courseLevelExportData, courseLevelCodeList } from "../../../../store/master/instituteMaster/action";
-import AddImportCourseLevelModal from './AddImportCourseLevelModal';
-import AddEditCourseLevelModal from './AddEditCourseLevelModal';
 import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
+import MasterLayout from '../../../../masterLayout/MasterLayout';
+import {
+    eligibilityOccupationNameExportData,
+    eligibilityOccupationNameDelete, 
+    eligibilityOccupationNameList,
+    occupationVersionList,
+    representingCountryList,
+    occupationCodeList,
+    occupationNameList
+} from "../../../../store/master/occupationMaster/action";
+import AddEditEligibilityforOccupationNameModal from './AddEditEligibilityforOccupationNameModal';
+import AddImportEligibilityforOccupationNameModal from './AddImportEligibilityforOccupationNameModal';
 import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
 import ResetButton from '../../../../components/comman/ResetButton';
-const CourseLevelList = () => {
+const EligibilityforOccupationNameList = () => {
     const dispatch = useDispatch();
     const { globalSearch, setGlobalSearch } = useGlobalSearch();
     const [columnFilters, setColumnFilters] = useState({
-        courseLevelCode: [],
+        occupationVersion: [],
+        representingCountry: [],
+        occupationName: [],
+        occupationCode: [],
+
     });
     const [activeFilterColumn, setActiveFilterColumn] = useState(null);
     const [filterDropdownData, setFilterDropdownData] = useState({});
     const [filterSearchTerms, setFilterSearchTerms] = useState({});
     const filterDropdownRef = useRef(null);
     useEffect(() => {
-        fetchCourseLevelCodeDropdown();
+        fetchOccupationVersionDropdown();
+        fetchRepresentingCountryDropdown();
+        fetchOccupationNameDropdown();
+        fetchOccupationCodeDropdown();
     }, []);
-
-    const fetchCourseLevelCodeDropdown = () => {
+    const fetchOccupationVersionDropdown = () => {
         const params = {
             page: 1,
             limit: 2000,
@@ -33,21 +46,96 @@ const CourseLevelList = () => {
             sortBy: "name",
             sortOrder: "asc"
         };
-        dispatch(courseLevelCodeList(params, (response, error) => {
+        dispatch(occupationVersionList(params, (response, error) => {
             if (response?.statusCode === 200 && response?.status === true) {
                 const options = (response.data || []).map(item => ({
                     id: item.uuid || item.id,
-                    name: String(item.name ?? "")
+                    name: String(item.occupation_version ?? "")
+                }));
+                const sortedOptions = options.sort((a, b) =>
+                    String(a.name).localeCompare(String(b.name), undefined, { numeric: true })
+                );
+                // Update filter dropdown data
+                setFilterDropdownData(prev => ({
+                    ...prev,
+                    occupationVersion: sortedOptions
+                }));
+            }
+        }));
+    };
+    const fetchRepresentingCountryDropdown = () => {
+        const params = {
+            page: 1,
+            limit: 2000,
+            search: "",
+            sortBy: "name",
+            sortOrder: "asc"
+        };
+        dispatch(representingCountryList(params, (response, error) => {
+            if (response?.statusCode === 200 && response?.status === true) {
+                const options = (response.data || []).map(item => ({
+                    id: item.uuid || item.id,
+                    name: String(item.majorarea ?? "")
                 }));
                 // Sort A–Z by name, numeric safe
                 const sortedOptions = options.sort((a, b) =>
                     String(a.name).localeCompare(String(b.name), undefined, { numeric: true })
                 );
-                // Store in dropdown filter data
-                setFilterDropdownData({
-                    courseLevelCode: sortedOptions
-                });
-
+                // Update filter dropdown data
+                setFilterDropdownData(prev => ({
+                    ...prev,
+                    representingCountry: sortedOptions
+                }));
+            }
+        }));
+    };
+    const fetchOccupationCodeDropdown = () => {
+        const params = {
+            page: 1,
+            limit: 2000,
+            search: "",
+            sortBy: "name",
+            sortOrder: "asc"
+        };
+        dispatch(occupationCodeList(params, (response, error) => {
+            if (response?.statusCode === 200 && response?.status === true) {
+                const options = (response.data || []).map(item => ({
+                    id: item.uuid || item.id,
+                    name: String(item.occupationcode ?? "")
+                }));
+                const sortedOptions = options.sort((a, b) =>
+                    String(a.name).localeCompare(String(b.name), undefined, { numeric: true })
+                );
+                // Update filter dropdown data
+                setFilterDropdownData(prev => ({
+                    ...prev,
+                    occupationCode: sortedOptions
+                }));
+            }
+        }));
+    };
+    const fetchOccupationNameDropdown = () => {
+        const params = {
+            page: 1,
+            limit: 2000,
+            search: "",
+            sortBy: "name",
+            sortOrder: "asc"
+        };
+        dispatch(occupationNameList(params, (response, error) => {
+            if (response?.statusCode === 200 && response?.status === true) {
+                const options = (response.data || []).map(item => ({
+                    id: item.uuid || item.id,
+                    name: String(item.occupationname ?? "")
+                }));
+                const sortedOptions = options.sort((a, b) =>
+                    String(a.name).localeCompare(String(b.name), undefined, { numeric: true })
+                );
+                // Update filter dropdown data
+                setFilterDropdownData(prev => ({
+                    ...prev,
+                    occupationName: sortedOptions
+                }));
             }
         }));
     };
@@ -82,11 +170,17 @@ const CourseLevelList = () => {
         const searchTerm = String(filterSearchTerms[columnField] || '').toLowerCase()
         const options = filterDropdownData[columnField] || []
         return options.filter(o =>
-            String(o.name ?? '').toLowerCase().startsWith(searchTerm)
+            String(o.name ?? '').toLowerCase().includes(searchTerm)
         )
     }
 
-    const clearAllOnlyHeaderFilters = () => setColumnFilters({ courseLevelCode: [] })
+    const clearAllOnlyHeaderFilters = () => setColumnFilters({
+        occupationVersion: [],
+        representingCountry: [],
+        occupationName: [],
+        occupationCode: [],
+
+    })
     const hasActiveFilters = () => Object.values(columnFilters).some(list => list.length > 0)
     // Close filter when clicking outside
     useEffect(() => {
@@ -123,11 +217,13 @@ const CourseLevelList = () => {
 
 
 
+
     const [modalState, setModalState] = useState({
         show: false,
         mode: 'add', // 'add' or 'edit'
         rowData: null
     })
+
     const handleShow = () => {
         setModalState({
             show: true,
@@ -143,32 +239,36 @@ const CourseLevelList = () => {
             rowData: null
         });
         if (shouldRefresh) {
-            fetchDepartmentList();
+            fetchGapList();
         }
 
     }
 
+    // const [showEdit, setShowEdit] = useState(false);
     const [showImport, setShowImport] = useState(false);
-    const [rowSelectData, setRowSelectData] = useState({});
     const [selectedRows, setSelectedRows] = useState([]);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this Course Level?");
+    const [deleteConfirmMessage, setDeleteConfirmMessage] = useState("Are you sure you want to delete this occupation to occupation?");
     const [showExportPopop, setShowExportPopop] = useState(false);
     const [deleteId, setDeleteId] = useState(null);
     const [selectAllOrNot, setSelectAllOrNot] = useState('');
-    const [departments, setDepartments] = useState([]);
+    const [stateListData, setStateListData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [loadingExport, setLoadingExport] = useState(false);
-    const [items] = useState(["Course Level", "Course Level Code", "Description", "Modified On"]);
-    const [selectedItems, setSelectedItems] = useState(["Course Level"]);
-    const [ItemsRequired] = useState(["Course Level"]);
-
+    const [items] = useState(["Country", "Occupation Version", "Occupation Name", "Occupation Code", "Required Study Main Area", "Required Study Major Area", "Modified On"]);
+    const [selectedItems, setSelectedItems] = useState(["Country", "Occupation Version", "Occupation Name", "Occupation Code"]);
+    const [ItemsRequired] = useState(["Country", "Occupation Version", "Occupation Name", "Occupation Code"]);
+    const [countryListData, setCountryListData] = useState([]);
     // Table columns configuration
     const [tableColumns] = useState([
-        { id: 'name', label: 'Course Level', field: 'name', visible: true, required: false, filterable: false },
-        { id: 'courselevelcode_id', label: 'Course Level Code', field: 'courseLevelCode', visible: true, required: false, filterable: true },
-        { id: 'description', label: 'Description', field: 'description', visible: true, required: false, filterable: false },
-        { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false, filterable: false },
+        { id: 'country', label: 'Country', field: 'representingCountry', visible: true, required: true, filterable: true },
+        { id: 'occupationVersion', label: 'Occupation Version', field: 'occupationVersion', visible: true, required: true, filterable: true },
+        { id: 'occupationName', label: 'Occupation Name', field: 'occupationName', visible: true, required: true, filterable: true },
+        { id: 'occupationCode', label: 'Occupation Code', field: 'occupationCode', visible: true, required: true, filterable: true },
+        { id: 'requiredStudyMainArea', label: ' Required Study Main Area', field: 'requiredStudyMainArea', visible: true, required: false, filterable: false },
+        { id: 'requiredStudyMajorArea', label: ' Required Study Major Area', field: 'requiredStudyMajorArea', visible: true, required: false, filterable: false },
+        // { id: 'description', label: 'Description', field: 'description', visible: false, required: false, filterable: false },
+        { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false, filterable: false }
     ]);
 
     const [visibleColumns, setVisibleColumns] = useState(
@@ -176,10 +276,10 @@ const CourseLevelList = () => {
     );
     const [showColumnDropdown, setShowColumnDropdown] = useState(false);
     const columnDropdownRef = useRef(null);
-    // Column visibility toggle handler
+
     const toggleColumnVisibility = (columnId) => {
         const column = tableColumns.find(col => col.id === columnId);
-        if (column?.required) return; // Don't allow hiding required columns
+        if (column?.required) return;
 
         setVisibleColumns(prev => {
             if (prev.includes(columnId)) {
@@ -190,26 +290,27 @@ const CourseLevelList = () => {
         });
     };
 
-    // Check if column is visible
     const isColumnVisible = (columnId) => {
         return visibleColumns.includes(columnId);
     };
 
+
+    // Close dropdowns when clicking outside
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (columnDropdownRef.current && !columnDropdownRef.current.contains(event.target)) {
                 setShowColumnDropdown(false);
             }
+            if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target)) {
+                setActiveFilterColumn(null);
+            }
         };
 
-        if (showColumnDropdown) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
-
+        document.addEventListener('mousedown', handleClickOutside);
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [showColumnDropdown]);
+    }, []);
 
     // Updated state with sorting
     const [tableState, setTableState] = useState({
@@ -228,15 +329,15 @@ const CourseLevelList = () => {
         hasNext: false,
         hasPrevious: false
     });
-
     useEffect(() => {
         setTableState(prev => ({ ...prev, search: globalSearch, page: 1 }));
     }, [globalSearch]);
 
+
     useEffect(() => {
         const timer = setTimeout(() => {
             if (tableState.search !== undefined) {
-                fetchDepartmentList();
+                fetchGapList();
             }
         }, 500);
 
@@ -244,10 +345,10 @@ const CourseLevelList = () => {
     }, [tableState.search]);
 
     useEffect(() => {
-        fetchDepartmentList();
+        fetchGapList();
     }, [tableState.page, tableState.limit, tableState.status, tableState.sort, columnFilters]);
 
-    const fetchDepartmentList = () => {
+    const fetchGapList = () => {
         setLoading(true);
         const params = {
             page: tableState.page,
@@ -257,15 +358,17 @@ const CourseLevelList = () => {
             sortBy: tableState.sortBy || '',
             sortOrder: tableState.sortOrder || '',
             sort: tableState.sort,
-            courseLevelCode: columnFilters.courseLevelCode.length > 0 ? columnFilters.courseLevelCode : null,
+            occupationVersion: columnFilters.occupationVersion.length > 0 ? columnFilters.occupationVersion : null,
+            representingCountry: columnFilters.representingCountry.length > 0 ? columnFilters.representingCountry : null,
+            occupationName: columnFilters.occupationName.length > 0 ? columnFilters.occupationName : null,
+            occupationCode: columnFilters.occupationCode.length > 0 ? columnFilters.occupationCode : null,
         };
-
-        dispatch(courseLevelList(params, (response, error) => {
+        dispatch(eligibilityOccupationNameList(params, (response, error) => {
             setLoading(false);
             if (response?.statusCode === 200 && response?.status === true) {
                 const paginationData = response?.pagination || {};
 
-                setDepartments(response?.data || []);
+                setStateListData(response?.data || []);
                 setTableState(prev => ({
                     ...prev,
                     total: paginationData.totalItems || 0,
@@ -274,7 +377,6 @@ const CourseLevelList = () => {
                     hasNext: paginationData.nextPage || false,
                     hasPrevious: paginationData.previousPage || false
                 }));
-
                 setSelectedRows(prev => {
                     const filtered = prev.filter(rowId =>
                         response?.data.some(rowItems => rowItems.uuid === rowId)
@@ -282,7 +384,7 @@ const CourseLevelList = () => {
                     return filtered;
                 });
             } else {
-                setDepartments([]);
+                setStateListData([]);
                 setTableState(prev => ({
                     ...prev,
                     total: 0,
@@ -295,7 +397,6 @@ const CourseLevelList = () => {
         }));
     };
 
-    // Handle sorting
     const handleSort = (field) => {
         setTableState(prev => {
             let newSort = [...prev.sort];
@@ -327,7 +428,6 @@ const CourseLevelList = () => {
         return <Icon icon="ri:sort-desc" className="sorting-th-icone" />;
     };
 
-    // Clear all filters
     const clearAllFilters = () => {
         setTableState(prev => ({
             ...prev,
@@ -351,21 +451,6 @@ const CourseLevelList = () => {
         setSelectedRows([]);
     };
 
-    const handleSearchChange = (value) => {
-        setTableState(prev => ({
-            ...prev,
-            search: value,
-            page: 1
-        }));
-    };
-
-    const handleStatusChange = (value) => {
-        setTableState(prev => ({
-            ...prev,
-            status: value === 'All' ? '' : value,
-            page: 1
-        }));
-    };
 
     const handlePageLengthChange = (value) => {
         setTableState(prev => ({
@@ -380,14 +465,14 @@ const CourseLevelList = () => {
         if (isAllSelected) {
             setSelectedRows([]);
         } else {
-            setSelectedRows(departments.map(Item => Item.uuid));
+            setSelectedRows(stateListData.map(Item => Item.uuid));
         }
     };
     // For checkbox in table header
     const handleSelectAll = (e) => {
         const checked = e.target.checked;
         if (checked) {
-            setSelectedRows(departments.map(Item => Item.uuid));
+            setSelectedRows(stateListData.map(Item => Item.uuid));
         } else {
             setSelectedRows([]);
             setSelectAllOrNot('');
@@ -404,8 +489,8 @@ const CourseLevelList = () => {
         });
     };
 
-    const isAllSelected = departments.length > 0 &&
-        departments.every(Item => selectedRows.includes(Item.uuid));
+    const isAllSelected = stateListData.length > 0 &&
+        stateListData.every(Item => selectedRows.includes(Item.uuid));
 
     const goToPage = (page) => {
         if (page >= 1 && page <= tableState.totalPages) {
@@ -446,6 +531,7 @@ const CourseLevelList = () => {
         return pages;
     };
 
+
     const handleShowEdit = (rowData) => {
         setModalState({
             show: true,
@@ -453,14 +539,13 @@ const CourseLevelList = () => {
             rowData: rowData
         });
     };
-
     const handleSelectAllOrNot = (a) => {
         setSelectAllOrNot(a);
     }
     const handleDelete = (uuid) => {
         setDeleteId(uuid);
         setShowDeleteConfirm(true);
-        setDeleteConfirmMessage(`Are you sure you want to delete this Course Level?`);
+        setDeleteConfirmMessage(`Are you sure you want to delete this language ability?`);
     };
 
     const handleBulkDelete = () => {
@@ -469,31 +554,55 @@ const CourseLevelList = () => {
             return;
         }
         // Choose message based on delete type
-        const message = selectAllOrNot === "all" ? `${tableState.total} all Course Level` : `${selectedRows.length} selected Course Level`;
-        setDeleteConfirmMessage(`Are you sure you want to delete this Course Level (${message})?`);
+        const message = selectAllOrNot === "all" ? `${tableState.total} all language ability` : `${selectedRows.length} selected language ability`;
+        setDeleteConfirmMessage(`Are you sure you want to delete this language ability (${message})?`);
         setShowDeleteConfirm(true);
     };
 
     const confirmDelete = () => {
-        // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
-        const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
-        if (!sendPayload || sendPayload.length === 0) {
-            toast.error("No Course Level selected for deletion.");
+        const sendPayload =
+            selectAllOrNot === "all"
+                ? "all"
+                : deleteId
+                    ? [deleteId]
+                    : selectedRows;
+
+        if (!sendPayload || (Array.isArray(sendPayload) && sendPayload.length === 0)) {
+            toast.error("No district selected for deletion.");
             return;
         }
-        dispatch(courseLevelDelete(sendPayload, (response, error) => {
+        const deleteAll =
+            selectAllOrNot === "all" &&
+            (
+                (tableState.search && tableState.search.trim() !== '') ||
+                columnFilters.occupationVersion.length > 0 ||
+                columnFilters.representingCountry.length > 0 ||
+                columnFilters.occupationName.length > 0 ||
+                columnFilters.occupationCode.length > 0
+            );
+        const payloadSend = {
+            deleteAll: deleteAll,
+            occupationVersion: columnFilters.occupationVersion.length > 0 ? columnFilters.occupationVersion : '',
+            representingCountry: columnFilters.representingCountry.length > 0 ? columnFilters.representingCountry : '',
+            occupationName: columnFilters.occupationName.length > 0 ? columnFilters.occupationName : '',
+            occupationCode: columnFilters.occupationCode.length > 0 ? columnFilters.occupationCode : '',
+            id: deleteAll == true ? "" : sendPayload,
+            search: tableState.search || '',
+        };
+        dispatch(eligibilityOccupationNameDelete(payloadSend, (response, error) => {
             if (error) {
                 toast.error(error?.response?.data?.message || "server error");
             } else {
                 if (response?.statusCode === 200 && response?.status === true) {
                     toast.success(response?.message);
-                    setDepartments(prevRowItems => prevRowItems.filter(Item => Item.uuid !== deleteId));
+                    setStateListData(prevRowItems => prevRowItems.filter(Item => Item.uuid !== deleteId));
                     setSelectedRows(prevSelected => prevSelected.filter(rowId => rowId !== deleteId));
                     setShowDeleteConfirm(false);
                     setSelectedRows([]);
                     setSelectAllOrNot('');
                     setDeleteId(null);
-                    fetchDepartmentList();
+                    // fetchGapList();
+                    clearAllFilters();
                 } else {
                     toast.error("Something went wrong.");
                 }
@@ -512,7 +621,7 @@ const CourseLevelList = () => {
     const handleCloseImport = (shouldRefresh = false) => {
         setShowImport(false);
         if (shouldRefresh) {
-            fetchDepartmentList();
+            fetchGapList();
         }
     };
 
@@ -561,14 +670,19 @@ const CourseLevelList = () => {
             toast.error("Please select at least one field");
             return
         }
-        // Map frontend labels to backend field names
+        // Map frontend labels to State field names
+
         const fieldMapping = {
-            "Course Level": "name",
-            "Course Level Code": "courselevelcode",
+            "Country": "country",
+            "Occupation Version": "occupation_version",
+            "Occupation Name": "occupation_name",
+            "Occupation Code": "occupation_code",
+            "Required Study Main Area": "compare_country",
+            "Required Study Major Area": "compare_occupation_version",
             "Modified On": "updated_at",
-            "Description": "description",
         };
-        // Convert selectedItems to backend field names
+
+        // Convert selectedItems to State field names
         const mappedFields = selectedItems.map((item) => fieldMapping[item] || item);
         // Convert to comma-separated string
         const fieldsString = mappedFields.join(",");
@@ -576,12 +690,16 @@ const CourseLevelList = () => {
             file: "xlsx",
             fields: fieldsString,
             uuids: selectAllOrNot === "all" ? [] : selectedRows,
-            search: tableState.search || '',
-            sort: tableState.sort,
-            courseLevelCode: columnFilters.courseLevelCode.length > 0 ? columnFilters.courseLevelCode : null,
+            search: tableState.search || '', // Add search parameter
+            sort: tableState.sort, // Add sort parameter
+            occupationVersion: columnFilters.occupationVersion.length > 0 ? columnFilters.occupationVersion : null,
+            representingCountry: columnFilters.representingCountry.length > 0 ? columnFilters.representingCountry : null,
+            occupationName: columnFilters.occupationName.length > 0 ? columnFilters.occupationName : null,
+            occupationCode: columnFilters.occupationCode.length > 0 ? columnFilters.occupationCode : null,
         };
+
         setLoadingExport(true);
-        dispatch(courseLevelExportData(sendPayload, (response, error) => {
+        dispatch(eligibilityOccupationNameExportData(sendPayload, (response, error) => {
             if (error) {
                 setLoadingExport(false);
                 toast.error(error?.response?.message || "server error");
@@ -595,7 +713,7 @@ const CourseLevelList = () => {
                     const url = window.URL.createObjectURL(blob);
                     const link = document.createElement('a');
                     link.href = url;
-                    link.download = `CourseLevel.xlsx`;
+                    link.download = `Occupation to Occupation.xlsx`;
                     document.body.appendChild(link);
                     link.click();
                     link.remove();
@@ -614,7 +732,6 @@ const CourseLevelList = () => {
 
     const startIndex = (tableState.currentPage - 1) * tableState.limit;
     const statusOptions = ['All', 'Active', 'Inactive'];
-
 
     return (
         <>
@@ -649,7 +766,7 @@ const CourseLevelList = () => {
                                     >
                                         Delete
                                     </button>
-                                    {(selectedRows?.length > 0 && selectedRows?.length === departments?.length) && (
+                                    {(selectedRows?.length > 0 && selectedRows?.length === stateListData?.length) && (
                                         <>
                                             <button
                                                 onClick={() => handleSelectAllOrNot("onlySelected")}
@@ -671,15 +788,15 @@ const CourseLevelList = () => {
                                         </button>
                                     )}
                                     {/* <button
-                                                                   onClick={clearAllFilters}
-                                                                   className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
-                                                               >Reset </button> */}
+                                               onClick={clearAllFilters}
+                                               className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
+                                             >Reset </button> */}
                                     <ResetButton
                                         onClick={clearAllFilters}
                                         tableState={tableState}
-                                        globalSearch={globalSearch}
                                         columnFilters={columnFilters}
                                         selectedRows={selectedRows}
+                                        globalSearch={globalSearch}
                                     />
                                 </div>
                             </div>
@@ -818,7 +935,7 @@ const CourseLevelList = () => {
                                                     type="checkbox"
                                                     checked={isAllSelected}
                                                     onChange={handleSelectAll}
-                                                    disabled={departments.length === 0}
+                                                    disabled={stateListData.length === 0}
                                                 />
                                                 <span>No.</span>
                                             </div>
@@ -955,7 +1072,7 @@ const CourseLevelList = () => {
                                                                                                     whiteSpace: 'nowrap',
                                                                                                     overflow: 'hidden',
                                                                                                     textOverflow: 'ellipsis',
-                                                                                                    maxWidth: '220px',
+                                                                                                    maxWidth: '200px',
                                                                                                     cursor: 'pointer',
                                                                                                 }}
 
@@ -1036,8 +1153,8 @@ const CourseLevelList = () => {
                                                 </div>
                                             </td>
                                         </tr>
-                                    ) : departments.length > 0 ? (
-                                        departments.map((rowItem, index) => (
+                                    ) : stateListData.length > 0 ? (
+                                        stateListData.map((rowItem, index) => (
                                             <tr key={rowItem.uuid}>
                                                 <td>
                                                     <div className="d-flex align-items-center gap-2">
@@ -1050,20 +1167,34 @@ const CourseLevelList = () => {
                                                         <span>{String(startIndex + index + 1).padStart(2, '0')}</span>
                                                     </div>
                                                 </td>
-                                                {isColumnVisible('name') && (
-                                                    <td><span>{rowItem.name}</span></td>
+                                                {isColumnVisible('country') && (
+                                                    <td><span>{rowItem.country}</span></td>
                                                 )}
-                                                {
-                                                    isColumnVisible('courselevelcode_id') && (
-                                                        <td><span>{rowItem.courselevelcode}</span></td>
-                                                    )
-                                                }
-                                                {isColumnVisible('description') && (
-                                                    <td><span>{rowItem.description}</span></td>
+
+                                                {isColumnVisible('occupationVersion') && (
+                                                    <td><span>{rowItem.occupation_version}</span></td>
                                                 )}
+
+                                                {isColumnVisible('occupationName') && (
+                                                    <td><span>{rowItem.occupation_name}</span></td>
+                                                )}
+
+                                                {isColumnVisible('occupationCode') && (
+                                                    <td><span>{rowItem.occupation_code}</span></td>
+                                                )}
+
+                                                {isColumnVisible('requiredStudyMainArea') && (
+                                                    <td><span>{rowItem.compare_country}</span></td>
+                                                )}
+
+                                                {isColumnVisible('requiredStudyMajorArea') && (
+                                                    <td><span>{rowItem.compare_occupation_version}</span></td>
+                                                )}
+
                                                 {isColumnVisible('updated_at') && (
                                                     <td><span>{formatDateDDMMYYYYTime(rowItem.updated_at)}</span></td>
                                                 )}
+
                                                 <td className='action-td'>
                                                     <div className="d-flex align-items-end gap-2">
                                                         <Link to="#" className='edit-btn-icone' onClick={(e) => { e.preventDefault(); handleShowEdit(rowItem); }}>
@@ -1085,19 +1216,17 @@ const CourseLevelList = () => {
                                     )}
                                 </tbody>
                             </table>
-
-
                         </div>
                     </div>
                 </div>
-                <AddEditCourseLevelModal
+                <AddEditEligibilityforOccupationNameModal
                     show={modalState.show}
                     handleClose={handleClose}
                     mode={modalState.mode}
                     rowData={modalState.rowData}
                 />
                 {showImport && (
-                    <AddImportCourseLevelModal show={showImport} handleClose={handleCloseImport} />)}
+                    <AddImportEligibilityforOccupationNameModal show={showImport} handleClose={handleCloseImport} />)}
                 {showDeleteConfirm && (
                     <div className="modal fade show common-ctl-popup">
                         <div className="modal-dialog modal-dialog-centered">
@@ -1107,8 +1236,6 @@ const CourseLevelList = () => {
                                     <button type="button" className="btn-close" onClick={cancelDelete}></button>
                                 </div>
                                 <div className="modal-body">
-                                    {/* <p className="mb-0">Are you sure you want to delete this department?</p> */}
-                                    {/* <p className="mb-0"> Are you sure you want to delete this department ({selectedRows.length})?</p> */}
                                     <p className="mb-0">{deleteConfirmMessage}</p>
 
                                 </div>
@@ -1141,7 +1268,7 @@ const CourseLevelList = () => {
                         <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
                             <div className="modal-content radius-16 bg-base">
                                 <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
-                                    <h1 className="modal-title fs-5">Export Course Level</h1>
+                                    <h1 className="modal-title fs-5">Export Language Ability</h1>
                                     <button
                                         type="button"
                                         className="btn-close"
@@ -1149,7 +1276,7 @@ const CourseLevelList = () => {
                                         aria-label="Close"
                                     />
                                 </div>
-                                <div className="modal-body p-24 pt-10">
+                                <div className="modal-body p-24">
                                     <div className="row">
                                         <div className="col-12 col-md-6">
                                             <h3 className="text-sm font-semibold mb-3 text-gray-700">Available fields</h3>
@@ -1221,16 +1348,19 @@ const CourseLevelList = () => {
                                         >
                                             Cancel
                                         </button>
-                                        <button onClick={handleExport} type="button"
+                                        <button
+                                            onClick={handleExport}
+                                            type="button"
                                             className="btn comman-btn-color border border-primary-600 text-md px-16 py-4 radius-6"
-                                            disabled={loadingExport}>{loadingExport ? (
-                                                <>
-                                                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                                    Submit...
-                                                </>
-                                            ) : (
-                                                "Submit"
-                                            )}
+                                            disabled={loadingExport}
+                                        >{loadingExport ? (
+                                            <>
+                                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                Submit...
+                                            </>
+                                        ) : (
+                                            "Submit"
+                                        )}
                                         </button>
                                     </div>
                                 </div>
@@ -1243,4 +1373,4 @@ const CourseLevelList = () => {
     );
 };
 
-export default CourseLevelList;
+export default EligibilityforOccupationNameList;

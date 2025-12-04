@@ -1606,6 +1606,7 @@ class DocumentTypeDeleteAPIView(APIView):
 
 
 
+
 class DocumentTypeExportAPIView(APIView):
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
@@ -3726,6 +3727,10 @@ class ProcessStatusDeleteAPIView(APIView):
         country = request.GET.get("country")
         visa_main = request.GET.get("visa_main_category")
 
+        # Filters
+        country = request.GET.get("country")
+        visa_main = request.GET.get("visa_main_category")
+
         if not ids:
             return Response({
                 "statusCode": 400,
@@ -4282,6 +4287,12 @@ class ProcessSubStatusDeleteAPIView(APIView):
 
     def delete(self, request):
         ids = request.data.get("id")
+
+        # Filters
+        country = request.GET.get("country")
+        visa_main_category = request.GET.get("visa_main_category")
+        process_status_name = request.GET.get("process_status_name")
+        search = request.GET.get("search", "").strip()
 
         # Filters
         country = request.GET.get("country")
@@ -5936,6 +5947,8 @@ class PaymentCategoryExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
+
+
 
 
 class PaymentCategoryImportAPIView(APIView):

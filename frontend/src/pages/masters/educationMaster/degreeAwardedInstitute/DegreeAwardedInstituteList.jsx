@@ -165,8 +165,9 @@ const DegreeAwardedInstituteList = () => {
         const searchTerm = String(filterSearchTerms[columnField] || '').toLowerCase()
         const options = filterDropdownData[columnField] || []
         return options.filter(o =>
-            String(o.name ?? '').toLowerCase().includes(searchTerm)
+            String(o.name ?? '').toLowerCase().startsWith(searchTerm)
         )
+        .sort((a, b) => a.name.localeCompare(b.name));
     }
 
     const clearAllOnlyHeaderFilters = () => setColumnFilters({ country: [], educationLevel: [] })
@@ -417,6 +418,13 @@ const DegreeAwardedInstituteList = () => {
     };
 
     const clearAllFilters = () => {
+        // Reset filter dropdowns
+        setColumnFilters({
+            country: [],
+            state: [],
+            educationLevel: [],
+            degreeAwardedBy: [],
+        });
         setTableState(prev => ({
             ...prev,
             page: 1,
@@ -436,6 +444,7 @@ const DegreeAwardedInstituteList = () => {
         }));
         // Reset Global Search
         setGlobalSearch('');
+        setSelectedRows([]);
     };
 
     const handleSearchChange = (value) => {
@@ -568,7 +577,17 @@ const DegreeAwardedInstituteList = () => {
             toast.error("No degree awarded institute selected for deletion.");
             return;
         }
-        dispatch(degreeAwardedInstituteDelete(sendPayload, (response, error) => {
+        const deleteAll = selectAllOrNot === "all" && ((tableState.search && tableState.search.trim() !== '') || columnFilters.country.length > 0 || columnFilters.state.length > 0 || columnFilters.educationLevel.length > 0 || columnFilters.degreeAwardedBy.length > 0);
+        const payloadSend = {
+            deleteAll: deleteAll,
+            country: columnFilters.country.length > 0 ? columnFilters.country : '',
+            state: columnFilters.state.length > 0 ? columnFilters.state : '',
+            educationLevel: columnFilters.educationLevel.length > 0 ? columnFilters.educationLevel : '',
+            degreeAwardedBy: columnFilters.degreeAwardedBy.length > 0 ? columnFilters.degreeAwardedBy : '',
+            id: deleteAll == true ? "" : sendPayload,
+            search: tableState.search || '',
+        };
+        dispatch(degreeAwardedInstituteDelete(payloadSend, (response, error) => {
             if (error) {
                 toast.error(error?.response?.data?.message || "server error");
             } else {
@@ -580,7 +599,8 @@ const DegreeAwardedInstituteList = () => {
                     setSelectedRows([]);
                     setSelectAllOrNot('');
                     setDeleteId(null);
-                    fetchDepartmentList();
+                    //fetchDepartmentList();
+                    clearAllFilters();
                 } else {
                     toast.error("Something went wrong.");
                 }
@@ -767,6 +787,7 @@ const DegreeAwardedInstituteList = () => {
                                         tableState={tableState}
                                         columnFilters={columnFilters}
                                         globalSearch={globalSearch}
+                                        selectedRows={selectedRows}
                                     />
                                 </div>
                             </div>

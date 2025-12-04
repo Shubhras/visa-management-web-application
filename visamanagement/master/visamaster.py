@@ -252,122 +252,237 @@ class RepresentingCountryImportAPIView(APIView):
     def post(self, request):
         file = request.FILES.get('file')
         sheet_name = request.data.get('sheet_name')
+
         if not file:
-            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'No file uploaded'}, status=400)
 
         format_type = file.name.split('.')[-1].lower()
-        duplicate_names = []
-        skipped_rows = []
 
         required_headers = {'full name', 'continent'}
         optional_headers = {'short name', 'official name', 'capital city', 'population', 'status'}
 
-        try:
-            data = []
-            headers = []
+        all_headers = required_headers.union(optional_headers)
 
+        data = []
+        duplicates = []
+        skipped_rows = []
+
+        try:
+            # ---------------- XLSX ----------------
             if format_type == 'xlsx':
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
                 if not sheet_name:
-                    return Response({'error': 'Please provide sheet_name', 'available_sheets': available_sheets}, status=400)
+                    return Response({
+                        'error': 'Please provide sheet_name',
+                        'available_sheets': available_sheets
+                    }, status=400)
+
                 if sheet_name not in available_sheets:
-                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
+                    return Response({
+                        'error': f'Sheet "{sheet_name}" not found',
+                        'available_sheets': available_sheets
+                    }, status=400)
 
                 ws = wb[sheet_name]
                 if ws.max_row <= 1:
                     return Response({
                         "statusCode": 400,
                         "status": False,
-                        "message": f'The uploaded XLSX sheet "{sheet_name}" is empty.'
+                        "message": f'Sheet "{sheet_name}" is empty.'
                     }, status=400)
 
-                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                headers = [
+                    str(c.value).strip().lower() if c.value else ''
+                    for c in next(ws.iter_rows(min_row=1, max_row=1))
+                ]
+
                 if not required_headers.issubset(set(headers)):
                     return Response({
                         "statusCode": 400,
-                        "status": True,
-                        "message": f'Missing required headers. Required: {required_headers}, Found: {set(headers)}'
+                        "status": False,
+                        "message": f"Missing required headers. Required: {required_headers}, Found: {set(headers)}"
                     }, status=400)
 
-                for row in ws.iter_rows(min_row=2, values_only=True):
+                for row_no, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
                         continue
-                    data.append(dict(zip(headers, row)))
+                    row_dict = dict(zip(headers, row))
+                    row_dict["_row_number"] = row_no
+                    data.append(row_dict)
 
+            # ---------------- CSV ----------------
             elif format_type == 'csv':
                 decoded_file = file.read().decode('utf-8')
                 reader = csv.DictReader(io.StringIO(decoded_file))
-                for row in reader:
+
+                for row_no, row in enumerate(reader, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    row_lower["_row_number"] = row_no
+
                     if not required_headers.issubset(set(row_lower.keys())):
                         return Response({
                             "statusCode": 400,
-                            "status": True,
-                            "message": f'Missing required headers. Required: {required_headers}. Found: {set(row_lower.keys())}'
+                            "status": False,
+                            "message": f"Missing required headers. Required: {required_headers}"
                         }, status=400)
+
                     data.append(row_lower)
+
             else:
                 return Response({
                     "statusCode": 400,
-                    "status": True,
-                    'error': 'Unsupported file format. Use .xlsx or .csv'
+                    "status": False,
+                    "message": "Unsupported file format. Use .xlsx or .csv"
                 }, status=400)
 
+            # ---------------- PROCESSING ----------------
             imported_count = 0
+            to_create = []
+            seen_in_file = set()
+
+            continents_map = {c.name.lower(): c for c in Continents.objects.all()}
+
+            existing_map = {
+                c.full_name.lower(): c
+                for c in RepresentingCountry.objects.all()
+            }
+
             for row in reversed(data):
-                full_name = str(row.get('full name')).strip() if row.get('full name') else None
+
+                row_no = row.get("_row_number", "Unknown")
+
+                # Extract all fields
+                full_name = str(row.get("full name") or "").strip()
+                short_name = str(row.get("short name") or "").strip()
+                official_name = str(row.get("official name") or "").strip()
+                capital_city = str(row.get("capital city") or "").strip()
+                population = str(row.get("population") or "").strip()
+                status = str(row.get("status") or "").strip()
+                continent_name = str(row.get("continent") or "").strip()
+
+                lower_full = full_name.lower()
+
+                # ---------------- Missing Required Field ----------------
                 if not full_name:
-                    skipped_rows.append({"Full Name": "Unknown", "Reason": "Missing required field: full name"})
+                    skipped_rows.append({
+                        "Row": row_no,
+                        "Full Name": full_name,
+                        "Short Name": short_name,
+                        "Official Name": official_name,
+                        "Capital City": capital_city,
+                        "Population": population,
+                        "Status": status,
+                        "Continent": continent_name,
+                        "Reason": "Missing required field: full name"
+                    })
                     continue
 
-                continent_name = str(row.get('continent')).strip() if row.get('continent') else ''
+                # ---------------- Validate Continent ----------------
                 continent_obj = None
                 if continent_name:
-                    continent_obj = Continents.objects.filter(name__iexact=continent_name).first()
+                    continent_obj = continents_map.get(continent_name.lower())
                     if not continent_obj:
-                        skipped_rows.append({"Full Name": full_name, "Continent": continent_name, "Reason": "Invalid continent name"})
+                        skipped_rows.append({
+                            "Row": row_no,
+                            "Full Name": full_name,
+                            "Short Name": short_name,
+                            "Official Name": official_name,
+                            "Capital City": capital_city,
+                            "Population": population,
+                            "Status": status,
+                            "Continent": continent_name,
+                            "Reason": "Invalid continent name"
+                        })
                         continue
 
-                existing = RepresentingCountry.objects.filter(full_name__iexact=full_name).first()
+                # ---------------- Duplicate Inside Import File ----------------
+                if lower_full in seen_in_file:
+                    duplicates.append({
+                        "Row": row_no,
+                        "Full Name": full_name,
+                        "Short Name": short_name,
+                        "Official Name": official_name,
+                        "Capital City": capital_city,
+                        "Population": population,
+                        "Status": status,
+                        "Continent": continent_name,
+                        "Reason": "Duplicate in uploaded file"
+                    })
+                    continue
+
+                seen_in_file.add(lower_full)
+
+                # ---------------- Already in Database ----------------
+                existing = existing_map.get(lower_full)
+
                 if existing:
                     if not existing.is_deleted:
-                        duplicate_names.append(full_name)
+                        duplicates.append({
+                            "Row": row_no,
+                            "Full Name": full_name,
+                            "Short Name": short_name,
+                            "Official Name": official_name,
+                            "Capital City": capital_city,
+                            "Population": population,
+                            "Status": status,
+                            "Continent": continent_name,
+                            "Reason": "Already exists in database"
+                        })
                         continue
+
+                    # Reactivate Deleted Record
+                    existing.continent = continent_obj
+                    existing.short_name = short_name
+                    existing.official_name = official_name
+                    existing.capital_city = capital_city
+                    existing.population = population
+                    existing.status = status
                     existing.is_deleted = False
-                    existing.continent = continent_name
                     existing.save()
+
                     imported_count += 1
-                else:
-                    RepresentingCountry.objects.create(
+                    continue
+
+                # ---------------- Add New Row for Bulk Create ----------------
+                to_create.append(
+                    RepresentingCountry(
                         full_name=full_name,
-                        continent=continent_name,
-                        short_name=row.get('short name', ''),
-                        official_name=row.get('official name', ''),
-                        capital_city=row.get('capital city', ''),
-                        population=row.get('population', ''),
-                        status=row.get('status', ''),
+                        short_name=short_name,
+                        official_name=official_name,
+                        capital_city=capital_city,
+                        population=population,
+                        status=status,
+                        continent=continent_obj,
                         is_deleted=False
                     )
-                    imported_count += 1
+                )
+
+            # ---------------- BULK CREATE ----------------
+            if to_create:
+                batch_size = 300
+                for i in range(0, len(to_create), batch_size):
+                    RepresentingCountry.objects.bulk_create(to_create[i:i + batch_size])
+
+                imported_count += len(to_create)
 
         except Exception as e:
             return Response({
                 "statusCode": 400,
-                "status": True,
-                'message': str(e)
+                "status": False,
+                "message": str(e)
             }, status=400)
 
+        # ---------------- FINAL RESPONSE ----------------
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": duplicate_names,
-            "skipped_rows": skipped_rows,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
-            "imported_count": imported_count
+            "imported_count": imported_count,
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=200)
-
 
 
 
@@ -553,14 +668,16 @@ class VisaMainImportAPIView(APIView):
             return Response({"error": "No file uploaded"}, status=400)
 
         format_type = file.name.split('.')[-1].lower()
-        duplicates = []
-        skipped_rows = []
         required_headers = {"visa main"}
         optional_headers = {"description"}
+        all_headers = required_headers.union(optional_headers)
+
+        data = []
+        duplicates = []
+        skipped_rows = []
+        to_create = []
 
         try:
-            data = []
-
             # ---------- XLSX Handling ----------
             if format_type == "xlsx":
                 wb = openpyxl.load_workbook(file, read_only=True)
@@ -587,10 +704,7 @@ class VisaMainImportAPIView(APIView):
                         "message": f'Sheet "{sheet_name}" is empty.'
                     }, status=400)
 
-                headers = [
-                    str(cell.value).strip().lower() if cell.value else ""
-                    for cell in next(ws.iter_rows(min_row=1, max_row=1))
-                ]
+                headers = [str(c.value).strip().lower() if c.value else "" for c in next(ws.iter_rows(min_row=1, max_row=1))]
 
                 if not required_headers.issubset(set(headers)):
                     return Response({
@@ -599,31 +713,27 @@ class VisaMainImportAPIView(APIView):
                         "message": f"Missing required headers. Required: {required_headers}, Found: {set(headers)}"
                     }, status=400)
 
-                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                for row_no, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
-                    row_dict["_row_number"] = idx
+                    row_dict["_row_number"] = row_no
                     data.append(row_dict)
 
             # ---------- CSV Handling ----------
             elif format_type == "csv":
                 decoded_file = file.read().decode("utf-8")
-                dataset = Dataset()
-                dataset.load(decoded_file, format="csv")
+                reader = csv.DictReader(io.StringIO(decoded_file))
 
-                for idx, row in enumerate(dataset.dict, start=2):
+                for row_no, row in enumerate(reader, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
-                    row_lower["_row_number"] = idx
+                    row_lower["_row_number"] = row_no
 
                     if not required_headers.issubset(set(row_lower.keys())):
                         return Response({
                             "statusCode": 400,
                             "status": False,
-                            "message": (
-                                f"Missing required headers. Required: {', '.join(required_headers)}. "
-                                f"Found headers in the file: {', '.join(row_lower.keys())}."
-                            )
+                            "message": f"Missing required headers. Required: {required_headers}, Found: {set(row_lower.keys())}"
                         }, status=400)
 
                     data.append(row_lower)
@@ -631,64 +741,90 @@ class VisaMainImportAPIView(APIView):
                 return Response({
                     "statusCode": 400,
                     "status": False,
-                    "error": "Unsupported file format. Use .xlsx or .csv",
+                    "message": "Unsupported file format. Use .xlsx or .csv",
                 }, status=400)
 
-            # ---------- Import Rows ----------
+            # ---------- Processing Rows ----------
             imported_count = 0
+            seen_in_file = set()
+
+            existing_map = {v.name.lower(): v for v in VisaMain.objects.all()}
 
             for row in reversed(data):
-                row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("visa main")).strip() if row.get("visa main") else None
-                description = str(row.get("description")).strip() if row.get("description") else ""
+                row_no = row.get("_row_number", "Unknown")
+                name = str(row.get("visa main") or "").strip()
+                description = str(row.get("description") or "").strip()
 
                 if not name:
                     skipped_rows.append({
-                        "Row": row_number,
-                        "Reason": "Missing name"
+                        "Row": row_no,
+                        "Visa Main": name,
+                        "Description": description,
+                        "Reason": "Missing required field: visa main"
                     })
                     continue
 
-                existing = VisaMain.objects.filter(name__iexact=name).first()
+                lower_name = name.lower()
 
+                # ---------- Duplicate in uploaded file ----------
+                if lower_name in seen_in_file:
+                    duplicates.append({
+                        "Row": row_no,
+                        "Visa Main": name,
+                        "Description": description,
+                        "Reason": "Duplicate in uploaded file"
+                    })
+                    continue
+                seen_in_file.add(lower_name)
+
+                # ---------- Existing record ----------
+                existing = existing_map.get(lower_name)
                 if existing:
                     if not existing.is_deleted:
                         duplicates.append({
-                            "Row": row_number,
+                            "Row": row_no,
                             "Visa Main": name,
-                            "Reason": "Already exists"
+                            "Description": description,
+                            "Reason": "Already exists in database"
                         })
                         continue
-                    else:
-                        existing.description = description
-                        existing.is_deleted = False
-                        existing.save()
-                        imported_count += 1
-                else:
-                    VisaMain.objects.create(
-                        name=name,
-                        description=description,
-                        is_deleted=False,
-                    )
+                    # Reactivate deleted record
+                    existing.description = description
+                    existing.is_deleted = False
+                    existing.save()
                     imported_count += 1
+                    continue
+
+                # ---------- Add to bulk_create list ----------
+                to_create.append(VisaMain(
+                    name=name,
+                    description=description,
+                    is_deleted=False
+                ))
+
+            # ---------- Bulk create ----------
+            if to_create:
+                batch_size = 500
+                for i in range(0, len(to_create), batch_size):
+                    VisaMain.objects.bulk_create(to_create[i:i + batch_size])
+                imported_count += len(to_create)
 
         except Exception as e:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": str(e),
+                "message": str(e)
             }, status=400)
 
+        # ---------- Response ----------
         return Response({
             "statusCode": 200,
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows,
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=200)
-
-
 
 
 
@@ -890,27 +1026,25 @@ class VisaMajorImportAPIView(APIView):
             return Response({'error': 'No file uploaded'}, status=400)
 
         format_type = file.name.split('.')[-1].lower()
-        duplicate_names = []
-        skipped_rows = []
-        imported_count = 0
-
         required_headers = {'country', 'visamain', 'name'}
         optional_headers = {'description'}
+        all_headers = required_headers.union(optional_headers)
+
+        data = []
+        duplicates = []
+        skipped_rows = []
+        to_create = []
 
         try:
-            data = []
-            headers = []
-
-            # --- XLSX ---
+            # ---------------- XLSX Handling ----------------
             if format_type == 'xlsx':
-                import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
                 if not sheet_name:
-                    return Response({'error': 'Please provide sheet_name', 'available_sheets': available_sheets}, status=400)
+                    return Response({'statusCode': 400, 'status': False, 'error': 'Please provide sheet_name', 'available_sheets': available_sheets}, status=400)
                 if sheet_name not in available_sheets:
-                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
+                    return Response({'statusCode': 400, 'status': False, 'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
 
                 ws = wb[sheet_name]
                 if ws.max_row <= 1:
@@ -918,75 +1052,138 @@ class VisaMajorImportAPIView(APIView):
 
                 headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
                 if not required_headers.issubset(set(headers)):
-                    return Response({'statusCode': 400, 'status': True, 'message': f'Missing required headers: {required_headers}. Found: {set(headers)}'}, status=400)
+                    return Response({'statusCode': 400, 'status': False, 'message': f'Missing required headers: {required_headers}. Found: {set(headers)}'}, status=400)
 
-                for row in ws.iter_rows(min_row=2, values_only=True):
+                for row_no, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
                         continue
-                    data.append(dict(zip(headers, row)))
+                    row_dict = dict(zip(headers, row))
+                    row_dict["_row_number"] = row_no
+                    data.append(row_dict)
 
-            # --- CSV ---
+            # ---------------- CSV Handling ----------------
             elif format_type == 'csv':
                 decoded_file = file.read().decode('utf-8')
                 reader = csv.DictReader(io.StringIO(decoded_file))
-                for row in reader:
+
+                for row_no, row in enumerate(reader, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    row_lower["_row_number"] = row_no
+
                     if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({'statusCode': 400, 'status': True, 'message': f'Missing required headers: {required_headers}. Found: {set(row_lower.keys())}'}, status=400)
+                        return Response({'statusCode': 400, 'status': False, 'message': f'Missing required headers: {required_headers}. Found: {set(row_lower.keys())}'}, status=400)
+
                     data.append(row_lower)
 
             else:
-                return Response({'statusCode': 400, 'status': True, 'error': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
+                return Response({'statusCode': 400, 'status': False, 'message': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
 
-            # --- PROCESS ROWS ---
+            # ---------------- Processing Rows ----------------
+            imported_count = 0
+            seen_in_file = set()
+
+            # Fetch related objects in bulk to reduce queries
+            countries_map = {c.full_name.lower(): c for c in RepresentingCountry.objects.all()}
+            visamain_map = {v.name.lower(): v for v in VisaMain.objects.all()}
+            existing_map = {
+                (v.country.id, v.visamain.id, v.name.lower()): v
+                for v in VisaMajor.objects.select_related('country', 'visamain').all()
+            }
+
             for row in reversed(data):
-                country_name = str(row.get('country')).strip() if row.get('country') else None
-                visamain_name = str(row.get('visamain')).strip() if row.get('visamain') else None
-                name = str(row.get('name')).strip() if row.get('name') else None
-                description = str(row.get('description')).strip() if row.get('description') else ''
+                row_no = row.get("_row_number", "Unknown")
+                country_name = str(row.get("country") or "").strip()
+                visamain_name = str(row.get("visamain") or "").strip()
+                name = str(row.get("name") or "").strip()
+                description = str(row.get("description") or "").strip()
+
+                key_in_file = (country_name.lower(), visamain_name.lower(), name.lower())
 
                 if not country_name or not visamain_name or not name:
-                    skipped_rows.append({"Row": row, "Reason": "Missing required fields"})
+                    skipped_rows.append({
+                        "Row": row_no,
+                        "Country": country_name,
+                        "VisaMain": visamain_name,
+                        "Name": name,
+                        "Description": description,
+                        "Reason": "Missing required fields"
+                    })
                     continue
 
-                # Fetch related objects
-                country_obj = RepresentingCountry.objects.filter(full_name__iexact=country_name).first()
-                visamain_obj = VisaMain.objects.filter(name__iexact=visamain_name).first()
+                # Duplicate in uploaded file
+                if key_in_file in seen_in_file:
+                    duplicates.append({
+                        "Row": row_no,
+                        "Country": country_name,
+                        "VisaMain": visamain_name,
+                        "Name": name,
+                        "Description": description,
+                        "Reason": "Duplicate in uploaded file"
+                    })
+                    continue
+                seen_in_file.add(key_in_file)
 
+                # Validate related objects
+                country_obj = countries_map.get(country_name.lower())
+                visamain_obj = visamain_map.get(visamain_name.lower())
                 if not country_obj or not visamain_obj:
-                    skipped_rows.append({"Row": row, "Reason": "Invalid country or visamain"})
+                    skipped_rows.append({
+                        "Row": row_no,
+                        "Country": country_name,
+                        "VisaMain": visamain_name,
+                        "Name": name,
+                        "Description": description,
+                        "Reason": "Invalid country or VisaMain"
+                    })
                     continue
 
-                existing = VisaMajor.objects.filter(country=country_obj, visamain=visamain_obj, name__iexact=name).first()
+                # Check existing in DB
+                existing = existing_map.get((country_obj.id, visamain_obj.id, name.lower()))
                 if existing:
-                    if existing.is_deleted:
-                        existing.is_deleted = False
-                        existing.description = description
-                        existing.save()
-                        imported_count += 1
-                    else:
-                        duplicate_names.append({"Name": existing.name, "VisaMain": visamain_name, "Country": country_name})
+                    if not existing.is_deleted:
+                        duplicates.append({
+                            "Row": row_no,
+                            "Country": country_name,
+                            "VisaMain": visamain_name,
+                            "Name": name,
+                            "Description": description,
+                            "Reason": "Already exists in database"
+                        })
                         continue
-                else:
-                    VisaMajor.objects.create(
-                        country=country_obj,
-                        visamain=visamain_obj,
-                        name=name,
-                        description=description,
-                        is_deleted=False
-                    )
+                    # Reactivate deleted record
+                    existing.description = description
+                    existing.is_deleted = False
+                    existing.save()
                     imported_count += 1
+                    continue
+
+                # Prepare for bulk create
+                to_create.append(VisaMajor(
+                    country=country_obj,
+                    visamain=visamain_obj,
+                    name=name,
+                    description=description,
+                    is_deleted=False
+                ))
+
+            # ---------------- Bulk Create ----------------
+            if to_create:
+                batch_size = 500
+                for i in range(0, len(to_create), batch_size):
+                    VisaMajor.objects.bulk_create(to_create[i:i + batch_size])
+                imported_count += len(to_create)
 
         except Exception as e:
-            return Response({"statusCode": 400, "status": True, 'message': str(e)}, status=400)
+            return Response({'statusCode': 400, 'status': False, 'message': str(e)}, status=400)
 
+        # ---------------- Response ----------------
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": duplicate_names,
-            "skipped_rows": skipped_rows,
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=200)
 
 #-------------------------VisaName----------------
@@ -1165,45 +1362,48 @@ class VisaNameImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
-        file = request.FILES.get('file')
-        sheet_name = request.data.get('sheet_name')
+        file = request.FILES.get("file")
+        sheet_name = request.data.get("sheet_name")
 
         if not file:
-            return Response({'error': 'No file uploaded'}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No file uploaded"
+            }, status=400)
 
-        format_type = file.name.split('.')[-1].lower()
-        duplicate_names = []
-        skipped_rows = []
-        imported_count = 0
-
-        # Required + optional headers
+        format_type = file.name.split(".")[-1].lower()
         required_headers = {'country', 'visa main category', 'visa major category', 'visa   name'}
         optional_headers = {'visa short name', 'description'}
 
-        try:
-            data = []
-            headers = []
+        data = []
+        duplicates = []
+        skipped_rows = []
+        to_create = []
 
-            # ---------------- XLSX -------------------
-            if format_type == 'xlsx':
-                import openpyxl
+        try:
+            # ---------------- XLSX Handling ----------------
+            if format_type == "xlsx":
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
                 if not sheet_name:
                     return Response({
-                        'error': 'Please provide sheet_name',
-                        'available_sheets': available_sheets
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Please provide sheet_name",
+                        "available_sheets": available_sheets
                     }, status=400)
 
                 if sheet_name not in available_sheets:
                     return Response({
-                        'error': f'Sheet "{sheet_name}" not found',
-                        'available_sheets': available_sheets
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Sheet "{sheet_name}" not found',
+                        "available_sheets": available_sheets
                     }, status=400)
 
                 ws = wb[sheet_name]
-
                 if ws.max_row <= 1:
                     return Response({
                         "statusCode": 400,
@@ -1211,61 +1411,78 @@ class VisaNameImportAPIView(APIView):
                         "message": f'Sheet "{sheet_name}" is empty'
                     }, status=400)
 
-                # extract headers
-                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
 
-                # validate headers
                 if not required_headers.issubset(set(headers)):
                     return Response({
                         "statusCode": 400,
                         "status": False,
-                        "message": f"Missing required headers: {required_headers}. Found: {set(headers)}"
+                        "message": f"Missing required headers. Required: {required_headers}, Found: {set(headers)}"
                     }, status=400)
 
-                # rows
-                for row in ws.iter_rows(min_row=2, values_only=True):
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
                         continue
-                    data.append(dict(zip(headers, row)))
+                    row_dict = dict(zip(headers, row))
+                    row_dict["_row_number"] = idx
+                    data.append(row_dict)
 
-            # ---------------- CSV -------------------
-            elif format_type == 'csv':
-                decoded_file = file.read().decode('utf-8')
+            # ---------------- CSV Handling ----------------
+            elif format_type == "csv":
+                decoded_file = file.read().decode("utf-8")
                 reader = csv.DictReader(io.StringIO(decoded_file))
-
-                for row in reader:
+                for idx, row in enumerate(reader, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
-
+                    row_lower["_row_number"] = idx
                     if not required_headers.issubset(set(row_lower.keys())):
                         return Response({
                             "statusCode": 400,
                             "status": False,
-                            "message": f"Missing required headers: {required_headers}. Found: {set(row_lower.keys())}"
+                            "message": f"Missing required headers. Required: {required_headers}, Found: {set(row_lower.keys())}"
                         }, status=400)
-
                     data.append(row_lower)
 
             else:
                 return Response({
                     "statusCode": 400,
                     "status": False,
-                    "error": "Unsupported file format. Use .xlsx or .csv"
+                    "message": "Unsupported file format. Use .xlsx or .csv"
                 }, status=400)
 
-            # ------------ PROCESS ROWS (reverse order) ------------
+            imported_count = 0
+            seen_in_file = set()
+
+            # Preload existing records
+            existing_map = {}
+            for vn in VisaName.objects.all():
+                key = (
+                    vn.country_id,
+                    vn.visamain_id,
+                    vn.visamajor_id,
+                    vn.full_name.lower()
+                )
+                existing_map[key] = vn
+
+            # ---------------- Process Rows ----------------
             for row in reversed(data):
-
-                country_name = str(row.get('country')).strip() if row.get('country') else None
-                visamain_name = str(row.get('visa main category')).strip() if row.get('visa main category') else None
-                visamajor_name = str(row.get('visa major category')).strip() if row.get('visa major category') else None
-
-                full_name = str(row.get('visa name')).strip() if row.get('visa name') else None
-                short_name = str(row.get('visa short name')).strip() if row.get('visa short name') else ''
-                description = str(row.get('description')).strip() if row.get('description') else ''
+                row_no = row.get("_row_number", "Unknown")
+                country_name = str(row.get('country') or '').strip()
+                visamain_name = str(row.get('visa main category') or '').strip()
+                visamajor_name = str(row.get('visa major category') or '').strip()
+                full_name = str(row.get('visa   name') or '').strip()
+                short_name = str(row.get('visa short name') or '').strip()
+                description = str(row.get('description') or '').strip()
 
                 # Validate required fields
                 if not country_name or not visamain_name or not visamajor_name or not full_name:
-                    skipped_rows.append({"Row": row, "Reason": "Missing required fields"})
+                    skipped_rows.append({
+                        "Row": row_no,
+                        "Country": country_name,
+                        "VisaMain": visamain_name,
+                        "VisaMajor": visamajor_name,
+                        "VisaName": full_name,
+                        "Reason": "Missing required fields"
+                    })
                     continue
 
                 # Fetch related objects
@@ -1274,36 +1491,53 @@ class VisaNameImportAPIView(APIView):
                 visamajor_obj = VisaMajor.objects.filter(name__iexact=visamajor_name).first()
 
                 if not country_obj or not visamain_obj or not visamajor_obj:
-                    skipped_rows.append({"Row": row, "Reason": "Invalid country / visamain / visamajor"})
+                    skipped_rows.append({
+                        "Row": row_no,
+                        "Country": country_name,
+                        "VisaMain": visamain_name,
+                        "VisaMajor": visamajor_name,
+                        "VisaName": full_name,
+                        "Reason": "Invalid country / visamain / visamajor"
+                    })
                     continue
 
-                # Check existing record
-                existing = VisaName.objects.filter(
-                    country=country_obj,
-                    visamain=visamain_obj,
-                    visamajor=visamajor_obj,
-                    full_name__iexact=full_name
-                ).first()
+                key = (country_obj.id, visamain_obj.id, visamajor_obj.id, full_name.lower())
 
+                # Duplicate in file
+                if key in seen_in_file:
+                    duplicates.append({
+                        "Row": row_no,
+                        "Country": country_name,
+                        "VisaMain": visamain_name,
+                        "VisaMajor": visamajor_name,
+                        "VisaName": full_name,
+                        "Reason": "Duplicate in uploaded file"
+                    })
+                    continue
+                seen_in_file.add(key)
+
+                existing = existing_map.get(key)
                 if existing:
-                    if existing.is_deleted:
-                        # Restore deleted
-                        existing.is_deleted = False
-                        existing.short_name = short_name
-                        existing.description = description
-                        existing.save()
-                        imported_count += 1
-                    else:
-                        duplicate_names.append({
-                            "full_name": full_name,
-                            "visamajor": visamajor_name,
-                            "visamain": visamain_name,
-                            "country": country_name
+                    if not existing.is_deleted:
+                        duplicates.append({
+                            "Row": row_no,
+                            "Country": country_name,
+                            "VisaMain": visamain_name,
+                            "VisaMajor": visamajor_name,
+                            "VisaName": full_name,
+                            "Reason": "Already exists in database"
                         })
+                        continue
+                    # Reactivate deleted record
+                    existing.short_name = short_name
+                    existing.description = description
+                    existing.is_deleted = False
+                    existing.save()
+                    imported_count += 1
                     continue
 
-                # Create new record
-                VisaName.objects.create(
+                # Prepare for bulk create
+                to_create.append(VisaName(
                     country=country_obj,
                     visamain=visamain_obj,
                     visamajor=visamajor_obj,
@@ -1311,8 +1545,14 @@ class VisaNameImportAPIView(APIView):
                     short_name=short_name,
                     description=description,
                     is_deleted=False
-                )
-                imported_count += 1
+                ))
+
+            # ---------------- Bulk Create ----------------
+            if to_create:
+                batch_size = 500
+                for i in range(0, len(to_create), batch_size):
+                    VisaName.objects.bulk_create(to_create[i:i + batch_size])
+                imported_count += len(to_create)
 
         except Exception as e:
             return Response({
@@ -1325,13 +1565,11 @@ class VisaNameImportAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": duplicate_names,
-            "skipped_rows": skipped_rows,
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows))
         }, status=200)
-
-
 
 
 
@@ -1501,135 +1739,134 @@ class ApplicantTypeImportAPIView(APIView):
             return Response({'error': 'No file uploaded'}, status=400)
 
         format_type = file.name.split('.')[-1].lower()
-        duplicate = []
-        skipped_rows = []
-        imported_count = 0
-
         required_headers = {'applicant type'}
         optional_headers = {'description'}
+        all_headers = required_headers.union(optional_headers)
+
+        data = []
+        duplicates = []
+        skipped_rows = []
+        to_create = []
 
         try:
-            data = []
-            headers = []
-
-            # ---------------- XLSX ----------------
+            # ---------------- XLSX Handling ----------------
             if format_type == 'xlsx':
-                import openpyxl
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
                 if not sheet_name:
-                    return Response({
-                        'error': 'Please provide sheet_name',
-                        'available_sheets': available_sheets
-                    }, status=400)
-
+                    return Response({'error': 'Please provide sheet_name', 'available_sheets': available_sheets}, status=400)
                 if sheet_name not in available_sheets:
-                    return Response({
-                        'error': f'Sheet "{sheet_name}" not found',
-                        'available_sheets': available_sheets
-                    }, status=400)
+                    return Response({'error': f'Sheet "{sheet_name}" not found', 'available_sheets': available_sheets}, status=400)
 
                 ws = wb[sheet_name]
-
                 if ws.max_row <= 1:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": f'Sheet "{sheet_name}" is empty'
-                    }, status=400)
+                    return Response({'statusCode': 400, 'status': False, 'message': f'Sheet "{sheet_name}" is empty'}, status=400)
 
-                headers = [
-                    str(cell.value).strip().lower() if cell.value else '' 
-                    for cell in next(ws.iter_rows(min_row=1, max_row=1))
-                ]
-
-                # Validate required headers
+                headers = [str(cell.value).strip().lower() if cell.value else '' for cell in next(ws.iter_rows(min_row=1, max_row=1))]
                 if not required_headers.issubset(set(headers)):
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": f"Missing required headers: {required_headers}. Found: {set(headers)}"
-                    }, status=400)
+                    return Response({'statusCode': 400, 'status': False, 'message': f'Missing required headers: {required_headers}. Found: {set(headers)}'}, status=400)
 
-                # Row data
-                for row in ws.iter_rows(min_row=2, values_only=True):
+                for row_no, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
                         continue
-                    data.append(dict(zip(headers, row)))
+                    row_dict = dict(zip(headers, row))
+                    row_dict["_row_number"] = row_no
+                    data.append(row_dict)
 
-            # ---------------- CSV ----------------
+            # ---------------- CSV Handling ----------------
             elif format_type == 'csv':
                 decoded_file = file.read().decode('utf-8')
                 reader = csv.DictReader(io.StringIO(decoded_file))
-
-                for row in reader:
+                for row_no, row in enumerate(reader, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
-
+                    row_lower["_row_number"] = row_no
                     if not required_headers.issubset(set(row_lower.keys())):
-                        return Response({
-                            "statusCode": 400,
-                            "status": False,
-                            "message": f"Missing required headers: {required_headers}. Found: {set(row_lower.keys())}"
-                        }, status=400)
-
+                        return Response({'statusCode': 400, 'status': False, 'message': f'Missing required headers: {required_headers}. Found: {set(row_lower.keys())}'}, status=400)
                     data.append(row_lower)
 
             else:
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "error": "Unsupported file format. Use .xlsx or .csv"
-                }, status=400)
+                return Response({'statusCode': 400, 'status': False, 'message': 'Unsupported file format. Use .xlsx or .csv'}, status=400)
 
-            # --------- PROCESS ROWS (reverse) ----------
+            # ---------------- Process Rows ----------------
+            imported_count = 0
+            seen_in_file = set()
+
+            # Fetch all existing ApplicantType to reduce DB queries
+            existing_map = {a.name.lower(): a for a in ApplicantType.objects.all()}
+
             for row in reversed(data):
-                row_number = row.get("_row_number", "Unknown")
-                name = str(row.get('applicant type')).strip() if row.get('applicant type') else None
-                description = str(row.get('description')).strip() if row.get('description') else ''
+                row_no = row.get("_row_number", "Unknown")
+                name = str(row.get("applicant type") or "").strip()
+                description = str(row.get("description") or "").strip()
 
+                key_in_file = name.lower()
+
+                # Missing required field
                 if not name:
-                    skipped_rows.append({"Row": row, "Reason": "Missing required field: name"})
+                    skipped_rows.append({
+                        "Row": row_no,
+                        "Applicant Type": name,
+                        "Description": description,
+                        "Reason": "Missing required field: applicant type"
+                    })
                     continue
 
-                existing = ApplicantType.objects.filter(name__iexact=name).first()
+                # Duplicate in uploaded file
+                if key_in_file in seen_in_file:
+                    duplicates.append({
+                        "Row": row_no,
+                        "Applicant Type": name,
+                        "Description": description,
+                        "Reason": "Duplicate in uploaded file"
+                    })
+                    continue
+                seen_in_file.add(key_in_file)
 
+                # Check existing in DB
+                existing = existing_map.get(key_in_file)
                 if existing:
-                    if existing.is_deleted:
-                        existing.is_deleted = False
-                        existing.description = description
-                        existing.save()
-                        imported_count += 1
-                    else:
-                        duplicate.append({"Row": row_number, "Applicant Type": name, "Reason": "Already exists"})
+                    if not existing.is_deleted:
+                        duplicates.append({
+                            "Row": row_no,
+                            "Applicant Type": name,
+                            "Description": description,
+                            "Reason": "Already exists in database"
+                        })
                         continue
+                    # Reactivate deleted record
+                    existing.description = description
+                    existing.is_deleted = False
+                    existing.save()
+                    imported_count += 1
                     continue
 
-                # Create new
-                ApplicantType.objects.create(
+                # Prepare for bulk create
+                to_create.append(ApplicantType(
                     name=name,
                     description=description,
                     is_deleted=False
-                )
-                imported_count += 1
+                ))
+
+            # ---------------- Bulk Create ----------------
+            if to_create:
+                batch_size = 500
+                for i in range(0, len(to_create), batch_size):
+                    ApplicantType.objects.bulk_create(to_create[i:i + batch_size])
+                imported_count += len(to_create)
 
         except Exception as e:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": str(e)
-            }, status=400)
+            return Response({'statusCode': 400, 'status': False, 'message': str(e)}, status=400)
 
-        # ------------ RESPONSE -------------
+        # ---------------- Response ----------------
         return Response({
             "statusCode": 200,
             "status": True,
-            "duplicates": duplicate,
-            "skipped_rows": skipped_rows,
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful"
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
         }, status=200)
-
 
 
 class VisaEligibilityTypeListAPIView(APIView):
@@ -1889,91 +2126,137 @@ class VisaEligibilityTypeImportAPIView(APIView):
         sheet_name = request.data.get("sheet_name")
 
         if not file:
-            return Response({"error": "No file uploaded"}, status=400)
+            return Response({"statusCode": 400, "status": False,"error": "No file uploaded"}, status=400)
 
         format_type = file.name.split(".")[-1].lower()
         required_headers = {"visa eligibility type"}
         optional_headers = {"description"}
+        all_headers = required_headers.union(optional_headers)
 
+        data = []
         duplicates = []
         skipped_rows = []
-        data = []
+        to_create = []
 
         try:
-            # XLSX Handling
+            # ---------------- XLSX Handling ----------------
             if format_type == "xlsx":
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
                 if not sheet_name:
-                    return Response({"error": "Sheet name required", "available_sheets": available_sheets}, status=400)
-
+                    return Response({"statusCode": 400, "status": False, "error": "Sheet name required", "available_sheets": available_sheets}, status=400)
                 if sheet_name not in available_sheets:
-                    return Response({"error": "Invalid sheet name", "available_sheets": available_sheets}, status=400)
+                    return Response({"statusCode": 400, "status": False,"error": f'Sheet "{sheet_name}" not found', "available_sheets": available_sheets}, status=400)
 
                 ws = wb[sheet_name]
-                headers = [str(c.value).lower().strip() for c in next(ws.iter_rows(min_row=1, max_row=1))]
+                if ws.max_row <= 1:
+                    return Response({"statusCode": 400, "status": False, "message": f'Sheet "{sheet_name}" is empty'}, status=400)
 
-                if not required_headers.issubset(headers):
-                    return Response({"error": "Missing required headers"}, status=400)
+                headers = [str(c.value).strip().lower() if c.value else "" for c in next(ws.iter_rows(min_row=1, max_row=1))]
+                if not required_headers.issubset(set(headers)):
+                    return Response({"statusCode": 400, "status": False, "message": f"Missing required headers: {required_headers}. Found: {set(headers)}"}, status=400)
 
-                for i, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                for row_no, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
                         continue
                     row_dict = dict(zip(headers, row))
-                    row_dict["_row"] = i
+                    row_dict["_row_number"] = row_no
                     data.append(row_dict)
 
-            # CSV Handling
+            # ---------------- CSV Handling ----------------
             elif format_type == "csv":
                 decoded_file = file.read().decode("utf-8")
-                dataset = Dataset()
-                dataset.load(decoded_file, format="csv")
-                for i, row in enumerate(dataset.dict, start=2):
-                    row_lower = {k.lower().strip(): v for k, v in row.items()}
-                    row_lower["_row"] = i
-                    if not required_headers.issubset(row_lower.keys()):
-                        return Response({"error": "Missing required headers"}, status=400)
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                for row_no, row in enumerate(reader, start=2):
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    row_lower["_row_number"] = row_no
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({"statusCode": 400, "status": False, "message": f"Missing required headers: {required_headers}. Found: {set(row_lower.keys())}"}, status=400)
                     data.append(row_lower)
+
             else:
-                return Response({"error": "Unsupported file type"}, status=400)
+                return Response({"statusCode": 400, "status": False, "message": "Unsupported file type. Use .xlsx or .csv"}, status=400)
 
-            imported = 0
+            imported_count = 0
+            seen_in_file = set()
 
+            # Fetch existing records to reduce DB hits
+            existing_map = {v.name.lower(): v for v in VisaEligibilityType.objects.all()}
+
+            # ---------------- Process Rows ----------------
             for row in reversed(data):
-                name = row.get("visa eligibility type")
-                desc = row.get("description") or ""
-                row_no = row.get("_row")
+                row_no = row.get("_row_number", "Unknown")
+                name = str(row.get("visa eligibility type") or "").strip()
+                description = str(row.get("description") or "").strip()
 
+                key_in_file = name.lower()
+
+                # Missing required field
                 if not name:
-                    skipped_rows.append({"row": row_no, "reason": "Missing name"})
+                    skipped_rows.append({
+                        "Row": row_no,
+                        "Visa Eligibility Type": name,
+                        "Description": description,
+                        "Reason": "Missing required field: visa eligibility type"
+                    })
                     continue
 
-                existing = VisaEligibilityType.objects.filter(name__iexact=name).first()
+                # Duplicate in uploaded file
+                if key_in_file in seen_in_file:
+                    duplicates.append({
+                        "Row": row_no,
+                        "Visa Eligibility Type": name,
+                        "Description": description,
+                        "Reason": "Duplicate in uploaded file"
+                    })
+                    continue
+                seen_in_file.add(key_in_file)
 
+                # Check existing in DB
+                existing = existing_map.get(key_in_file)
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"row": row_no, "Visa Eligibility Type": name})
+                        duplicates.append({
+                            "Row": row_no,
+                            "Visa Eligibility Type": name,
+                            "Description": description,
+                            "Reason": "Already exists in database"
+                        })
                         continue
+                    # Reactivate deleted record
+                    existing.description = description
                     existing.is_deleted = False
-                    existing.description = desc
                     existing.save()
-                    imported += 1
-                else:
-                    VisaEligibilityType.objects.create(name=name, description=desc)
-                    imported += 1
+                    imported_count += 1
+                    continue
+
+                # Prepare for bulk create
+                to_create.append(VisaEligibilityType(
+                    name=name,
+                    description=description,
+                    is_deleted=False
+                ))
+
+            # ---------------- Bulk Create ----------------
+            if to_create:
+                batch_size = 500
+                for i in range(0, len(to_create), batch_size):
+                    VisaEligibilityType.objects.bulk_create(to_create[i:i + batch_size])
+                imported_count += len(to_create)
 
         except Exception as e:
-            return Response({"error": str(e)}, status=400)
+            return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
 
+        # ---------------- Response ----------------
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": "Import completed",
-            "imported": imported,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows,
-        })
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count,
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows)),
+        }, status=200)
 
 
 
@@ -2243,8 +2526,6 @@ class VisaStatusExportAPIView(APIView):
         return response
 
 
-
-
 class VisaStatusImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2253,31 +2534,41 @@ class VisaStatusImportAPIView(APIView):
         sheet_name = request.data.get("sheet_name")
 
         if not file:
-            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No file uploaded"
+            }, status=400)
 
         format_type = file.name.split(".")[-1].lower()
-        duplicates = []
-        skipped_rows = []
         required_headers = {"visa status"}
         optional_headers = {"description"}
 
-        try:
-            data = []
+        data = []
+        duplicates = []
+        skipped_rows = []
+        to_create = []
 
+        try:
+            # ---------------- XLSX Handling ----------------
             if format_type == "xlsx":
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
                 if not sheet_name:
                     return Response({
-                        "error": "Please provide sheet_name",
-                        "available_sheets": available_sheets,
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Please provide sheet_name",
+                        "available_sheets": available_sheets
                     }, status=400)
 
                 if sheet_name not in available_sheets:
                     return Response({
-                        "error": f'Sheet "{sheet_name}" not found',
-                        "available_sheets": available_sheets,
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Sheet "{sheet_name}" not found',
+                        "available_sheets": available_sheets
                     }, status=400)
 
                 ws = wb[sheet_name]
@@ -2289,7 +2580,6 @@ class VisaStatusImportAPIView(APIView):
                     }, status=400)
 
                 headers = [str(c.value).strip().lower() if c.value else "" for c in next(ws.iter_rows(min_row=1, max_row=1))]
-
                 if not required_headers.issubset(set(headers)):
                     return Response({
                         "statusCode": 400,
@@ -2304,11 +2594,11 @@ class VisaStatusImportAPIView(APIView):
                     row_dict["_row_number"] = idx
                     data.append(row_dict)
 
+            # ---------------- CSV Handling ----------------
             elif format_type == "csv":
                 decoded_file = file.read().decode("utf-8")
-                dataset = Dataset()
-                dataset.load(decoded_file, format="csv")
-                for idx, row in enumerate(dataset.dict, start=2):
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                for idx, row in enumerate(reader, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
                     row_lower["_row_number"] = idx
                     if not required_headers.issubset(set(row_lower.keys())):
@@ -2323,44 +2613,87 @@ class VisaStatusImportAPIView(APIView):
                 return Response({
                     "statusCode": 400,
                     "status": False,
-                    "message": "Unsupported file format. Use .xlsx or .csv",
+                    "message": "Unsupported file format. Use .xlsx or .csv"
                 }, status=400)
 
             imported_count = 0
+            seen_in_file = set()
+            existing_map = {v.name.lower(): v for v in VisaStatus.objects.all()}
 
+            # ---------------- Process Rows ----------------
             for row in reversed(data):
-                row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("visa status")) if row.get("visa status") else None
-                description = str(row.get("description")).strip() if row.get("description") else ""
+                row_no = row.get("_row_number", "Unknown")
+                name = str(row.get("visa status") or "").strip()
+                description = str(row.get("description") or "").strip()
+                key_in_file = name.lower()
 
+                # Missing required field
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing VisaStatus name"})
+                    skipped_rows.append({
+                        "Row": row_no,
+                        "Visa Status": name,
+                        "Description": description,
+                        "Reason": "Missing required field: visa status"
+                    })
                     continue
 
-                existing = VisaStatus.objects.filter(name__iexact=name).first()
+                # Duplicate in uploaded file
+                if key_in_file in seen_in_file:
+                    duplicates.append({
+                        "Row": row_no,
+                        "Visa Status": name,
+                        "Description": description,
+                        "Reason": "Duplicate in uploaded file"
+                    })
+                    continue
+                seen_in_file.add(key_in_file)
+
+                # Check existing in DB
+                existing = existing_map.get(key_in_file)
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Visa Status": name, "Reason": "Already exists"})
+                        duplicates.append({
+                            "Row": row_no,
+                            "Visa Status": name,
+                            "Description": description,
+                            "Reason": "Already exists in database"
+                        })
                         continue
-                    else:
-                        existing.description = description
-                        existing.is_deleted = False
-                        existing.save()
-                        imported_count += 1
-                else:
-                    VisaStatus.objects.create(name=name, description=description, is_deleted=False)
+                    # Reactivate deleted record
+                    existing.description = description
+                    existing.is_deleted = False
+                    existing.save()
                     imported_count += 1
+                    continue
+
+                # Prepare for bulk create
+                to_create.append(VisaStatus(
+                    name=name,
+                    description=description,
+                    is_deleted=False
+                ))
+
+            # ---------------- Bulk Create ----------------
+            if to_create:
+                batch_size = 500
+                for i in range(0, len(to_create), batch_size):
+                    VisaStatus.objects.bulk_create(to_create[i:i + batch_size])
+                imported_count += len(to_create)
 
         except Exception as e:
-            return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": str(e)
+            }, status=400)
 
         return Response({
             "statusCode": 200,
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows))
         }, status=200)
 
 
@@ -2628,32 +2961,52 @@ class PossibilityLevelImportAPIView(APIView):
         sheet_name = request.data.get("sheet_name")
 
         if not file:
-            return Response({"error": "No file uploaded"}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No file uploaded"
+            }, status=400)
 
         format_type = file.name.split(".")[-1].lower()
-        duplicates = []
-        skipped_rows = []
         required_headers = {"possibility level"}
         optional_headers = {"description"}
+
         data = []
+        duplicates = []
+        skipped_rows = []
+        to_create = []
 
         try:
-            # XLSX
+            # ---------------- XLSX Handling ----------------
             if format_type == "xlsx":
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
                 if not sheet_name:
-                    return Response({"error": "Provide sheet_name", "available_sheets": available_sheets}, status=400)
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Provide sheet_name",
+                        "available_sheets": available_sheets
+                    }, status=400)
 
                 if sheet_name not in available_sheets:
-                    return Response({"error": f'Sheet "{sheet_name}" not found', "available_sheets": available_sheets}, status=400)
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Sheet "{sheet_name}" not found',
+                        "available_sheets": available_sheets
+                    }, status=400)
 
                 ws = wb[sheet_name]
                 headers = [str(c.value).lower().strip() if c.value else "" for c in next(ws.iter_rows(min_row=1, max_row=1))]
 
-                if not required_headers.issubset(headers):
-                    return Response({"error": "Missing required headers"}, status=400)
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f"Missing required headers. Required: {required_headers}, Found: {set(headers)}"
+                    }, status=400)
 
                 for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     if not any(row):
@@ -2662,57 +3015,106 @@ class PossibilityLevelImportAPIView(APIView):
                     row_dict["_row_number"] = idx
                     data.append(row_dict)
 
-            # CSV
+            # ---------------- CSV Handling ----------------
             elif format_type == "csv":
                 decoded_file = file.read().decode("utf-8")
-                dataset = Dataset()
-                dataset.load(decoded_file, format="csv")
-                for idx, row in enumerate(dataset.dict, start=2):
+                reader = csv.DictReader(io.StringIO(decoded_file))
+                for idx, row in enumerate(reader, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
                     row_lower["_row_number"] = idx
-                    if not required_headers.issubset(row_lower.keys()):
-                        return Response({"error": "Missing required headers"}, status=400)
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({
+                            "statusCode": 400,
+                            "status": False,
+                            "message": f"Missing required headers. Required: {', '.join(required_headers)}"
+                        }, status=400)
                     data.append(row_lower)
 
             else:
-                return Response({"error": "Unsupported file format"}, status=400)
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Unsupported file format. Use .xlsx or .csv"
+                }, status=400)
 
             imported_count = 0
+            seen_in_file = set()
+            existing_map = {v.name.lower(): v for v in PossibilityLevel.objects.all()}
 
+            # ---------------- Process Rows ----------------
             for row in reversed(data):
-                row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("possibility level")) if row.get("possibility level") else None
-                description = str(row.get("description")).strip() if row.get("description") else ""
+                row_no = row.get("_row_number", "Unknown")
+                name = str(row.get("possibility level") or "").strip()
+                description = str(row.get("description") or "").strip()
+                key_in_file = name.lower()
 
+                # Missing required field
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing PossibilityLevel name"})
+                    skipped_rows.append({
+                        "Row": row_no,
+                        "Possibility Level": name,
+                        "Description": description,
+                        "Reason": "Missing required field: possibility level"
+                    })
                     continue
 
-                existing = PossibilityLevel.objects.filter(name__iexact=name).first()
+                # Duplicate in uploaded file
+                if key_in_file in seen_in_file:
+                    duplicates.append({
+                        "Row": row_no,
+                        "Possibility Level": name,
+                        "Description": description,
+                        "Reason": "Duplicate in uploaded file"
+                    })
+                    continue
+                seen_in_file.add(key_in_file)
+
+                # Check existing in DB
+                existing = existing_map.get(key_in_file)
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Possibility Level": name, "Reason": "Already exists"})
+                        duplicates.append({
+                            "Row": row_no,
+                            "Possibility Level": name,
+                            "Description": description,
+                            "Reason": "Already exists in database"
+                        })
                         continue
+                    # Reactivate deleted record
                     existing.description = description
                     existing.is_deleted = False
                     existing.save()
                     imported_count += 1
-                else:
-                    PossibilityLevel.objects.create(name=name, description=description, is_deleted=False)
-                    imported_count += 1
+                    continue
+
+                # Prepare for bulk create
+                to_create.append(PossibilityLevel(
+                    name=name,
+                    description=description,
+                    is_deleted=False
+                ))
+
+            # ---------------- Bulk Create ----------------
+            if to_create:
+                batch_size = 500
+                for i in range(0, len(to_create), batch_size):
+                    PossibilityLevel.objects.bulk_create(to_create[i:i + batch_size])
+                imported_count += len(to_create)
 
         except Exception as e:
-            return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": str(e)
+            }, status=400)
 
         return Response({
             "statusCode": 200,
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows))
         }, status=200)
-
-
 
 

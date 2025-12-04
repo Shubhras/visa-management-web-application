@@ -477,8 +477,9 @@ const LicenceNameList = () => {
     const searchTerm = filterSearchTerms[columnField] || "";
     const options = filterDropdownData[columnField] || [];
     return options.filter((option) =>
-      option.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+      option.name.toLowerCase().startsWith(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => a.name.localeCompare(b.name));
   };
 
   // Clear all filters + reset global search
