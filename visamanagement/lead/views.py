@@ -1698,3 +1698,449 @@ class BusinessExperienceDeleteAPIView(APIView):
             "data":{"invalid_uuids": invalid_uuids} if invalid_uuids else None
         },status = status.HTTP_200_OK)
     
+
+#<=====================Net_worth=========================>
+class NetworthCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self,request):
+        try:
+            serializer = NetworthSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({
+                    "statusCode":201,
+                    "status":True,
+                    "message":"Networth create successfully. ",
+                    "data":serializer.data
+                },status=status.HTTP_201_CREATED)
+            else:
+                return Response({
+                    "statusCode":400,
+                    "status":False,
+                    "message":"Validation Faild",
+                    "error":serializer.errors
+                },status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                "statusCode":500,
+                "status":False,
+                "message":"Something went wrong. ",
+                "error":str(e)
+            },status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+ 
+ 
+class NetworthListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self,request):
+        queryset = Networth.objects.all()
+ 
+        #filter
+        uuids = request.GET.get("uuids")
+        if uuids:
+            uuid_list = []
+            for u in uuids.split(","):
+                try:
+                    uuid_list.append(UUID(u.strip()))
+                except:
+                    return Response({
+                        "status":False,
+                        "message":f"Invalid UUID:{u}"
+                    },status=status.HTTP_400_BAD_REQUEST)
+            queryset = queryset.filter(uuid_in=uuid_list)
+ 
+        serializer = NetworthSerializer(queryset,many=True)
+        return Response({
+            "status":True,
+            "message":"Networth data fatched successfully. ",
+            "data":serializer.data,
+        },status=status.HTTP_200_OK)
+ 
+class NetworthDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self,request,uuid):
+        try:
+            valid_uuid = UUID(str(uuid))
+        except:
+            return Response({
+                "statusCode":400,
+                "status":False,
+                "message":"Invalide UUID format"
+            },status=status.HTTP_400_BAD_REQUEST)
+        networth = get_object_or_404(Networth,uuid=valid_uuid)
+        serializer = NetworthSerializer(networth)
+        return Response({
+            "status":True,
+            "message":"Networth fetched successfully. ",
+            "data":serializer.data
+        },status=status.HTTP_200_OK)
+ 
+class NetworthUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def put(self,request,uuid):
+        try:
+            networth = Networth.objects.get(uuid=uuid)
+        except Networth.DoesNotExist:
+               return Response({
+                "status": "error",
+                "message": "Networth not found."
+            }, status=status.HTTP_404_NOT_FOUND)
+ 
+        try:
+            serializer = NetworthSerializer(networth,data = request.data, partial = True)
+            serializer.is_valid(raise_exception=True)
+ 
+            with transaction.atomic():
+               networth = serializer.save()
+            return Response({
+                "status":True,
+                "message":"Networth updated successfully.",
+                "data":NetworthSerializer(networth).data
+            },status = status.HTTP_200_OK)
+        except serializers.ValidationError as ve:
+            return Response({
+                "status": "error",
+                "message": "Validation failed.",
+                "errors": ve.detail
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        except IntegrityError as ie:
+            return Response({
+                "status": "error",
+                "message": "Database integrity error.",
+                "details": str(ie)
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        except ValidationError as ve:
+            return Response({
+                "status": "error",
+                "message": "Validation failed.",
+                "errors": ve.message_dict
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                "status": "error",
+                "message": "Something went wrong.",
+                "details": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+ 
+ 
+class NetworthDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def delete(self,request,uuid=None):
+        id = request.data.get('id',None)
+        
+        #single delete via url
+        if uuid:
+            try:
+                obj = Networth.objects.get(uuid=uuid)
+                obj.delete()
+                return Response({
+                    "statusCode":204,
+                    "status":True,
+                    "message":"Networth deleted.",
+                    "data":None
+                },status=status.HTTP_204_NO_CONTENT)
+            except Networth.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status" :  False,
+                    "message": "Networth not found. ",
+                    "data":None        
+                        },status=status.HTTP_404_NOT_FOUND)
+        #delete all
+        if id == "all":
+            queryset = Networth.objects.all()
+            count = queryset.count()
+            queryset.delete()
+            return Response({
+                "statusCode":200,
+                "status":True,
+                "message": f"All {count} Networth permanently deleted. ",
+                "data":None
+            },status=status.HTTP_200_OK)
+        
+        #Bulk Delete
+        if not id or not isinstance(id,list):
+            return Response({
+                "statusCode":400,
+                "status":False,
+                "message":"Please provide a list of U"
+                "UIDs in 'id' field or 'all'.",
+                "data":None
+            },status= status.HTTP_400_BAD_REQUEST)
+        valid_uuids= []
+        invalid_uuids= []
+        for u in id:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(UUID(u))
+        queryset = Networth.objects.filter(uuid__in=valid_uuids)
+        count = queryset.count()
+        queryset.delete()
+        return Response({
+            "statusCode":200,
+            "status":True,
+            "message":f"{count} Networth permanently deleted.",
+            "data":{"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        },status = status.HTTP_200_OK) 
+    
+#<============================EligibilityFlags============================>
+class EligibilityFlagsRetrieveAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, applicant_uuid):
+        applicant = get_object_or_404(Applicant, uuid=applicant_uuid)
+        flags = get_object_or_404(EligibilityFlags, applicant=applicant)
+
+        serializer = EligibilityFlagsSerializer(flags)
+
+        return Response({
+            "status": True,
+            "message": "Eligibility flags fetched successfully.",
+            "data": serializer.data
+        }, status=status.HTTP_200_OK)
+    
+class EligibilityFlagsUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, applicant_uuid):
+        applicant = get_object_or_404(Applicant, uuid=applicant_uuid)
+        flags = get_object_or_404(EligibilityFlags, applicant=applicant)
+
+        serializer = EligibilityFlagsSerializer(flags, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+
+            return Response({
+                "status": True,
+                "message": "Eligibility flags updated successfully.",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+
+        return Response({
+            "status": False,
+            "message": "Validation failed.",
+            "errors": serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+class EligibilityFlagsCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            serializer = EligibilityFlagsSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({
+                    "statusCode": 201,
+                    "status": True,
+                    "message": "Eligibility flags created successfully.",
+                    "data": serializer.data
+                }, status=status.HTTP_201_CREATED)
+
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "Validation failed.",
+                "errors": serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            return Response({
+                "statusCode": 500,
+                "status": False,
+                "message": "Something went wrong.",
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+#<========================SpouseEducation=======================>
+class SpouseEducationleadCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self,request):
+        try:
+            serializer = SpouseEducationleadSerializer(data = request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({
+                    "statusCode":201,
+                    "status":True,
+                    "message":"Spouse Education create successfully. ",
+                    "data":serializer.data
+                },status=status.HTTP_201_CREATED)
+            else:
+                return Response({
+                    "statusCode":400,
+                    "status":False,
+                    "message":"Validation Faild. ",
+                    "error":serializer.errors
+                },status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                "statusCode":500,
+                "status":False,
+                "message":"Something went wrong.",
+                "error":str(e)
+            },status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+
+class SpouseEducationleadListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self,request):
+        queryset = SpouseEducationlead.objects.all()
+
+        #filter
+        uuids = request.GET.get("uuids")
+        if uuids:
+            uuid_list = []
+            for u in uuids.split(","):
+                try:
+                    uuid_list.append(UUID(u.strip()))
+                except:
+                    return Response({
+                        "status":False,
+                        "message":f"Invalid UUID:{u}"
+                    },status=status.HTTP_400_BAD_REQUEST)
+            queryset = queryset.filter(uuid_in=uuid_list)
+
+        serializer = SpouseEducationleadSerializer(queryset,many=True)
+        return Response({
+            "status":True,
+            "message":"Spouse Education data fatched successfully. ",
+            "data":serializer.data,
+        },status=status.HTTP_200_OK)
+
+class SpouseEducationleadDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self,request,uuid):
+        try:
+            valid_uuid = UUID(str(uuid))
+        except:
+            return Response({
+                "statusCode":400,
+                "status":False,
+                "message":"Invalide UUID format"
+            },status=status.HTTP_400_BAD_REQUEST)
+        spouse = get_object_or_404(SpouseEducationlead,uuid=valid_uuid)
+        serializer = SpouseEducationleadSerializer(spouse)
+        return Response({
+            "status":True,
+            "message":"Spouse Education fetched successfully. ",
+            "data":serializer.data
+        },status=status.HTTP_200_OK)
+
+class SpouseEducationleadUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def put(self,request,uuid):
+        try: 
+            spouse = SpouseEducationlead.objects.get(uuid=uuid)
+        except SpouseEducationlead.DoesNotExist:
+               return Response({
+                "status": "error",
+                "message": "Spouse Educationlead not found."
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            serializer = SpouseEducationleadSerializer(spouse,data = request.data, partial = True)
+            serializer.is_valid(raise_exception=True)
+
+            with transaction.atomic():
+               spouse = serializer.save()
+            return Response({
+                "status":True,
+                "message":"Spouse Educationlead updated successfully.",
+                "data":SpouseEducationleadSerializer(spouse).data
+            },status = status.HTTP_200_OK)
+        except serializers.ValidationError as ve:
+            return Response({
+                "status": "error",
+                "message": "Validation failed.",
+                "errors": ve.detail
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        except IntegrityError as ie:
+            return Response({
+                "status": "error",
+                "message": "Database integrity error.",
+                "details": str(ie)
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        except ValidationError as ve:
+            return Response({
+                "status": "error",
+                "message": "Validation failed.",
+                "errors": ve.message_dict
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                "status": "error",
+                "message": "Something went wrong.",
+                "details": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+
+class SpouseEducationleadDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def delete(self,request,uuid=None):
+        id = request.data.get('id',None)
+        
+        #single delete via url
+        if uuid:
+            try:
+                obj = SpouseEducationlead.objects.get(uuid=uuid)
+                obj.delete()
+                return Response({
+                    "statusCode":204,
+                    "status":True,
+                    "message":"Spouse Educationlead deleted.",
+                    "data":None
+                },status=status.HTTP_204_NO_CONTENT)
+            except SpouseEducationlead.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status" :  False,
+                    "message": "Spouse Educationlead not found. ",
+                    "data":None        
+                        },status=status.HTTP_404_NOT_FOUND)
+        #delete all
+        if id == "all":
+            queryset = SpouseEducationlead.objects.all()
+            count = queryset.count()
+            queryset.delete()
+            return Response({
+                "statusCode":200,
+                "status":True,
+                "message": f"All {count} Spouse Educationlead permanently deleted. ",
+                "data":None
+            },status=status.HTTP_200_OK)
+        
+        #Bulk Delete
+        if not id or not isinstance(id,list):
+            return Response({
+                "statusCode":400,
+                "status":False,
+                "message":"Please provide a list of U"
+                "UIDs in 'id' field or 'all'.",
+                "data":None
+            },status= status.HTTP_400_BAD_REQUEST)
+        valid_uuids= []
+        invalid_uuids= []
+        for u in id:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(UUID(u))
+        queryset = SpouseEducationlead.objects.filter(uuid__in=valid_uuids)
+        count = queryset.count()
+        queryset.delete()
+        return Response({
+            "statusCode":200,
+            "status":True,
+            "message":f"{count} Spouse Educationlead permanently deleted.",
+            "data":{"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        },status = status.HTTP_200_OK)
+        
