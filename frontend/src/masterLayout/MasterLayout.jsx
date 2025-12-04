@@ -2246,7 +2246,7 @@ const MasterLayout = ({ children }) => {
                   />
                 </div>
                 {/* <div style={{ cursor: "pointer" }} onClick={toggleSidebar}> */}
-                 <div style={{ cursor: "pointer" }} onClick={toggleSidebar}>
+                 <div style={{ cursor: "pointer" }}>
                   <Icon icon="material-symbols:menu" width="30" />
                 </div>
               </div>
