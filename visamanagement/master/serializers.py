@@ -527,7 +527,7 @@ class EducationLevelSerializer(serializers.ModelSerializer):
         if exists:
             raise serializers.ValidationError("This educationlevel already exists")
 
-        return value    
+        return value  
 
 
 class EducationDurationSerializer(serializers.ModelSerializer):

@@ -1250,7 +1250,8 @@ class EducationLevelUpdateAPIView(APIView):
                 "data": None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = EducationLevelSerializer(obj, data=request.data)
+        # serializer = EducationLevelSerializer(obj, data=request.data)
+        serializer = EducationLevelSerializer(obj, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response({
