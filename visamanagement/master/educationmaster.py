@@ -2280,7 +2280,8 @@ class StudymainareaUpdateAPIView(APIView):
                 "data": None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = StudymainareaSerializer(area, data=request.data)
+        # serializer = StudymainareaSerializer(area, data=request.data)
+        serializer = StudymainareaSerializer(area, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response({

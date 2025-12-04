@@ -573,7 +573,19 @@ class StudymainareaSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'uuid', 'created_at', 'updated_at']
 
+    def validate_name(self, value):
+        value = value.strip()
+        current_uuid = self.instance.uuid if self.instance else None
 
+        exists = Studymainarea.objects.filter(
+            name__iexact=value,
+            is_deleted=False
+        ).exclude(uuid=current_uuid).exists()
+
+        if exists:
+            raise serializers.ValidationError("This study main area name already exists")
+
+        return value
 
 
 class StudyMajorAreaSerializer(serializers.ModelSerializer):
