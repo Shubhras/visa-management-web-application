@@ -318,7 +318,7 @@ const AddEditRequiredDocumentsModal = ({ show, handleClose, mode = 'add', rowDat
                                         placeholder="Select Visa Main Category"
                                         isClearable
                                         isSearchable
-                                        className={`custom-select-container ${errors.country ? "is-invalid" : ""
+                                        className={`custom-select-container ${errors.visaMain ? "is-invalid" : ""
                                             }`}
                                         classNamePrefix="custom-select"
                                     />

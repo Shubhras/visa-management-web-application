@@ -660,7 +660,7 @@ const CourseLevelList = () => {
       "Course Level": "name",
       "Course Level Code": "courselevelcode",
       "Modified On": "updated_at",
-      Description: "description",
+      "Description": "description",
     };
     // Convert selectedItems to backend field names
     const mappedFields = selectedItems.map(

@@ -26,7 +26,7 @@ const StudyFactorLanguageAbilityList = () => {
     languageTestModuleName: [],
     languageTestName: [],
     minimumOverAllScore: [],
-    notLessThan : [],
+    notLessThan: [],
 
   });
   const [activeFilterColumn, setActiveFilterColumn] = useState(null);
@@ -39,7 +39,7 @@ const StudyFactorLanguageAbilityList = () => {
     fetchlanguageTestModuleNameDropdown();
     fetchlanguageTestNameDropdown();
     fetchLanguageTestResultDropdown();
-    fetchNotLessThanDropdown();
+
   }, []);
   const fetchFactorForDropdown = () => {
     const params = {
@@ -161,36 +161,44 @@ const StudyFactorLanguageAbilityList = () => {
         // Update filter dropdown data
         setFilterDropdownData(prev => ({
           ...prev,
-          minimumOverAllScore: sortedOptions
-        }));
-      }
-    }));
-  };
-    const fetchNotLessThanDropdown = () => {
-    const params = {
-      page: 1,
-      limit: 2000,
-      search: "",
-      sortBy: "numeric_score",
-      sortOrder: "asc"
-    };
-    dispatch(languageTestResultList(params, (response, error) => {
-      if (response?.statusCode === 200 && response?.status === true) {
-        const options = (response.data || []).map(item => ({
-          id: item.uuid || item.id,
-          name: String(item.numeric_score ?? "")
-        }));
-        const sortedOptions = options.sort((a, b) =>
-          String(a.name).localeCompare(String(b.name), undefined, { numeric: true })
-        );
-        // Update filter dropdown data
-        setFilterDropdownData(prev => ({
-          ...prev,
+          minimumOverAllScore: sortedOptions,
           notLessThan: sortedOptions
         }));
+      } else {
+        setFilterDropdownData(prev => ({
+          ...prev,
+          minimumOverAllScore: [],
+          notLessThan: []
+        }));
+
       }
     }));
   };
+
+  //   const params = {
+  //     page: 1,
+  //     limit: 2000,
+  //     search: "",
+  //     sortBy: "numeric_score",
+  //     sortOrder: "asc"
+  //   };
+  //   dispatch(languageTestResultList(params, (response, error) => {
+  //     if (response?.statusCode === 200 && response?.status === true) {
+  //       const options = (response.data || []).map(item => ({
+  //         id: item.uuid || item.id,
+  //         name: String(item.numeric_score ?? "")
+  //       }));
+  //       const sortedOptions = options.sort((a, b) =>
+  //         String(a.name).localeCompare(String(b.name), undefined, { numeric: true })
+  //       );
+  //       // Update filter dropdown data
+  //       setFilterDropdownData(prev => ({
+  //         ...prev,
+  //         notLessThan: sortedOptions
+  //       }));
+  //     }
+  //   }));
+  // };
   const toggleFilterDropdown = (e, columnField) => {
     e.stopPropagation()
     setActiveFilterColumn(activeFilterColumn === columnField ? null : columnField)
@@ -231,6 +239,7 @@ const StudyFactorLanguageAbilityList = () => {
     languageTestModuleName: [],
     languageTestName: [],
     minimumOverAllScore: [],
+    notLessThan: [],
   })
   const hasActiveFilters = () => Object.values(columnFilters).some(list => list.length > 0)
   useEffect(() => {
@@ -766,7 +775,7 @@ const StudyFactorLanguageAbilityList = () => {
       languageTestModuleName: columnFilters.languageTestModuleName.length > 0 ? columnFilters.languageTestModuleName : null,
       languageTestName: columnFilters.languageTestName.length > 0 ? columnFilters.languageTestName : null,
       minimumOverAllScore: columnFilters.minimumOverAllScore.length > 0 ? columnFilters.minimumOverAllScore : null,
-      notLessThan : columnFilters.notLessThan.length > 0 ? columnFilters.notLessThan : null,
+      notLessThan: columnFilters.notLessThan.length > 0 ? columnFilters.notLessThan : null,
     };
 
     setLoadingExport(true);

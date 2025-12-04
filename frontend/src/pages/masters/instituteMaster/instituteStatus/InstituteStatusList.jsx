@@ -371,11 +371,11 @@ const InstituteStatusList = () => {
             return;
         }
         const deleteAll = selectAllOrNot === "all" && Boolean(tableState.search?.trim());
-    const payloadSend = {
-      deleteAll: deleteAll,
-      id: deleteAll == true ? "" : sendPayload,
-      search: tableState.search || '',
-    };
+        const payloadSend = {
+            deleteAll: deleteAll,
+            id: deleteAll == true ? "" : sendPayload,
+            search: tableState.search || '',
+        };
         dispatch(instituteStatusDelete(payloadSend, (response, error) => {
             if (error) {
                 toast.error(error?.response?.data?.message || "server error");
@@ -560,7 +560,7 @@ const InstituteStatusList = () => {
                                             </button>
                                         </>
                                     )}
-                                     <ResetButton
+                                    <ResetButton
                                         onClick={clearAllFilters}
                                         tableState={tableState}
                                         globalSearch={globalSearch}
@@ -814,7 +814,7 @@ const InstituteStatusList = () => {
                                 </tbody>
                             </table>
 
-                            
+
                         </div>
                     </div>
                 </div>

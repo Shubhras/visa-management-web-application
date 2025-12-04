@@ -167,7 +167,7 @@ const RequiredDocumentsList = () => {
         return options.filter(o =>
             String(o.name ?? '').toLowerCase().startsWith(searchTerm)
         )
-            .sort((a, b) => a.name.localeCompare(b.name));
+        .sort((a, b) => a.name.localeCompare(b.name));
     }
 
     const clearAllOnlyHeaderFilters = () => setColumnFilters({
@@ -417,10 +417,6 @@ const RequiredDocumentsList = () => {
     const clearAllFilters = () => {
 
         // Reset filter dropdowns
-        setColumnFilters({
-            studyMainArea: [],
-            studyMajorArea: [],
-        });
         setTableState(prev => ({
             ...prev,
             page: 1,
@@ -594,7 +590,8 @@ const RequiredDocumentsList = () => {
                     setSelectedRows([]);
                     setSelectAllOrNot('');
                     setDeleteId(null);
-                    fetchDepartmentList();
+                    // fetchDepartmentList();
+                    clearAllFilters();
                 } else {
                     toast.error("Something went wrong.");
                 }

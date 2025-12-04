@@ -200,123 +200,125 @@ const AddEditOccupationVersionModal = ({ show, handleClose, mode = 'add', rowDat
                         />
                     </div>
 
-                    <div className="modal-body p-24 pt-10">
+                    <div className="modal-body ">
                         <form onSubmit={handleSubmit}>
-                            <div className="row">
-                                {/* Department Name */}
-                                <div className="col-12 mb-10">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                                        Start Date <span className="text-danger">*</span>
-                                    </label>
-                                    <input
-                                        type="date"
-                                        name="startDate"
-                                        value={formData.startDate}
-                                        onChange={handleChange}
-                                        className={`form-control radius-8 ${errors.startDate ? 'is-invalid' : ''}`}
-                                        placeholder="Enter start date"
-                                    />
-                                    {errors.startDate && (
-                                        <div className="text-danger text-sm mt-1">
-                                            {errors.startDate}
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="col-12 mb-10">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                                        End Date
-                                    </label>
-                                    <input
-                                        type="date"
-                                        name="endDate"
-                                        value={formData.endDate}
-                                        onChange={handleChange}
-                                        className={`form-control radius-8 ${errors.endDate ? 'is-invalid' : ''}`}
-                                        placeholder="Enter end date"
-                                    />
-                                    {errors.endDate && (
-                                        <div className="text-danger text-sm mt-1">
-                                            {errors.endDate}
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="col-12 mb-10">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                                        Country<span className="text-danger">*</span>
-                                    </label>
-                                    <Select
-                                        options={countryDate.map((option) => ({
-                                            value: option.uuid,
-                                            label: option.name,
-                                        }))}
-                                        value={
-                                            formData.country
-                                                ? countryDate
-                                                    .map((option) => ({
-                                                        value: option.uuid,
-                                                        label: option.name,
-                                                    }))
-                                                    .find((opt) => opt.value === formData.country)
-                                                : null
-                                        }
-                                        onChange={(selectedOption) =>
-                                            handleChange({
-                                                target: {
-                                                    name: "country",
-                                                    value: selectedOption ? selectedOption.value : "",
-                                                },
-                                            })
-                                        }
-                                        placeholder="Select country"
-                                        isClearable
-                                        isSearchable
-                                        className={`custom-select-container ${errors.country ? "is-invalid" : ""
-                                            }`}
-                                        classNamePrefix="custom-select"
-                                    />
-                                    {errors.country && (
-                                        <div className="text-danger text-sm mt-1">
-                                            {errors.country}
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="col-12 mb-10">
-                                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                                        Occupation Version <span className="text-danger">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="departmentName"
-                                        value={formData.departmentName}
-                                        onChange={handleChange}
-                                        className={`form-control radius-8 ${errors.departmentName ? 'is-invalid' : ''}`}
-                                        placeholder="Enter occupation version"
-                                    />
-                                    {errors.departmentName && (
-                                        <div className="text-danger text-sm mt-1">
-                                            {errors.departmentName}
-                                        </div>
-                                    )}
-                                </div>
+                            <div className="">
+                                <div className='row modal-scrollable-content'>
+                                    {/* Department Name */}
+                                    <div className="col-12 mb-10">
+                                        <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                                            Start Date <span className="text-danger">*</span>
+                                        </label>
+                                        <input
+                                            type="date"
+                                            name="startDate"
+                                            value={formData.startDate}
+                                            onChange={handleChange}
+                                            className={`form-control radius-8 ${errors.startDate ? 'is-invalid' : ''}`}
+                                            placeholder="Enter start date"
+                                        />
+                                        {errors.startDate && (
+                                            <div className="text-danger text-sm mt-1">
+                                                {errors.startDate}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="col-12 mb-10">
+                                        <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                                            End Date
+                                        </label>
+                                        <input
+                                            type="date"
+                                            name="endDate"
+                                            value={formData.endDate}
+                                            onChange={handleChange}
+                                            className={`form-control radius-8 ${errors.endDate ? 'is-invalid' : ''}`}
+                                            placeholder="Enter end date"
+                                        />
+                                        {errors.endDate && (
+                                            <div className="text-danger text-sm mt-1">
+                                                {errors.endDate}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="col-12 mb-10">
+                                        <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                                            Country<span className="text-danger">*</span>
+                                        </label>
+                                        <Select
+                                            options={countryDate.map((option) => ({
+                                                value: option.uuid,
+                                                label: option.name,
+                                            }))}
+                                            value={
+                                                formData.country
+                                                    ? countryDate
+                                                        .map((option) => ({
+                                                            value: option.uuid,
+                                                            label: option.name,
+                                                        }))
+                                                        .find((opt) => opt.value === formData.country)
+                                                    : null
+                                            }
+                                            onChange={(selectedOption) =>
+                                                handleChange({
+                                                    target: {
+                                                        name: "country",
+                                                        value: selectedOption ? selectedOption.value : "",
+                                                    },
+                                                })
+                                            }
+                                            placeholder="Select country"
+                                            isClearable
+                                            isSearchable
+                                            className={`custom-select-container ${errors.country ? "is-invalid" : ""
+                                                }`}
+                                            classNamePrefix="custom-select"
+                                        />
+                                        {errors.country && (
+                                            <div className="text-danger text-sm mt-1">
+                                                {errors.country}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="col-12 mb-10">
+                                        <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                                            Occupation Version <span className="text-danger">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            name="departmentName"
+                                            value={formData.departmentName}
+                                            onChange={handleChange}
+                                            className={`form-control radius-8 ${errors.departmentName ? 'is-invalid' : ''}`}
+                                            placeholder="Enter occupation version"
+                                        />
+                                        {errors.departmentName && (
+                                            <div className="text-danger text-sm mt-1">
+                                                {errors.departmentName}
+                                            </div>
+                                        )}
+                                    </div>
 
-                                {/* Description */}
-                                <div className="col-12 mb-10">
-                                    <label
-                                        htmlFor="desc"
-                                        className="form-label fw-semibold text-primary-light text-sm mb-0"
-                                    >
-                                        Description
-                                    </label>
-                                    <textarea
-                                        className={`form-control ${errors.description ? 'is-invalid' : ''}`}
-                                        id="desc"
-                                        name="description"
-                                        value={formData.description}
-                                        onChange={handleChange}
-                                        rows={4}
-                                        cols={50}
-                                        placeholder="Description"
-                                    />
+                                    {/* Description */}
+                                    <div className="col-12 mb-10">
+                                        <label
+                                            htmlFor="desc"
+                                            className="form-label fw-semibold text-primary-light text-sm mb-0"
+                                        >
+                                            Description
+                                        </label>
+                                        <textarea
+                                            className={`form-control ${errors.description ? 'is-invalid' : ''}`}
+                                            id="desc"
+                                            name="description"
+                                            value={formData.description}
+                                            onChange={handleChange}
+                                            rows={4}
+                                            cols={50}
+                                            placeholder="Description"
+                                        />
+                                    </div>
                                 </div>
 
                                 {/* Buttons */}
