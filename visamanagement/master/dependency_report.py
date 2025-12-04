@@ -3,7 +3,7 @@ import io
 from django.apps import apps
 from django.http import HttpResponse
 from openpyxl import Workbook
-
+import json
 
 
 def generate_dependency_excel(data, filename="dependency_report.xlsx"):
@@ -37,6 +37,16 @@ def generate_dependency_excel(data, filename="dependency_report.xlsx"):
     )
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
     response['X-Excel-Download'] = "true"
+
+    json_body = {
+        "statusCode": 200,
+        "status": False,
+        "message": "Dependencies found. Download report for details.",
+        "data": None,
+        "excelDownload": True
+    }
+
+    response["X-Json-Body"] = json.dumps(json_body)
     
     return response
 
