@@ -520,7 +520,7 @@ class EducationLevelSerializer(serializers.ModelSerializer):
         exists = EducationLevel.objects.filter(
             educationlevel__iexact=value,
             is_deleted=False
-        ).exclude(uuid=self.instance.uuid).exists()
+        ).exists()
 
         if exists:
             raise serializers.ValidationError("This name already exists")
