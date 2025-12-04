@@ -482,7 +482,7 @@ class EducationLevel(models.Model):
         blank=True,
         null=True
     )
-    educationlevel= models.CharField(max_length=255,blank=True)
+    educationlevel= models.CharField(max_length=255,blank=True,unique=True)
     durations=models.IntegerField(null=True,blank=True,unique=True)
     description = models.TextField(max_length=255,blank=True)
     is_deleted = models.BooleanField(default=False)
