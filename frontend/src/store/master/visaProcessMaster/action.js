@@ -65,6 +65,7 @@ import {
     DELETE_PAYMENT_CATEGORY,
     EXPORT_PAYMENT_CATEGORY,
     IMPORT_PAYMENT_CATEGORY,
+    VISA_MAJOR_CATEGORY_RCOUNTRY_ID
 
 } from "./actionType"
 // Document Category
@@ -464,6 +465,11 @@ export const paymentCategoryImportData = (data, callback) => ({
     callback,
 });
 
+export const visamajorCategoryRCountryIdList = (data, callback) => ({
+    type: VISA_MAJOR_CATEGORY_RCOUNTRY_ID,
+    data,
+    callback,
+});
 
 
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
-import { requiredDocumentGeneralAdd, requiredDocumentGeneralEdit, documentsForList } from "../../../../store/master/visaProcessMaster/action";
+import { requiredDocumentGeneralAdd, requiredDocumentGeneralEdit, documentsForList, visamajorCategoryRCountryIdList } from "../../../../store/master/visaProcessMaster/action";
 import { toast } from "react-toastify";
 import Select from "react-select";
 import { representingCountryList } from "../../../../store/master/occupationMaster/action";
@@ -11,6 +11,7 @@ const AddEditRequiredDocumentsModal = ({ show, handleClose, mode = 'add', rowDat
     const [documentFor, setDocumentFor] = useState([]);
     const [representinfCountry, setRepresentingCountry] = useState([]);
     const [visaMainCategory, setVisaMainCategory] = useState([]);
+    const [visaMajorCategory, setVisaMajorCategory] = useState([]);
     // Form state
     const [formData, setFormData] = useState({
         uuid: '',
@@ -39,6 +40,9 @@ const AddEditRequiredDocumentsModal = ({ show, handleClose, mode = 'add', rowDat
                     visaMajor: rowData.visaMajor || '',
                     description: rowData.description || '',
                 });
+                if (rowData.country) {
+                    fetchVisaMajorCategoryList(rowData.country);
+                }
             } else {
                 // Reset form when switching to add mode
                 setFormData({
@@ -60,8 +64,8 @@ const AddEditRequiredDocumentsModal = ({ show, handleClose, mode = 'add', rowDat
             limit: 2000,
             search: '',
             status: '',
-            sortBy: 'updated_at', // Field to sort by
-            sortOrder: 'desc', // 'asc' or 'desc'
+            sortBy: 'name', // Field to sort by
+            sortOrder: 'asc', // 'asc' or 'desc'
         };
         dispatch(documentsForList(params, (response, error) => {
             if (response?.statusCode === 200 && response?.status === true) {
@@ -83,10 +87,60 @@ const AddEditRequiredDocumentsModal = ({ show, handleClose, mode = 'add', rowDat
         }));
 
     }
+    const fetchVisaMajorCategoryList = (countryId) => {
+        if (!countryId) {
+            setVisaMajorCategory([]);
+            setFormData(prev => ({
+                ...prev,
+                visaMajor: ''
+            }));
+            return;
+        }
 
-    // Handle input changes
+        const params = {
+            page: 1,
+            limit: 2000,
+            search: '',
+            status: '',
+            sortBy: 'name',
+            sortOrder: 'asc',
+            representingCountry: countryId
+        };
+        dispatch(visamajorCategoryRCountryIdList(params, (response, error) => {
+            if (response?.statusCode === 200 && response?.status === true) {
+                setVisaMajorCategory(response?.data || []);
+            } else {
+                setVisaMajorCategory([]);
+            }
+        }));
+    };
+
+
     const handleChange = (e) => {
         const { name, value } = e.target;
+        if (name === 'country') {
+            fetchVisaMajorCategoryList(value);
+        }
+
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+        if (errors[name]) {
+            setErrors(prev => ({
+                ...prev,
+                [name]: ''
+            }));
+        }
+    };
+    const handleSelectChange = (name, selectedOption) => {
+        const value = selectedOption ? selectedOption.value : "";
+
+        // If country is being changed, fetch visa major categories
+        if (name === 'country') {
+            fetchVisaMajorCategoryList(value);
+        }
+
         setFormData(prev => ({
             ...prev,
             [name]: value
@@ -170,6 +224,7 @@ const AddEditRequiredDocumentsModal = ({ show, handleClose, mode = 'add', rowDat
             description: "",
         });
         setErrors({});
+        setVisaMajorCategory([]);
     };
 
     // Handle modal close
@@ -267,14 +322,7 @@ const AddEditRequiredDocumentsModal = ({ show, handleClose, mode = 'add', rowDat
                                                     .find((opt) => opt.value === formData.country)
                                                 : null
                                         }
-                                        onChange={(selectedOption) =>
-                                            handleChange({
-                                                target: {
-                                                    name: "country",
-                                                    value: selectedOption ? selectedOption.value : "",
-                                                },
-                                            })
-                                        }
+                                        onChange={(selectedOption) => handleSelectChange("country", selectedOption)}
                                         placeholder="Select Representing Country"
                                         isClearable
                                         isSearchable
@@ -332,13 +380,28 @@ const AddEditRequiredDocumentsModal = ({ show, handleClose, mode = 'add', rowDat
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-0">
                                         Visa Major Category
                                     </label>
-                                    <input
-                                        type="text"
-                                        name="visaMajor"
-                                        value={formData.visaMajor}
-                                        onChange={handleChange}
-                                        className={`form-control radius-8 ${errors.visaMajor ? 'is-invalid' : ''}`}
-                                        placeholder="Enter visa major category"
+                                    <Select
+                                        options={visaMajorCategory.map((option) => ({
+                                            value: option.uuid,
+                                            label: option.name,
+                                        }))}
+                                        value={
+                                            formData.visaMajor
+                                                ? visaMajorCategory
+                                                    .map((option) => ({
+                                                        value: option.uuid,
+                                                        label: option.name,
+                                                    }))
+                                                    .find((opt) => opt.value === formData.visaMajor)
+                                                : null
+                                        }
+                                        onChange={(selectedOption) => handleSelectChange("visaMajor", selectedOption)}
+                                        placeholder={formData.country ? "Select Visa Major Category" : "Please select country first"}
+                                        isClearable
+                                        isSearchable
+                                        isDisabled={!formData.country}
+                                        className={`custom-select-container ${errors.visaMajor ? "is-invalid" : ""}`}
+                                        classNamePrefix="custom-select"
                                     />
                                     {errors.visaMajor && (
                                         <div className="text-danger text-sm mt-1">

@@ -66,6 +66,7 @@ import {
     DELETE_PAYMENT_CATEGORY,
     EXPORT_PAYMENT_CATEGORY,
     IMPORT_PAYMENT_CATEGORY,
+    VISA_MAJOR_CATEGORY_RCOUNTRY_ID
 
 } from "./actionType"
 import {
@@ -135,6 +136,7 @@ import {
     deletePaymentCategoryAPI,
     exportPaymentCategoryAPI,
     importPaymentCategoryAPI,
+    visaMajorCategoryRCountryIdAPI,
 
 } from "../../../service/api_helper";
 
@@ -736,6 +738,16 @@ function* paymentCategoryImportDataSaga(action) {
 }
 
 
+function* visaMajorCategoryRCountryIdSaga(action) {
+    try {
+        const response = yield call(visaMajorCategoryRCountryIdAPI, action?.data);
+        if (action.callback) action.callback(response);
+    } catch (error) {
+        if (action.callback) action.callback(null, error);
+    }
+}
+
+
 
 function* visaProcessMasterSaga() {
     yield takeEvery(DOCUMENT_CATEGORY_LIST, documentCategoryListSaga);
@@ -804,6 +816,7 @@ function* visaProcessMasterSaga() {
     yield takeEvery(DELETE_PAYMENT_CATEGORY, paymentCategoryDeleteSaga);
     yield takeEvery(EXPORT_PAYMENT_CATEGORY, paymentCategoryExportDataSaga);
     yield takeEvery(IMPORT_PAYMENT_CATEGORY, paymentCategoryImportDataSaga);
+    yield takeEvery(VISA_MAJOR_CATEGORY_RCOUNTRY_ID,visaMajorCategoryRCountryIdSaga);
 
 }
 

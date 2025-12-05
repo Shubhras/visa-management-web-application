@@ -3492,7 +3492,18 @@ export const importOccupationCategoryDataAPI = (payload) => {
 
 // Occupation Version
 export const getOccupationVersionListDataAPI = (data) => {
-  const apiUrl = `${url.GET_OCCUPATION_VERSION_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+   let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_OCCUPATION_VERSION_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&representingCountry=${data?.representingCountry}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -3516,7 +3527,18 @@ export const deleteOccupationVersionDataAPI = (payload) => {
 };
 
 export const exportOccupationVersionDataAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_OCCUPATION_VERSION_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+   let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_OCCUPATION_VERSION_API}??search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&representingCountry=${payload?.representingCountry}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -7473,3 +7495,9 @@ export const exportStudyFactorEntranceTestAbilityAPI = (payload) => {
 export const importStudyFactorEntranceTestAbilityAPI = (payload) => {
   return post(url.IMPORT_STUDY_FACTOR_ENTRANCE_TEST_ABILITY_API, payload);
 };
+
+
+export const visaMajorCategoryRCountryIdAPI = (payload)=>{
+    const apiUrl = `${url.VISA_MAJOR_CATEGORY_RCOUNTRY_ID}${payload?.representingCountry}/`;
+  return get(apiUrl);
+}

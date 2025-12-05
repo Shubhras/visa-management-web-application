@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import MasterLayout from "../../../masterLayout/MasterLayout";
 import { Icon } from "@iconify/react/dist/iconify.js";
@@ -12,6 +12,9 @@ import Documents from "./components/documents/Documents";
 import AddEditActionModal from "./components/leadB2CSidebar/AddEditActionModal";
 import AddEditOfficeModal from "./components/leadB2CSidebar/AddEditOfficeModal";
 import { Link } from "react-router-dom";
+import { languageTestNameList } from '../../../store/master/testMaster/action';
+import { visaMainCategoryList } from "../../../store/master/visaConditionsMaster/action";
+import { representingCountryData } from "../../../store/master/visaMaster/action"
 const LeadB2CForm = () => {
   const dispatch = useDispatch();
   const [leadFor, setLeadFor] = useState(null);
@@ -32,10 +35,9 @@ const LeadB2CForm = () => {
   };
 
   const mainTabBtnClass = (tab) =>
-    `btn btn-sm px-3 py-1 fw-medium ${
-      activeMainTab === tab
-        ? "comman-btn-color text-white"
-        : "bg-white text-primary-600 border border-primary-600"
+    `btn btn-sm px-3 py-1 fw-medium ${activeMainTab === tab
+      ? "comman-btn-color text-white"
+      : "bg-white text-primary-600 border border-primary-600"
     }`;
 
   const renderActiveTab = () => {
@@ -58,11 +60,10 @@ const LeadB2CForm = () => {
   };
   const getTabBtnClass = (tabKey) =>
     `btn border border-primary-600 fw-medium px-3 py-1
-   ${
-     activeTab === tabKey
-       ? "comman-btn-color text-white"
-       : "bg-white text-primary-600"
-   }`;
+   ${activeTab === tabKey
+      ? "comman-btn-color text-white"
+      : "bg-white text-primary-600"
+    }`;
   // ACTION STATES
   const [actionsLog, setActionsLog] = useState([
     {
@@ -87,6 +88,59 @@ const LeadB2CForm = () => {
   const [showActionModal, setShowActionModal] = useState(false);
   const [actionMode, setActionMode] = useState("add");
   const [editActionRow, setEditActionRow] = useState(null);
+  const [languageTestName, setLanguageTestName] = useState([]);
+  const [visaMainCategory, setVisaMainCategory] = useState([]);
+  const [representingCountry,setRepresentingCountry]=useState([]);
+
+  const [formData, setFormData] = useState({
+    languageTestName: '',
+    visaMainCategory: [],
+    representingCountry: [],
+  });
+
+
+  useEffect(() => {
+    fetchMultipleApisList();
+  }, [dispatch])
+
+
+  const fetchMultipleApisList = () => {
+    const params = {
+      page: 1,
+      limit: 2000,
+      search: '',
+      status: '',
+      sortBy: 'name',
+      sortOrder: 'asc',
+    };
+    dispatch(languageTestNameList(params, (response, error) => {
+      if (response?.statusCode === 200 && response?.status === true) {
+        setLanguageTestName(response?.data || []);
+
+      }
+    }));
+    dispatch(visaMainCategoryList(params, (response, error) => {
+      if (response?.statusCode === 200 && response?.status === true) {
+        setVisaMainCategory(response?.data || []);
+
+      }
+    }));
+     dispatch(representingCountryData(params, (response, error) => {
+      if (response?.statusCode === 200 && response?.status === true) {
+        setRepresentingCountry(response?.data || []);
+
+      }
+    }));
+
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   // ADD NEW ACTION
   const handleAddNewAction = () => {
@@ -691,10 +745,38 @@ const LeadB2CForm = () => {
                 <div className="row gx-5 mt-1">
                   <div className="col-md-4">
                     <label className="form-label">Test (Exam) Name</label>
-                    <input
-                      type="text"
-                      className="form-control form-control-sm"
-                      placeholder="Master (Language Test Name)"
+                    <Select
+                      options={languageTestName.map((option) => ({
+                        value: option.uuid,
+                        label: option.name,
+                      }))}
+                      value={
+                        formData.languageTestName
+                          ? languageTestName
+                            .map((option) => ({
+                              value: option.uuid,
+                              label: option.name,
+                            }))
+                            .find((opt) => opt.value === formData.languageTestName)
+                          : null
+                      }
+                      onChange={(selectedOption) =>
+                        handleChange({
+                          target: {
+                            name: "languageTestName",
+                            value: selectedOption ? selectedOption.value : "",
+                          },
+                        })
+                      }
+                      placeholder="Select Language Test Name"
+                      isClearable
+                      isSearchable
+                      classNamePrefix="custom-select"
+                      menuPortalTarget={document.body}
+                      menuPosition="fixed"
+                    // styles={{
+                    //   menuPortal: base => ({ ...base, zIndex: 9999 })
+                    // }}
                     />
                   </div>
 
@@ -702,19 +784,50 @@ const LeadB2CForm = () => {
                     <label className="form-label">
                       Interested Visa Category
                     </label>
-                    <input
-                      type="text"
-                      className="form-control form-control-sm"
-                      placeholder="Master (Visa Main Category) - Multiple"
+                    <Select
+                      options={visaMainCategory.map((item) => ({
+                        value: item.uuid,
+                        label: item.name,
+                      }))}
+                      value={formData.visaMainCategory}
+                      onChange={(selected) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          visaMainCategory: selected || []
+                        }));
+                      }}
+                      placeholder="Select Visa Categories"
+                      isClearable
+                      isSearchable
+                      isMulti
+                      classNamePrefix="custom-select"
+                      menuPortalTarget={document.body}
+                      menuPosition="fixed"
                     />
+
                   </div>
 
                   <div className="col-md-4">
                     <label className="form-label">Interested Country</label>
-                    <input
-                      type="text"
-                      className="form-control form-control-sm"
-                      placeholder="Master (Rep. Country) - Multiple"
+                     <Select
+                      options={representingCountry.map((item) => ({
+                        value: item.uuid,
+                        label: item.name,
+                      }))}
+                      value={formData.representingCountry}
+                      onChange={(selected) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          representingCountry: selected || []
+                        }));
+                      }}
+                      placeholder="Select Representing Country"
+                      isClearable
+                      isSearchable
+                      isMulti
+                      classNamePrefix="custom-select"
+                      menuPortalTarget={document.body}
+                      menuPosition="fixed"
                     />
                   </div>
                 </div>

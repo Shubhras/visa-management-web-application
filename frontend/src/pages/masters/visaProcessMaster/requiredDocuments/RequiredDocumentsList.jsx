@@ -23,6 +23,7 @@ const RequiredDocumentsList = () => {
         representingCountry: [],
         documentFor: []
     });
+
     const [activeFilterColumn, setActiveFilterColumn] = useState(null);
     const [filterDropdownData, setFilterDropdownData] = useState({});
     const [filterSearchTerms, setFilterSearchTerms] = useState({});

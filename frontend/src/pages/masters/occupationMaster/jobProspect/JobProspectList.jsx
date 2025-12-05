@@ -80,7 +80,7 @@ const JobProspectList = () => {
       if (response?.statusCode === 200 && response?.status === true) {
         const options = (response.data || []).map(item => ({
           id: item.uuid || item.id,
-          name: String(item.majorarea ?? "")
+          name: String(item.name ?? "")
         }));
         // Sort A–Z by name, numeric safe
         const sortedOptions = options.sort((a, b) =>
