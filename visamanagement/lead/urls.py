@@ -84,6 +84,13 @@ urlpatterns = [
     path('spouseeducation/delete/',SpouseEducationleadDeleteAPIView.as_view(),name = 'SpouseEducation-delete'),
 
     path('document/create/',LeadDocumentCreateAPI.as_view(),name='document-create'),
+
+    #<-------------------------------QuickAssessment--------------------------->
+    path('quickassessment/create/',QuickAssessmentNewCreateAPIView.as_view(),name='QuickAssessment-create'),
+    path('quickassessment/get/',QuickAssessmentNewListAPIView.as_view(),name='QuickAssessment-get'),
+    path('quickassessment/<uuid:uuid>/',QuickAssessmentNewDetailAPIView.as_view(),name='QuickAssessment-get-uuid'),
+    path('quickassessment/<uuid:uuid>/update/',QuickAssessmentNewUpdateAPIView.as_view(),name='QuickAssessment-update'),
+    path('quickassessment/delete/',QuickAssessmentNewDeleteAPIView.as_view(),name='QuickAssessment-delete'),
     
 
 ]

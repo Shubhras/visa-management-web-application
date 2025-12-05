@@ -543,41 +543,6 @@ class SpouseEducationleadSerializer(serializers.ModelSerializer):
     study_main_area = serializers.SlugRelatedField(slug_field='uuid', queryset=Studymainarea.objects.all(), allow_null=True)
     edu_type = serializers.SlugRelatedField(slug_field='uuid', queryset=EducationType.objects.all(), allow_null=True)
 
-    # Read-only related names
-    applicant_name = serializers.CharField(source='applicant.first_name', read_only=True)
-    education_level_name = serializers.CharField(source='education_level.name', read_only=True)
-    duration_name = serializers.CharField(source='duration.name', read_only=True)
-    study_main_area_name = serializers.CharField(source='study_main_area.name', read_only=True)
-    edu_type_name = serializers.CharField(source='edu_type.name', read_only=True)
-
-    class Meta:
-        model = SpouseEducationlead
-        fields = [
-            'uuid',
-            'applicant',
-            'applicant_name',
-            'education_level',
-            'education_level_name',
-            'duration',
-            'duration_name',
-            'study_main_area',
-            'study_main_area_name',
-            'edu_type',
-            'edu_type_name',
-            'start_date',
-            'end_date',
-            'result',
-        ]
-        read_only_fields = ['uuid']
-
-class SpouseEducationleadSerializer(serializers.ModelSerializer):
-# UUID-based foreign keys
-    applicant = serializers.SlugRelatedField(slug_field='uuid', queryset=Applicant.objects.all())
-    education_level = serializers.SlugRelatedField(slug_field='uuid', queryset=EducationLevel.objects.all(), allow_null=True)
-    duration = serializers.SlugRelatedField(slug_field='uuid', queryset=EducationDuration.objects.all(), allow_null=True)
-    study_main_area = serializers.SlugRelatedField(slug_field='uuid', queryset=Studymainarea.objects.all(), allow_null=True)
-    edu_type = serializers.SlugRelatedField(slug_field='uuid', queryset=EducationType.objects.all(), allow_null=True)
-
     # Read-only fields for related names
     applicant_name = serializers.CharField(source='applicant.first_name', read_only=True)
     education_level_name = serializers.CharField(source='education_level.name', read_only=True)
@@ -629,3 +594,114 @@ class LeadDocumentSerializer(serializers.Serializer):
             raise serializers.ValidationError({"documentname": "Invalid document name UUID"})
 
         return data
+
+
+
+class QuickAssessmentNewSerializer(serializers.ModelSerializer):
+
+    # ---------- ForeignKey (UUID based) ----------
+    visa_main_category = serializers.SlugRelatedField(
+        slug_field='uuid', queryset=VisaMain.objects.all(), allow_null=True
+    )
+    country = serializers.SlugRelatedField(
+        slug_field='uuid', queryset=Country.objects.all(), allow_null=True
+    )
+    state = serializers.SlugRelatedField(
+        slug_field='uuid', queryset=State.objects.all(), allow_null=True, required=False
+    )
+    city = serializers.SlugRelatedField(
+        slug_field='uuid', queryset=City.objects.all(), allow_null=True, required=False
+    )
+    course_level = serializers.SlugRelatedField(
+        slug_field='uuid', queryset=CourseLevel.objects.all(), allow_null=True, required=False
+    )
+    course_duration = serializers.SlugRelatedField(
+        slug_field='uuid', queryset=CourseDuration.objects.all(), allow_null=True, required=False
+    )
+    intake_name = serializers.SlugRelatedField(
+        slug_field='uuid', queryset=IntakeName.objects.all(), allow_null=True, required=False
+    )
+
+    # ---------- ManyToMany (UUID based) ----------
+    visa_major_category = serializers.SlugRelatedField(
+        slug_field='uuid', queryset=VisaMajor.objects.all(), many=True, required=False,write_only = True
+    )
+    study_main_areas = serializers.SlugRelatedField(
+        slug_field='uuid', queryset=Studymainarea.objects.all(), many=True, required=False,write_only=True
+    )
+    study_major_areas = serializers.SlugRelatedField(
+        slug_field='uuid', queryset=Studymajorarea.objects.all(), many=True, required=False, write_only = True
+    )
+
+    # ---------- Read-only related names ----------
+    visa_main_category_name = serializers.CharField(source='visa_main_category.name', read_only=True)
+    country_name = serializers.CharField(source='country.name', read_only=True)
+    state_name = serializers.CharField(source='state.stateName', read_only=True)
+    city_name = serializers.CharField(source='city.cityName', read_only=True)
+    course_level_name = serializers.CharField(source='course_level.name', read_only=True)
+    course_duration_name = serializers.CharField(source='course_duration.valid_duration_unit', read_only=True)
+    intake_name_value = serializers.CharField(source='intake_name.name', read_only=True)
+   
+
+    class Meta:
+        model = QuickAssessmentNew
+        fields = [
+            "uuid",
+            "visa_main_category",
+            "visa_main_category_name",
+
+            "country",
+            "country_name",
+
+            "visa_major_category",
+            "visa_major_category_data",
+
+            "visa_name",
+
+            "state",
+            "state_name",
+
+            "city",
+            "city_name",
+
+            "course_level",
+            "course_level_name",
+
+            "course_duration",
+            "course_duration_name",
+
+            "study_main_areas",
+            "study_main_areas_data",
+            
+            "study_major_areas",
+            "study_major_areas_data",
+
+            "intake_name",
+            "intake_name_value",
+
+            "intake_year",
+            "max_application_fee_currency",
+            "max_application_fee",
+            "course_fee_min",
+            "course_fee_max",
+            "scholarships_available",
+            "scholarship_min_amount",
+            "with_moi",
+            "with_esl",
+            "with_pre_course",
+            "created_at",
+            "updated_at",
+        ]
+    visa_major_category_data = serializers.SerializerMethodField()
+    def get_visa_major_category_data(self, obj):
+        return [{"uuid": area.uuid, "name":area.name} for area in obj.visa_major_category.all()]
+    
+    study_main_areas_data = serializers.SerializerMethodField()
+    def get_study_main_areas_data(self, obj):
+        return [{"uuid": area.uuid, "name": area.name} for area in obj.study_main_areas.all()]
+    
+    study_major_areas_data = serializers.SerializerMethodField()
+    def get_study_major_areas_data(self, obj):
+        return [{"uuid":area.uuid, "name":area.majorarea} for area in obj.study_major_areas.all()]
+
+    

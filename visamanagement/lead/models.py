@@ -410,3 +410,96 @@ class LeadDocument(models.Model):
     attachments = models.JSONField(default=list)  # <-- multiple file URLs in list
 
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class QuickAssessment(models.Model):
+ 
+    # Top section
+    visa_main_category = models.ForeignKey( VisaMain, on_delete=models.SET_NULL, null=True)
+    country = models.ForeignKey(Country, on_delete=models.SET_NULL, null=True)
+    visa_major_category = models.ManyToManyField(VisaMajor, blank=True)
+    visa_name = models.CharField(max_length=255, blank=True, null=True)
+ 
+    # If Student Visa → Show below fields
+    state = models.ForeignKey(State, on_delete=models.SET_NULL, null=True, blank=True)
+    city = models.ForeignKey(City, on_delete=models.SET_NULL, null=True, blank=True)
+ 
+    course_level = models.ForeignKey(CourseLevel, on_delete=models.SET_NULL, null=True, blank=True)
+    course_duration = models.ForeignKey(CourseDuration, on_delete=models.SET_NULL, null=True, blank=True)
+ 
+ 
+    study_main_areas = models.ManyToManyField(Studymainarea, blank=True)
+    study_major_areas = models.ManyToManyField(Studymajorarea, blank=True)
+ 
+    intake_name = models.ForeignKey(IntakeName, on_delete=models.SET_NULL, null=True, blank=True)
+    intake_year = models.CharField(max_length=255, blank=True, null=True)
+ 
+    max_application_fee_currency = models.CharField(max_length=20, null=True, blank=True)
+    max_application_fee = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+ 
+    course_fee_min = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    course_fee_max = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+ 
+    scholarships_available = models.BooleanField(default=False)
+    scholarship_min_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+ 
+    with_moi = models.BooleanField(default=False)
+    with_esl = models.BooleanField(default=False)
+    with_pre_course = models.BooleanField(default=False)
+ 
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
+ 
+ 
+    def __str__(self):
+        return f"Assessment #{self.id}"
+    
+
+
+class QuickAssessmentNew(models.Model):
+ 
+    # Top section
+    uuid = models.UUIDField(primary_key=True,default=uuid.uuid4, editable=False, unique=True)
+
+    visa_main_category = models.ForeignKey( VisaMain, on_delete=models.SET_NULL, null=True)
+    country = models.ForeignKey(Country, on_delete=models.SET_NULL, null=True)
+    visa_major_category = models.ManyToManyField(VisaMajor, blank=True)
+    visa_name = models.CharField(max_length=255, blank=True, null=True)
+ 
+    # If Student Visa → Show below fields
+    state = models.ForeignKey(State, on_delete=models.SET_NULL, null=True, blank=True)
+    city = models.ForeignKey(City, on_delete=models.SET_NULL, null=True, blank=True)
+ 
+    course_level = models.ForeignKey(CourseLevel, on_delete=models.SET_NULL, null=True, blank=True)
+    course_duration = models.ForeignKey(CourseDuration, on_delete=models.SET_NULL, null=True, blank=True)
+ 
+ 
+    study_main_areas = models.ManyToManyField(Studymainarea, blank=True)
+    study_major_areas = models.ManyToManyField(Studymajorarea, blank=True)
+ 
+    intake_name = models.ForeignKey(IntakeName, on_delete=models.SET_NULL, null=True, blank=True)
+    intake_year = models.CharField(max_length=255, blank=True, null=True)
+ 
+    max_application_fee_currency = models.CharField(max_length=20, null=True, blank=True)
+    max_application_fee = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+ 
+    course_fee_min = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    course_fee_max = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+ 
+    scholarships_available = models.BooleanField(default=False)
+    scholarship_min_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+ 
+    with_moi = models.BooleanField(default=False)
+    with_esl = models.BooleanField(default=False)
+    with_pre_course = models.BooleanField(default=False)
+ 
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
+ 
+ 
+    def __str__(self):
+        return f"Assessment #{self.uuid}"
+    
+
+    
+
