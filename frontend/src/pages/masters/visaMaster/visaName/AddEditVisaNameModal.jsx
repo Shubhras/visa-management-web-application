@@ -292,6 +292,7 @@ const AddEditVisaNameModal = ({ show, handleClose, mode = 'add', rowData = null 
                                                 },
                                             })
                                         }
+                                        filterOption={customFilterOption}
                                         placeholder="Select visa main category"
                                         isClearable
                                         isSearchable

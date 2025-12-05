@@ -237,6 +237,12 @@ const AddEditDesignationModal = ({
     handleClose(false);
   };
 
+  const customFilterOption = (option, inputValue) => {
+    if (!inputValue) return true;
+    return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
+  };
+
+
   // Conditional return after all hooks
   if (!show) return null;
 
@@ -346,6 +352,7 @@ const AddEditDesignationModal = ({
                           },
                         })
                       }
+                      filterOption={customFilterOption}
                       placeholder="Select Occupation Version"
                       isClearable
                       isSearchable
@@ -388,6 +395,7 @@ const AddEditDesignationModal = ({
                           },
                         })
                       }
+                      filterOption={customFilterOption}
                       placeholder="Select Occupation Code"
                       isClearable
                       isSearchable
@@ -430,6 +438,7 @@ const AddEditDesignationModal = ({
                           },
                         })
                       }
+                      filterOption={customFilterOption}
                       placeholder="Select Occupation Name"
                       isClearable
                       isSearchable

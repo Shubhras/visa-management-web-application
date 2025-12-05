@@ -276,6 +276,7 @@ const AddEditVisaMajorCategoryModal = ({ show, handleClose, mode = 'add', rowDat
                         },
                       })
                     }
+                    filterOption={customFilterOption}
                     placeholder="Select visa main category"
                     isClearable
                     isSearchable

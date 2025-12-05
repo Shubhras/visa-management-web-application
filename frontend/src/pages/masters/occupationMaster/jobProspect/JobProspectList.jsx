@@ -224,8 +224,9 @@ const JobProspectList = () => {
     const searchTerm = String(filterSearchTerms[columnField] || '').toLowerCase()
     const options = filterDropdownData[columnField] || []
     return options.filter(o =>
-      String(o.name ?? '').toLowerCase().includes(searchTerm)
+      String(o.name ?? '').toLowerCase().startsWith(searchTerm)
     )
+    .sort((a, b) => a.name.localeCompare(b.name));
   }
 
   const clearAllOnlyHeaderFilters = () => setColumnFilters({

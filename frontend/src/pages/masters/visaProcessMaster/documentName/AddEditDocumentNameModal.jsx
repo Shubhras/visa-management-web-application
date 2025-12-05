@@ -155,6 +155,11 @@ const AddEditDocumentNameModal = ({ show, handleClose, mode = 'add', rowData = n
         handleClose();
     };
 
+    const customFilterOption = (option, inputValue) => {
+        if (!inputValue) return true;
+        return option.label.toLowerCase().startsWith(inputValue.toLowerCase())
+    };
+
     // Conditional return after all hooks
     if (!show) return null;
 
@@ -213,6 +218,7 @@ const AddEditDocumentNameModal = ({ show, handleClose, mode = 'add', rowData = n
                                                     },
                                                 })
                                             }
+                                            filterOption={customFilterOption}
                                             placeholder="Select document category"
                                             isClearable
                                             isSearchable
