@@ -6778,6 +6778,17 @@ h6,
 
 /* === text-align css end === */
 /* === border css start === */
+.custom-border-right{
+  border-inline-start: 1px solid var(--primary-600) !important;
+  border-inline-end: 1px solid var(--primary-600) !important;
+}
+
+.custom-border-left{
+  border-inline-start: 1px solid var(--primary-600) !important;
+border-inline-end: 1px solid var(--primary-600) !important;}
+
+
+
 .border {
   border: 1px solid var(--border-color) !important;
 }
@@ -15842,7 +15853,7 @@ td.fc-header-center {
 /* custum css */
 .main-container-data .container-data {
   background-color: #f5f5ef;
-  padding: 12px 8px;
+  /* padding: 12px 8px; */
 }
 
 .main-container-data .container-table {
@@ -15854,7 +15865,9 @@ td.fc-header-center {
 .main-container-data .container-table .min-height tbody td {
   padding: 3px 6px !important; /* Reduce row height */
   line-height: 1.8 !important; /* Reduce vertical height */
-  border: 0.5px solid ;
+  /* border: 0.5px solid ; */
+    border: 1px solid #e9ecef;
+
 }
 
 /* .main-container-data .container-table-div {
@@ -15927,7 +15940,7 @@ td.fc-header-center {
 
 .basic-data-table .container-table .table thead {
   background-color: #f8f9fa;
-  border-bottom: 2px solid #e9ecef;
+  border: 1px solid #e9ecef;
 }
 
 .basic-data-table .container-table tr th {
@@ -15947,7 +15960,7 @@ td.fc-header-center {
 
 .colored-table-head th {
   background-color: #f5f5ef !important;
-  border-bottom: 1px solid #d3e4e3 !important;
+  /* border-bottom: 1px solid #d3e4e3 !important; */
 }
 
 .basic-data-table .container-table .action-th {

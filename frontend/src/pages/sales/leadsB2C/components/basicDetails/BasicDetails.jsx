@@ -218,7 +218,7 @@ const BasicDetails = () => {
 
 
   return (
-    <div className="section-block no-overflow compact-inputs">
+    <div className="section-block  compact-inputs">
       <div className="row gx-5">
         {/* First row */}
 

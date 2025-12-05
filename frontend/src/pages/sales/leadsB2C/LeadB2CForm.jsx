@@ -276,21 +276,14 @@ const LeadB2CForm = () => {
   return (
     <MasterLayout>
       <style jsx>{`
-        .lead-stat-box {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          background: white;
-        }
-
         .section-block {
           padding: 35px;
         }
       `}</style>
 
       <div className="card basic-data-table main-container-data">
-        <div className="card-body container-data">
-          <div className="d-flex flex-wrap align-items-center justify-content-between w-100 gap-3">
+        <div className="container-data">
+          {/* <div className="d-flex flex-wrap align-items-center justify-content-between w-100 gap-3">
             <div className="d-flex align-items-center gap-2 flex-wrap">
               <button className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color">
                 Create Inquiry
@@ -320,42 +313,45 @@ const LeadB2CForm = () => {
                 <p className=" fw-bold fs-5 mb-0">12</p>
                 <span className="">Follow Ups</span>
               </div>
+            </div>
+          </div> */}
 
-              {/* <div className="d-flex align-items-center ">
-                <button type="button">
-                  <Icon icon="mdi:chevron-left" width="25" height="25" />
-                </button>
+          <div
+            className="d-flex align-items-center justify-content-between w-100 ps-3"
+            style={{ minHeight: "80px" }}
+          >
+            {/* Left: Buttons */}
+            <div className="d-flex align-items-center gap-2 flex-wrap">
+              <button className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color">
+                Create Inquiry
+              </button>
+              <button className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color">
+                Lost
+              </button>
+              <button className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color">
+                Save
+              </button>
+            </div>
 
-                <p className="mb-0">02/30</p>
-
-                <button type="button">
-                  <Icon icon="mdi:chevron-right" width="25" height="25" />
-                </button>
+            {/* Right: Stats */}
+            <div
+              className="d-flex align-items-stretch"
+              style={{ height: "80px" }}
+            >
+              <div className="d-flex align-items-center justify-content-center gap-2 text-center custom-border-right px-3 h-100">
+                <p className="fw-bold fs-3 mb-0">04</p>
+                <span className="text-muted small">Quick Assessment</span>
               </div>
-              <div className="d-flex align-items-center gap-2">
-                <Icon
-                  icon="mdi:whatsapp"
-                  className="cursor-pointer"
-                  width="30"
-                />
-                <Icon
-                  icon="material-symbols:mail-outline"
-                  className="cursor-pointer"
-                  width="30"
-                />
-                <Icon
-                  icon="material-symbols:sms-outline"
-                  className="cursor-pointer"
-                  width="30"
-                />
-              </div> */}
-              {/* <div
-                style={{ cursor: "pointer" }}
-                data-bs-toggle="offcanvas"
-                data-bs-target="#leadSidebar"
-              >
-                <Icon icon="material-symbols:menu" width="30" />
-              </div> */}
+
+              <div className="d-flex align-items-center justify-content-center gap-2 text-center px-3 h-100">
+                <p className="fw-bold fs-3 mb-0">24</p>
+                <span className="text-muted small">Schedule Meeting</span>
+              </div>
+
+              <div className="d-flex align-items-center justify-content-center gap-2 text-center custom-border-left px-3 h-100">
+                <p className="fw-bold fs-3 mb-0">12</p>
+                <span className="text-muted small">Follow Ups</span>
+              </div>
             </div>
           </div>
         </div>
@@ -835,8 +831,8 @@ const LeadB2CForm = () => {
             )}
 
             <div
-              className="px-3 d-flex align-items-center justify-content-between border-top border-bottom py-3"
-              style={{ backgroundColor: "#e5f0ef" }}
+              className="px-3 d-flex align-items-center justify-content-between "
+              style={{ backgroundColor: "#e5f0ef", paddingBlock: "14px" }}
             >
               <div role="group" className="d-flex align-items-center">
                 {/* <button

@@ -29,6 +29,10 @@ const ReusableTable = ({
   const isAllSelected =
     data.length > 0 && data.every((item) => selectedRows.includes(item.id));
 
+  const isColumnVisible = (columnId) => {
+    return visibleColumns.includes(columnId);
+  };
+
   // Sorting functions
   const handleSort = (field) => {
     if (!enableSorting) return;
@@ -130,9 +134,9 @@ const ReusableTable = ({
   };
 
   return (
-    <div className={`${tableSize}-table-container my-3`}>
+    <div className={`${tableSize}-table-container `}>
       {/* <div className="py-2 px-4 border-bottom "> */}
-        {/* <h6 className="mb-0 fw-semibold fs-6" style={{ color: "#5a6c5b" }}>
+      {/* <h6 className="mb-0 fw-semibold fs-6" style={{ color: "#5a6c5b" }}>
           {title}
         </h6> */}
       {/* </div> */}
@@ -143,20 +147,20 @@ const ReusableTable = ({
             <thead className="colored-table-head">
               <tr>
                 <th scope="col" className="sl-numbar-th ">
-                    <div className="d-flex align-items-center gap-2 ">
-                      {/* <input
+                  <div className="d-flex align-items-center gap-2 ">
+                    {/* <input
                         className="form-check-input"
                         type="checkbox"
                         checked={isAllSelected}
                         onChange={handleSelectAll}
                         disabled={data.length === 0}
                       /> */}
-                      <span>No.</span>
-                    </div>
-                  </th>
+                    <span>No.</span>
+                  </div>
+                </th>
                 {columns.map(
                   (col) =>
-                    visibleColumns.includes(col.id) && (
+                    isColumnVisible(col.id) && (
                       <th
                         key={col.id}
                         scope="col"
@@ -243,7 +247,7 @@ const ReusableTable = ({
                     </td>
                     {columns.map(
                       (col) =>
-                        visibleColumns.includes(col.id) && (
+                        isColumnVisible(col.id) && (
                           <td key={col.id}>
                             <span>{row[col.field] || "—"}</span>
                           </td>
@@ -276,17 +280,28 @@ const ReusableTable = ({
                   </tr>
                 ))
               )}
+              <tr>
+                <td colSpan={visibleColumns.length + 2} className="text-start">
+                  <span
+                    className="text-primary-600 fw-medium"
+                    style={{ cursor: "pointer" }}
+                    onClick={handleAddNew}
+                  >
+                    Add {title.replace(/\(PA\)/, "....").trim()}
+                  </span>
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
       </div>
 
-      <button
+      {/* <button
         onClick={handleAddNew}
         className="btn btn-sm text-white fw-medium px-3 py-1 comman-btn-color"
       >
         New
-      </button>
+      </button> */}
     </div>
   );
 };
@@ -302,77 +317,103 @@ const PrincipalApplicantTables = () => {
   const [educations, setEducations] = useState([
     {
       id: 1,
+      consider: "Yes",
+      country: "India",
+      state: "Gujarat",
       educationLevel: "Bachelors",
-      duration: "48",
+      educationDuration: "48",
       studyMainArea: "Engineering",
-      eduType: "Full-Time",
-      startDate: "16/07/2000",
-      endDate: "02/04/2004",
-      result: "67.04%",
+      studyMajorArea: "Computer Engineering",
+      startDate: "2000-07-16",
+      endDate: "2004-04-02",
+      resultType: "Percentage",
+      academicResult: "67.04%",
+      backlogs: "0",
+      mediumOfEducation: "English",
+      educationType: "Full-Time",
+      englishResultType: "IELTS",
+      englishResult: "6.5",
+      mathematicsResultType: "Board",
+      mathematicsResult: "72",
+      physicsResultType: "Board",
+      physicsResult: "70",
     },
     {
       id: 2,
+      consider: "Yes",
+      country: "India",
+      state: "Maharashtra",
       educationLevel: "Masters",
-      duration: "24",
+      educationDuration: "24",
       studyMainArea: "Computer Science",
-      eduType: "Full-Time",
-      startDate: "01/08/2004",
-      endDate: "30/06/2006",
-      result: "78.50%",
-    },
-    ,
-    {
-      id: 2,
-      educationLevel: "Masters",
-      duration: "24",
-      studyMainArea: "Computer Science",
-      eduType: "Full-Time",
-      startDate: "01/08/2004",
-      endDate: "30/06/2006",
-      result: "78.50%",
-    },
-    ,
-    {
-      id: 2,
-      educationLevel: "Masters",
-      duration: "24",
-      studyMainArea: "Computer Science",
-      eduType: "Full-Time",
-      startDate: "01/08/2004",
-      endDate: "30/06/2006",
-      result: "78.50%",
-    },
-    ,
-    {
-      id: 2,
-      educationLevel: "Masters",
-      duration: "24",
-      studyMainArea: "Computer Science",
-      eduType: "Full-Time",
-      startDate: "01/08/2004",
-      endDate: "30/06/2006",
-      result: "78.50%",
+      studyMajorArea: "AI & ML",
+      startDate: "2004-08-01",
+      endDate: "2006-06-30",
+      resultType: "CGPA",
+      academicResult: "8.2",
+      backlogs: "1",
+      mediumOfEducation: "English",
+      educationType: "Full-Time",
+      englishResultType: "IELTS",
+      englishResult: "7.0",
+      mathematicsResultType: "University",
+      mathematicsResult: "78",
+      physicsResultType: "N/A",
+      physicsResult: "-",
     },
   ]);
 
   const [workExperiences, setWorkExperiences] = useState([
     {
       id: 1,
+      consider: "Yes",
       employerName: "ABCD Corporation",
-      occupation: "Sales Manager",
+      designation: "Sales Manager",
       jobType: "Full-Time",
       startDate: "01/01/2023",
       endDate: "15/07/2025",
-      salary: "27,000",
+      modeOfSalary: "Bank Transfer",
+      salaryCurrency: "USD",
+      salaryAmount: "27000",
+      itrStatus: "Filed",
+      amount: "2500",
+      expYears: "2",
+      expMonths: "6",
+      expDays: "15",
     },
     {
       id: 2,
+      consider: "Yes",
       employerName: "XYZ Technologies",
-      occupation: "Senior Developer",
+      designation: "Senior Developer",
       jobType: "Full-Time",
       startDate: "15/03/2020",
       endDate: "31/12/2022",
-      salary: "45,000",
+      modeOfSalary: "Cheque",
+      salaryCurrency: "INR",
+      salaryAmount: "45000",
+      itrStatus: "Pending",
+      amount: "4000",
+      expYears: "2",
+      expMonths: "9",
+      expDays: "16",
+    },
+    {
+      id: 3,
+      consider: "Yes",
+      employerName: "Tech Solutions Ltd.",
+      designation: "Project Lead",
+      jobType: "Full-Time",
+      startDate: "01/06/2018",
+      endDate: "31/12/2019",
+      modeOfSalary: "Cash",
+      salaryCurrency: "EUR",
+      salaryAmount: "35000",
+      itrStatus: "Filed",
+      amount: "3200",
+      expYears: "1",
+      expMonths: "6",
+      expDays: "30",
     },
   ]);
 
@@ -505,22 +546,157 @@ const PrincipalApplicantTables = () => {
 
   // Column Definitions
   const educationColumns = [
-    { id: "educationLevel", label: "Education Level", field: "educationLevel" },
-    { id: "duration", label: "Duration (Months)", field: "duration" },
-    { id: "studyMainArea", label: "Study Main Area", field: "studyMainArea" },
-    { id: "eduType", label: "Edu. Type", field: "eduType" },
-    { id: "startDate", label: "Start Date", field: "startDate" },
-    { id: "endDate", label: "End Date", field: "endDate" },
-    { id: "result", label: "Result", field: "result" },
+    { id: "consider", label: "Consider", field: "consider", visible: true },
+    { id: "country", label: "Country", field: "country", visible: true },
+    { id: "state", label: "State", field: "state", visible: true },
+    {
+      id: "educationLevel",
+      label: "Education Level",
+      field: "educationLevel",
+      visible: false,
+    },
+    {
+      id: "educationDuration",
+      label: "Duration (Months)",
+      field: "educationDuration",
+      visible: true,
+    },
+    {
+      id: "studyMainArea",
+      label: "Study Main Area",
+      field: "studyMainArea",
+      visible: true,
+    },
+    {
+      id: "studyMajorArea",
+      label: "Study Major Area",
+      field: "studyMajorArea",
+      visible: true,
+    },
+    { id: "startDate", label: "Start Date", field: "startDate", visible: true },
+    { id: "endDate", label: "End Date", field: "endDate", visible: true },
+    {
+      id: "resultType",
+      label: "Result Type",
+      field: "resultType",
+      visible: true,
+    },
+    {
+      id: "academicResult",
+      label: "Academic Result",
+      field: "academicResult",
+      visible: true,
+    },
+    { id: "backlogs", label: "Backlogs", field: "backlogs", visible: false },
+    {
+      id: "mediumOfEducation",
+      label: "Medium",
+      field: "mediumOfEducation",
+      visible: false,
+    },
+    {
+      id: "educationType",
+      label: "Education Type",
+      field: "educationType",
+      visible: true,
+    },
+    {
+      id: "englishResultType",
+      label: "English Result Type",
+      field: "englishResultType",
+      visible: false,
+    },
+    {
+      id: "englishResult",
+      label: "English Result",
+      field: "englishResult",
+      visible: false,
+    },
+    {
+      id: "mathematicsResultType",
+      label: "Math Result Type",
+      field: "mathematicsResultType",
+      visible: false,
+    },
+    {
+      id: "mathematicsResult",
+      label: "Math Result",
+      field: "mathematicsResult",
+      visible: false,
+    },
+    {
+      id: "physicsResultType",
+      label: "Physics Result Type",
+      field: "physicsResultType",
+      visible: false,
+    },
+    {
+      id: "physicsResult",
+      label: "Physics Result",
+      field: "physicsResult",
+      visible: false,
+    },
   ];
-
   const workColumns = [
-    { id: "employerName", label: "Employer Name", field: "employerName" },
-    { id: "occupation", label: "Occupation", field: "occupation" },
-    { id: "jobType", label: "Job Type", field: "jobType" },
-    { id: "startDate", label: "Start Date", field: "startDate" },
-    { id: "endDate", label: "End Date", field: "endDate" },
-    { id: "salary", label: "Salary", field: "salary" },
+    { id: "consider", label: "Consider", field: "consider", visible: true },
+    {
+      id: "employerName",
+      label: "Employer Name",
+      field: "employerName",
+      visible: true,
+    },
+    {
+      id: "designation",
+      label: "Designation",
+      field: "designation",
+      visible: true,
+    },
+    { id: "jobType", label: "Job Type", field: "jobType", visible: true },
+    { id: "startDate", label: "Start Date", field: "startDate", visible: true },
+    { id: "endDate", label: "End Date", field: "endDate", visible: true },
+    {
+      id: "modeOfSalary",
+      label: "Mode of Salary",
+      field: "modeOfSalary",
+      visible: false,
+    },
+    {
+      id: "salaryCurrency",
+      label: "Salary Currency",
+      field: "salaryCurrency",
+      visible: false,
+    },
+    {
+      id: "salaryAmount",
+      label: "Salary Amount",
+      field: "salaryAmount",
+      visible: false,
+    },
+    {
+      id: "itrStatus",
+      label: "ITR Status",
+      field: "itrStatus",
+      visible: false,
+    },
+    { id: "amount", label: "Amount", field: "amount", visible: false },
+    {
+      id: "expYears",
+      label: "Experience Years",
+      field: "expYears",
+      visible: false,
+    },
+    {
+      id: "expMonths",
+      label: "Experience Months",
+      field: "expMonths",
+      visible: false,
+    },
+    {
+      id: "expDays",
+      label: "Experience Days",
+      field: "expDays",
+      visible: false,
+    },
   ];
 
   const languageColumns = [
@@ -551,14 +727,19 @@ const PrincipalApplicantTables = () => {
 
   // Visibility States
   const [eduVisible, setEduVisible] = useState(
-    educationColumns.map((c) => c.id)
+    educationColumns.filter((c) => c.visible !== false).map((c) => c.id)
   );
-  const [workVisible, setWorkVisible] = useState(workColumns.map((c) => c.id));
+
+  const [workVisible, setWorkVisible] = useState(
+    workColumns.filter((c) => c.visible !== false).map((c) => c.id)
+  );
+
   const [langVisible, setLangVisible] = useState(
-    languageColumns.map((c) => c.id)
+    languageColumns.filter((c) => c.visible !== false).map((c) => c.id)
   );
+
   const [entranceVisible, setEntranceVisible] = useState(
-    entranceColumns.map((c) => c.id)
+    entranceColumns.filter((c) => c.visible !== false).map((c) => c.id)
   );
 
   return (

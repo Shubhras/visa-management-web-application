@@ -243,7 +243,7 @@ const AddEditLanguageAbilityModal = ({
 
           <div className="modal-body p-24 pt-10">
             <form onSubmit={handleSubmit}>
-              <div className="row">
+              <div className="row compact-inputs">
                 <div className="col-12">
                   <div className="row gx-2">
                     {/* Language */}
