@@ -63,7 +63,7 @@ class IsAdminUser(BasePermission):
 
 
 class JobTypeListAPIView(APIView):
-    permission_classes = [IsAuthenticated]  # Add IsAdminUser if needed
+    # permission_classes = [IsAuthenticated]  # Add IsAdminUser if needed
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
@@ -78,7 +78,7 @@ class JobTypeListAPIView(APIView):
             queryset = queryset.filter(Q(name__istartswith=search))
 
         # ----------------------------------------
-        # 🔽 Sorting rules
+        # Sorting rules
         # ----------------------------------------
         allowed_sort_fields = ['name', 'description', 'created_at', 'updated_at']
 
@@ -92,7 +92,7 @@ class JobTypeListAPIView(APIView):
         sort_fields = []
 
         # ----------------------------------------
-        # 🧠 Custom sort (multi-column)
+        #  Custom sort (multi-column)
         # ----------------------------------------
         if custom_sort:
             for rule in custom_sort.split(','):
@@ -120,7 +120,7 @@ class JobTypeListAPIView(APIView):
                     continue
 
         # ----------------------------------------
-        # ⏬ Default sort (fallback)
+        #  Default sort (fallback)
         # ----------------------------------------
         else:
             sort_by = request.GET.get('sortBy', 'created_at')
@@ -139,7 +139,7 @@ class JobTypeListAPIView(APIView):
         queryset = queryset.order_by(*sort_fields)
 
         # ----------------------------------------
-        # 📄 Pagination
+        #  Pagination
         # ----------------------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
@@ -382,67 +382,12 @@ class JobTypeDeleteAPIView(APIView):
             "data": None
         }, status=400)
 
-# class JobTypeExportAPIView(APIView):
-#     def get(self, request):
-#         format_type = request.GET.get('format', 'xlsx').lower()
-#         fields = request.GET.get('fields')
-#         uuids_param = request.GET.get('uuids', '')
-
-#         uuids = [u.strip() for u in uuids_param.split(',') if u]
-
-#         field_header_map = {
-#             'uuid': 'UUID',
-#             'name': 'Job Type',
-#             'description': 'Description',
-#             'is_deleted': 'Deleted',
-#             'updated_at': 'Modified On',
-#         }
-
-#         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
-
-#         queryset = JobType.objects.filter(is_deleted=False)
-#         if uuids:
-#             queryset = queryset.filter(uuid__in=uuids)
-#         queryset = queryset.order_by('-created_at')
-
-#         dataset = Dataset()
-#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-#         dataset.title = 'Job Type'
-
-#         for obj in queryset:
-#             row = []
-#             for field in field_list:
-#                 value = getattr(obj, field, '')
-#                 if field in ['created_at', 'updated_at'] and value:
-#                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-#                 elif isinstance(value, bool):
-#                     value = int(value)
-#                 row.append(value if value is not None else '')
-#             dataset.append(row)
-
-#         if format_type == 'csv':
-#             file_data = dataset.export('csv')
-#             content_type = 'text/csv'
-#             file_name = 'job_types.csv'
-#         else:
-#             file_data = io.BytesIO(dataset.export('xlsx'))
-#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-#             file_name = 'job_types.xlsx'
-
-#         response = HttpResponse(file_data if format_type == 'csv' else file_data.getvalue(), content_type=content_type)
-#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
-#         return response
 
 class JobTypeExportAPIView(APIView):
 
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
-        from django.db.models.functions import Lower
-        from django.db.models import F
-        from django.utils import timezone
-        import io
-        from tablib import Dataset
 
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')  # comma-separated
@@ -528,7 +473,7 @@ class JobTypeExportAPIView(APIView):
         # -----------------------------
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = "Job Types"
+        dataset.title = "JobTypes"
 
         for obj in queryset:
             row = []
@@ -673,29 +618,114 @@ class JobTypeImportAPIView(APIView):
 
 
 
+# class ModeofSalaryListAPIView(APIView):
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')
+
+#         allowed_sort_fields = ['name', 'description', 'updated_at']
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = 'created_at'
+
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
+
+#         queryset = ModeofSalary.objects.filter(is_deleted=False)
+
+#         if search:
+#             queryset = queryset.filter(Q(name__istartswith=search))
+
+#         queryset = queryset.order_by(sort_by)
+
+#         paginator = CustomPagination()
+#         result_page = paginator.paginate_queryset(queryset, request)
+#         serializer = ModeofSalarySerializer(result_page, many=True)
+#         return paginator.get_paginated_response(serializer.data)
+
+
 class ModeofSalaryListAPIView(APIView):
+    # permission_classes = [IsAuthenticated]  # Add IsAdminUser if needed
+
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
-
-        allowed_sort_fields = ['name', 'description', 'updated_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        custom_sort = request.GET.get('customSort')
 
         queryset = ModeofSalary.objects.filter(is_deleted=False)
 
+        # ----------------------------------------
+        # 🔍 Search filter
+        # ----------------------------------------
         if search:
             queryset = queryset.filter(Q(name__istartswith=search))
 
-        queryset = queryset.order_by(sort_by)
+        # ----------------------------------------
+        # Sorting rules
+        # ----------------------------------------
+        allowed_sort_fields = ['name', 'description', 'created_at', 'updated_at']
 
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        sort_fields = []
+
+        # ----------------------------------------
+        #  Custom sort (multi-column)
+        # ----------------------------------------
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in allowed_sort_fields:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sort for string fields
+                    if field in ['name', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+
+        # ----------------------------------------
+        #  Default sort (fallback)
+        # ----------------------------------------
+        else:
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'asc')
+
+            if sort_by not in allowed_sort_fields:
+                sort_by = 'created_at'
+
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+
+            f = F(orm_field)
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)
+            ]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ----------------------------------------
+        #  Pagination
+        # ----------------------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = ModeofSalarySerializer(result_page, many=True)
+
         return paginator.get_paginated_response(serializer.data)
 
 
@@ -933,42 +963,187 @@ class ModeofSalaryDeleteAPIView(APIView):
 
 
 
+# class ModeofSalaryExportAPIView(APIView):
+#     def get(self, request):
+#         format_type = request.GET.get('format', 'xlsx').lower()
+#         fields = request.GET.get('fields')
+#         uuids_param = request.GET.get('uuids', '')
+#         uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+#         field_header_map = {
+#             'uuid': 'UUID',
+#             'name': 'Mode of Salary',
+#             'description': 'Description',
+#             'is_deleted': 'Deleted',
+#             'updated_at': 'Modified On',
+#         }
+#         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+#         queryset = ModeofSalary.objects.filter(is_deleted=False)
+#         if uuids:
+#             queryset = queryset.filter(uuid__in=uuids)
+#         queryset = queryset.order_by('-created_at')
+
+#         dataset = Dataset()
+#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+#         dataset.title = 'Mode of Salary'
+
+#         for obj in queryset:
+#             row = []
+#             for field in field_list:
+#                 value = getattr(obj, field, '')
+#                 if field in ['created_at', 'updated_at'] and value:
+#                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+#                 elif isinstance(value, bool):
+#                     value = int(value)
+#                 row.append(value if value is not None else '')
+#             dataset.append(row)
+
+#         if format_type == 'csv':
+#             file_data = dataset.export('csv')
+#             content_type = 'text/csv'
+#             file_name = 'mode_of_salary.csv'
+#         else:
+#             file_data = io.BytesIO(dataset.export('xlsx'))
+#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+#             file_name = 'mode_of_salary.xlsx'
+
+#         response = HttpResponse(file_data if format_type == 'csv' else file_data.getvalue(), content_type=content_type)
+#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+#         return response
+
+
 class ModeofSalaryExportAPIView(APIView):
+
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
     def get(self, request):
+
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
         uuids_param = request.GET.get('uuids', '')
+        custom_sort = request.GET.get('customSort')
+        sort_by = request.GET.get('sortBy')
+        sort_order = request.GET.get('sortOrder', 'desc').lower()
+        search = request.GET.get('search', '').strip()
+
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
+        # ----------------------------- 
+        # Field header mapping
+        # -----------------------------
         field_header_map = {
             'uuid': 'UUID',
             'name': 'Mode of Salary',
             'description': 'Description',
             'is_deleted': 'Deleted',
+            'created_at': 'Created On',
             'updated_at': 'Modified On',
         }
+
+        # Determine export fields
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
+        # -----------------------------
+        # Queryset
+        # -----------------------------
         queryset = ModeofSalary.objects.filter(is_deleted=False)
+
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
 
+        if search:
+            queryset = queryset.filter(
+                Q(name__istartswith=search)
+            )
+
+        # -----------------------------
+        # Sorting logic
+        # -----------------------------
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'is_deleted': 'is_deleted',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        sort_fields = []
+
+        # 1️⃣ customSort (highest priority)
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive for strings
+                    if field in ['name', 'description']:
+                        f_expr = Lower(orm_field)
+                    else:
+                        f_expr = F(orm_field)
+
+                    sort_fields.append(
+                        f_expr.asc(nulls_last=True) if order == 'asc'
+                        else f_expr.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+
+        # 2️⃣ sortBy + sortOrder (if customSort not used)
+        elif sort_by and sort_by in sort_field_map:
+            orm_field = sort_field_map[sort_by]
+
+            if sort_by in ['name', 'description']:
+                f_expr = Lower(orm_field)
+            else:
+                f_expr = F(orm_field)
+
+            sort_fields.append(
+                f_expr.asc(nulls_last=True) if sort_order == 'asc'
+                else f_expr.desc(nulls_last=True)
+            )
+
+        # 3️⃣ Default fallback — created_at desc
+        else:
+            f = F('created_at')
+            sort_fields.append(
+                f.desc(nulls_last=True) if sort_order == 'desc'
+                else f.asc(nulls_last=True)
+            )
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # -----------------------------
+        # Dataset build
+        # -----------------------------
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'Mode of Salary'
+        dataset.title = "ModeofSalary"
 
         for obj in queryset:
             row = []
             for field in field_list:
                 value = getattr(obj, field, '')
+
                 if field in ['created_at', 'updated_at'] and value:
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+                    value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
+
                 elif isinstance(value, bool):
                     value = int(value)
+
                 row.append(value if value is not None else '')
             dataset.append(row)
 
+        # -----------------------------
+        # Export file
+        # -----------------------------
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
@@ -978,9 +1153,14 @@ class ModeofSalaryExportAPIView(APIView):
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             file_name = 'mode_of_salary.xlsx'
 
-        response = HttpResponse(file_data if format_type == 'csv' else file_data.getvalue(), content_type=content_type)
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+
         return response
+
 
 
 class ModeofSalaryImportAPIView(APIView):
@@ -1067,26 +1247,111 @@ class ModeofSalaryImportAPIView(APIView):
 
 
 
+# class ITReturnStatusListAPIView(APIView):
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')
+
+#         allowed_sort_fields = ['name', 'description', 'updated_at']
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = 'created_at'
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
+
+#         queryset = ITReturnStatus.objects.filter(is_deleted=False)
+#         if search:
+#             queryset = queryset.filter(Q(name__istartswith=search))
+#         queryset = queryset.order_by(sort_by)
+
+#         paginator = CustomPagination()
+#         result_page = paginator.paginate_queryset(queryset, request)
+#         serializer = ITReturnStatusSerializer(result_page, many=True)
+#         return paginator.get_paginated_response(serializer.data)
+
+
 class ITReturnStatusListAPIView(APIView):
+    # permission_classes = [IsAuthenticated]  # Add IsAdminUser if needed
+
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
-
-        allowed_sort_fields = ['name', 'description', 'updated_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        custom_sort = request.GET.get('customSort')
 
         queryset = ITReturnStatus.objects.filter(is_deleted=False)
+
+        # ----------------------------------------
+        # 🔍 Search filter
+        # ----------------------------------------
         if search:
             queryset = queryset.filter(Q(name__istartswith=search))
-        queryset = queryset.order_by(sort_by)
 
+        # ----------------------------------------
+        # Sorting rules
+        # ----------------------------------------
+        allowed_sort_fields = ['name', 'description', 'created_at', 'updated_at']
+
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        sort_fields = []
+
+        # ----------------------------------------
+        #  Custom sort (multi-column)
+        # ----------------------------------------
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in allowed_sort_fields:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for strings
+                    if field in ['name', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+
+        # ----------------------------------------
+        #  Default sort (fallback)
+        # ----------------------------------------
+        else:
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'asc')
+
+            if sort_by not in allowed_sort_fields:
+                sort_by = 'created_at'
+
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+
+            f = F(orm_field)
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)
+            ]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ----------------------------------------
+        #  Pagination
+        # ----------------------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = ITReturnStatusSerializer(result_page, many=True)
+
         return paginator.get_paginated_response(serializer.data)
 
 
@@ -1323,54 +1588,185 @@ class ITReturnStatusDeleteAPIView(APIView):
 
 
 
+# class ITReturnStatusExportAPIView(APIView):
+#     def get(self, request):
+#         format_type = request.GET.get('format', 'xlsx').lower()
+#         fields = request.GET.get('fields')
+#         uuids_param = request.GET.get('uuids', '')
+#         uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+#         field_header_map = {
+#             'uuid': 'UUID',
+#             'name': 'IT Return Status',
+#             'description': 'Description',
+#             'is_deleted': 'Deleted',
+#             'updated_at': 'Modified On',
+#         }
+#         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+
+#         queryset = ITReturnStatus.objects.filter(is_deleted=False)
+#         if uuids:
+#             queryset = queryset.filter(uuid__in=uuids)
+#         queryset = queryset.order_by('-created_at')
+
+#         dataset = Dataset()
+#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+#         dataset.title = 'IT Return Status'
+
+#         for obj in queryset:
+#             row = []
+#             for field in field_list:
+#                 value = getattr(obj, field, '')
+#                 if field in ['created_at', 'updated_at'] and value:
+#                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+#                 elif isinstance(value, bool):
+#                     value = int(value)
+#                 row.append(value if value is not None else '')
+#             dataset.append(row)
+
+#         if format_type == 'csv':
+#             file_data = dataset.export('csv')
+#             content_type = 'text/csv'
+#             file_name = 'it_return_status.csv'
+#         else:
+#             file_data = io.BytesIO(dataset.export('xlsx'))
+#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+#             file_name = 'it_return_status.xlsx'
+
+#         response = HttpResponse(file_data if format_type == 'csv' else file_data.getvalue(), content_type=content_type)
+#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+#         return response
+
+
 class ITReturnStatusExportAPIView(APIView):
+
     def get(self, request):
         format_type = request.GET.get('format', 'xlsx').lower()
         fields = request.GET.get('fields')
         uuids_param = request.GET.get('uuids', '')
+        custom_sort = request.GET.get('customSort')
+        sort_by = request.GET.get('sortBy')
+        sort_order = request.GET.get('sortOrder', 'desc').lower()
+        search = request.GET.get('search', '').strip()
+
         uuids = [u.strip() for u in uuids_param.split(',') if u]
 
+        # --- Field header map ---
         field_header_map = {
             'uuid': 'UUID',
             'name': 'IT Return Status',
             'description': 'Description',
             'is_deleted': 'Deleted',
+            'created_at': 'Created On',
             'updated_at': 'Modified On',
         }
+
+        # Determine fields to export
         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
 
+        # --- Queryset Build ---
         queryset = ITReturnStatus.objects.filter(is_deleted=False)
+
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
 
+        if search:
+            queryset = queryset.filter(
+                Q(name__istartswith=search) 
+            )
+
+        # --- Sorting Setup ---
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        sort_fields = []
+
+        # 1️⃣ CUSTOM SORT (Highest Priority)
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sort for text fields
+                    if field in ['name', 'description']:
+                        f_expr = Lower(orm_field)
+                    else:
+                        f_expr = F(orm_field)
+
+                    sort_fields.append(
+                        f_expr.asc(nulls_last=True) if order == 'asc' else f_expr.desc(nulls_last=True)
+                    )
+                except ValueError:
+                    continue
+
+        # 2️⃣ SORT BY + SORT ORDER (applied only if customSort not used)
+        elif sort_by and sort_by in sort_field_map:
+            orm_field = sort_field_map[sort_by]
+
+            if sort_by in ['name', 'description']:
+                f_expr = Lower(orm_field)
+            else:
+                f_expr = F(orm_field)
+
+            sort_fields.append(
+                f_expr.asc(nulls_last=True) if sort_order == 'asc' else f_expr.desc(nulls_last=True)
+            )
+
+        # 3️⃣ DEFAULT SORT — created_at DESC
+        else:
+            f = F('created_at')
+            sort_fields.append(
+                f.desc(nulls_last=True) if sort_order == 'desc' else f.asc(nulls_last=True)
+            )
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'IT Return Status'
+        dataset.title = "ITReturnStatus"
 
-        for obj in queryset:
+        for item in queryset:
             row = []
             for field in field_list:
-                value = getattr(obj, field, '')
+                value = getattr(item, field, '')
+
                 if field in ['created_at', 'updated_at'] and value:
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
                     value = int(value)
+
                 row.append(value if value is not None else '')
             dataset.append(row)
 
+        # --- Export ---
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
-            file_name = 'it_return_status.csv'
+            file_name = "it_return_status.csv"
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
-            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'it_return_status.xlsx'
+            content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            file_name = "it_return_status.xlsx"
 
-        response = HttpResponse(file_data if format_type == 'csv' else file_data.getvalue(), content_type=content_type)
-        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        response = HttpResponse(
+            file_data if format_type == 'csv' else file_data.getvalue(),
+            content_type=content_type
+        )
+        response['Content-Disposition'] = f'attachment; filename=\"{file_name}\"'
         return response
+
 
 
 class ITReturnStatusImportAPIView(APIView):
@@ -3900,33 +4296,129 @@ class OccupationCodeImportAPIView(APIView):
 
 
 
+# class OccupationTypeListAPIView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')
+
+#         allowed_sort_fields = ['name', 'description', 'updated_at']
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = 'created_at'
+
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
+
+#         queryset = OccupationType.objects.filter(is_deleted=False)
+
+#         if search:
+#             queryset = queryset.filter(Q(name__istartswith=search))
+
+#         queryset = queryset.order_by(sort_by)
+
+#         paginator = CustomPagination()
+#         result_page = paginator.paginate_queryset(queryset, request)
+#         serializer = OccupationTypeSerializer(result_page, many=True)
+
+#         return paginator.get_paginated_response(serializer.data)
+
+
 class OccupationTypeListAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
+        custom_sort = request.GET.get('customSort')
 
-        allowed_sort_fields = ['name', 'description', 'updated_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
-
+        # ----------------------------------------
+        # Base Queryset
+        # ----------------------------------------
         queryset = OccupationType.objects.filter(is_deleted=False)
 
+        # ----------------------------------------
+        # 🔍 Search filter
+        # ----------------------------------------
         if search:
-            queryset = queryset.filter(Q(name__istartswith=search))
+            queryset = queryset.filter(
+                Q(name__istartswith=search)
+            )
 
-        queryset = queryset.order_by(sort_by)
+        # ----------------------------------------
+        # Sorting
+        # ----------------------------------------
+        allowed_sort_fields = ['name', 'description', 'created_at', 'updated_at']
 
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
+
+        sort_fields = []
+
+        # ----------------------------------------
+        #  Custom multi-column sorting
+        # customSort=name:asc,description:desc
+        # ----------------------------------------
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in allowed_sort_fields:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sort for string fields
+                    if field in ['name', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc'
+                        else f.desc(nulls_last=True)
+                    )
+
+                except ValueError:
+                    continue
+
+        # ----------------------------------------
+        #  Default fallback sorting
+        # ----------------------------------------
+        else:
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'asc')
+
+            if sort_by not in allowed_sort_fields:
+                sort_by = 'created_at'
+
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+
+            f = F(orm_field)
+
+            sort_fields = [
+                f.asc(nulls_last=True) if sort_order == 'asc'
+                else f.desc(nulls_last=True)
+            ]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ----------------------------------------
+        #  Pagination
+        # ----------------------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = OccupationTypeSerializer(result_page, many=True)
 
         return paginator.get_paginated_response(serializer.data)
+
 
 
 # -------------------- CREATE API --------------------
@@ -4205,64 +4697,193 @@ class OccupationTypeDeleteAPIView(APIView):
 
 
 # -------------------- EXPORT API --------------------
+# class OccupationTypeExportAPIView(APIView):
+
+#     def get(self, request):
+#         format_type = request.GET.get('format', 'xlsx').lower()
+#         fields = request.GET.get('fields')
+#         uuids_param = request.GET.get('uuids', '')
+
+#         uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+#         field_header_map = {
+#             'uuid': 'UUID',
+#             'name': 'Occupation Type',
+#             'description': 'Description',
+#             'is_deleted': 'Deleted',
+#             'updated_at': 'Modified On',
+#         }
+
+#         if fields:
+#             field_list = [f.strip() for f in fields.split(',')]
+#         else:
+#             field_list = list(field_header_map.keys())
+
+#         queryset = OccupationType.objects.filter(is_deleted=False)
+#         if uuids:
+#             queryset = queryset.filter(uuid__in=uuids)
+#         queryset = queryset.order_by('-created_at')
+
+#         dataset = Dataset()
+#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+#         dataset.title = 'OccupationType'
+
+#         for obj in queryset:
+#             row = []
+#             for field in field_list:
+#                 value = getattr(obj, field, '')
+#                 if field in ['created_at', 'updated_at'] and value:
+#                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+#                 elif isinstance(value, bool):
+#                     value = int(value)
+#                 row.append(value if value is not None else '')
+#             dataset.append(row)
+
+#         if format_type == 'csv':
+#             file_data = dataset.export('csv')
+#             content_type = 'text/csv'
+#             file_name = 'occupation_types.csv'
+#         else:
+#             file_data = io.BytesIO(dataset.export('xlsx'))
+#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+#             file_name = 'occupation_types.xlsx'
+
+#         response = HttpResponse(
+#             file_data if format_type == 'csv' else file_data.getvalue(),
+#             content_type=content_type
+#         )
+#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+#         return response
+
 class OccupationTypeExportAPIView(APIView):
 
     def get(self, request):
-        format_type = request.GET.get('format', 'xlsx').lower()
-        fields = request.GET.get('fields')
-        uuids_param = request.GET.get('uuids', '')
+        format_type = request.GET.get("format", "xlsx").lower()
 
-        uuids = [u.strip() for u in uuids_param.split(',') if u]
+        # -------- FILTER PARAMS --------
+        search = request.GET.get("search", "").strip()
+        fields = request.GET.get("fields")
+        uuids_param = request.GET.get("uuids", "").strip()
+        custom_sort = request.GET.get("customSort")   # multi-column
+        sort_by = request.GET.get("sortBy", "created_at").strip()
+        sort_order = request.GET.get("sortOrder", "desc").lower()
 
+        uuids = [u.strip() for u in uuids_param.split(",") if u]
+
+        # -------- FIELD HEADER MAP --------
         field_header_map = {
-            'uuid': 'UUID',
-            'name': 'Occupation Type',
-            'description': 'Description',
-            'is_deleted': 'Deleted',
-            'updated_at': 'Modified On',
+            "uuid": "UUID",
+            "name": "Occupation Type",
+            "description": "Description",
+            "is_deleted": "Deleted",
+            "created_at": "Created On",
+            "updated_at": "Modified On",
         }
 
-        if fields:
-            field_list = [f.strip() for f in fields.split(',')]
-        else:
-            field_list = list(field_header_map.keys())
+        # -------- EXPORT FIELD LIST --------
+        field_list = [f.strip() for f in fields.split(",")] if fields else list(field_header_map.keys())
 
+        # -------- BUILD QUERYSET --------
         queryset = OccupationType.objects.filter(is_deleted=False)
+
+        if search:
+            queryset = queryset.filter(
+                Q(name__istartswith=search)
+            )
+
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
 
+        # -------- SORT FIELD MAP --------
+        sort_field_map = {
+            "name": "name",
+            "description": "description",
+            "created_at": "created_at",
+            "updated_at": "updated_at",
+        }
+
+        sort_fields = []
+
+        # -------- CUSTOM SORT TAKES PRIORITY --------
+        if custom_sort:
+            for rule in custom_sort.split(","):
+                try:
+                    field, order = rule.split(":")
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for strings
+                    if field in ["name", "description"]:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == "asc" else f.desc(nulls_last=True)
+                    )
+
+                except ValueError:
+                    continue
+
+        else:
+            # -------- APPLY sortBy + sortOrder --------
+            if sort_by in sort_field_map:
+                orm_field = sort_field_map[sort_by]
+
+                if sort_by in ["name", "description"]:
+                    f = Lower(orm_field)
+                else:
+                    f = F(orm_field)
+
+                sort_fields = [
+                    f.desc(nulls_last=True) if sort_order == "desc" else f.asc(nulls_last=True)
+                ]
+            else:
+                # Fallback default sorting
+                sort_fields = [F("created_at").desc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # -------- EXPORT DATASET --------
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'OccupationType'
+        dataset.title = "OccupationType"
 
         for obj in queryset:
             row = []
             for field in field_list:
-                value = getattr(obj, field, '')
-                if field in ['created_at', 'updated_at'] and value:
+                value = getattr(obj, field, "")
+
+                if field in ["created_at", "updated_at"] and value:
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
                 elif isinstance(value, bool):
                     value = int(value)
-                row.append(value if value is not None else '')
+
+                row.append(value if value is not None else "")
+
             dataset.append(row)
 
-        if format_type == 'csv':
-            file_data = dataset.export('csv')
-            content_type = 'text/csv'
-            file_name = 'occupation_types.csv'
+        # -------- FILE EXPORT --------
+        if format_type == "csv":
+            file_bytes = dataset.export("csv")
+            content_type = "text/csv"
+            filename = "occupation_type.csv"
         else:
-            file_data = io.BytesIO(dataset.export('xlsx'))
-            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'occupation_types.xlsx'
+            file_bytes = io.BytesIO(dataset.export("xlsx"))
+            content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            filename = "occupation_type.xlsx"
 
         response = HttpResponse(
-            file_data if format_type == 'csv' else file_data.getvalue(),
+            file_bytes if format_type == "csv" else file_bytes.getvalue(),
             content_type=content_type
         )
-        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        response["Content-Disposition"] = f'attachment; filename=\"{filename}\"'
         return response
-
 
 # -------------------- IMPORT API --------------------
 class OccupationTypeImportAPIView(APIView):
