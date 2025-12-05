@@ -906,3 +906,5 @@ export const EDIT_STUDY_FACTOR_ENTRANCE_TEST_ABILITY_API ="/api/v1/master/study-
 export const DELETE_STUDY_FACTOR_ENTRANCE_TEST_ABILITY_API ="/api/v1/master/study-factor-entrance-test-ability/"; // +delete/
 export const EXPORT_STUDY_FACTOR_ENTRANCE_TEST_ABILITY_API ="/api/v1/master/study-factor-entrance-test-ability/export/";
 export const IMPORT_STUDY_FACTOR_ENTRANCE_TEST_ABILITY_API ="/api/v1/master/study-factor-entrance-test-ability/import/";
+
+export const VISA_MAJOR_CATEGORY_RCOUNTRY_ID = "/api/v1/master/requireddocument/visa-major/by-country/";

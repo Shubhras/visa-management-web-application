@@ -130,13 +130,13 @@ const AddEditVisaMajorCategoryModal = ({ show, handleClose, mode = 'add', rowDat
         ? {
           uuid: formData.uuid,
           name: formData.name,
-          visaMain: formData.visaMain,
+          visamain: formData.visaMain,
           country_name: formData.country_name,
           description: formData.description,
         }
         : {
           name: formData.name,
-          visaMain: formData.visaMain,
+          visamain: formData.visaMain,
           country_name: formData.country_name,
           description: formData.description,
         };
