@@ -2,18 +2,15 @@ import React, { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import Select from "react-select";
-import { countryDemoList } from "../../../../store/master/companyMasters/actions";
 import {
   factorForList,
   languageAbilityGroupList,
   languageTestModuleNameList,
   languageTestNameList,
   languageTestResultList,
-  representingCountryList,
   studyFactorLanguageAbilityAdd,
   studyFactorLanguageAbilityEdit,
 } from "../../../../store/actions";
-import LanguageTestModuleNameList from "../../testMaster/languageTestModuleName/LanguageTestModuleNameList";
 
 const AddEditStudyFactorLanguageAbilityModal = ({
   show,

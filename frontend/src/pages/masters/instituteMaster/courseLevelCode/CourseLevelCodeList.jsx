@@ -371,7 +371,13 @@ const CourseLevelCodeList = () => {
             toast.error("No Course Level Code selected for deletion.");
             return;
         }
-        dispatch(courseLevelCodeDelete(sendPayload, (response, error) => {
+        const deleteAll = selectAllOrNot === "all" && Boolean(tableState.search?.trim());
+    const payloadSend = {
+      deleteAll: deleteAll,
+      id: deleteAll == true ? "" : sendPayload,
+      search: tableState.search || '',
+    };
+        dispatch(courseLevelCodeDelete(payloadSend, (response, error) => {
             if (error) {
                 toast.error(error?.response?.data?.message || "server error");
             } else {
@@ -383,7 +389,8 @@ const CourseLevelCodeList = () => {
                     setSelectedRows([]);
                     setSelectAllOrNot('');
                     setDeleteId(null);
-                    fetchDepartmentList();
+                    // fetchDepartmentList();
+                    clearAllFilters();
                 } else {
                     toast.error("Something went wrong.");
                 }

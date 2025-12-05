@@ -10,7 +10,7 @@ import { visaNameList, visaNameDelete, visaNameExportData } from '../../../../st
 import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
 import { visaMainCategoryList } from "../../../../store/master/visaConditionsMaster/action";
-import { representingCountryData ,visaMajorCategoryList} from "../../../../store/master/visaMaster/action";
+import { representingCountryData, visaMajorCategoryList } from "../../../../store/master/visaMaster/action";
 
 import ResetButton from '../../../../components/comman/ResetButton';
 const VisaNameList = () => {
@@ -141,10 +141,14 @@ const VisaNameList = () => {
         return options.filter(o =>
             String(o.name ?? '').toLowerCase().startsWith(searchTerm)
         )
-        .sort((a, b) => a.name.localeCompare(b.name));
+            .sort((a, b) => a.name.localeCompare(b.name));
     }
 
-    const clearAllOnlyHeaderFilters = () => setColumnFilters({ representingCountry: [], visaMainCategory: [], })
+    const clearAllOnlyHeaderFilters = () => setColumnFilters({
+        representingCountry: [],
+        visaMainCategory: [],
+        visaMajorCategory: [],
+    })
     const hasActiveFilters = () => Object.values(columnFilters).some(list => list.length > 0)
     // Close filter when clicking outside
     useEffect(() => {
@@ -221,6 +225,7 @@ const VisaNameList = () => {
     const [ItemsRequired] = useState(["Country", "Visa Main Category", "Visa Major Category", "Visa Name"]);
 
     // Table columns configuration
+
     const [tableColumns] = useState([
         { id: 'country', label: 'Country', field: 'representingCountry', visible: true, required: false, filterable: true },
         { id: 'visaMain', label: 'Visa Main Category', field: 'visaMainCategory', visible: true, required: false, filterable: true },
@@ -314,6 +319,7 @@ const VisaNameList = () => {
             sort: tableState.sort,
             representingCountry: columnFilters.representingCountry.length > 0 ? columnFilters.representingCountry : null,
             visaMainCategory: columnFilters.visaMainCategory.length > 0 ? columnFilters.visaMainCategory : null,
+            visaMajorCategory: columnFilters.visaMajorCategory.length > 0 ? columnFilters.visaMajorCategory : null,
         };
 
         dispatch(visaNameList(params, (response, error) => {
@@ -506,10 +512,20 @@ const VisaNameList = () => {
     const confirmDelete = () => {
         const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
         if (!sendPayload || sendPayload.length === 0) {
-            toast.error("No Visa Name selected for deletion.");
+            toast.error("No Study specialisation selected for deletion.");
             return;
         }
-        dispatch(visaNameDelete(sendPayload, (response, error) => {
+        const deleteAll = selectAllOrNot === "all" && ((tableState.search && tableState.search.trim() !== '') || columnFilters.representingCountry.length > 0 ||
+            columnFilters.visaMainCategory.length > 0 || columnFilters.visaMajorCategory.length > 0);
+        const payloadSend = {
+            deleteAll: deleteAll,
+            representingCountry: columnFilters.representingCountry.length > 0 ? columnFilters.representingCountry : '',
+            visaMainCategory: columnFilters.visaMainCategory.length > 0 ? columnFilters.visaMainCategory : '',
+            visaMajorCategory: columnFilters.visaMajorCategory.length > 0 ? columnFilters.visaMajorCategory : '',
+            id: deleteAll == true ? "" : sendPayload,
+            search: tableState.search || '',
+        };
+        dispatch(visaNameDelete(payloadSend, (response, error) => {
             if (error) {
                 toast.error(error?.response?.data?.message || "server error");
             } else {
@@ -521,7 +537,8 @@ const VisaNameList = () => {
                     setSelectedRows([]);
                     setSelectAllOrNot('');
                     setDeleteId(null);
-                    fetchDepartmentList();
+                    // fetchDepartmentList();
+                    clearAllFilters();
                 } else {
                     toast.error("Something went wrong.");
                 }
@@ -609,6 +626,7 @@ const VisaNameList = () => {
             sort: tableState.sort,
             representingCountry: columnFilters.representingCountry.length > 0 ? columnFilters.representingCountry : null,
             visaMainCategory: columnFilters.visaMainCategory.length > 0 ? columnFilters.visaMainCategory : null,
+            visaMajorCategory: columnFilters.visaMajorCategory.length > 0 ? columnFilters.visaMajorCategory : null,
         };
 
         setLoadingExport(true);
@@ -1073,19 +1091,19 @@ const VisaNameList = () => {
                                                     </div>
                                                 </td>
                                                 {isColumnVisible('country') && (
-                                                    <td><span>{rowItem.country}</span></td>
+                                                    <td><span>{rowItem.name}</span></td>
                                                 )}
                                                 {isColumnVisible('visaMain') && (
-                                                    <td><span>{rowItem.visaMain}</span></td>
+                                                    <td><span>{rowItem.visamain_name}</span></td>
                                                 )}
                                                 {isColumnVisible('visaMajor') && (
-                                                    <td><span>{rowItem.visaMajor}</span></td>
+                                                    <td><span>{rowItem.visamajor_name}</span></td>
                                                 )}
                                                 {isColumnVisible('visaName') && (
-                                                    <td><span>{rowItem.visaName}</span></td>
+                                                    <td><span>{rowItem.full_name}</span></td>
                                                 )}
                                                 {isColumnVisible('visaShortName') && (
-                                                    <td><span>{rowItem.visaShortName}</span></td>
+                                                    <td><span>{rowItem.short_name}</span></td>
                                                 )}
                                                 {isColumnVisible('description') && (
                                                     <td><span>{rowItem.description}</span></td>

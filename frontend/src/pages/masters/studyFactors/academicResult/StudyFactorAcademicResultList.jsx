@@ -4,29 +4,186 @@ import { Icon } from '@iconify/react/dist/iconify.js';
 import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
 import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
-import { countryDemoList } from '../../../../store/master/companyMasters/actions';
 import { useGlobalSearch, } from '../../../../components/comman/GlobalSearchContext';
 import MasterLayout from '../../../../masterLayout/MasterLayout';
 import { studyFactorAcademicResultDelete, studyFactorAcademicResultExportData, studyFactorAcademicResultList } from '../../../../store/actions';
 import AddEditStudyFactorAcademicResultModal from './AddEditStudyFactorAcademicResultModal';
 import AddImportStudyFactorAcademicResultModal from './AddImportStudyFactorAcademicResultModal';
+import { academicResultTypeList } from "../../../../store/master/educationMaster/action";
+import { factorForList, academicResultGroupList } from "../../../../store/master/studyFactorsMasters/action";
+import ResetButton from '../../../../components/comman/ResetButton';
+
 const StudyFactorAcademicResultList = () => {
   const dispatch = useDispatch();
   const { globalSearch, setGlobalSearch } = useGlobalSearch();
-  const [modalState, setModalState] = useState({
-    show: false,
-    mode: 'add', // 'add' or 'edit'
-    rowData: null
-  })
-  // Excel-style column filters - Now storing country , state and district IDs
   const [columnFilters, setColumnFilters] = useState({
-    countryId: [], // Country filter
-  });
+    factorFor: [],
+    studyAcademicResultGroup: [],
+    academicResultType: [],
 
+  });
   const [activeFilterColumn, setActiveFilterColumn] = useState(null);
   const [filterDropdownData, setFilterDropdownData] = useState({});
   const [filterSearchTerms, setFilterSearchTerms] = useState({});
   const filterDropdownRef = useRef(null);
+  useEffect(() => {
+    fetchFactorForDropdown();
+    fetchStudyAcademicResultGroupDropdown();
+    fetchAcademicResultTypedown();
+  }, []);
+  const fetchFactorForDropdown = () => {
+    const params = {
+      page: 1,
+      limit: 2000,
+      search: "",
+      sortBy: "name",
+      sortOrder: "asc"
+    };
+    dispatch(factorForList(params, (response, error) => {
+      if (response?.statusCode === 200 && response?.status === true) {
+        const options = (response.data || []).map(item => ({
+          id: item.uuid || item.id,
+          name: String(item.name ?? "")
+        }));
+        const sortedOptions = options.sort((a, b) =>
+          String(a.name).localeCompare(String(b.name), undefined, { numeric: true })
+        );
+        // Update filter dropdown data
+        setFilterDropdownData(prev => ({
+          ...prev,
+          factorFor: sortedOptions
+        }));
+      }
+    }));
+  };
+  const fetchStudyAcademicResultGroupDropdown = () => {
+    const params = {
+      page: 1,
+      limit: 2000,
+      search: "",
+      sortBy: "name",
+      sortOrder: "asc"
+    };
+    dispatch(academicResultGroupList(params, (response, error) => {
+      if (response?.statusCode === 200 && response?.status === true) {
+        const options = (response.data || []).map(item => ({
+          id: item.uuid || item.id,
+          name: String(item.name ?? "")
+        }));
+        const sortedOptions = options.sort((a, b) =>
+          String(a.name).localeCompare(String(b.name), undefined, { numeric: true })
+        );
+        setFilterDropdownData(prev => ({
+          ...prev,
+          studyAcademicResultGroup: sortedOptions
+        }));
+      }
+    }));
+  };
+  const fetchAcademicResultTypedown = () => {
+    const params = {
+      page: 1,
+      limit: 2000,
+      search: "",
+      sortBy: "name",
+      sortOrder: "asc"
+    };
+    dispatch(academicResultTypeList(params, (response, error) => {
+      if (response?.statusCode === 200 && response?.status === true) {
+        const options = (response.data || []).map(item => ({
+          id: item.uuid || item.id,
+          name: String(item.name ?? "")
+        }));
+        const sortedOptions = options.sort((a, b) =>
+          String(a.name).localeCompare(String(b.name), undefined, { numeric: true })
+        );
+        setFilterDropdownData(prev => ({
+          ...prev,
+          academicResultType: sortedOptions
+        }));
+      }
+    }));
+  };
+  const toggleFilterDropdown = (e, columnField) => {
+    e.stopPropagation()
+    setActiveFilterColumn(activeFilterColumn === columnField ? null : columnField)
+    setFilterSearchTerms(prev => ({ ...prev, [columnField]: '' }))
+  }
+  const handleFilterCheckboxChange = (columnField, value, checked) => {
+    setColumnFilters(prev => {
+      const current = prev[columnField] || []
+      const updated = checked ? [...current, value] : current.filter(v => v !== value)
+      return { ...prev, [columnField]: updated }
+    })
+  }
+
+  const handleFilterSelectAll = (columnField) => {
+    const searchTerm = String(filterSearchTerms[columnField] || '').toLowerCase()
+    const available = (filterDropdownData[columnField] || [])
+      .filter(o => String(o.name).toLowerCase().includes(searchTerm))
+      .map(o => o.id)
+    setColumnFilters(prev => ({ ...prev, [columnField]: available }))
+  }
+
+
+  const handleFilterClearAll = (columnField) => {
+    setColumnFilters(prev => ({ ...prev, [columnField]: [] }))
+  }
+
+  const getFilteredOptions = (columnField) => {
+    const searchTerm = String(filterSearchTerms[columnField] || '').toLowerCase()
+    const options = filterDropdownData[columnField] || []
+    return options.filter(o =>
+      String(o.name ?? '').toLowerCase().includes(searchTerm)
+    )
+  }
+
+  const clearAllOnlyHeaderFilters = () => setColumnFilters({
+    factorFor: [],
+    studyAcademicResultGroup: [],
+    academicResultType: [],
+
+  })
+  const hasActiveFilters = () => Object.values(columnFilters).some(list => list.length > 0)
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target)) {
+        setActiveFilterColumn(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const applySortAsc = (field) => {
+    setTableState(prev => {
+      let newSort = [...prev.sort]
+      const existingIndex = newSort.findIndex(s => s.field === field)
+      if (existingIndex === -1) newSort.push({ field, order: 'asc' })
+      else newSort[existingIndex].order = 'asc'
+      return { ...prev, sort: newSort, page: 1 }
+    })
+  }
+
+  // Sort descending (Largest to Smallest)
+  const applySortDesc = (field) => {
+    setTableState(prev => {
+      let newSort = [...prev.sort]
+      const existingIndex = newSort.findIndex(s => s.field === field)
+      if (existingIndex === -1) newSort.push({ field, order: 'desc' })
+      else newSort[existingIndex].order = 'desc'
+      return { ...prev, sort: newSort, page: 1 }
+    })
+  }
+
+
+
+
+  const [modalState, setModalState] = useState({
+    show: false,
+    mode: 'add',
+    rowData: null
+  })
   const handleShow = () => {
     setModalState({
       show: true,
@@ -47,7 +204,6 @@ const StudyFactorAcademicResultList = () => {
 
   }
 
-  // const [showEdit, setShowEdit] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -58,33 +214,33 @@ const StudyFactorAcademicResultList = () => {
   const [stateListData, setStateListData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingExport, setLoadingExport] = useState(false);
-  const [items] = useState(["Factor For", "Study : Academic Result Group", "Minimum Academic Result Type","Minimum Academic Result","Description", "Modified On"]);
-  const [selectedItems, setSelectedItems] = useState(["Factor For", "Study : Academic Result Group", "Minimum Academic Result Type","Minimum Academic Result",]);
-  const [ItemsRequired] = useState(["Factor For", "Study : Academic Result Group", "Minimum Academic Result Type","Minimum Academic Result"]);
+  const [items] = useState(["Factor For", "Study : Academic Result Group", " Minimum Academic Result Required","Description", "Modified On"]);
+  const [selectedItems, setSelectedItems] = useState(["Factor For", "Study : Academic Result Group", " Minimum Academic Result Required"]);
+  const [ItemsRequired] = useState(["Factor For", "Study : Academic Result Group", " Minimum Academic Result Required"]);
   const [countryListData, setCountryListData] = useState([]);
   // Table columns configuration
   const [tableColumns] = useState([
-      { id: 'factorForName', label: 'Factor For', field: 'factorForName', visible: true, required: false, filterable: false },
-      { id: 'studyAcademicResultGroup', label: 'Study : Academic Result Group', field: 'studyAcademicResultGroup', visible: true, required: false, filterable: false },
-      { id: 'minimumAcademicResultType', label: 'Minimum Academic Result Type', field: 'minimumAcademicResultRequired', visible: true, required: false, filterable: false },
-      { id: 'minimumAcademicResult', label: 'Minimum Academic Result', field: 'minimumAcademicResultRequired', visible: true, required: false, filterable: false },
+    { id: 'factorForName', label: 'Factor For', field: 'factorFor', visible: true, required: false, filterable: true },
+    { id: 'studyAcademicResultGroup', label: 'Study : Academic Result Group', field: 'studyAcademicResultGroup', visible: true, required: false, filterable: true },
+    { id: 'minimumAcademicResultType', label: ' Minimum Academic Result Required', field: 'academicResultType', visible: true, required: false, filterable: true },
+    // { id: 'minimumAcademicResult', label: 'Minimum Academic Result', field: 'minimumAcademicResultRequired', visible: true, required: false, filterable: false },
     { id: 'description', label: 'Description', field: 'description', visible: false, required: false, filterable: false },
     { id: 'updated_at', label: 'Modified On', field: 'updated_at', visible: true, required: false, filterable: false },
   ]);
-
+ 
   const [visibleColumns, setVisibleColumns] = useState(
-    tableColumns.filter(col => col.visible).map(col => col.id)
+    tableColumns.filter((col) => col.visible).map((col) => col.id)
   );
   const [showColumnDropdown, setShowColumnDropdown] = useState(false);
   const columnDropdownRef = useRef(null);
 
   const toggleColumnVisibility = (columnId) => {
-    const column = tableColumns.find(col => col.id === columnId);
+    const column = tableColumns.find((col) => col.id === columnId);
     if (column?.required) return;
 
-    setVisibleColumns(prev => {
+    setVisibleColumns((prev) => {
       if (prev.includes(columnId)) {
-        return prev.filter(id => id !== columnId);
+        return prev.filter((id) => id !== columnId);
       } else {
         return [...prev, columnId];
       }
@@ -95,31 +251,34 @@ const StudyFactorAcademicResultList = () => {
     return visibleColumns.includes(columnId);
   };
 
-
-  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (columnDropdownRef.current && !columnDropdownRef.current.contains(event.target)) {
+      if (
+        columnDropdownRef.current &&
+        !columnDropdownRef.current.contains(event.target)
+      ) {
         setShowColumnDropdown(false);
       }
-      if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target)) {
-        setActiveFilterColumn(null);
-      }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    if (showColumnDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []);
+  }, [showColumnDropdown]);
 
+  // Updated state with sorting
   const [tableState, setTableState] = useState({
     page: 1,
     limit: 25,
     search: '',
     status: '',
+    sortBy: '', // Field to sort by
+    sortOrder: '', // 'asc' or 'desc'
     sort: [
-      // { field: "updated_at", order: "desc" }
       { field: "created_at", order: "desc" }
     ],
     total: 0,
@@ -128,14 +287,13 @@ const StudyFactorAcademicResultList = () => {
     hasNext: false,
     hasPrevious: false
   });
-
   useEffect(() => {
     setTableState(prev => ({ ...prev, search: globalSearch, page: 1 }));
   }, [globalSearch]);
 
   useEffect(() => {
-    fetchCountryList();
-  }, []);
+    fetchDepartmentList();
+  }, [tableState.page, tableState.limit, tableState.status, tableState.sort, columnFilters]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -147,6 +305,7 @@ const StudyFactorAcademicResultList = () => {
     return () => clearTimeout(timer);
   }, [tableState.search]);
 
+
   const fetchDepartmentList = () => {
     setLoading(true);
     const params = {
@@ -154,11 +313,13 @@ const StudyFactorAcademicResultList = () => {
       limit: tableState.limit,
       search: tableState.search || '',
       status: tableState.status || '',
-      // sortBy: tableState.sortBy || '',
-      // sortOrder: tableState.sortOrder || ''
+      sortBy: tableState.sortBy || '',
+      sortOrder: tableState.sortOrder || '',
       sort: tableState.sort,
-      // Send country, state and district IDs
-      country: columnFilters.countryId.length > 0 ? columnFilters.countryId : null,
+      factorFor: columnFilters.factorFor.length > 0 ? columnFilters.factorFor : null,
+      studyAcademicResultGroup: columnFilters.studyAcademicResultGroup.length > 0 ? columnFilters.studyAcademicResultGroup : null,
+      academicResultType: columnFilters.academicResultType.length > 0 ? columnFilters.academicResultType : null,
+
     };
 
     dispatch(studyFactorAcademicResultList(params, (response, error) => {
@@ -194,132 +355,8 @@ const StudyFactorAcademicResultList = () => {
       }
     }));
   };
-  useEffect(() => {
-    fetchDepartmentList();
-  }, [tableState.page, tableState.limit, tableState.status, tableState.sort, columnFilters]);
-  // Prepare country and state filter options
-  useEffect(() => {
-    if (countryListData.length > 0) {
-      // Create filter options with country names from countryListData
-      setFilterDropdownData(prev => ({
-        ...prev,
-        countryId: countryListData.map(country => ({
-          id: country.uuid || country.id,
-          name: country.name || country.countryName
-        })).sort((a, b) => a.name.localeCompare(b.name))
-      }));
-    }
-  }, [countryListData]);
 
 
-  const fetchCountryList = () => {
-    const params = {
-      page: 1,
-      limit: 2000,
-      search: '',
-      status: '',
-      sortBy: 'name',
-      sortOrder: 'asc',
-    };
-
-    dispatch(countryDemoList(params, (response, error) => {
-      if (response?.statusCode === 200 && response?.status === true) {
-        setCountryListData(response?.data || []);
-      }
-    }));
-  };
-  // Toggle filter dropdown for a column
-  const toggleFilterDropdown = (e, columnField) => {
-    e.stopPropagation();
-    setActiveFilterColumn(activeFilterColumn === columnField ? null : columnField);
-    setFilterSearchTerms(prev => ({ ...prev, [columnField]: '' }));
-  };
-  // Handle filter checkbox change - now handles both IDs and regular values
-  const handleFilterCheckboxChange = (columnField, value, checked) => {
-    setColumnFilters(prev => {
-      const currentFilters = prev[columnField] || [];
-      let newFilters;
-      if (checked) {
-        newFilters = [...currentFilters, value];
-      } else {
-        newFilters = currentFilters.filter(v => v !== value);
-      }
-      return { ...prev, [columnField]: newFilters };
-    });
-  };
-
-  // Select all in filter
-  const handleFilterSelectAll = (columnField) => {
-    const searchTerm = filterSearchTerms[columnField] || '';
-
-    // For country, state and district filter, select IDs
-    const availableOptions = (filterDropdownData[columnField] || [])
-      .filter(option => option.name.toLowerCase().includes(searchTerm.toLowerCase()))
-      .map(option => option.id);
-
-    setColumnFilters(prev => ({
-      ...prev,
-      [columnField]: availableOptions
-    }));
-  };
-
-  // Clear all in filter
-  const handleFilterClearAll = (columnField) => {
-    setColumnFilters(prev => ({
-      ...prev,
-      [columnField]: []
-    }));
-  };
-
-  // Clear all filters
-  const clearAllOnlyHeaderFilters = () => {
-    setColumnFilters({
-      countryId: [],
-    });
-  };
-
-  // Clear all filters
-  const clearAllFilters = () => {
-    // Reset filter dropdowns
-    setColumnFilters({
-      countryId: []
-    });
-    // Reset table state (sorting + pagination)
-    setTableState(prev => ({
-      ...prev,
-      page: 1,
-      limit: 25,
-      search: '',
-      status: '',
-      sort: [
-        { field: "created_at", order: "desc" }   // default sort
-      ],
-      total: 0,
-      totalPages: 0,
-      currentPage: 1,
-      hasNext: false,
-      hasPrevious: false
-    }));
-    // Reset global search
-    setGlobalSearch('');
-  };
-
-  // Check if any filters are active
-  const hasActiveFilters = () => {
-    return Object.values(columnFilters).some(filters => filters.length > 0);
-  };
-
-  // Get filtered options based on search term
-  const getFilteredOptions = (columnField) => {
-    const searchTerm = filterSearchTerms[columnField] || '';
-    const options = filterDropdownData[columnField] || [];
-
-    // For country, state and district filter, filter by name
-    return options.filter(option =>
-      option.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  };
-  // Handle sorting
   const handleSort = (field) => {
     setTableState(prev => {
       let newSort = [...prev.sort];
@@ -340,12 +377,9 @@ const StudyFactorAcademicResultList = () => {
     });
   };
 
-  // Get sort icon for a column
   const getSortIcon = (field) => {
     const sortObj = tableState.sort.find(s => s.field === field);
     if (!sortObj) {
-      // return <Icon icon="ri:arrow-up-down-line" className="sorting-th-icone" />;
-      //  return <Icon icon="ri:close-line" className="sorting-th-icone" />;
       return <Icon icon="ri:menu-line" className="sorting-th-icone" />;
     }
     if (sortObj.order === "asc") {
@@ -354,91 +388,90 @@ const StudyFactorAcademicResultList = () => {
     return <Icon icon="ri:sort-desc" className="sorting-th-icone" />;
   };
 
-  // const handleSearchChange = (value) => {
-  //   setTableState(prev => ({
-  //     ...prev,
-  //     search: value,
-  //     page: 1
-  //   }));
-  // };
-
-  // Sort A–Z
-  const applySortAsc = (field) => {
-    setTableState(prev => {
-      let newSort = [...prev.sort];
-      const existingIndex = newSort.findIndex(s => s.field === field);
-
-      if (existingIndex === -1) {
-        newSort.push({ field, order: "asc" });
-      } else {
-        newSort[existingIndex].order = "asc";
-      }
-
-      return { ...prev, sort: newSort, page: 1 };
-    });
-  };
-
-  // Sort Z–A
-  const applySortDesc = (field) => {
-    setTableState(prev => {
-      let newSort = [...prev.sort];
-      const existingIndex = newSort.findIndex(s => s.field === field);
-
-      if (existingIndex === -1) {
-        newSort.push({ field, order: "desc" });
-      } else {
-        newSort[existingIndex].order = "desc";
-      }
-
-      return { ...prev, sort: newSort, page: 1 };
-    });
-  };
-
-  const handlePageLengthChange = (value) => {
+  const clearAllFilters = () => {
     setTableState(prev => ({
       ...prev,
-      limit: Number(value),
-      page: 1
+      page: 1,
+      limit: 25,
+      search: '',
+      status: '',
+      sortBy: '',
+      sortOrder: '',
+      sort: [
+        { field: "created_at", order: "desc" }   // default sort
+      ],
+      total: 0,
+      totalPages: 0,
+      currentPage: 1,
+      hasNext: false,
+      hasPrevious: false
+    }));
+    // Reset Global Search
+    setGlobalSearch('');
+    setSelectedRows([]);
+  };
+
+  const handleSearchChange = (value) => {
+    setTableState((prev) => ({
+      ...prev,
+      search: value,
+      page: 1,
     }));
   };
 
-  // For "Select All" button
+  const handleStatusChange = (value) => {
+    setTableState((prev) => ({
+      ...prev,
+      status: value === "All" ? "" : value,
+      page: 1,
+    }));
+  };
+
+  const handlePageLengthChange = (value) => {
+    setTableState((prev) => ({
+      ...prev,
+      limit: Number(value),
+      page: 1,
+    }));
+  };
+
   const handleSelectAllButton = () => {
     if (isAllSelected) {
       setSelectedRows([]);
     } else {
-      setSelectedRows(stateListData.map(Item => Item.uuid));
+      setSelectedRows(stateListData.map((Item) => Item.uuid));
     }
   };
-  // For checkbox in table header
+
   const handleSelectAll = (e) => {
     const checked = e.target.checked;
     if (checked) {
-      setSelectedRows(stateListData.map(Item => Item.uuid));
+      setSelectedRows(stateListData.map((Item) => Item.uuid));
     } else {
       setSelectedRows([]);
-      setSelectAllOrNot('');
+      setSelectAllOrNot("");
     }
   };
 
   const handleRowSelect = (uuid) => {
-    setSelectedRows(prev => {
+    setSelectedRows((prev) => {
       if (prev.includes(uuid)) {
-        return prev.filter(rowId => rowId !== uuid);
+        return prev.filter((rowId) => rowId !== uuid);
       } else {
         return [...prev, uuid];
       }
     });
   };
 
-  const isAllSelected = stateListData.length > 0 &&
-    stateListData.every(Item => selectedRows.includes(Item.uuid));
+  const isAllSelected =
+    stateListData.length > 0 &&
+    stateListData.every((Item) => selectedRows.includes(Item.uuid));
 
   const goToPage = (page) => {
     if (page >= 1 && page <= tableState.totalPages) {
-      setTableState(prev => ({
+      setTableState((prev) => ({
         ...prev,
-        page: page
+        page: page,
       }));
     }
   };
@@ -456,38 +489,33 @@ const StudyFactorAcademicResultList = () => {
     } else {
       if (currentPage <= 3) {
         for (let i = 1; i <= 4; i++) pages.push(i);
-        pages.push('...');
+        pages.push("...");
         pages.push(totalPages);
       } else if (currentPage >= totalPages - 2) {
         pages.push(1);
-        pages.push('...');
+        pages.push("...");
         for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
       } else {
         pages.push(1);
-        pages.push('...');
+        pages.push("...");
         for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
-        pages.push('...');
+        pages.push("...");
         pages.push(totalPages);
       }
     }
     return pages;
   };
 
-  // const handleCloseEdit = () => {
-  //   setShowEdit(false);
-  //   fetchDepartmentList();
-  // };
-
   const handleShowEdit = (rowData) => {
     setModalState({
       show: true,
-      mode: 'edit',
-      rowData: rowData
+      mode: "edit",
+      rowData: rowData,
     });
   };
   const handleSelectAllOrNot = (a) => {
     setSelectAllOrNot(a);
-  }
+  };
   const handleDelete = (uuid) => {
     setDeleteId(uuid);
     setShowDeleteConfirm(true);
@@ -506,13 +534,35 @@ const StudyFactorAcademicResultList = () => {
   };
 
   const confirmDelete = () => {
-    // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
-    const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
-    if (!sendPayload || sendPayload.length === 0) {
-      toast.error("No state selected for deletion.");
+    const sendPayload =
+      selectAllOrNot === "all"
+        ? "all"
+        : deleteId
+          ? [deleteId]
+          : selectedRows;
+
+    if (!sendPayload || (Array.isArray(sendPayload) && sendPayload.length === 0)) {
+      toast.error("No district selected for deletion.");
       return;
     }
-    dispatch(studyFactorAcademicResultDelete(sendPayload, (response, error) => {
+    const deleteAll =
+      selectAllOrNot === "all" &&
+      (
+        (tableState.search && tableState.search.trim() !== '') ||
+        columnFilters.factorFor.length > 0 ||
+        columnFilters.studyAcademicResultGroup.length > 0 ||
+        columnFilters.academicResultType.length > 0
+
+      );
+    const payloadSend = {
+      deleteAll: deleteAll,
+      factorFor: columnFilters.factorFor.length > 0 ? columnFilters.factorFor : '',
+      studyAcademicResultGroup: columnFilters.studyAcademicResultGroup.length > 0 ? columnFilters.studyAcademicResultGroup : '',
+      academicResultType: columnFilters.academicResultType.length > 0 ? columnFilters.academicResultType : '',
+      id: deleteAll == true ? "" : sendPayload,
+      search: tableState.search || '',
+    };
+    dispatch(studyFactorAcademicResultDelete(payloadSend, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
@@ -524,7 +574,8 @@ const StudyFactorAcademicResultList = () => {
           setSelectedRows([]);
           setSelectAllOrNot('');
           setDeleteId(null);
-          fetchDepartmentList();
+          // fetchDepartmentList();
+          clearAllFilters();
         } else {
           toast.error("Something went wrong.");
         }
@@ -592,13 +643,11 @@ const StudyFactorAcademicResultList = () => {
       toast.error("Please select at least one field");
       return
     }
-    // Map frontend labels to State field names
 
     const fieldMapping = {
       "Factor For": "factor_for",
       "Study : Academic Result Group": "studyAcademicResultGroup",
-      "Minimum Academic Result Type": "minimumAcademicResultType",
-      "Academic Result Type":"minimumAcademicResult",
+      "Minimum Academic Result Required": "minimumAcademicResultType",
       "Description": "description",
       "Modified On": "updated_at",
     };
@@ -610,9 +659,11 @@ const StudyFactorAcademicResultList = () => {
       file: "xlsx",
       fields: fieldsString,
       uuids: selectAllOrNot === "all" ? [] : selectedRows,
-      search: tableState.search || '',
-      sort: tableState.sort,
-      country: columnFilters.countryId.length > 0 ? columnFilters.countryId : null,
+      search: tableState.search || '', // Add search parameter
+      sort: tableState.sort, // Add sort parameter
+      factorFor: columnFilters.factorFor.length > 0 ? columnFilters.factorFor : null,
+      studyAcademicResultGroup: columnFilters.studyAcademicResultGroup.length > 0 ? columnFilters.studyAcademicResultGroup : null,
+      academicResultType: columnFilters.academicResultType.length > 0 ? columnFilters.academicResultType : null,
     };
 
     setLoadingExport(true);
@@ -630,7 +681,7 @@ const StudyFactorAcademicResultList = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `Stuy Factor : Academic Result.xlsx`;
+          link.download = `StuyFactor:AcademicResult.xlsx`;
           document.body.appendChild(link);
           link.click();
           link.remove();
@@ -700,19 +751,20 @@ const StudyFactorAcademicResultList = () => {
                     </>
                   )}
                   {hasActiveFilters() && (
-                    <button
-                      onClick={clearAllOnlyHeaderFilters}
-                      className="btn btn-sm py-1 comman-inactive-btn">
+                    <button onClick={clearAllOnlyHeaderFilters} className="btn btn-sm py-1 comman-inactive-btn">
                       <Icon icon="mdi:filter-off" width="16" /> Clear Filters
                     </button>
                   )}
-                  <button
+                
+                  <ResetButton
                     onClick={clearAllFilters}
-                    className="btn btn-sm py-1 text-white fw-medium comman-btn-color"
-                  >Reset</button>
+                    tableState={tableState}
+                    columnFilters={columnFilters}
+                    selectedRows={selectedRows}
+                    globalSearch={globalSearch}
+                  />
                 </div>
               </div>
-
               {/* Right Section: Select / Search / +Add New */}
               <div className="col-xl-6 col-lg-8 col-md-12">
                 <div className="d-flex flex-wrap align-items-center justify-content-end gap-2">
@@ -1051,8 +1103,6 @@ const StudyFactorAcademicResultList = () => {
                         )}
                         {isColumnVisible('minimumAcademicResultType') && (
                           <td><span>{rowItem.minimumAcademicResultType}</span></td>
-                        )}{isColumnVisible('minimumAcademicResult') && (
-                          <td><span>{rowItem.minimumAcademicResult}</span></td>
                         )}
                         {isColumnVisible('description') && (
                           <td><span>{rowItem.description}</span></td>

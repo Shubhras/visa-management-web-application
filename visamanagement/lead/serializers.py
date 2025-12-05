@@ -596,4 +596,133 @@ class BusinessExperienceSerializer(serializers.ModelSerializer):
                 "end_date": "End date cannot be earlier than start date."
             })
         return attrs
+    
+
+
+class NetworthSerializer(serializers.ModelSerializer):
+    # UUID-based foreign keys
+    applicant = serializers.SlugRelatedField(slug_field='uuid', queryset=Applicant.objects.all())
+    applicant_type = serializers.SlugRelatedField(slug_field='uuid', queryset=ApplicantType.objects.all(), allow_null=True)
+    country = serializers.SlugRelatedField(slug_field='uuid', queryset=Country.objects.all(), allow_null=True)
+    currency = serializers.SlugRelatedField(slug_field='uuid', queryset=Country.objects.all(), allow_null=True)
+
+    # Read-only fields for names
+    applicant_name = serializers.CharField(source='applicant.first_name', read_only=True)
+    applicant_type_name = serializers.CharField(source='applicant_type.name', read_only=True)
+    country_name = serializers.CharField(source='country.name', read_only=True)
+    currency_name = serializers.CharField(source='currency.name', read_only=True)
+
+    class Meta:
+        model = Networth
+        fields = [
+            'uuid',
+            'applicant',
+            'applicant_name',
+            'applicant_type',
+            'applicant_type_name',
+            'country',
+            'country_name',
+            'currency',
+            'currency_name',
+            'immovable_property',
+            'movable_property',
+            'liquid_amount',
+            'total_networth',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['uuid', 'created_at', 'updated_at']
+
+class EligibilityFlagsSerializer(serializers.ModelSerializer):
+    # UUID-based foreign key
+    applicant = serializers.SlugRelatedField(slug_field='uuid', queryset=Applicant.objects.all())
+
+    # Read-only field for related name
+    applicant_name = serializers.CharField(source='applicant.first_name', read_only=True)
+
+    class Meta:
+        model = EligibilityFlags
+        fields = [
+            'uuid',
+            'applicant',
+            'applicant_name',
+            'trade_certificate',
+            'educational_credential_assessment',
+            'ita_province',
+            'tech_startup_founder',
+            'reside_outside_greater_city',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['uuid', 'created_at', 'updated_at']
+
+class SpouseEducationleadSerializer(serializers.ModelSerializer):
+# UUID-based foreign keys
+    applicant = serializers.SlugRelatedField(slug_field='uuid', queryset=Applicant.objects.all())
+    education_level = serializers.SlugRelatedField(slug_field='uuid', queryset=EducationLevel.objects.all(), allow_null=True)
+    duration = serializers.SlugRelatedField(slug_field='uuid', queryset=EducationDuration.objects.all(), allow_null=True)
+    study_main_area = serializers.SlugRelatedField(slug_field='uuid', queryset=Studymainarea.objects.all(), allow_null=True)
+    edu_type = serializers.SlugRelatedField(slug_field='uuid', queryset=EducationType.objects.all(), allow_null=True)
+
+    # Read-only related names
+    applicant_name = serializers.CharField(source='applicant.first_name', read_only=True)
+    education_level_name = serializers.CharField(source='education_level.name', read_only=True)
+    duration_name = serializers.CharField(source='duration.name', read_only=True)
+    study_main_area_name = serializers.CharField(source='study_main_area.name', read_only=True)
+    edu_type_name = serializers.CharField(source='edu_type.name', read_only=True)
+
+    class Meta:
+        model = SpouseEducationlead
+        fields = [
+            'uuid',
+            'applicant',
+            'applicant_name',
+            'education_level',
+            'education_level_name',
+            'duration',
+            'duration_name',
+            'study_main_area',
+            'study_main_area_name',
+            'edu_type',
+            'edu_type_name',
+            'start_date',
+            'end_date',
+            'result',
+        ]
+        read_only_fields = ['uuid']
+
+class SpouseEducationleadSerializer(serializers.ModelSerializer):
+# UUID-based foreign keys
+    applicant = serializers.SlugRelatedField(slug_field='uuid', queryset=Applicant.objects.all())
+    education_level = serializers.SlugRelatedField(slug_field='uuid', queryset=EducationLevel.objects.all(), allow_null=True)
+    duration = serializers.SlugRelatedField(slug_field='uuid', queryset=EducationDuration.objects.all(), allow_null=True)
+    study_main_area = serializers.SlugRelatedField(slug_field='uuid', queryset=Studymainarea.objects.all(), allow_null=True)
+    edu_type = serializers.SlugRelatedField(slug_field='uuid', queryset=EducationType.objects.all(), allow_null=True)
+
+    # Read-only fields for related names
+    applicant_name = serializers.CharField(source='applicant.first_name', read_only=True)
+    education_level_name = serializers.CharField(source='education_level.name', read_only=True)
+    duration_name = serializers.CharField(source='duration.name', read_only=True)
+    study_main_area_name = serializers.CharField(source='study_main_area.name', read_only=True)
+    edu_type_name = serializers.CharField(source='edu_type.name', read_only=True)
+
+    class Meta:
+        model = SpouseEducationlead
+        fields = [
+            'uuid',
+            'applicant',
+            'applicant_name',
+            'education_level',
+            'education_level_name',
+            'duration',
+            'duration_name',
+            'study_main_area',
+            'study_main_area_name',
+            'edu_type',
+            'edu_type_name',
+            'start_date',
+            'end_date',
+            'result',
+        ]
+        read_only_fields = ['uuid']
         

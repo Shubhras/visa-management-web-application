@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
-import {occupationProspectAdd,occupationProspectEdit} from "../../../../store/master/occupationMaster/action";
+import { occupationProspectAdd, occupationProspectEdit } from "../../../../store/master/occupationMaster/action";
 import { toast } from "react-toastify";
 
 const AddEditOccupationProspectModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
@@ -149,47 +149,49 @@ const AddEditOccupationProspectModal = ({ show, handleClose, mode = 'add', rowDa
             />
           </div>
 
-          <div className="modal-body p-24 pt-10">
+          <div className="modal-body ">
             <form onSubmit={handleSubmit}>
-              <div className="row">
+              <div className="">
                 {/* Department Name */}
-                <div className="col-12 mb-10">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Occupation Prospect <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="departmentName"
-                    value={formData.departmentName}
-                    onChange={handleChange}
-                    className={`form-control radius-8 ${errors.departmentName ? 'is-invalid' : ''}`}
-                    placeholder="Enter occupation prospect"
-                  />
-                  {errors.departmentName && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.departmentName}
-                    </div>
-                  )}
-                </div>
+                <div className='row modal-scrollable-content'>
+                  <div className="col-12 mb-10">
+                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                      Occupation Prospect <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="departmentName"
+                      value={formData.departmentName}
+                      onChange={handleChange}
+                      className={`form-control radius-8 ${errors.departmentName ? 'is-invalid' : ''}`}
+                      placeholder="Enter occupation prospect"
+                    />
+                    {errors.departmentName && (
+                      <div className="text-danger text-sm mt-1">
+                        {errors.departmentName}
+                      </div>
+                    )}
+                  </div>
 
-                {/* Description */}
-                <div className="col-12 mb-10">
-                  <label
-                    htmlFor="desc"
-                    className="form-label fw-semibold text-primary-light text-sm mb-0"
-                  >
-                    Description
-                  </label>
-                  <textarea
-                    className={`form-control ${errors.description ? 'is-invalid' : ''}`}
-                    id="desc"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    rows={4}
-                    cols={50}
-                    placeholder="Description"
-                  />
+                  {/* Description */}
+                  <div className="col-12 mb-10">
+                    <label
+                      htmlFor="desc"
+                      className="form-label fw-semibold text-primary-light text-sm mb-0"
+                    >
+                      Description
+                    </label>
+                    <textarea
+                      className={`form-control ${errors.description ? 'is-invalid' : ''}`}
+                      id="desc"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      rows={4}
+                      cols={50}
+                      placeholder="Description"
+                    />
+                  </div>
                 </div>
 
                 {/* Buttons */}

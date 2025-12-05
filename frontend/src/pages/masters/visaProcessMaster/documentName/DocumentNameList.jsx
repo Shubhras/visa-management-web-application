@@ -82,8 +82,9 @@ const DocumentNameList = () => {
         const searchTerm = String(filterSearchTerms[columnField] || '').toLowerCase()
         const options = filterDropdownData[columnField] || []
         return options.filter(o =>
-            String(o.name ?? '').toLowerCase().includes(searchTerm)
+            String(o.name ?? '').toLowerCase().startsWith(searchTerm)
         )
+        .sort((a, b) => a.name.localeCompare(b.name));
     }
 
     const clearAllOnlyHeaderFilters = () => setColumnFilters({ documentCategory: [] })
@@ -469,13 +470,20 @@ const DocumentNameList = () => {
     };
 
     const confirmDelete = () => {
-        // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
-        const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
+        const sendPayload =
+            selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
         if (!sendPayload || sendPayload.length === 0) {
-            toast.error("No Document Name selected for deletion.");
+            toast.error("No ownership Type selected for deletion.");
             return;
         }
-        dispatch(documentNameDelete(sendPayload, (response, error) => {
+        const deleteAll = selectAllOrNot === "all" && ((tableState.search && tableState.search.trim() !== '') || columnFilters.documentCategory.length > 0);
+        const payloadSend = {
+            deleteAll: deleteAll,
+            documentCategory: columnFilters.documentCategory.length > 0 ? columnFilters.documentCategory : '',
+            id: deleteAll == true ? "" : sendPayload,
+            search: tableState.search || '',
+        };
+        dispatch(documentNameDelete(payloadSend, (response, error) => {
             if (error) {
                 toast.error(error?.response?.data?.message || "server error");
             } else {
@@ -487,7 +495,8 @@ const DocumentNameList = () => {
                     setSelectedRows([]);
                     setSelectAllOrNot('');
                     setDeleteId(null);
-                    fetchDepartmentList();
+                    // fetchDepartmentList();
+                    clearAllFilters();
                 } else {
                     toast.error("Something went wrong.");
                 }

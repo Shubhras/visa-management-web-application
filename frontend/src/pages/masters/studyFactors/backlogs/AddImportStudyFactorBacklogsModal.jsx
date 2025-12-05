@@ -4,12 +4,11 @@ import { toast } from "react-toastify";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import CommanSampleExcelDownloadModal from "../../../../components/comman/CommanSampleExcelDownloadModal";
-import { stateImportData } from "../../../../store/master/generalMasters/actions";
 import {
   exportToExcelDuplicate,
   exportToExcelWrongData,
 } from "../../../../helper/utils/commanHelper";
-import { studyFactorAcademicResultImportData, studyFactorBacklogsImportData } from "../../../../store/actions";
+import { studyFactorBacklogsImportData } from "../../../../store/actions";
 const AddImportStudyFactorBacklogsModal = ({ show, handleClose }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
@@ -103,8 +102,8 @@ const AddImportStudyFactorBacklogsModal = ({ show, handleClose }) => {
                   "Backlogs Accepted",
                   "Maximum Backlogs Accepted",
                 ],
-                sheetName: "Study Factor : Backlogs",
-                fileName: " Study Factor : Backlogs",
+                sheetName: "StudyFactor:Backlogs",
+                fileName: " StudyFactor:Backlogs",
               };
               exportToExcelDuplicate(
                 prepareData.data,
@@ -123,8 +122,8 @@ const AddImportStudyFactorBacklogsModal = ({ show, handleClose }) => {
                   "Maximum Backlogs Accepted",
                   "Reason",
                 ],
-                sheetName: "Study Factor : Backlogs",
-                fileName: " Study Factor : Backlogs",
+                sheetName: "StudyFactor:Backlogs",
+                fileName: " StudyFactor:Backlogs",
               };
               exportToExcelWrongData(
                 prepareData.data,
@@ -295,7 +294,7 @@ const AddImportStudyFactorBacklogsModal = ({ show, handleClose }) => {
           show={showSampleExcelDownload}
           handleClose={handleCloseSampleExcelDownload}
           prepareData={{
-            downloadFileName: "Study Factor : Backlogs",
+            downloadFileName: "StudyFactor:Backlogs",
             items: [
               "Factor For",
               "Study : Backlogs Group",

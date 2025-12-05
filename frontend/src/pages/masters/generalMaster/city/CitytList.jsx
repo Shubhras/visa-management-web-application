@@ -543,7 +543,7 @@ const CityList = () => {
     return options.filter((option) =>
       option.name.toLowerCase().startsWith(searchTerm.toLowerCase())
     )
-    .sort((a, b) => a.name.localeCompare(b.name));
+      .sort((a, b) => a.name.localeCompare(b.name));
   };
 
   const handleSort = (field) => {
@@ -734,16 +734,38 @@ const CityList = () => {
         if (error) {
           toast.error(error?.response?.data?.message || "server error");
         } else {
-          if (response?.statusCode === 200 && response?.status === true) {
-            toast.success(response?.message);
+          if (typeof response === "string") {
+            const blob = new Blob([response.data], {
+              type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            });
+
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = "CityDependencyReport.xlsx";
+            document.body.appendChild(link);
+
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+            toast.success("Export successful");
             setShowDeleteConfirm(false);
             setSelectedRows([]);
             setSelectAllOrNot("");
             setDeleteId(null);
-            //fetchCityList();
             clearAllFilters();
           } else {
-            toast.error("Something went wrong.");
+            if (response?.statusCode === 200 && response?.status === true) {
+              toast.success(response?.message);
+              setShowDeleteConfirm(false);
+              setSelectedRows([]);
+              setSelectAllOrNot("");
+              setDeleteId(null);
+              //fetchCityList();
+              clearAllFilters();
+            } else {
+              toast.error("Something went wrong.");
+            }
           }
         }
       })

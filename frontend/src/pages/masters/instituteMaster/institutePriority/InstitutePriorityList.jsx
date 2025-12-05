@@ -371,7 +371,13 @@ const InstitutePriorityList = () => {
             toast.error("No institute priority selected for deletion.");
             return;
         }
-        dispatch(institutePriorityDelete(sendPayload, (response, error) => {
+        const deleteAll = selectAllOrNot === "all" && Boolean(tableState.search?.trim());
+        const payloadSend = {
+            deleteAll: deleteAll,
+            id: deleteAll == true ? "" : sendPayload,
+            search: tableState.search || '',
+        };
+        dispatch(institutePriorityDelete(payloadSend, (response, error) => {
             if (error) {
                 toast.error(error?.response?.data?.message || "server error");
             } else {
@@ -383,7 +389,8 @@ const InstitutePriorityList = () => {
                     setSelectedRows([]);
                     setSelectAllOrNot('');
                     setDeleteId(null);
-                    fetchDepartmentList();
+                    // fetchDepartmentList();
+                    clearAllFilters();
                 } else {
                     toast.error("Something went wrong.");
                 }
@@ -554,7 +561,7 @@ const InstitutePriorityList = () => {
                                             </button>
                                         </>
                                     )}
-                                     <ResetButton
+                                    <ResetButton
                                         onClick={clearAllFilters}
                                         tableState={tableState}
                                         globalSearch={globalSearch}

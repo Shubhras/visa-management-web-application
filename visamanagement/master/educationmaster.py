@@ -344,84 +344,6 @@ class EducationLevelCodeUpdateAPIView(APIView):
 
 # ------------------ Delete API ------------------
 
-# class EducationLevelCodeDeleteAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
-
-#     def delete(self, request):
-#         try:
-#             search = request.GET.get("search", "").strip()
-#             ids = request.data.get("id", None)
-#             delete_all = request.data.get("deleteAll", False)
-
-#             # ----------------------------------
-#             # If id == "all" → delete entire table
-#             # ----------------------------------
-#             if ids == "all":
-#                 count = EducationLevelCode.objects.count()
-#                 EducationLevelCode.objects.all().delete()
-#                 return Response({
-#                     "statusCode": 200,
-#                     "status": True,
-#                     "message": f"All {count} education level code(s) deleted from the table.",
-#                 })
-
-#             # Base queryset (not deleted soft filter)
-#             queryset = EducationLevelCode.objects.filter(is_deleted=False)
-
-#             # -----------------------------
-#             # If SEARCH applied → filter list
-#             # -----------------------------
-#             if search:
-#                 queryset = queryset.filter(Q(name__istartswith=search))
-
-#             # -----------------------------
-#             # deleteAll with search filter
-#             # -----------------------------
-#             if delete_all:
-#                 count = queryset.count()
-#                 queryset.delete()
-#                 return Response({
-#                     "statusCode": 200,
-#                     "status": True,
-#                     "message": f"{count} education level code(s) deleted based on search filter.",
-#                 })
-
-#             # -----------------------------
-#             # Specific UUID deletion block
-#             # -----------------------------
-#             if not ids or not isinstance(ids, list):
-#                 return Response({
-#                     "statusCode": 400,
-#                     "status": False,
-#                     "message": "Please provide a list of UUIDs in the 'id' field, or send 'all' to delete everything."
-#                 }, status=400)
-
-#             valid_uuids = []
-#             invalid_uuids = []
-
-#             for u in ids:
-#                 try:
-#                     valid_uuids.append(UUID(u))
-#                 except:
-#                     invalid_uuids.append(u)
-
-#             queryset = queryset.filter(uuid__in=valid_uuids)
-#             count = queryset.count()
-#             queryset.delete()
-
-#             return Response({
-#                 "statusCode": 200,
-#                 "status": True,
-#                 "message": f"{count} education level code(s) deleted.",
-#                 "invalid_uuids": invalid_uuids if invalid_uuids else None
-#             })
-
-#         except Exception as e:
-#             return Response({
-#                 "statusCode": 500,
-#                 "status": False,
-#                 "message": f"Internal server error: {str(e)}"
-#             }, status=500)
         
 class EducationLevelCodeDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -616,6 +538,196 @@ class EducationLevelCodeDeleteAPIView(APIView):
 # ------------------ Export API ------------------
 
 
+# class EducationLevelCodeExportAPIView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def get(self, request):
+#         try:
+#             # ---------------------------
+#             # Query Params
+#             # ---------------------------
+#             format_type = request.GET.get('format', 'xlsx').lower()
+#             fields = request.GET.get('fields')
+#             uuids_param = request.GET.get('uuids', '')
+#             custom_sort = request.GET.get('customSort')
+#             search = request.GET.get('search', '').strip()
+
+#             # Validate format
+#             if format_type not in ['xlsx', 'csv']:
+#                 return Response({
+#                     "status": False,
+#                     "statusCode": 400,
+#                     "message": "Invalid format. Allowed: xlsx, csv"
+#                 }, status=400)
+
+#             # ---------------------------
+#             # Field Mapping for Headers
+#             # ---------------------------
+#             field_header_map = {
+#                 'uuid': 'UUID',
+#                 'name': 'Education Level Code',
+#                 'description': 'Description',
+#                 'is_deleted': 'Deleted',
+#                 'created_at': 'Created On',
+#                 'updated_at': 'Modified On',
+#             }
+
+#             # Validate fields
+#             if fields:
+#                 field_list = [f.strip() for f in fields.split(',')]
+#                 invalid_fields = [f for f in field_list if f not in field_header_map]
+#                 if invalid_fields:
+#                     return Response({
+#                         "status": False,
+#                         "statusCode": 400,
+#                         "message": f"Invalid fields: {invalid_fields}",
+#                     }, status=400)
+#             else:
+#                 field_list = list(field_header_map.keys())
+
+#             # ---------------------------
+#             # UUID Processing
+#             # ---------------------------
+#             uuids = []
+#             if uuids_param:
+#                 for u in uuids_param.split(','):
+#                     u = u.strip()
+#                     if not u:
+#                         continue
+#                     try:
+#                         uuids.append(UUID(u))
+#                     except:
+#                         return Response({
+#                             "status": False,
+#                             "statusCode": 400,
+#                             "message": f"Invalid UUID: {u}",
+#                         }, status=400)
+
+#             # ---------------------------
+#             # Base QuerySet
+#             # ---------------------------
+#             queryset = EducationLevelCode.objects.filter(is_deleted=False)
+
+#             if uuids:
+#                 queryset = queryset.filter(uuid__in=uuids).distinct()
+
+#             if search:
+#                 queryset = queryset.filter(
+#                     Q(name__istartswith=search)
+#                 )
+
+#             # ---------------------------
+#             # Sorting Logic
+#             # ---------------------------
+#             sort_field_map = {
+#                 'uuid': 'uuid',
+#                 'name': 'name',
+#                 'description': 'description',
+#                 'is_deleted': 'is_deleted',
+#                 'created_at': 'created_at',
+#                 'updated_at': 'updated_at',
+#             }
+
+#             sort_fields = []
+
+#             if custom_sort:
+#                 for rule in custom_sort.split(','):
+#                     try:
+#                         field, order = rule.split(':')
+#                         field = field.strip()
+#                         order = order.strip().lower()
+
+#                         if field not in sort_field_map:
+#                             return Response({
+#                                 "status": False,
+#                                 "statusCode": 400,
+#                                 "message": f"Invalid sort field: {field}",
+#                             }, status=400)
+
+#                         orm_field = sort_field_map[field]
+
+#                         if order not in ['asc', 'desc']:
+#                             return Response({
+#                                 "status": False,
+#                                 "statusCode": 400,
+#                                 "message": f"Invalid sort order: {order}. Use asc/desc",
+#                             }, status=400)
+
+#                         # case-insensitive for description only
+#                         f = Lower(orm_field) if field == 'description' else F(orm_field)
+
+#                         sort_fields.append(
+#                             f.asc(nulls_last=True) if order == 'asc' 
+#                             else f.desc(nulls_last=True)
+#                         )
+#                     except ValueError:
+#                         return Response({
+#                             "status": False,
+#                             "statusCode": 400,
+#                             "message": f"Invalid sorting rule format: {rule}",
+#                         }, status=400)
+
+#             else:
+#                 f = F('created_at')
+#                 sort_order = request.GET.get('sortOrder', 'desc')
+
+#                 sort_fields = [
+#                     f.desc(nulls_last=True) if sort_order == 'desc'
+#                     else f.asc(nulls_last=True)
+#                 ]
+
+#             queryset = queryset.order_by(*sort_fields)
+
+#             # ---------------------------
+#             # Preparing Dataset
+#             # ---------------------------
+#             dataset = Dataset()
+#             dataset.headers = [field_header_map[f] for f in field_list]
+#             dataset.title = 'EducationLevelCode'
+
+#             for edu in queryset:
+#                 row = []
+#                 for field in field_list:
+#                     value = getattr(edu, field, '')
+
+#                     if field in ['created_at', 'updated_at'] and value:
+#                         value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
+#                     elif isinstance(value, bool):
+#                         value = int(value)
+
+#                     row.append(value or "")
+
+#                 dataset.append(row)
+
+#             # ---------------------------
+#             # Export File
+#             # ---------------------------
+#             if format_type == 'csv':
+#                 file_data = dataset.export('csv')
+#                 content_type = 'text/csv'
+#                 file_name = 'education_level_codes.csv'
+#                 response_content = file_data
+#             else:
+#                 file_buffer = io.BytesIO(dataset.export('xlsx'))
+#                 content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+#                 file_name = 'education_level_codes.xlsx'
+#                 response_content = file_buffer.getvalue()
+
+#             # Final Response
+#             response = HttpResponse(response_content, content_type=content_type)
+#             response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+#             return response
+
+#         except Exception as e:
+#             # Catch-all safety net
+#             return Response({
+#                 "status": False,
+#                 "statusCode": 500,
+#                 "message": "Internal server error",
+#                 "error": str(e)
+#             }, status=500)
+
+
 class EducationLevelCodeExportAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -630,7 +742,6 @@ class EducationLevelCodeExportAPIView(APIView):
             custom_sort = request.GET.get('customSort')
             search = request.GET.get('search', '').strip()
 
-            # Validate format
             if format_type not in ['xlsx', 'csv']:
                 return Response({
                     "status": False,
@@ -639,7 +750,7 @@ class EducationLevelCodeExportAPIView(APIView):
                 }, status=400)
 
             # ---------------------------
-            # Field Mapping for Headers
+            # Field Mapping
             # ---------------------------
             field_header_map = {
                 'uuid': 'UUID',
@@ -650,7 +761,7 @@ class EducationLevelCodeExportAPIView(APIView):
                 'updated_at': 'Modified On',
             }
 
-            # Validate fields
+            # Parse selected fields
             if fields:
                 field_list = [f.strip() for f in fields.split(',')]
                 invalid_fields = [f for f in field_list if f not in field_header_map]
@@ -690,9 +801,7 @@ class EducationLevelCodeExportAPIView(APIView):
                 queryset = queryset.filter(uuid__in=uuids).distinct()
 
             if search:
-                queryset = queryset.filter(
-                    Q(name__istartswith=search)
-                )
+                queryset = queryset.filter(name__istartswith=search)
 
             # ---------------------------
             # Sorting Logic
@@ -731,24 +840,30 @@ class EducationLevelCodeExportAPIView(APIView):
                                 "message": f"Invalid sort order: {order}. Use asc/desc",
                             }, status=400)
 
-                        # case-insensitive for description only
-                        f = Lower(orm_field) if field == 'description' else F(orm_field)
+                        # Case-insensitive for string fields (name + description)
+                        # Numeric sorting for name if it's numeric
+                        if field == 'name':
+                            f = Cast(orm_field, IntegerField())
+                        elif field in ['description']:
+                            f = Lower(orm_field)
+                        else:
+                            f = F(orm_field)
+
 
                         sort_fields.append(
-                            f.asc(nulls_last=True) if order == 'asc' 
+                            f.asc(nulls_last=True) if order == 'asc'
                             else f.desc(nulls_last=True)
                         )
+
                     except ValueError:
                         return Response({
                             "status": False,
                             "statusCode": 400,
                             "message": f"Invalid sorting rule format: {rule}",
                         }, status=400)
-
             else:
-                f = F('created_at')
                 sort_order = request.GET.get('sortOrder', 'desc')
-
+                f = F('created_at')
                 sort_fields = [
                     f.desc(nulls_last=True) if sort_order == 'desc'
                     else f.asc(nulls_last=True)
@@ -757,53 +872,52 @@ class EducationLevelCodeExportAPIView(APIView):
             queryset = queryset.order_by(*sort_fields)
 
             # ---------------------------
-            # Preparing Dataset
+            # Create Dataset
             # ---------------------------
             dataset = Dataset()
             dataset.headers = [field_header_map[f] for f in field_list]
             dataset.title = 'EducationLevelCode'
 
-            for edu in queryset:
+            for obj in queryset:
                 row = []
                 for field in field_list:
-                    value = getattr(edu, field, '')
+                    value = getattr(obj, field, "")
 
                     if field in ['created_at', 'updated_at'] and value:
                         value = timezone.localtime(value).strftime("%d-%m-%Y %I:%M:%S %p")
-                    elif isinstance(value, bool):
+
+                    if isinstance(value, bool):
                         value = int(value)
 
                     row.append(value or "")
-
                 dataset.append(row)
 
             # ---------------------------
-            # Export File
+            # Output File
             # ---------------------------
             if format_type == 'csv':
-                file_data = dataset.export('csv')
+                data = dataset.export('csv')
                 content_type = 'text/csv'
                 file_name = 'education_level_codes.csv'
-                response_content = file_data
+                response_data = data
             else:
-                file_buffer = io.BytesIO(dataset.export('xlsx'))
+                xlsx_bytes = io.BytesIO(dataset.export('xlsx'))
                 content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                 file_name = 'education_level_codes.xlsx'
-                response_content = file_buffer.getvalue()
+                response_data = xlsx_bytes.getvalue()
 
-            # Final Response
-            response = HttpResponse(response_content, content_type=content_type)
+            response = HttpResponse(response_data, content_type=content_type)
             response['Content-Disposition'] = f'attachment; filename="{file_name}"'
             return response
 
         except Exception as e:
-            # Catch-all safety net
             return Response({
                 "status": False,
                 "statusCode": 500,
                 "message": "Internal server error",
                 "error": str(e)
             }, status=500)
+
 
 
 # ------------------ Import API ------------------
@@ -873,9 +987,16 @@ class EducationLevelCodeImportAPIView(APIView):
             imported_count = 0
             for row in reversed(data):
                 row_number = row.get("_row_number", "Unknown")
-                name = str(row.get('education level code')).strip() if row.get('education level code') else ''
-                description = str(row.get('description')).strip() if row.get('description') else ''
+                raw_name = row.get('education level code')
 
+                # allow 0 also
+                name = str(raw_name).strip() if raw_name is not None else ''
+
+                # name = str(row.get('education level code')).strip() if row.get('education level code') else ''
+
+                # description = str(row.get('description')).strip() if row.get('description') else ''
+                raw_desc = row.get('description')
+                description = str(raw_desc).strip() if raw_desc is not None else ''
                 
                 if not name:
                     skipped_rows.append(
@@ -899,7 +1020,9 @@ class EducationLevelCodeImportAPIView(APIView):
                 # Convert to int for database (optional if your model field is IntegerField)
                 name = int(name)
 
-                existing = EducationLevelCode.objects.filter(name__iexact=name).first()
+                # existing = EducationLevelCode.objects.filter(name__iexact=name).first()
+                existing = EducationLevelCode.objects.filter(name=name).first()
+
                 if existing:
                     if not existing.is_deleted:
                         duplicates.append({"Row": row_number,
@@ -931,6 +1054,8 @@ class EducationLevelCodeImportAPIView(APIView):
             "duplicates": list(reversed(duplicates)),
             "skipped_rows": list(reversed(skipped_rows)),
         }, status=status.HTTP_200_OK)
+
+
 
 # -------------------- EducationLevel -------------------- #
 
@@ -1125,7 +1250,8 @@ class EducationLevelUpdateAPIView(APIView):
                 "data": None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = EducationLevelSerializer(obj, data=request.data)
+        # serializer = EducationLevelSerializer(obj, data=request.data)
+        serializer = EducationLevelSerializer(obj, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response({
@@ -2155,7 +2281,8 @@ class StudymainareaUpdateAPIView(APIView):
                 "data": None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = StudymainareaSerializer(area, data=request.data)
+        # serializer = StudymainareaSerializer(area, data=request.data)
+        serializer = StudymainareaSerializer(area, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response({
@@ -2178,95 +2305,6 @@ class StudymainareaUpdateAPIView(APIView):
 
 
 # -------------------- DELETE API --------------------
-
-
-# class StudymainareaDeleteAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
-
-#     def delete(self, request):
-#         try:
-#             search = request.GET.get("search", "").strip()
-#             delete_all = request.data.get("deleteAll", False)
-#             ids = request.data.get("id", None)
-
-#             # ----------------------------------
-#             # If id == "all" → DELETE entire table
-#             # ----------------------------------
-#             if ids == "all":
-#                 count = Studymainarea.objects.count()
-#                 Studymainarea.objects.all().delete()
-#                 return Response({
-#                     "statusCode": 200,
-#                     "status": True,
-#                     "message": f"All {count} study main area(s) deleted from the table.",
-#                 }, status=200)
-
-#             # ----------------------------------
-#             # Base queryset
-#             # ----------------------------------
-#             queryset = Studymainarea.objects.all()
-
-#             # -----------------------------
-#             # Search filter
-#             # -----------------------------
-#             if search:
-#                 queryset = queryset.filter(name__istartswith=search)
-
-#             # -----------------------------
-#             # deleteAll with search logic
-#             # -----------------------------
-#             if delete_all:
-#                 count = queryset.count()
-#                 queryset.delete()
-
-#                 if search:
-#                     msg = f"{count} study main area(s) deleted based on search filter."
-#                 else:
-#                     msg = f"All {count} study main area(s) deleted from the table."
-
-#                 return Response({
-#                     "statusCode": 200,
-#                     "status": True,
-#                     "message": msg
-#                 }, status=200)
-
-#             # -----------------------------
-#             # Specific UUID deletion
-#             # -----------------------------
-#             if not ids or not isinstance(ids, list):
-#                 return Response({
-#                     "statusCode": 400,
-#                     "status": False,
-#                     "message": "Please provide a list of UUIDs in 'id' field, or send 'all' to delete everything."
-#                 }, status=400)
-
-#             valid_uuids = []
-#             invalid_uuids = []
-
-#             for u in ids:
-#                 try:
-#                     valid_uuids.append(UUID(u))
-#                 except:
-#                     invalid_uuids.append(u)
-
-#             filtered_objects = queryset.filter(uuid__in=valid_uuids)
-#             count = filtered_objects.count()
-#             filtered_objects.delete()
-
-#             return Response({
-#                 "statusCode": 200,
-#                 "status": True,
-#                 "message": f"{count} study main area(s) deleted.",
-#                 "invalid_uuids": invalid_uuids if invalid_uuids else None
-#             }, status=200)
-
-#         except Exception as e:
-#             return Response({
-#                 "statusCode": 500,
-#                 "status": False,
-#                 "message": f"Internal server error: {str(e)}"
-#             }, status=500)
-
 
 class StudymainareaDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]

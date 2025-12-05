@@ -12,8 +12,11 @@ const MasterLayout = ({ children }) => {
   let [mobileMenu, setMobileMenu] = useState(false);
   const location = useLocation();
   const [selectedItemName, setSelectedItemName] = useState("Dashboard");
+   const [getUrlPath, setGetUrlPath] = useState("");
   const [openSubmenu, setOpenSubmenu] = useState(null);
   const [openChildMenu, setOpenChildMenu] = useState(null);
+  const [leftSidebarHideShow, setLeftSidebarHideShow] = useState(false);
+
 
   const [searchAllowedModules] = useState([
     "City",
@@ -145,6 +148,10 @@ const MasterLayout = ({ children }) => {
     "Compare : Occupation To Occupation",
     "Eligibility for Occupation Name",
   ]);
+  const toggleSidebar = () => {
+    setLeftSidebarHideShow((prev) => !prev);
+  };
+
 
   // Global Search State - Har page pe same rahega
   const { globalSearch, setGlobalSearch } = useGlobalSearch();
@@ -158,7 +165,7 @@ const MasterLayout = ({ children }) => {
       name: "Sales",
       submenu: [
         { name: "Leads B2C", path: "/leads-B2C" },
-        { name: "Inquiry B2C", path: "/inquiry-B2C" },
+        { name: "Inquiry B2C", path: "/" },
       ],
     },
     {
@@ -303,14 +310,8 @@ const MasterLayout = ({ children }) => {
             { name: "Designation (Job Title)", path: "/designation" },
             { name: "Job Prospect", path: "/job-prospect" },
             { name: "Related Occupation", path: "/related-occupation" },
-            {
-              name: "Compare : Occupation To Occupation",
-              path: "/occupation-to-occupation",
-            },
-            {
-              name: "Eligibility for Occupation Name",
-              path: "/eligibility-for-occupation-name",
-            },
+            { name: "Compare : Occupation To Occupation", path: "/occupation-to-occupation" },
+            { name: "Eligibility for Occupation Name", path: "/eligibility-for-occupation-name" },
           ],
         },
         {
@@ -509,14 +510,16 @@ const MasterLayout = ({ children }) => {
   };
 
   // // Page title set karne ke liye (optional improvement)
-  // useEffect(() => {
-  //   const path = location.pathname;
+  useEffect(() => {
+    const path = location.pathname;
+    console.log('pathpathpathpathpath',path);
+    setGetUrlPath(path)
   //   if (path === "/") setSelectedItemName("Dashboard");
   //   else if (path.includes("city-list")) setSelectedItemName("City");
   //   else if (path.includes("country-list")) setSelectedItemName("Country");
   //   // ... aur baki pages ke liye add kar sakte ho
   //   else setSelectedItemName("Dashboard");
-  // }, [location.pathname]);
+  }, [location.pathname]);
 
   useEffect(() => {
     // when changes pathname than blank GlobalSearch
@@ -2249,10 +2252,61 @@ const MasterLayout = ({ children }) => {
                   )}
                 </div>
               )}
+
+
+             
+              {getUrlPath == "/leads-form" && (
+                
+                <div className="d-flex align-items-center gap-3 flex-wrap h-100">
+                <div className="d-flex align-items-center ">
+                  <button type="button">
+                    <Icon icon="mdi:chevron-left" width="25" height="25" />
+                  </button>
+                  <p className="mb-0">02/30</p>
+                  <button type="button">
+                    <Icon icon="mdi:chevron-right" width="25" height="25" />
+                  </button>
+                </div>
+                <div className="d-flex align-items-center gap-2">
+                  <Icon
+                    icon="mdi:whatsapp"
+                    className="cursor-pointer"
+                    width="30"
+                  />
+                  <Icon
+                    icon="material-symbols:mail-outline"
+                    className="cursor-pointer"
+                    width="30"
+                  />
+                  <Icon
+                    icon="material-symbols:sms-outline"
+                    className="cursor-pointer"
+                    width="30"
+                  />
+                </div>
+                {/* <div style={{ cursor: "pointer" }} onClick={toggleSidebar}> */}
+                 <div style={{ cursor: "pointer" }}>
+                  <Icon icon="material-symbols:menu" width="30" />
+                </div>
+              </div>
+             )}
+
+
+
+
+
             </div>
           </div>
         </div>
-        <div className="dashboard-main-body">{children}</div>
+        {/* <div className="dashboard-main-body">{children}</div> */}
+
+        <div style={{ display: "flex" }}>
+          <div className="dashboard-main-body" style={{ width: leftSidebarHideShow ? "80%" : "100%" }}>{children}</div>
+          <div className="left-sidebar-main-body" style={{ width: leftSidebarHideShow ? "20%" : "0%", overflow: "hidden" }}>
+            {/* Ghanshya Nagar */}
+          </div>
+
+        </div>
 
         <footer className="d-footer main-footer">
           <div className="row align-items-center justify-content-between">

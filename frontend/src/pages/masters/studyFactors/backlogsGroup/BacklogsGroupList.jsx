@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
 import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
-import { backlogsGroupDelete, backlogsGroupExportData, backlogsGroupList, factorForDelete, factorForExportData, factorForList } from '../../../../store/actions';
+import { backlogsGroupDelete, backlogsGroupExportData, backlogsGroupList} from '../../../../store/actions';
 import AddEditBacklogsGroupModal from './AddEditBacklogsGroupModal';
 import AddImportBacklogsGroupModal from './AddImportBacklogsGroupModal';
 import ResetButton from '../../../../components/comman/ResetButton';
@@ -359,7 +359,8 @@ const BacklogsGroupList = () => {
           setSelectedRows([]);
           setSelectAllOrNot('');
           setDeleteId(null);
-          fetchFactorForList();
+          // fetchFactorForList();
+            clearAllFilters();
         } else {
           toast.error("Something went wrong.");
         }

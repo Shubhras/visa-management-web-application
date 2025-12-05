@@ -359,7 +359,8 @@ const LanguageAbilityGroupList = () => {
           setSelectedRows([]);
           setSelectAllOrNot('');
           setDeleteId(null);
-          fetchLanguageAbilityGroupList();
+          // fetchLanguageAbilityGroupList();
+            clearAllFilters();
         } else {
           toast.error("Something went wrong.");
         }

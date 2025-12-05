@@ -39,7 +39,7 @@ const AddEditVisaNameModal = ({ show, handleClose, mode = 'add', rowData = null 
                     visaMain: rowData.visaMain || '',
                     visaMajorCategory: rowData.visaMajorCategory || "",
                     visaShortName: rowData.visaShortName || "",
-                    country_name: rowData.country_name || '',
+                    country_name: rowData.country || '',
                     description: rowData.description || '',
                 });
             } else {

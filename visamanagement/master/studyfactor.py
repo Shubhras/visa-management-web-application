@@ -28,6 +28,16 @@ import io
 import pytz
 from django.utils import timezone
 import unicodedata
+from django.db.models import F
+from django.db.models.functions import Lower
+from django.db.models.deletion import ProtectedError
+from uuid import UUID
+from django.db import transaction
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from master.dependency_report import find_dependencies, generate_dependency_excel
+
+
 
 india_tz = pytz.timezone('Asia/Kolkata')
 
@@ -38,6 +48,7 @@ class IsAdminUser(BasePermission):
     
 
 
+# ----------------FactorFor LIST ----------------
 
 class FactorForListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -67,7 +78,7 @@ class FactorForListAPIView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 
-# ---------------- CREATE ----------------
+# ----------------FactorFor CREATE ----------------
 class FactorForCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -102,7 +113,7 @@ class FactorForCreateAPIView(APIView):
             }, status=400)
 
 
-# ---------------- RETRIEVE ----------------
+# ----------------FactorFor RETRIEVE ----------------
 class FactorForRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -126,7 +137,7 @@ class FactorForRetrieveAPIView(APIView):
         })
 
 
-# ---------------- UPDATE ----------------
+# ----------------FactorFor UPDATE ----------------
 class FactorForUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -162,93 +173,209 @@ class FactorForUpdateAPIView(APIView):
             }, status=400)
 
 
-# ---------------- DELETE ----------------
+# ----------------FactorFor DELETE ----------------
+
 class FactorForDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def delete(self, request, uuid=None):
-        ids = request.data.get('id', None)
+    def delete(self, request):
+        try:
+            search = request.GET.get("search", "").strip()
+            delete_all = request.data.get("deleteAll", False)
+            ids = request.data.get("id", None)
 
-        if uuid:
-            try:
-                obj = FactorFor.objects.get(uuid=uuid)
-                obj.delete()
+            # ----------------------------------
+            # CASE 1: DELETE ENTIRE TABLE (id = "all")
+            # ----------------------------------
+            if ids == "all":
+                queryset = FactorFor.objects.all()
+
+                deletable = []
+                non_deletable = []
+                report = []
+
+                for obj in queryset:
+                    if self._is_connected(obj):
+                        non_deletable.append(obj)
+
+                        # Excel report row
+                        report.append({
+                            "parent_table": "FactorFor",
+                            "parent_field_value": obj.name,
+                            "used_in_table": "Related Table",
+                            "field": "factor_for"
+                        })
+                    else:
+                        deletable.append(obj)
+
+                deleted_count = len(deletable)
+                not_deleted_count = len(non_deletable)
+
+                # If any failed, return Excel sheet
+                if non_deletable:
+                    return generate_dependency_excel(
+                        report,
+                        filename="factorfor_dependency_report.xlsx"
+                    )
+
+                FactorFor.objects.filter(id__in=[o.id for o in deletable]).delete()
+
                 return Response({
-                    "statusCode": 204,
+                    "statusCode": 200,
                     "status": True,
-                    "message": "FactorFor permanently deleted.",
-                    "data": None
-                }, status=204)
-            except FactorFor.DoesNotExist:
-                return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "FactorFor not found.",
-                    "data": None
-                }, status=404)
+                    "message": f"{deleted_count} data deleted; "
+                               f"{not_deleted_count} data not deleted, they are connected to another table."
+                })
 
-        if ids == "all":
-            objs = FactorFor.objects.all()
-            count = objs.count()
-            if count == 0:
+            # ----------------------------------
+            # BASE QUERYSET
+            # ----------------------------------
+            queryset = FactorFor.objects.all()
+
+            # ----------------------------------
+            # SEARCH FILTER
+            # ----------------------------------
+            if search:
+                queryset = queryset.filter(name__istartswith=search)
+
+            # ---------------------------------------------------
+            # CASE 2: DELETE ALL MATCHING SEARCH RESULTS
+            # ---------------------------------------------------
+            if delete_all:
+
+                deletable = []
+                non_deletable = []
+                report = []
+
+                for obj in queryset:
+                    if self._is_connected(obj):
+                        non_deletable.append(obj)
+
+                        report.append({
+                            "parent_table": "FactorFor",
+                            "parent_field_value": obj.name,
+                            "used_in_table": "Related Table",
+                            "field": "factor_for"
+                        })
+                    else:
+                        deletable.append(obj)
+
+                deleted_count = len(deletable)
+                not_deleted_count = len(non_deletable)
+
+                # If any failed, return Excel
+                if non_deletable:
+                    return generate_dependency_excel(
+                        report,
+                        filename="factorfor_dependency_report.xlsx"
+                    )
+
+                FactorFor.objects.filter(id__in=[o.id for o in deletable]).delete()
+
                 return Response({
-                    "statusCode": 404,
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{deleted_count} data is deleted ; "
+                               f"{not_deleted_count} data is not deleted ,they are connected to another table",
+                })
+
+            # ---------------------------------------------------
+            # CASE 3: DELETE SPECIFIC UUID LIST
+            # ---------------------------------------------------
+            if not ids or not isinstance(ids, list):
+                return Response({
+                    "statusCode": 400,
                     "status": False,
-                    "message": "No FactorFor found to delete.",
-                    "data": None
-                }, status=404)
-            objs.delete()
+                    "message": "Please provide a list of UUIDs in 'id'."
+                }, status=400)
+
+            valid_uuids = []
+            invalid_uuids = []
+
+            for u in ids:
+                try:
+                    valid_uuids.append(UUID(u))
+                except:
+                    invalid_uuids.append(u)
+
+            filtered_objects = queryset.filter(uuid__in=valid_uuids)
+
+            deletable = []
+            non_deletable = []
+            report = []
+
+            for obj in filtered_objects:
+                if self._is_connected(obj):
+                    non_deletable.append(obj)
+                    report.append({
+                        "parent_table": "FactorFor",
+                        "parent_field_value": obj.name,
+                        "used_in_table": "Related Table",
+                        "field": "factor_for"
+                    })
+                else:
+                    deletable.append(obj)
+
+            # If non deletable exists → return Excel
+            if non_deletable:
+                return generate_dependency_excel(
+                    report,
+                    filename="factorfor_dependency_report.xlsx"
+                )
+
+            FactorFor.objects.filter(id__in=[o.id for o in deletable]).delete()
+
+            # -----------------------------
+            # SINGLE DELETE MESSAGE
+            # -----------------------------
+            if len(valid_uuids) == 1:
+                if len(non_deletable) == 1:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Could not delete the data, it is connected to another table."
+                    })
+                else:
+                    return Response({
+                        "statusCode": 200,
+                        "status": True,
+                        "message": "1 data deleted successfully."
+                    })
+
+            # -----------------------------
+            # MULTIPLE DELETE MESSAGE
+            # -----------------------------
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} FactorFor permanently deleted.",
-                "data": None
-            })
+                "message": f"{len(deletable)} data is deleted ; "
+                           f"{len(non_deletable)} data is not deleted ,they are connected to another table",
+                "invalid_uuids": invalid_uuids if invalid_uuids else None
+            }, status=200)
 
-        if not ids or not isinstance(ids, list):
+        except Exception as e:
             return Response({
-                "statusCode": 400,
+                "statusCode": 500,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
-                "data": None
-            }, status=400)
+                "message": f"Internal server error: {str(e)}"
+            }, status=500)
 
-        valid_uuids = []
-        invalid_uuids = []
-        for u in ids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
-
-        if not valid_uuids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=400)
-
-        objs = FactorFor.objects.filter(uuid__in=valid_uuids)
-        count = objs.count()
-        if count == 0:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "No matching FactorFor found.",
-                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=404)
-
-        objs.delete()
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} FactorFor(s) permanently deleted.",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        })
+    # -------------------------------------------------------------------
+    # FUNCTION TO CHECK IF FACTORFOR IS CONNECTED TO ANY OTHER TABLE
+    # -------------------------------------------------------------------
+    def _is_connected(self, factor_for_obj):
+        return (
+            StudyFactorAge.objects.filter(factor_for=factor_for_obj).exists() or
+            StudyFactorAcademicResult.objects.filter(factor_for=factor_for_obj).exists() or
+            StudyFactorBacklogs.objects.filter(factor_for=factor_for_obj).exists() or
+            StudyFactorGAP.objects.filter(factor_for=factor_for_obj).exists() or
+            StudyFactorLanguageAbility.objects.filter(factor_for=factor_for_obj).exists() or
+            StudyFactorEntranceTestAbility.objects.filter(factor_for=factor_for_obj).exists()
+        )
 
 
-# ---------------- EXPORT ----------------
+
+# ----------------FactorFor EXPORT ----------------
 class FactorForExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -290,11 +417,11 @@ class FactorForExportAPIView(APIView):
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
-            file_name = 'factorfor.csv'
+            file_name = 'FactorFor.csv'
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'factorfor.xlsx'
+            file_name = 'FactorFor.xlsx'
 
         response = HttpResponse(
             file_data if format_type == 'csv' else file_data.getvalue(),
@@ -304,7 +431,8 @@ class FactorForExportAPIView(APIView):
         return response
 
 
-# ---------------- IMPORT ----------------
+# ----------------FactorFor IMPORT ----------------
+
 class FactorForImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -313,31 +441,43 @@ class FactorForImportAPIView(APIView):
         sheet_name = request.data.get("sheet_name")
 
         if not file:
-            return Response({"error": "No file uploaded"}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No file uploaded"
+            }, status=400)
 
         format_type = file.name.split(".")[-1].lower()
-        duplicates = []
-        skipped_rows = []
         required_headers = {"factor for"}
         optional_headers = {"description"}
 
-        try:
-            data = []
+        data = []
+        duplicates = []
+        skipped_rows = []
+        to_create = []
+        seen_in_file = set()
+        imported_count = 0
 
+        try:
+            # ---------- READ XLSX ----------
             if format_type == "xlsx":
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
                 if not sheet_name:
                     return Response({
-                        "error": "Please provide sheet_name",
-                        "available_sheets": available_sheets,
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Please provide sheet_name",
+                        "available_sheets": available_sheets
                     }, status=400)
 
                 if sheet_name not in available_sheets:
                     return Response({
-                        "error": f'Sheet "{sheet_name}" not found',
-                        "available_sheets": available_sheets,
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Sheet "{sheet_name}" not found',
+                        "available_sheets": available_sheets
                     }, status=400)
 
                 ws = wb[sheet_name]
@@ -348,7 +488,7 @@ class FactorForImportAPIView(APIView):
                         "message": f'Sheet "{sheet_name}" is empty.'
                     }, status=400)
 
-                headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                headers = [str(c.value).strip().lower() if c.value else "" for c in next(ws.iter_rows(min_row=1, max_row=1))]
                 if not required_headers.issubset(set(headers)):
                     return Response({
                         "statusCode": 400,
@@ -363,6 +503,7 @@ class FactorForImportAPIView(APIView):
                     row_dict["_row_number"] = idx
                     data.append(row_dict)
 
+            # ---------- READ CSV ----------
             elif format_type == "csv":
                 decoded_file = file.read().decode("utf-8")
                 dataset = Dataset()
@@ -385,45 +526,121 @@ class FactorForImportAPIView(APIView):
                     "message": "Unsupported file format. Use .xlsx or .csv",
                 }, status=400)
 
-            imported_count = 0
-            for row in reversed(data):
-                row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("factor for")).strip() if row.get("factor for") else None
-                description = str(row.get("description")).strip() if row.get("description") else ""
+            # ---------- IMPORT LOGIC ----------
+            from master.models import FactorFor
 
+            existing_map = {f.name.lower(): f for f in FactorFor.objects.all()}
+
+            # process rows in reverse to maintain input order in final output
+            for row in reversed(data):
+                row_no = row.get("_row_number", "Unknown")
+                name_raw = row.get("factor for")
+                desc_raw = row.get("description")
+
+                name = str(name_raw).strip() if name_raw is not None else ""
+                description = str(desc_raw).strip() if desc_raw is not None else ""
+
+                # -----------------------
+                # VALIDATION BLOCK
+                # -----------------------
+                row_errors = {}
+
+                # 1. Validate Factor For
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing name"})
+                    row_errors["Factor For"] = {
+                        "value": name_raw if name_raw else "",
+                        "reason": "Missing required value"
+                    }
+                else:
+                    if isinstance(name_raw, (int, float)) or not any(c.isalpha() for c in name):
+                        row_errors["Factor For"] = {
+                            "value": name_raw,
+                            "reason": "Invalid Input: Factor For"
+                        }
+
+                # 2. Validate Description datatype
+                if desc_raw is not None and not isinstance(desc_raw, (str, int, float, bool)):
+                    row_errors["Description"] = {
+                        "value": desc_raw,
+                        "reason": "Invalid description data"
+                    }
+
+                # If validation failed → send to skipped_rows
+                if row_errors:
+                    skipped_item = {"Row": row_no}
+
+                    # FOLLOW EXPORT ORDER: Factor For → Description
+                    for key in ("Factor For", "Description"):
+                        if key in row_errors:
+                            skipped_item[key] = row_errors[key]
+
+                    skipped_rows.append(skipped_item)
                     continue
 
-                existing = FactorFor.objects.filter(name__iexact=name).first()
+                # -----------------------
+                # DUPLICATES IN FILE
+                # -----------------------
+                key = name.lower()
+                if key in seen_in_file:
+                    duplicates.append({
+                        "Row": row_no,
+                        "Factor For": name,
+                        "Description": description,
+                        "Reason": "Duplicate in uploaded file"
+                    })
+                    continue
+                seen_in_file.add(key)
+
+                # -----------------------
+                # EXISTING IN DATABASE
+                # -----------------------
+                existing = existing_map.get(key)
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Factor For": name, "Reason": "Already exists"})
+                        duplicates.append({
+                            "Row": row_no,
+                            "Factor For": name,
+                            "Description": description,
+                            "Reason": "Already exists in database"
+                        })
                         continue
-                    else:
-                        existing.description = description
-                        existing.is_deleted = False
-                        existing.save()
-                        imported_count += 1
-                else:
-                    FactorFor.objects.create(name=name, description=description, is_deleted=False)
+                    # Reactivate soft deleted record
+                    existing.description = description
+                    existing.is_deleted = False
+                    existing.save()
                     imported_count += 1
+                    continue
+
+                # -----------------------
+                # BULK CREATE
+                # -----------------------
+                to_create.append(FactorFor(name=name, description=description, is_deleted=False))
+
+            if to_create:
+                batch_size = 500
+                for i in range(0, len(to_create), batch_size):
+                    FactorFor.objects.bulk_create(to_create[i:i + batch_size])
+                imported_count += len(to_create)
 
         except Exception as e:
-            return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": str(e)
+            }, status=400)
 
+        # restore file order for response
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "message": f'Sheet \"{sheet_name}\" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows))
         }, status=200)
-    
 
 
-
+# ----------------Study AgeGroup LIST ----------------
 
 class AgeGroupListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -451,7 +668,7 @@ class AgeGroupListAPIView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 
-# ---------------- CREATE ----------------
+# ----------------AgeGroup CREATE ----------------
 class AgeGroupCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -485,7 +702,7 @@ class AgeGroupCreateAPIView(APIView):
             }, status=400)
 
 
-# ---------------- RETRIEVE ----------------
+# ----------------AgeGroup RETRIEVE ----------------
 class AgeGroupRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -509,7 +726,7 @@ class AgeGroupRetrieveAPIView(APIView):
         })
 
 
-# ---------------- UPDATE ----------------
+# ----------------AgeGroup UPDATE ----------------
 class AgeGroupUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -545,93 +762,190 @@ class AgeGroupUpdateAPIView(APIView):
             }, status=400)
 
 
-# ---------------- DELETE ----------------
+# ----------------AgeGroup DELETE ----------------
 class AgeGroupDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def delete(self, request, uuid=None):
-        ids = request.data.get('id', None)
+    def delete(self, request):
+        try:
+            search = request.GET.get("search", "").strip()
+            delete_all = request.data.get("deleteAll", False)
+            ids = request.data.get("id", None)
 
-        if uuid:
-            try:
-                obj = AgeGroup.objects.get(uuid=uuid)
-                obj.delete()
+            queryset = AgeGroup.objects.filter(is_deleted=False)
+
+            # -------------------------------------------
+            # CASE A: deleteAll = true + search
+            # -------------------------------------------
+            if delete_all and search and (ids in [None, "",[]]):
+                qs_search = queryset.filter(name__istartswith=search)
+
+                if not qs_search.exists():
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No AgeGroup found matching this search",
+                    })
+
+                deleted = []
+                skipped = []
+                report = []
+
+                for obj in qs_search:
+                    deps = find_dependencies(obj)
+
+                    if deps:
+                        skipped.append(str(obj.uuid))
+                        for d in deps:
+                            report.append({
+                                "parent_table": "AgeGroup",
+                                "parent_field_value": obj.name,
+                                "used_in_table": d["used_in_table"],
+                                "field": d["field"]
+                            })
+                        continue
+
+                    with transaction.atomic():
+                        obj.delete()
+                    deleted.append(str(obj.uuid))
+
+                if skipped:
+                    return generate_dependency_excel(
+                        report,
+                        filename="agegroup_dependency_report.xlsx"
+                    )
+
                 return Response({
-                    "statusCode": 204,
+                    "statusCode": 200,
                     "status": True,
-                    "message": "AgeGroup permanently deleted.",
-                    "data": None
-                }, status=204)
-            except AgeGroup.DoesNotExist:
-                return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "AgeGroup not found.",
-                    "data": None
-                }, status=404)
+                    "message": f"{len(deleted)} deleted based on search",
+                    "data": {"deleted": deleted}
+                })
 
-        if ids == "all":
-            objs = AgeGroup.objects.all()
-            count = objs.count()
-            if count == 0:
+            # -------------------------------------------
+            # CASE B: id = "all" → delete entire table
+            # -------------------------------------------
+            if ids == "all" and not delete_all and search == "":
+                qs_all = queryset
+
+                if not qs_all.exists():
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No AgeGroup found to delete",
+                    })
+
+                deleted = []
+                skipped = []
+                report = []
+
+                for obj in qs_all:
+                    deps = find_dependencies(obj)
+
+                    if deps:
+                        skipped.append(obj.name)
+                        for d in deps:
+                            report.append({
+                                "parent_table": "AgeGroup",
+                                "parent_field_value": obj.name,
+                                "used_in_table": d["used_in_table"],
+                                "field": d["field"]
+                            })
+                        continue
+
+                    with transaction.atomic():
+                        obj.delete()
+                    deleted.append(str(obj.uuid))
+
+                if skipped:
+                    return generate_dependency_excel(
+                        report,
+                        filename="agegroup_dependency_report.xlsx"
+                    )
+
                 return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "No AgeGroup found to delete.",
-                    "data": None
-                }, status=404)
-            objs.delete()
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"All deletable AgeGroup removed",
+                    "data": {"deleted": deleted}
+                })
+
+            # -------------------------------------------
+            # CASE C: list of IDs (bulk delete)
+            # -------------------------------------------
+            if isinstance(ids, list):
+                deleted = []
+                skipped = []
+                invalid = []
+                report = []
+
+                # Validate UUIDs
+                valid_uuids = []
+                for u in ids:
+                    try:
+                        valid_uuids.append(UUID(u))
+                    except:
+                        invalid.append(u)
+
+                qs_ids = queryset.filter(uuid__in=valid_uuids)
+
+                if not qs_ids.exists():
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "No AgeGroup found for given ID list",
+                    })
+
+                for obj in qs_ids:
+                    deps = find_dependencies(obj)
+
+                    if deps:
+                        skipped.append(str(obj.uuid))
+                        for d in deps:
+                            report.append({
+                                "parent_table": "AgeGroup",
+                                "parent_field_value": obj.name,
+                                "used_in_table": d["used_in_table"],
+                                "field": d["field"]
+                            })
+                        continue
+
+                    with transaction.atomic():
+                        obj.delete()
+                    deleted.append(str(obj.uuid))
+
+                if skipped:
+                    return generate_dependency_excel(
+                        report,
+                        filename="agegroup_dependency_report.xlsx"
+                    )
+
+                return Response({
+                    "statusCode": 200,
+                    "status": True,
+                    "message": f"{len(deleted)} AgeGroup deleted",
+                    "data": {"deleted": deleted, "invalid_uuids": invalid}
+                })
+
+            # -------------------------------------------
+            # INVALID REQUEST FORMAT
+            # -------------------------------------------
             return Response({
-                "statusCode": 200,
-                "status": True,
-                "message": f"All {count} AgeGroup permanently deleted.",
-                "data": None
+                "statusCode": 400,
+                "status": False,
+                "message": "Invalid delete request format"
             })
 
-        if not ids or not isinstance(ids, list):
+        except Exception as e:
             return Response({
-                "statusCode": 400,
+                "statusCode": 500,
                 "status": False,
-                "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
-                "data": None
-            }, status=400)
-
-        valid_uuids = []
-        invalid_uuids = []
-        for u in ids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
-
-        if not valid_uuids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=400)
-
-        objs = AgeGroup.objects.filter(uuid__in=valid_uuids)
-        count = objs.count()
-        if count == 0:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "No matching AgeGroup found.",
-                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=404)
-
-        objs.delete()
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} AgeGroup(s) permanently deleted.",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        })
+                "message": f"Internal server error: {str(e)}"
+            }, status=500)
 
 
-# ---------------- EXPORT ----------------
+
+# ----------------AgeGroup EXPORT ----------------
 class AgeGroupExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -657,7 +971,7 @@ class AgeGroupExportAPIView(APIView):
 
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'AgeGroup'
+        dataset.title = 'StudyAgeGroup'
 
         for obj in queryset:
             row = []
@@ -673,11 +987,11 @@ class AgeGroupExportAPIView(APIView):
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
-            file_name = 'agegroup.csv'
+            file_name = 'StudyAgeGroup.csv'
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'agegroup.xlsx'
+            file_name = 'StudyAgeGroup.xlsx'
 
         response = HttpResponse(
             file_data if format_type == 'csv' else file_data.getvalue(),
@@ -687,7 +1001,8 @@ class AgeGroupExportAPIView(APIView):
         return response
 
 
-# ---------------- IMPORT ----------------
+# ----------------AgeGroup IMPORT ----------------
+
 class AgeGroupImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -696,31 +1011,46 @@ class AgeGroupImportAPIView(APIView):
         sheet_name = request.data.get("sheet_name")
 
         if not file:
-            return Response({"error": "No file uploaded"}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No file uploaded"
+            }, status=400)
 
         format_type = file.name.split(".")[-1].lower()
-        duplicates = []
-        skipped_rows = []
+
+        # Export API headers (ORDER MATTERS)
+        export_headers = ["Age Group", "Description"]
+
         required_headers = {"age group"}
         optional_headers = {"description"}
 
-        try:
-            data = []
+        data = []
+        duplicates = []
+        skipped_rows = []
+        to_create = []
+        seen_in_file = set()
 
+        try:
+            # ---------------- XLSX Handling ----------------
             if format_type == "xlsx":
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
                 if not sheet_name:
                     return Response({
-                        "error": "Please provide sheet_name",
-                        "available_sheets": available_sheets,
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Please provide sheet_name",
+                        "available_sheets": available_sheets
                     }, status=400)
 
                 if sheet_name not in available_sheets:
                     return Response({
-                        "error": f'Sheet "{sheet_name}" not found',
-                        "available_sheets": available_sheets,
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Sheet "{sheet_name}" not found',
+                        "available_sheets": available_sheets
                     }, status=400)
 
                 ws = wb[sheet_name]
@@ -731,7 +1061,9 @@ class AgeGroupImportAPIView(APIView):
                         "message": f'Sheet "{sheet_name}" is empty.'
                     }, status=400)
 
-                headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                headers = [str(c.value).strip().lower() if c.value else "" 
+                           for c in next(ws.iter_rows(min_row=1, max_row=1))]
+
                 if not required_headers.issubset(set(headers)):
                     return Response({
                         "statusCode": 400,
@@ -746,73 +1078,146 @@ class AgeGroupImportAPIView(APIView):
                     row_dict["_row_number"] = idx
                     data.append(row_dict)
 
+            # ---------------- CSV Handling ----------------
             elif format_type == "csv":
                 decoded_file = file.read().decode("utf-8")
                 dataset = Dataset()
                 dataset.load(decoded_file, format="csv")
+
                 for idx, row in enumerate(dataset.dict, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
                     row_lower["_row_number"] = idx
+
                     if not required_headers.issubset(set(row_lower.keys())):
                         return Response({
                             "statusCode": 400,
                             "status": False,
                             "message": f"Missing required headers. Required: {', '.join(required_headers)}. Found: {', '.join(row_lower.keys())}."
                         }, status=400)
+
                     data.append(row_lower)
 
             else:
                 return Response({
                     "statusCode": 400,
                     "status": False,
-                    "message": "Unsupported file format. Use .xlsx or .csv",
+                    "message": "Unsupported file format. Use .xlsx or .csv"
                 }, status=400)
 
-            imported_count = 0
-            for row in reversed(data):
-                row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("age group")).strip() if row.get("age group") else None
-                description = str(row.get("description")).strip() if row.get("description") else ""
+            # preload existing AgeGroup
+            existing_map = {ag.name.lower(): ag for ag in AgeGroup.objects.all()}
 
+            imported_count = 0
+
+            # ---------------- Process Rows ----------------
+            for row in reversed(data):
+                row_no = row.get("_row_number", "Unknown")
+
+                name = str(row.get("age group") or "").strip()
+                description = str(row.get("description") or "").strip()
+
+                # -----------------------------------------------------
+                # NEW VALIDATION RULES ADDED HERE (as requested)
+                # -----------------------------------------------------
+
+                # Missing Age Group
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing name"})
+                    skipped_rows.append({
+                        "Row": row_no,
+                        "Age Group": name,
+                        "Description": description,
+                        "Reason": "Age Group is missing"
+                    })
                     continue
 
-                existing = AgeGroup.objects.filter(name__iexact=name).first()
+                # Length validation
+                if len(name) > 100:
+                    skipped_rows.append({
+                        "Row": row_no,
+                        "Age Group": name,
+                        "Description": description,
+                        "Reason": "Age Group exceeds 100 characters"
+                    })
+                    continue
+
+                # Description missing
+                if description is None or description == "":
+                    skipped_rows.append({
+                        "Row": row_no,
+                        "Age Group": name,
+                        "Description": description,
+                        "Reason": "Description is missing"
+                    })
+                    continue
+
+                # -----------------------------------------------------
+                # END OF NEW VALIDATION RULES
+                # (Existing logic below is untouched)
+                # -----------------------------------------------------
+
+                key = name.lower()
+
+                # Duplicate inside file
+                if key in seen_in_file:
+                    duplicates.append({
+                        "Row": row_no,
+                        "Age Group": name,
+                        "Description": description,
+                        "Reason": "Duplicate in uploaded file"
+                    })
+                    continue
+                seen_in_file.add(key)
+
+                # Duplicate in database
+                existing = existing_map.get(key)
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Age  Group": name, "Reason": "Already exists"})
+                        duplicates.append({
+                            "Row": row_no,
+                            "Age Group": name,
+                            "Description": description,
+                            "Reason": "Already exists in database"
+                        })
                         continue
-                    else:
-                        existing.description = description
-                        existing.is_deleted = False
-                        existing.save()
-                        imported_count += 1
-                else:
-                    AgeGroup.objects.create(name=name, description=description, is_deleted=False)
+
+                    # Reactivate record
+                    existing.description = description
+                    existing.is_deleted = False
+                    existing.save()
                     imported_count += 1
+                    continue
+
+                # Add for bulk create
+                to_create.append(
+                    AgeGroup(name=name, description=description, is_deleted=False)
+                )
+
+            # ---------------- Bulk Create ----------------
+            if to_create:
+                batch_size = 500
+                for i in range(0, len(to_create), batch_size):
+                    AgeGroup.objects.bulk_create(to_create[i:i + batch_size])
+                imported_count += len(to_create)
 
         except Exception as e:
-            return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": str(e)
+            }, status=400)
 
+        # ---------------- SUCCESS RESPONSE -----------------
         return Response({
             "statusCode": 200,
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows))
         }, status=200)
 
 
-
-
-
-
-
-
-
-
+# ----------------AcademicResultGroup CREATE ----------------
 
 class AcademicResultGroupListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -840,7 +1245,7 @@ class AcademicResultGroupListAPIView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 
-# ---------------- CREATE ----------------
+# ----------------AcademicResultGroup CREATE ----------------
 class AcademicResultGroupCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -874,7 +1279,7 @@ class AcademicResultGroupCreateAPIView(APIView):
             }, status=400)
 
 
-# ---------------- RETRIEVE ----------------
+# ----------------AcademicResultGroup RETRIEVE ----------------
 class AcademicResultGroupRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -898,7 +1303,7 @@ class AcademicResultGroupRetrieveAPIView(APIView):
         })
 
 
-# ---------------- UPDATE ----------------
+# ----------------AcademicResultGroup UPDATE ----------------
 class AcademicResultGroupUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -934,16 +1339,42 @@ class AcademicResultGroupUpdateAPIView(APIView):
             }, status=400)
 
 
-# ---------------- DELETE ----------------
+# ----------------AcademicResultGroup DELETE ----------------
+
 class AcademicResultGroupDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
+        from master.dependency_report import find_dependencies, generate_dependency_excel
+
+        search = request.GET.get("search","").strip()
         ids = request.data.get('id', None)
 
+        # -------------------------
+        #  SINGLE DELETE
+        # -------------------------
         if uuid:
             try:
                 obj = AcademicResultGroup.objects.get(uuid=uuid)
+
+                deps = find_dependencies(obj)
+                if deps:
+                    # Build excel report
+                    report = []
+                    for d in deps:
+                        report.append({
+                            "parent_table": "AcademicResultGroup",
+                            "parent_field_value": obj.name,
+                            "used_in_table": d["used_in_table"],
+                            "field": d["field"]
+                        })
+
+                    return generate_dependency_excel(
+                        report,
+                        filename="academicresultgroup_dependency_report.xlsx"
+                    )
+
+                # no dependency → delete
                 obj.delete()
                 return Response({
                     "statusCode": 204,
@@ -951,6 +1382,7 @@ class AcademicResultGroupDeleteAPIView(APIView):
                     "message": "AcademicResultGroup permanently deleted.",
                     "data": None
                 }, status=204)
+
             except AcademicResultGroup.DoesNotExist:
                 return Response({
                     "statusCode": 404,
@@ -959,24 +1391,62 @@ class AcademicResultGroupDeleteAPIView(APIView):
                     "data": None
                 }, status=404)
 
+        # -------------------------
+        #  ALL DELETE (ids="all")
+        # -------------------------
         if ids == "all":
             objs = AcademicResultGroup.objects.all()
-            count = objs.count()
-            if count == 0:
+            if search:
+                objs = objs.filter(name__istartswith=search)
+
+            if not objs.exists():
                 return Response({
                     "statusCode": 404,
                     "status": False,
                     "message": "No AcademicResultGroup found to delete.",
                     "data": None
                 }, status=404)
-            objs.delete()
+
+            deleted = []
+            skipped = []
+            report = []
+
+            for obj in objs:
+                deps = find_dependencies(obj)
+
+                if deps:
+                    skipped.append(str(obj.uuid))
+                    for d in deps:
+                        report.append({
+                            "parent_table": "AcademicResultGroup",
+                            "parent_field_value": obj.name,
+                            "used_in_table": d["used_in_table"],
+                            "field": d["field"]
+                        })
+                    continue
+
+                obj.delete()
+                deleted.append(str(obj.uuid))
+
+            # if some skipped → return excel
+            if skipped:
+                message = f"{len(deleted)} data is deleted ; {len(skipped)} data is not deleted, they are connected to another table"
+
+                return generate_dependency_excel(
+                    report,
+                    filename="academicresultgroup_dependency_report.xlsx"
+                )
+
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} AcademicResultGroup permanently deleted.",
+                "message": f"All {len(deleted)} AcademicResultGroup permanently deleted.",
                 "data": None
             })
 
+        # -------------------------
+        #  MULTIPLE DELETE
+        # -------------------------
         if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
@@ -1002,25 +1472,57 @@ class AcademicResultGroupDeleteAPIView(APIView):
             }, status=400)
 
         objs = AcademicResultGroup.objects.filter(uuid__in=valid_uuids)
-        count = objs.count()
-        if count == 0:
+        if search:
+            objs = objs.filter(name__istartswith=search)
+
+        if not objs.exists():
             return Response({
                 "statusCode": 404,
                 "status": False,
                 "message": "No matching AcademicResultGroup found.",
-                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                "data": None
             }, status=404)
 
-        objs.delete()
+        deleted = []
+        skipped = []
+        report = []
+
+        for obj in objs:
+            deps = find_dependencies(obj)
+
+            if deps:
+                skipped.append(str(obj.uuid))
+                for d in deps:
+                    report.append({
+                        "parent_table": "AcademicResultGroup",
+                        "parent_field_value": obj.name,
+                        "used_in_table": d["used_in_table"],
+                        "field": d["field"]
+                    })
+                continue
+
+            obj.delete()
+            deleted.append(str(obj.uuid))
+
+        # If some skipped → return Excel
+        if skipped:
+            message = f"{len(deleted)} data is deleted ; {len(skipped)} data is not deleted, they are connected to another table"
+
+            return generate_dependency_excel(
+                report,
+                filename="academicresultgroup_dependency_report.xlsx"
+            )
+
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} AcademicResultGroup(s) permanently deleted.",
+            "message": f"{len(deleted)} AcademicResultGroup(s) permanently deleted.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         })
 
 
-# ---------------- EXPORT ----------------
+
+# ----------------AcademicResultGroup EXPORT ----------------
 class AcademicResultGroupExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -1062,11 +1564,11 @@ class AcademicResultGroupExportAPIView(APIView):
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
-            file_name = 'academicresultgroup.csv'
+            file_name = 'AcademicResultGroup.csv'
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'academicresultgroup.xlsx'
+            file_name = 'AcademicResultGroup.xlsx'
 
         response = HttpResponse(
             file_data if format_type == 'csv' else file_data.getvalue(),
@@ -1076,7 +1578,9 @@ class AcademicResultGroupExportAPIView(APIView):
         return response
 
 
-# ---------------- IMPORT ----------------
+# ----------------AcademicResultGroup IMPORT ----------------
+
+
 class AcademicResultGroupImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -1085,31 +1589,42 @@ class AcademicResultGroupImportAPIView(APIView):
         sheet_name = request.data.get("sheet_name")
 
         if not file:
-            return Response({"error": "No file uploaded"}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No file uploaded"
+            }, status=400)
 
         format_type = file.name.split(".")[-1].lower()
-        duplicates = []
-        skipped_rows = []
         required_headers = {"academic result"}
         optional_headers = {"description"}
 
-        try:
-            data = []
+        data = []
+        duplicates = []
+        skipped_rows = []
+        to_create = []
+        seen_in_file = set()
 
+        try:
+            # ---------------- XLSX Handling ----------------
             if format_type == "xlsx":
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
                 if not sheet_name:
                     return Response({
-                        "error": "Please provide sheet_name",
-                        "available_sheets": available_sheets,
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Please provide sheet_name",
+                        "available_sheets": available_sheets
                     }, status=400)
 
                 if sheet_name not in available_sheets:
                     return Response({
-                        "error": f'Sheet "{sheet_name}" not found',
-                        "available_sheets": available_sheets,
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Sheet "{sheet_name}" not found',
+                        "available_sheets": available_sheets
                     }, status=400)
 
                 ws = wb[sheet_name]
@@ -1120,7 +1635,8 @@ class AcademicResultGroupImportAPIView(APIView):
                         "message": f'Sheet "{sheet_name}" is empty.'
                     }, status=400)
 
-                headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                headers = [str(c.value).strip().lower() if c.value else "" for c in next(ws.iter_rows(min_row=1, max_row=1))]
+
                 if not required_headers.issubset(set(headers)):
                     return Response({
                         "statusCode": 400,
@@ -1135,6 +1651,7 @@ class AcademicResultGroupImportAPIView(APIView):
                     row_dict["_row_number"] = idx
                     data.append(row_dict)
 
+            # ---------------- CSV Handling ----------------
             elif format_type == "csv":
                 decoded_file = file.read().decode("utf-8")
                 dataset = Dataset()
@@ -1157,44 +1674,286 @@ class AcademicResultGroupImportAPIView(APIView):
                     "message": "Unsupported file format. Use .xlsx or .csv",
                 }, status=400)
 
+            # Preload existing records
+            existing_map = {pr.name.lower(): pr for pr in AcademicResultGroup.objects.all()}
             imported_count = 0
-            for row in reversed(data):
-                row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("academic result")).strip() if row.get("academic result") else None
-                description = str(row.get("description")).strip() if row.get("description") else ""
 
+            # ---------------- Process Rows ----------------
+            for row in reversed(data):
+                row_no = row.get("_row_number", "Unknown")
+                name = str(row.get("academic result") or "").strip()
+                description = str(row.get("description") or "").strip()
+
+                # Check for missing name
                 if not name:
-                    skipped_rows.append({"Row": row_number,"Academic Result": name or "","Description":description, "Reason": "Missing name"})
+                    skipped_rows.append({
+                        "Row": row_no,
+                        "Academic Result": name,
+                        "Description": description,
+                        "Reason": "Missing Academic Result"
+                    })
                     continue
 
-                existing = AcademicResultGroup.objects.filter(name__iexact=name).first()
+                # Check for invalid values (letters and spaces only)
+                if not all(c.isalpha() or c.isspace() for c in name):
+                    skipped_rows.append({
+                        "Row": row_no,
+                        "Academic Result": name,
+                        "Description": description,
+                        "Reason": "Invalid Academic Result"
+                    })
+                    continue
+
+                key = name.lower()
+
+                # Duplicate in file
+                if key in seen_in_file:
+                    duplicates.append({
+                        "Row": row_no,
+                        "Academic Result": name,
+                        "Description": description,
+                        "Reason": "Duplicate in uploaded file"
+                    })
+                    continue
+                seen_in_file.add(key)
+
+                # Existing in database
+                existing = existing_map.get(key)
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Academic Result": name, "Reason": "Already exists"})
+                        duplicates.append({
+                            "Row": row_no,
+                            "Academic Result": name,
+                            "Description": description,
+                            "Reason": "Already exists"
+                        })
                         continue
-                    else:
-                        existing.description = description
-                        existing.is_deleted = False
-                        existing.save()
-                        imported_count += 1
-                else:
-                    AcademicResultGroup.objects.create(name=name, description=description, is_deleted=False)
+                    # Reactivate deleted record
+                    existing.description = description
+                    existing.is_deleted = False
+                    existing.save()
                     imported_count += 1
+                    continue
+
+                # Prepare for bulk create
+                to_create.append(AcademicResultGroup(name=name, description=description, is_deleted=False))
+
+            # ---------------- Bulk Create ----------------
+            if to_create:
+                batch_size = 500
+                for i in range(0, len(to_create), batch_size):
+                    AcademicResultGroup.objects.bulk_create(to_create[i:i + batch_size])
+                imported_count += len(to_create)
 
         except Exception as e:
-            return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": str(e)
+            }, status=400)
 
+        # ---------------- SUCCESS RESPONSE -----------------
         return Response({
             "statusCode": 200,
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
             "duplicates": list(reversed(duplicates)),
-            "skipped_rows": list(reversed(skipped_rows)),
+            "skipped_rows": list(reversed(skipped_rows))
+        }, status=200)
+
+
+
+
+
+class AcademicResultGroupImportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        file = request.FILES.get("file")
+        sheet_name = request.data.get("sheet_name")
+
+        if not file:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No file uploaded"
+            }, status=400)
+
+        format_type = file.name.split(".")[-1].lower()
+        required_headers = {"academic result"}
+        optional_headers = {"description"}
+
+        data = []
+        duplicates = []
+        skipped_rows = []
+        to_create = []
+        seen_in_file = set()
+
+        try:
+            # ---------------- XLSX Handling ----------------
+            if format_type == "xlsx":
+                wb = openpyxl.load_workbook(file, read_only=True)
+                available_sheets = wb.sheetnames
+
+                if not sheet_name:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Please provide sheet_name",
+                        "available_sheets": available_sheets
+                    }, status=400)
+
+                if sheet_name not in available_sheets:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Sheet "{sheet_name}" not found',
+                        "available_sheets": available_sheets
+                    }, status=400)
+
+                ws = wb[sheet_name]
+                if ws.max_row <= 1:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Sheet "{sheet_name}" is empty.'
+                    }, status=400)
+
+                headers = [str(c.value).strip().lower() if c.value else "" 
+                           for c in next(ws.iter_rows(min_row=1, max_row=1))]
+
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f"Missing required headers. Required: {required_headers}, Found: {set(headers)}"
+                    }, status=400)
+
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    row_dict["_row_number"] = idx
+                    data.append(row_dict)
+
+            # ---------------- CSV Handling ----------------
+            elif format_type == "csv":
+                decoded_file = file.read().decode("utf-8")
+                dataset = Dataset()
+                dataset.load(decoded_file, format="csv")
+
+                for idx, row in enumerate(dataset.dict, start=2):
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    row_lower["_row_number"] = idx
+
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({
+                            "statusCode": 400,
+                            "status": False,
+                            "message": f"Missing required headers. Required: {', '.join(required_headers)}. "
+                                       f"Found: {', '.join(row_lower.keys())}."
+                        }, status=400)
+
+                    data.append(row_lower)
+
+            else:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Unsupported file format. Use .xlsx or .csv",
+                }, status=400)
+
+            # Load existing data
+            existing_map = {obj.name.lower(): obj for obj in AcademicResultGroup.objects.all()}
+            imported_count = 0
+
+            # ---------------- PROCESS ROWS ----------------
+            for row in reversed(data):
+                row_no = row.get("_row_number", "Unknown")
+
+                name = str(row.get("academic result") or "").strip()
+                description = str(row.get("description") or "").strip()
+
+                #  Missing / wrong name → skipped
+                if not name or len(name) < 2:
+                    skipped_rows.append({
+                        "Row": row_no,
+                        "Academic Result": name,
+                        "Description": description,
+                        "Reason": "Invalid or missing Academic Result name"
+                    })
+                    continue
+
+                key = name.lower()
+
+                #  Duplicate inside uploaded file
+                if key in seen_in_file:
+                    duplicates.append({
+                        "Row": row_no,
+                        "Academic Result": name,
+                        "Description": description,
+                        "Reason": "Duplicate in uploaded file"
+                    })
+                    continue
+                seen_in_file.add(key)
+
+                #  Already exists in database
+                existing = existing_map.get(key)
+                if existing:
+                    if not existing.is_deleted:
+                        duplicates.append({
+                            "Row": row_no,
+                            "Academic Result": name,
+                            "Description": description,
+                            "Reason": "Already exists in database"
+                        })
+                        continue
+
+                    # Reactivate deleted record
+                    existing.description = description
+                    existing.is_deleted = False
+                    existing.save()
+                    imported_count += 1
+                    continue
+
+                # Prepare for bulk create
+                to_create.append(
+                    AcademicResultGroup(
+                        name=name,
+                        description=description,
+                        is_deleted=False,
+                    )
+                )
+
+            # ---------------- BULK CREATE ----------------
+            if to_create:
+                batch = 500
+                for i in range(0, len(to_create), batch):
+                    AcademicResultGroup.objects.bulk_create(to_create[i:i + batch])
+
+                imported_count += len(to_create)
+
+        except Exception as e:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": str(e)
+            }, status=400)
+
+        # ---------------- SUCCESS RESPONSE ----------------
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count,
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows))
         }, status=200)
 
 
         
+# ----------------BacklogsGroup List ----------------
 
 class BacklogsGroupListAPIView(APIView):
     def get(self, request):
@@ -1219,7 +1978,7 @@ class BacklogsGroupListAPIView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 
-# -------------------- Create API --------------------
+# -------------------- BacklogsGroup CREATE API --------------------
 class BacklogsGroupCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -1254,7 +2013,7 @@ class BacklogsGroupCreateAPIView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
 
-# -------------------- Retrieve API --------------------
+# --------------------BacklogsGroup Retrieve API --------------------
 class BacklogsGroupRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -1278,7 +2037,7 @@ class BacklogsGroupRetrieveAPIView(APIView):
         })
 
 
-# -------------------- Update API --------------------
+# --------------------BacklogsGroup Update API --------------------
 class BacklogsGroupUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -1314,13 +2073,17 @@ class BacklogsGroupUpdateAPIView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
 
-# -------------------- Delete API --------------------
+# --------------------BacklogsGroup Delete API --------------------
 class BacklogsGroupDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
+        search = request.GET.get("search", "").strip()  # SEARCH ONLY on 'name' field
         ids = request.data.get('id', None)
 
+        # -------------------------
+        #  SINGLE DELETE
+        # -------------------------
         if uuid:
             try:
                 group = BacklogsGroup.objects.get(uuid=uuid)
@@ -1339,8 +2102,14 @@ class BacklogsGroupDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
+        # -------------------------
+        #  BULK DELETE (ALL) — APPLY SEARCH FILTER
+        # -------------------------
         if ids == "all":
             groups = BacklogsGroup.objects.all()
+            if search:
+                groups = groups.filter(name__icontains=search)
+
             count = groups.count()
             if count == 0:
                 return Response({
@@ -1349,6 +2118,7 @@ class BacklogsGroupDeleteAPIView(APIView):
                     "message": "No BacklogsGroups found to delete.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
+
             groups.delete()
             return Response({
                 "statusCode": 200,
@@ -1357,6 +2127,9 @@ class BacklogsGroupDeleteAPIView(APIView):
                 "data": None
             })
 
+        # -------------------------
+        #  MULTIPLE DELETE (Selected UUIDs)
+        # -------------------------
         if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
@@ -1382,8 +2155,10 @@ class BacklogsGroupDeleteAPIView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         groups = BacklogsGroup.objects.filter(uuid__in=valid_uuids)
-        count = groups.count()
+        if search:
+            groups = groups.filter(name__icontains=search)
 
+        count = groups.count()
         if count == 0:
             return Response({
                 "statusCode": 404,
@@ -1393,7 +2168,6 @@ class BacklogsGroupDeleteAPIView(APIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
         groups.delete()
-
         return Response({
             "statusCode": 200,
             "status": True,
@@ -1402,7 +2176,7 @@ class BacklogsGroupDeleteAPIView(APIView):
         })
 
 
-# -------------------- Export API --------------------
+# --------------------BacklogsGroup Export API --------------------
 class BacklogsGroupExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -1463,7 +2237,7 @@ class BacklogsGroupExportAPIView(APIView):
         return response
 
 
-# -------------------- Import API --------------------
+# --------------------BacklogsGroup Import API --------------------
 class BacklogsGroupImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -1576,14 +2350,14 @@ class BacklogsGroupImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": reversed(duplicates),
+            "skipped_rows": reversed(skipped_rows)
         }, status=200)
 
 
 
 
-# -------------------- List API --------------------
+# --------------------GAPGroup List API --------------------
 class GAPGroupListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
@@ -1607,7 +2381,7 @@ class GAPGroupListAPIView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 
-# -------------------- Create API --------------------
+# --------------------GAPGroup Create API --------------------
 class GAPGroupCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -1642,7 +2416,7 @@ class GAPGroupCreateAPIView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
 
-# -------------------- Retrieve API --------------------
+# --------------------GAPGroup Retrieve API --------------------
 class GAPGroupRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -1666,7 +2440,7 @@ class GAPGroupRetrieveAPIView(APIView):
         })
 
 
-# -------------------- Update API --------------------
+# --------------------GAPGroup Update API --------------------
 class GAPGroupUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -1702,13 +2476,17 @@ class GAPGroupUpdateAPIView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
 
-# -------------------- Delete API --------------------
+# --------------------GAPGroup Delete API --------------------
 class GAPGroupDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
+        search = request.GET.get("search", "").strip()  # SEARCH ONLY on 'name' field
         ids = request.data.get('id', None)
 
+        # -------------------------
+        #  SINGLE DELETE
+        # -------------------------
         if uuid:
             try:
                 group = GAPGroup.objects.get(uuid=uuid)
@@ -1727,8 +2505,14 @@ class GAPGroupDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
+        # -------------------------
+        #  BULK DELETE (ALL) — APPLY SEARCH FILTER
+        # -------------------------
         if ids == "all":
             groups = GAPGroup.objects.all()
+            if search:
+                groups = groups.filter(name__icontains=search)
+
             count = groups.count()
             if count == 0:
                 return Response({
@@ -1737,6 +2521,7 @@ class GAPGroupDeleteAPIView(APIView):
                     "message": "No GAPGroups found to delete.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
+
             groups.delete()
             return Response({
                 "statusCode": 200,
@@ -1745,6 +2530,9 @@ class GAPGroupDeleteAPIView(APIView):
                 "data": None
             })
 
+        # -------------------------
+        #  MULTIPLE DELETE (Selected UUIDs)
+        # -------------------------
         if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
@@ -1770,8 +2558,10 @@ class GAPGroupDeleteAPIView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         groups = GAPGroup.objects.filter(uuid__in=valid_uuids)
-        count = groups.count()
+        if search:
+            groups = groups.filter(name__icontains=search)
 
+        count = groups.count()
         if count == 0:
             return Response({
                 "statusCode": 404,
@@ -1781,7 +2571,6 @@ class GAPGroupDeleteAPIView(APIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
         groups.delete()
-
         return Response({
             "statusCode": 200,
             "status": True,
@@ -1790,7 +2579,7 @@ class GAPGroupDeleteAPIView(APIView):
         })
 
 
-# -------------------- Export API --------------------
+# --------------------GAPGroup Export API --------------------
 class GAPGroupExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -1851,7 +2640,7 @@ class GAPGroupExportAPIView(APIView):
         return response
 
 
-# -------------------- Import API --------------------
+# --------------------GAPGroup Import API --------------------
 class GAPGroupImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -1964,14 +2753,14 @@ class GAPGroupImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": reversed(duplicates),
+            "skipped_rows": reversed(skipped_rows)
         }, status=200)
 
 
 
 
-# -------------------- List API --------------------
+# --------------------LanguageAbilityGroup List API --------------------
 class LanguageAbilityGroupListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
@@ -1995,7 +2784,7 @@ class LanguageAbilityGroupListAPIView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 
-# -------------------- Create API --------------------
+# --------------------LanguageAbilityGroup Create API --------------------
 class LanguageAbilityGroupCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2030,7 +2819,7 @@ class LanguageAbilityGroupCreateAPIView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
 
-# -------------------- Retrieve API --------------------
+# --------------------LanguageAbilityGroup Retrieve API --------------------
 class LanguageAbilityGroupRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2054,7 +2843,7 @@ class LanguageAbilityGroupRetrieveAPIView(APIView):
         })
 
 
-# -------------------- Update API --------------------
+# --------------------LanguageAbilityGroup Update API --------------------
 class LanguageAbilityGroupUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2090,7 +2879,7 @@ class LanguageAbilityGroupUpdateAPIView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
 
-# -------------------- Delete API --------------------
+# --------------------LanguageAbilityGroup Delete API --------------------
 class LanguageAbilityGroupDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2178,7 +2967,8 @@ class LanguageAbilityGroupDeleteAPIView(APIView):
         })
 
 
-# -------------------- Export API --------------------
+
+# --------------------LanguageAbilityGroup Export API --------------------
 class LanguageAbilityGroupExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2190,7 +2980,7 @@ class LanguageAbilityGroupExportAPIView(APIView):
 
         field_header_map = {
             'uuid': 'UUID',
-            'name': 'Language Ability',
+            'name': 'Language Ability Group',
             'description': 'Description',
             'is_deleted': 'Deleted',
             'updated_at': 'Modified On',
@@ -2225,11 +3015,11 @@ class LanguageAbilityGroupExportAPIView(APIView):
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
-            file_name = 'languageabilitygroups.csv'
+            file_name = 'LanguageAbilityGroup.csv'
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'languageabilitygroups.xlsx'
+            file_name = 'LanguageAbilityGroup.xlsx'
 
         response = HttpResponse(
             file_data if format_type == 'csv' else file_data.getvalue(),
@@ -2239,7 +3029,7 @@ class LanguageAbilityGroupExportAPIView(APIView):
         return response
 
 
-# -------------------- Import API --------------------
+# --------------------LanguageAbilityGroup Import API --------------------
 class LanguageAbilityGroupImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2352,14 +3142,14 @@ class LanguageAbilityGroupImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": reversed(duplicates),
+            "skipped_rows": reversed(skipped_rows)
         }, status=200)
 
 
 
 
-# -------------------- List API --------------------
+# --------------------EntranceTestAbilityGroup List API --------------------
 class EntranceTestAbilityGroupListAPIView(APIView):
     def get(self, request):
         search = request.GET.get('search', '').strip()
@@ -2383,7 +3173,7 @@ class EntranceTestAbilityGroupListAPIView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 
-# -------------------- Create API --------------------
+# --------------------EntranceTestAbilityGroup Create API --------------------
 class EntranceTestAbilityGroupCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2418,7 +3208,7 @@ class EntranceTestAbilityGroupCreateAPIView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
 
-# -------------------- Retrieve API --------------------
+# --------------------EntranceTestAbilityGroup Retrieve API --------------------
 class EntranceTestAbilityGroupRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2442,7 +3232,7 @@ class EntranceTestAbilityGroupRetrieveAPIView(APIView):
         })
 
 
-# -------------------- Update API --------------------
+# --------------------EntranceTestAbilityGroup Update API --------------------
 class EntranceTestAbilityGroupUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2478,13 +3268,17 @@ class EntranceTestAbilityGroupUpdateAPIView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
 
-# -------------------- Delete API --------------------
+# --------------------EntranceTestAbilityGroup Delete API --------------------
 class EntranceTestAbilityGroupDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
+        search = request.GET.get("search", "").strip()  # SEARCH ONLY on 'name'
         ids = request.data.get('id', None)
 
+        # -------------------------
+        #  SINGLE DELETE
+        # -------------------------
         if uuid:
             try:
                 group = EntranceTestAbilityGroup.objects.get(uuid=uuid)
@@ -2503,8 +3297,15 @@ class EntranceTestAbilityGroupDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
+        # -------------------------
+        #  BULK DELETE (ALL) — APPLY SEARCH FILTER
+        # -------------------------
         if ids == "all":
             groups = EntranceTestAbilityGroup.objects.all()
+
+            if search:
+                groups = groups.filter(name__icontains=search)
+
             count = groups.count()
             if count == 0:
                 return Response({
@@ -2513,6 +3314,7 @@ class EntranceTestAbilityGroupDeleteAPIView(APIView):
                     "message": "No EntranceTestAbilityGroups found to delete.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
+
             groups.delete()
             return Response({
                 "statusCode": 200,
@@ -2521,6 +3323,9 @@ class EntranceTestAbilityGroupDeleteAPIView(APIView):
                 "data": None
             })
 
+        # -------------------------
+        #  MULTIPLE DELETE (Selected UUIDs)
+        # -------------------------
         if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
@@ -2546,6 +3351,11 @@ class EntranceTestAbilityGroupDeleteAPIView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         groups = EntranceTestAbilityGroup.objects.filter(uuid__in=valid_uuids)
+
+        # APPLY SEARCH FILTER HERE TOO
+        if search:
+            groups = groups.filter(name__icontains=search)
+
         count = groups.count()
 
         if count == 0:
@@ -2566,7 +3376,8 @@ class EntranceTestAbilityGroupDeleteAPIView(APIView):
         })
 
 
-# -------------------- Export API --------------------
+
+# --------------------EntranceTestAbilityGroup Export API --------------------
 class EntranceTestAbilityGroupExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2627,7 +3438,7 @@ class EntranceTestAbilityGroupExportAPIView(APIView):
         return response
 
 
-# -------------------- Import API --------------------
+# --------------------EntranceTestAbilityGroup Import API --------------------
 class EntranceTestAbilityGroupImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2740,50 +3551,15 @@ class EntranceTestAbilityGroupImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": reversed(duplicates),
+            "skipped_rows": reversed(skipped_rows)
         }, status=200)
 
 
 
 
 
-# -------------------- Age List API --------------------
-# class StudyFactorAgeListAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
-
-#     def get(self, request):
-#         search = request.GET.get('search', '').strip()
-#         sort_by = request.GET.get('sortBy', 'created_at')
-#         sort_order = request.GET.get('sortOrder', 'desc')
-
-#         allowed_sort_fields = [
-#             'minimum_age_months', 
-#             'maximum_age_months',
-#             'updated_at'
-#         ]
-        
-#         if sort_by not in allowed_sort_fields:
-#             sort_by = 'created_at'
-
-#         if sort_order == 'desc':
-#             sort_by = f'-{sort_by}'
-
-#         queryset = StudyFactorAge.objects.filter(is_deleted=False)
-
-#         if search:
-#             queryset = queryset.filter(
-#                 Q(study_age_group__name__istartswith=search) |
-#                 Q(factor_for__name__istartswith=search)
-#             )
-
-#         queryset = queryset.order_by(sort_by)
-#         paginator = CustomPagination()
-#         result_page = paginator.paginate_queryset(queryset, request)
-#         serializer = StudyFactorAgeSerializer(result_page, many=True)
-
-#         return paginator.get_paginated_response(serializer.data)
-
+# -------------------- StudyFactorAge List API --------------------
 
 class StudyFactorAgeListAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -2874,138 +3650,7 @@ class StudyFactorAgeListAPIView(APIView):
 
 
 
-# -------------------- Age Create API --------------------
-
-# class StudyFactorAgeCreateAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
-
-#     @transaction.atomic
-#     def post(self, request):
-#         try:
-#             data = request.data
-
-#             # Required fields validation
-#             factor_for_uuid = data.get("factor_for")
-#             age_group_uuid = data.get("study_age_group")
-#             min_age = data.get("minimum_age_months")
-#             max_age = data.get("maximum_age_months")
-#             country_uuids = data.get("country", [])
-#             course_level_uuids = data.get("course_level", [])
-
-#             missing_fields = []
-#             if not factor_for_uuid:
-#                 missing_fields.append("factor_for")
-#             if not age_group_uuid:
-#                 missing_fields.append("study_age_group")
-#             if min_age is None:
-#                 missing_fields.append("minimum_age_months")
-#             if max_age is None:
-#                 missing_fields.append("maximum_age_months")
-
-#             if missing_fields:
-#                 return Response({
-#                     "statusCode": 400,
-#                     "status": False,
-#                     "message": f"Missing required fields: {', '.join(missing_fields)}"
-#                 }, status=400)
-
-#             # Convert ages safely
-#             try:
-#                 min_age = int(min_age)
-#                 max_age = int(max_age)
-#             except ValueError:
-#                 return Response({
-#                     "statusCode": 400,
-#                     "status": False,
-#                     "message": "minimum_age_months and maximum_age_months must be integers."
-#                 }, status=400)
-
-#             # Fetch FK using UUIDs
-#             try:
-#                 factor_for = FactorFor.objects.get(uuid=factor_for_uuid, is_deleted=False)
-#             except FactorFor.DoesNotExist:
-#                 return Response({
-#                     "statusCode": 400,
-#                     "status": False,
-#                     "message": "Invalid factor_for UUID"
-#                 }, status=400)
-
-#             try:
-#                 age_group = AgeGroup.objects.get(uuid=age_group_uuid, is_deleted=False)
-#             except AgeGroup.DoesNotExist:
-#                 return Response({
-#                     "statusCode": 400,
-#                     "status": False,
-#                     "message": "Invalid study_age_group UUID"
-#                 }, status=400)
-
-#             # Duplicate check
-#             if StudyFactorAge.objects.filter(
-#                 factor_for=factor_for,
-#                 study_age_group=age_group,
-#                 minimum_age_months=min_age,
-#                 maximum_age_months=max_age,
-#                 is_deleted=False
-#             ).exists():
-#                 return Response({
-#                     "statusCode": 400,
-#                     "status": False,
-#                     "message": "Age entry already exists with these details."
-#                 }, status=400)
-
-#             # Atomic transaction begins
-#             with transaction.atomic():
-
-#                 obj = StudyFactorAge.objects.create(
-#                     factor_for=factor_for,
-#                     study_age_group=age_group,
-#                     minimum_age_months=min_age,
-#                     maximum_age_months=max_age,
-#                     description=data.get("description", "")
-#                 )
-
-#                 # Assign Countries
-#                 if country_uuids:
-#                     valid_countries = Country.objects.filter(uuid__in=country_uuids)
-#                     if valid_countries.count() != len(country_uuids):
-#                         return Response({
-#                             "statusCode": 400,
-#                             "status": False,
-#                             "message": "One or more country UUIDs are invalid."
-#                         }, status=400)
-#                     obj.country.set(valid_countries)
-
-#                 # Assign Course Levels
-#                 if course_level_uuids:
-#                     valid_levels = CourseLevel.objects.filter(uuid__in=course_level_uuids)
-#                     if valid_levels.count() != len(course_level_uuids):
-#                         return Response({
-#                             "statusCode": 400,
-#                             "status": False,
-#                             "message": "One or more course_level UUIDs are invalid."
-#                         }, status=400)
-#                     obj.course_level.set(valid_levels)
-
-#                 obj.save()
-
-#             # Final response
-#             serializer = StudyFactorAgeSerializer(obj)
-
-#             return Response({
-#                 "statusCode": 200,
-#                 "status": True,
-#                 "message": "Age created successfully",
-#                 "data": serializer.data
-#             })
-
-#         except Exception as e:
-#             # Debug-friendly but safe
-#             return Response({
-#                 "statusCode": 500,
-#                 "status": False,
-#                 "message": "Internal server error",
-#                 "error": str(e)  
-#             }, status=500)
+# -------------------- StudyFactorAge Create API --------------------
 
 
 class StudyFactorAgeCreateAPIView(APIView):
@@ -3139,77 +3784,7 @@ class StudyFactorAgeCreateAPIView(APIView):
                 "error": str(e)  
             }, status=500)
 
-# -------------------- Age Retrieve API --------------------
-
-# class StudyFactorAgeRetrieveAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
-
-#     def get(self, request):
-#         try:
-#             search = request.GET.get('search', '').strip()
-#             sort_by = request.GET.get('sortBy', 'created_at')
-#             sort_order = request.GET.get('sortOrder', 'desc')
-
-#             # Allowed sort fields
-#             allowed_sort_fields = [
-#                 'minimum_age_months',
-#                 'maximum_age_months',
-#                 'created_at',
-#                 'updated_at',
-#             ]
-
-#             # Validate sortBy
-#             if sort_by not in allowed_sort_fields:
-#                 sort_by = 'created_at'
-
-#             # Apply desc/asc
-#             if sort_order == 'desc':
-#                 sort_by = f'-{sort_by}'
-
-#             # Base queryset
-#             queryset = StudyFactorAge.objects.filter(is_deleted=False)
-
-#             # Search
-#             if search:
-#                 queryset = queryset.filter(
-#                     Q(study_age_group__name__icontains=search) |
-#                     Q(factor_for__name__icontains=search)
-#                 )
-
-#             # Sorting
-#             queryset = queryset.order_by(sort_by)
-
-#             # Pagination
-#             paginator = CustomPagination()
-#             paginated_queryset = paginator.paginate_queryset(queryset, request)
-
-#             # Serialization
-#             serializer = StudyFactorAgeSerializer(paginated_queryset, many=True)
-
-#             return paginator.get_paginated_response(serializer.data)
-
-#         except ValidationError as ve:
-#             return Response({
-#                 "status": False,
-#                 "message": "Validation error",
-#                 "error": str(ve),
-#             }, status=status.HTTP_400_BAD_REQUEST)
-
-#         except DatabaseError as db_err:
-#             return Response({
-#                 "status": False,
-#                 "message": "Database error occurred",
-#                 "error": str(db_err),
-#             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-#         except Exception as e:
-#             # Catch-all for unexpected issues
-#             return Response({
-#                 "status": False,
-#                 "message": "Something went wrong",
-#                 "error": str(e),
-#             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+# -------------------- StudyFactorAge Retrieve API --------------------
 class StudyFactorAgeRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -3246,59 +3821,12 @@ class StudyFactorAgeRetrieveAPIView(APIView):
 
         serializer = StudyFactorAgeSerializer(paginated_queryset, many=True)
         return paginator.get_paginated_response(serializer.data)
+
+        serializer = StudyFactorAgeSerializer(paginated_queryset, many=True)
+        return paginator.get_paginated_response(serializer.data)
     
 
-# -------------------- Age Update API--------------------
-# class StudyFactorAgeUpdateAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
-
-#     @transaction.atomic
-#     def patch(self, request, uuid):
-#         # Fetch object
-#         try:
-#             obj = StudyFactorAge.objects.get(uuid=uuid, is_deleted=False)
-#         except StudyFactorAge.DoesNotExist:
-#             return Response({
-#                 "statusCode": 404,
-#                 "status": False,
-#                 "message": "Age entry not found",
-#                 "data": None
-#             }, status=404)
-
-#         # Partial update
-#         serializer = StudyFactorAgeSerializer(obj, data=request.data, partial=True)
-
-#         if serializer.is_valid():
-#             try:
-#                 serializer.save()  # atomic
-#             except Exception as e:
-#                 transaction.set_rollback(True)
-#                 return Response({
-#                     "statusCode": 500,
-#                     "status": False,
-#                     "message": f"Update failed: {str(e)}",
-#                     "data": None
-#                 }, status=500)
-
-#             return Response({
-#                 "statusCode": 200,
-#                 "status": True,
-#                 "message": "Age updated successfully",
-#                 "data": serializer.data
-#             })
-
-#         # Flatten validation errors
-#         errors = []
-#         for field, msgs in serializer.errors.items():
-#             errors.extend(msgs)
-
-#         return Response({
-#             "statusCode": 400,
-#             "status": False,
-#             "message": " ".join(errors),
-#             "data": None
-#         }, status=400)
-    
+#-------------------- StudyFactorAge Update API--------------------
 
 class StudyFactorAgeUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -3344,102 +3872,185 @@ class StudyFactorAgeUpdateAPIView(APIView):
             "status": False,
             "message": " ".join(error_list)
         }, status=400)
-    
 
-# -------------------- Age Delete API --------------------
+
+    
+# -------------------- StudyFactorAge Delete API --------------------
 
 class StudyFactorAgeDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
-        ids = request.data.get("id", None)
+        try:
+            # ----------- GET PARAMS -----------
+            search = request.GET.get("search", "").strip()
+            delete_all = request.data.get("deleteAll", False)
+            ids = request.data.get("id", None)
 
-        # ---------- SINGLE DELETE ----------
-        if uuid:
-            try:
-                obj = StudyFactorAge.objects.get(uuid=uuid)
-                obj.delete()
+            # ============================================================
+            # (1) SINGLE DELETE — DO NOT TOUCH
+            # ============================================================
+            if uuid:
+                try:
+                    obj = StudyFactorAge.objects.get(uuid=uuid)
+                    obj.delete()
+                    return Response({
+                        "statusCode": 204,
+                        "status": True,
+                        "message": "Age entry permanently deleted."
+                    }, status=204)
+                except StudyFactorAge.DoesNotExist:
+                    return Response({
+                        "statusCode": 404,
+                        "status": False,
+                        "message": "Age entry not found."
+                    }, status=404)
+
+            # ============================================================
+            # (2) DELETE ENTIRE TABLE WHEN id == "all"
+            # ============================================================
+            if ids == "all":
+                count = StudyFactorAge.objects.count()
+                StudyFactorAge.objects.all().delete()
+
                 return Response({
-                    "statusCode": 204,
+                    "statusCode": 200,
                     "status": True,
-                    "message": "Age entry permanently deleted."
-                }, status=204)
-            except StudyFactorAge.DoesNotExist:
+                    "message": f"All {count} Age entries deleted from the table."
+                }, status=200)
+
+            # ---------------------------------------------------
+            # Parse comma-separated UUID list from query params
+            # ---------------------------------------------------
+            def parse_uuid_list(param):
+                raw = request.GET.get(param, "")
+                result = []
+                if raw:
+                    for x in raw.split(","):
+                        try:
+                            result.append(UUID(x.strip()))
+                        except:
+                            pass
+                return result
+
+            age_uuid_list = parse_uuid_list("ageUUID")
+
+            # ---------------------------------------------------
+            # NEW FILTER PARAMS (YOUR REQUIREMENT)
+            # ---------------------------------------------------
+            factor_for_list = parse_uuid_list("factorFor")
+            age_group_list = parse_uuid_list("studyAgeGroup")
+            country_list = parse_uuid_list("country")
+            course_level_list = parse_uuid_list("courseLevel")
+
+            # ---------------------------------------------------
+            # BASE QUERYSET
+            # ---------------------------------------------------
+            queryset = StudyFactorAge.objects.all()
+            applied_filters = []
+
+            # ---------------------------------------------------
+            # SEARCH FILTER (keep original)
+            # ---------------------------------------------------
+            if search:
+                queryset = queryset.filter(age__istartswith=search)
+                applied_filters.append("search")
+
+            # ---------------------------------------------------
+            # UUID LIST FILTER (keep original)
+            # ---------------------------------------------------
+            if age_uuid_list:
+                queryset = queryset.filter(uuid__in=age_uuid_list)
+                applied_filters.append("ageUUID")
+
+            # ---------------------------------------------------
+            # FILTER: FACTOR FOR
+            # ---------------------------------------------------
+            if factor_for_list:
+                queryset = queryset.filter(factor_for__uuid__in=factor_for_list)
+                applied_filters.append("factorFor")
+
+            # ---------------------------------------------------
+            # FILTER: STUDY AGE GROUP
+            # ---------------------------------------------------
+            if age_group_list:
+                queryset = queryset.filter(study_age_group__uuid__in=age_group_list)
+                applied_filters.append("studyAgeGroup")
+
+            # ---------------------------------------------------
+            # FILTER: COUNTRY
+            # ---------------------------------------------------
+            if country_list:
+                queryset = queryset.filter(country__uuid__in=country_list)
+                applied_filters.append("country")
+
+            # ---------------------------------------------------
+            # FILTER: COURSE LEVEL
+            # ---------------------------------------------------
+            if course_level_list:
+                queryset = queryset.filter(course_level__uuid__in=course_level_list)
+                applied_filters.append("courseLevel")
+
+            # ============================================================
+            # (3) deleteAll → delete all matching FILTERED rows
+            # ============================================================
+            if delete_all:
+                count = queryset.count()
+                queryset.delete()
+
+                if applied_filters:
+                    msg = f"{count} Age entries deleted based on filters: {', '.join(applied_filters)}"
+                else:
+                    msg = f"All {count} Age entries deleted."
+
                 return Response({
-                    "statusCode": 404,
-                    "status": False,
-                    "message": "Age entry not found."
-                }, status=404)
+                    "statusCode": 200,
+                    "status": True,
+                    "message": msg
+                }, status=200)
 
-        # ---------- DELETE ALL ----------
-        if ids == "all":
-            qs = StudyFactorAge.objects.all()
-            count = qs.count()
-
-            if count == 0:
+            # ============================================================
+            # (4) MULTIPLE DELETE — DO NOT TOUCH ORIGINAL LOGIC
+            # ============================================================
+            if not ids or not isinstance(ids, list):
                 return Response({
-                    "statusCode": 404,
+                    "statusCode": 400,
                     "status": False,
-                    "message": "No Age entries found to delete."
-                }, status=404)
+                    "message": "Please provide a list of UUIDs in 'id'."
+                }, status=400)
 
-            qs.delete()
+            valid_uuids = []
+            invalid_uuids = []
+
+            for u in ids:
+                try:
+                    valid_uuids.append(UUID(u))
+                except:
+                    invalid_uuids.append(u)
+
+            # Only delete from FILTERED queryset
+            filtered_objects = queryset.filter(uuid__in=valid_uuids)
+            count = filtered_objects.count()
+            filtered_objects.delete()
+
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} Age entries permanently deleted."
+                "message": f"{count} Age entry(ies) deleted.",
+                "invalid_uuids": invalid_uuids or None
             }, status=200)
 
-        # ---------- MULTIPLE DELETE ----------
-        if not ids or not isinstance(ids, list):
+        except Exception as e:
             return Response({
-                "statusCode": 400,
+                "statusCode": 500,
                 "status": False,
-                "message": "Provide list of UUIDs in 'id' field or 'all'."
-            }, status=400)
-
-        valid_uuids = []
-        invalid_uuids = []
-
-        for u in ids:
-            try:
-                valid_uuids.append(UUID(u))
-            except ValueError:
-                invalid_uuids.append(u)
-
-        if not valid_uuids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=400)
-
-        qs = StudyFactorAge.objects.filter(uuid__in=valid_uuids)
-        count = qs.count()
-
-        if count == 0:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "No matching Age entries found.",
-                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-            }, status=404)
-
-        qs.delete()
-
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": f"{count} Age entries permanently deleted.",
-            "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-        }, status=200)
-    
+                "message": f"Internal server error: {str(e)}"
+            }, status=500)
 
 
 
-    
-# ---------------- Age EXPORT ----------------
+
+# ---------------- StudyFactorAGE EXPORT ----------------
 class StudyFactorAgeExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -3593,9 +4204,10 @@ class StudyFactorAgeExportAPIView(APIView):
         response = HttpResponse(response_content, content_type=content_type)
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-    
 
-# ---------------- Age IMPORT ----------------
+
+# ---------------- StudyFactorAge IMPORT ----------------
+
 class StudyFactorAgeImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -3849,16 +4461,13 @@ class StudyFactorAgeImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows,
+            "duplicates": reversed(duplicates),
+            "skipped_rows": reversed(skipped_rows),
         }, status=200)
 
 
 
-
-# ---------------- LIST ----------------
-
-
+# ----------------StudyFactorAcademicResult LIST ----------------
 class StudyFactorAcademicResultListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -3869,7 +4478,7 @@ class StudyFactorAcademicResultListAPIView(APIView):
         # Allowed sort fields mapping
         sort_field_map = {
             'factor_for_name': 'factor_for__name',
-            'academic_result_group_name': 'academic_result_group__name',
+            'study_academic_result_group': 'study_academic_result_group',
             'minimum_academic_result_required_name': 'minimum_academic_result_required__name',
             'description': 'description',
             'created_at': 'created_at',
@@ -3883,7 +4492,7 @@ class StudyFactorAcademicResultListAPIView(APIView):
         # --------------------------
         if search:
             queryset = queryset.filter(
-                Q(academic_result_group__name__istartswith=search)
+                Q(study_academic_result_group__name__istartswith=search)
             )
 
         # --------------------------
@@ -3904,7 +4513,7 @@ class StudyFactorAcademicResultListAPIView(APIView):
                     orm_field = sort_field_map[field]
 
                     # Case-insensitive for string fields
-                    if field in ['factor_for_name', 'academic_result_group_name', 'minimum_academic_result_required_name', 'description']:
+                    if field in ['factor_for_name', 'study_academic_result_group_name', 'minimum_academic_result_required_name', 'description']:
                         f = Lower(orm_field)
                     else:
                         f = F(orm_field)
@@ -3932,9 +4541,9 @@ class StudyFactorAcademicResultListAPIView(APIView):
         serializer = StudyFactorAcademicResultSerializer(result_page, many=True)
 
         return paginator.get_paginated_response(serializer.data)
-    
 
-# ---------------- CREATE ----------------
+
+# ----------------StudyFactorAcademicResult CREATE ----------------
 
 class StudyFactorAcademicResultCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -3942,7 +4551,7 @@ class StudyFactorAcademicResultCreateAPIView(APIView):
     def post(self, request):
 
         factor_for = request.data.get("factor_for")
-        academic_result_group = request.data.get("academic_result_group")
+        study_academic_result_group = request.data.get("study_academic_result_group")
         minimum_academic_result_required = request.data.get("minimum_academic_result_required")
 
         # ---------- 1. Basic Required Validations ----------
@@ -3954,11 +4563,11 @@ class StudyFactorAcademicResultCreateAPIView(APIView):
                 "message": "factor_for is required."
             }, status=400)
 
-        if not academic_result_group:
+        if not study_academic_result_group:
             return Response({
                 "statusCode": 400,
                 "status": False,
-                "message": "academic_result_group is required."
+                "message": "study_academic_result_group is required."
             }, status=400)
 
         if not minimum_academic_result_required:
@@ -3972,7 +4581,7 @@ class StudyFactorAcademicResultCreateAPIView(APIView):
         # ---------- 2. Duplicate Check (Like Department API) ----------
         existing = StudyFactorAcademicResult.objects.filter(
             factor_for_id=factor_for,
-            academic_result_group_id=academic_result_group,
+            study_academic_result_group_id=study_academic_result_group,
             minimum_academic_result_required__uuid=minimum_academic_result_required,
             is_deleted=False
         ).first()
@@ -4007,10 +4616,9 @@ class StudyFactorAcademicResultCreateAPIView(APIView):
             "status": False,
             "message": message_text,
         }, status=400)
-    
 
-# ---------------- RETRIEVE ----------------
 
+# ----------------StudyFactorAcademicResult RETRIEVE ----------------
 class StudyFactorAcademicResultRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -4034,9 +4642,7 @@ class StudyFactorAcademicResultRetrieveAPIView(APIView):
         })
 
 
-
-# ---------------- UPDATE ----------------
-
+# ----------------StudyFactorAcademicResult UPDATE ----------------
 class StudyFactorAcademicResultUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -4059,7 +4665,7 @@ class StudyFactorAcademicResultUpdateAPIView(APIView):
                 "status": True,
                 "message": "Study Factor Academic Result updated successfully",
                 "data": serializer.data
-            })
+            }, status=200)
 
         # Collect all error messages
         errors = []
@@ -4074,8 +4680,7 @@ class StudyFactorAcademicResultUpdateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
-
-# ---------------- DELETE ----------------
+# ----------------StudyFactorAcademicResult DELETE ----------------
 
 class StudyFactorAcademicResultDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -4083,7 +4688,44 @@ class StudyFactorAcademicResultDeleteAPIView(APIView):
     def delete(self, request, uuid=None):
         ids = request.data.get("id", None)
 
-        # ---- SINGLE DELETE ----
+        # -------------------------------
+        # PARSE FILTER QUERY PARAMS
+        # -------------------------------
+        def parse_uuid_list(param):
+            """Parse comma-separated UUIDs safely."""
+            raw = request.GET.get(param, "")
+            result = []
+            if raw:
+                for val in raw.split(","):
+                    try:
+                        result.append(UUID(val.strip()))
+                    except:
+                        pass
+            return result
+
+        factor_for_list = parse_uuid_list("factorFor")
+        academic_result_group_list = parse_uuid_list("academicResultGroup")
+
+        # -------------------------------
+        # BASE QUERYSET WITH FILTERS
+        # -------------------------------
+        queryset = StudyFactorAcademicResult.objects.all()
+
+        applied_filters = []
+
+        if factor_for_list:
+            queryset = queryset.filter(factor_for__uuid__in=factor_for_list)
+            applied_filters.append("factorFor")
+
+        if academic_result_group_list:
+            queryset = queryset.filter(
+                study_academic_result_group__uuid__in=academic_result_group_list
+            )
+            applied_filters.append("academicResultGroup")
+
+        # ============================================================
+        # (1) SINGLE DELETE — DO NOT TOUCH
+        # ============================================================
         if uuid:
             try:
                 obj = StudyFactorAcademicResult.objects.get(uuid=uuid)
@@ -4102,10 +4744,13 @@ class StudyFactorAcademicResultDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-        # ---- DELETE ALL ----
+        # ============================================================
+        # (2) DELETE ALL (with filters)
+        # ============================================================
         if ids == "all":
-            objs = StudyFactorAcademicResult.objects.all()
+            objs = queryset
             count = objs.count()
+
             if count == 0:
                 return Response({
                     "statusCode": 404,
@@ -4113,15 +4758,25 @@ class StudyFactorAcademicResultDeleteAPIView(APIView):
                     "message": "No Study Factor Academic Results found to delete.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
+
             objs.delete()
+
+            # Smart message
+            if applied_filters:
+                msg = f"All {count} Study Factor Academic Result(s) deleted based on filters: {', '.join(applied_filters)}."
+            else:
+                msg = f"All {count} Study Factor Academic Result(s) permanently deleted."
+
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} Study Factor Academic Result(s) permanently deleted.",
+                "message": msg,
                 "data": None
             }, status=status.HTTP_200_OK)
 
-        # ---- MULTIPLE DELETE ----
+        # ============================================================
+        # (3) MULTIPLE DELETE (only selected + filtered items)
+        # ============================================================
         if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
@@ -4147,7 +4802,8 @@ class StudyFactorAcademicResultDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        objs = StudyFactorAcademicResult.objects.filter(uuid__in=valid_uuids)
+        # IMPORTANT: delete ONLY filtered + selected items 
+        objs = queryset.filter(uuid__in=valid_uuids)
         count = objs.count()
 
         if count == 0:
@@ -4159,6 +4815,7 @@ class StudyFactorAcademicResultDeleteAPIView(APIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
         objs.delete()
+
         return Response({
             "statusCode": 200,
             "status": True,
@@ -4167,7 +4824,7 @@ class StudyFactorAcademicResultDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-
+# ----------------StudyFactorAcademicResult EXPORT ----------------
 
 class StudyFactorAcademicResultExportAPIView(APIView):
     """
@@ -4187,7 +4844,7 @@ class StudyFactorAcademicResultExportAPIView(APIView):
         field_header_map = {
             'uuid': 'UUID',
             'factor_for': 'Factor For',
-            'academic_result_group': 'Academic Result Group',
+            'study_academic_result_group': 'Study Academic Result Group',
             'minimum_academic_result_required': 'Minimum Academic Result Required',
             'description': 'Description',
             'is_deleted': 'Deleted',
@@ -4209,7 +4866,7 @@ class StudyFactorAcademicResultExportAPIView(APIView):
         # --- Custom sorting logic ---
         sort_field_map = {
             'factor_for': 'factor_for__name',
-            'academic_result_group': 'academic_result_group__name',
+            'study_academic_result_group': 'study_academic_result_group__name',
             'minimum_academic_result_required': 'minimum_academic_result_required__name',
             'description': 'description',
             'is_deleted': 'is_deleted',
@@ -4232,7 +4889,7 @@ class StudyFactorAcademicResultExportAPIView(APIView):
                     orm_field = sort_field_map[field]
 
                     # Case-insensitive sorting for string fields
-                    if field in ['factor_for', 'academic_result_group', 'minimum_academic_result_required', 'description']:
+                    if field in ['factor_for', 'study_academic_result_group', 'minimum_academic_result_required', 'description']:
                         f = Lower(orm_field)
                     else:
                         f = F(orm_field)
@@ -4259,8 +4916,8 @@ class StudyFactorAcademicResultExportAPIView(APIView):
                 # Handle related fields
                 if field == 'factor_for':
                     value = getattr(obj.factor_for, 'name', '') if obj.factor_for else ''
-                elif field == 'academic_result_group':
-                    value = getattr(obj.academic_result_group, 'name', '') if obj.academic_result_group else ''
+                elif field == 'study_academic_result_group':
+                    value = getattr(obj.academic_result_group, 'name', '') if obj.study_academic_result_group else ''
                 elif field == 'minimum_academic_result_required':
                     value = getattr(obj.minimum_academic_result_required, 'name', '') if obj.minimum_academic_result_required else ''
                 else:
@@ -4291,6 +4948,7 @@ class StudyFactorAcademicResultExportAPIView(APIView):
         return response
 
 
+# ----------------StudyFactorAcademicResult IMPORT ----------------
 
 class StudyFactorAcademicResultImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -4306,7 +4964,7 @@ class StudyFactorAcademicResultImportAPIView(APIView):
         duplicates = []
         skipped_rows = []
 
-        required_headers = {"factor for", "academic result group", "minimum academic result required"}
+        required_headers = {"factor for", "study academic result group", "minimum academic result required"}
         optional_headers = {"description"}
 
         try:
@@ -4391,7 +5049,7 @@ class StudyFactorAcademicResultImportAPIView(APIView):
                 row_number = row.get("_row_number", "Unknown")
 
                 factor_for_val = str(row.get("factor for")).strip() if row.get("factor for") else None
-                academic_group_val = str(row.get("academic result group")).strip() if row.get("academic result group") else None
+                academic_group_val = str(row.get("study academic result group")).strip() if row.get("study academic result group") else None
                 min_result_val = str(row.get("minimum academic result required")).strip() if row.get("minimum academic result required") else None
                 description = str(row.get("description")).strip() if row.get("description") else ""
 
@@ -4462,12 +5120,14 @@ class StudyFactorAcademicResultImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": reversed(duplicates),
+            "skipped_rows": reversed(skipped_rows)
         }, status=200)
 
-# ---------------- LIST ----------------
 
+
+
+# ----------------StudyFactorBacklogs List ----------------
 class StudyFactorBacklogsListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -4482,7 +5142,7 @@ class StudyFactorBacklogsListAPIView(APIView):
         # --------------------------------------
         if search:
             queryset = queryset.filter(
-                Q(backlog_group__name__istartswith=search)
+                Q(study_backlogs_group__name__istartswith=search)
             )
 
         # --------------------------------------
@@ -4490,7 +5150,7 @@ class StudyFactorBacklogsListAPIView(APIView):
         # --------------------------------------
         allowed_sort_fields = [
             "factor_for__name",
-            "backlog_group__name",
+            "study_backlogs_group__name",
             "created_at",
             "updated_at"
         ]
@@ -4498,7 +5158,7 @@ class StudyFactorBacklogsListAPIView(APIView):
         # Map readable names to ORM fields
         sort_field_map = {
             "factor_for": "factor_for__name",
-            "backlog_group": "backlog_group__name",
+            "study_backlogs_group": "study_backlogs_group__name",
             "created_at": "created_at",
             "updated_at": "updated_at",
         }
@@ -4521,7 +5181,7 @@ class StudyFactorBacklogsListAPIView(APIView):
                     orm_field = sort_field_map[field]
 
                     # Case-insensitive sorting
-                    if field in ["factor_for", "backlog_group"]:
+                    if field in ["factor_for", "study_backlogs_group"]:
                         f = Lower(orm_field)
                     else:
                         f = F(orm_field)
@@ -4558,6 +5218,8 @@ class StudyFactorBacklogsListAPIView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 
+
+# ----------------StudyFactorBacklogs CREATE ----------------
 class StudyFactorBacklogsCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -4568,11 +5230,11 @@ class StudyFactorBacklogsCreateAPIView(APIView):
         if serializer.is_valid():
             # Duplicate check
             factor_for_obj = serializer.validated_data['factor_for']
-            backlog_group_obj = serializer.validated_data['backlog_group']
+            study_backlogs_group_obj = serializer.validated_data['study_backlogs_group']
 
             exists = StudyFactorBacklogs.objects.filter(
                 factor_for=factor_for_obj,
-                backlog_group=backlog_group_obj,
+                backlog_group=study_backlogs_group_obj,
                 is_deleted=False
             ).first()
 
@@ -4603,7 +5265,7 @@ class StudyFactorBacklogsCreateAPIView(APIView):
         }, status=400)
 
 
-
+# ----------------StudyFactorBacklogs Retrieve ----------------
 class StudyFactorBacklogsRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -4628,6 +5290,8 @@ class StudyFactorBacklogsRetrieveAPIView(APIView):
         }, status=200)
 
 
+
+# ----------------StudyFactorBacklogs Update ----------------
 class StudyFactorBacklogsUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -4669,15 +5333,49 @@ class StudyFactorBacklogsUpdateAPIView(APIView):
         }, status=200)
 
 
+
+
+# ----------------StudyFactorBacklogs Delete ----------------
 class StudyFactorBacklogsDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
         ids = request.data.get("id", None)
 
-        # ------------------------------
-        # 1. SINGLE DELETE (via URL UUID)
-        # ------------------------------
+        # ----------------------------------------------------
+        # PARSE FILTER QUERY PARAMS
+        # ----------------------------------------------------
+        def parse_uuid_list(param):
+            raw = request.GET.get(param, "")
+            result = []
+            if raw:
+                for x in raw.split(","):
+                    try:
+                        result.append(UUID(x.strip()))
+                    except:
+                        pass
+            return result
+
+        factor_for_list = parse_uuid_list("factorFor")
+        backlogs_group_list = parse_uuid_list("backlogsGroup")
+
+        # ----------------------------------------------------
+        # BASE QUERYSET WITH FILTERS
+        # ----------------------------------------------------
+        queryset = StudyFactorBacklogs.objects.all()
+        applied_filters = []
+
+        if factor_for_list:
+            queryset = queryset.filter(factor_for__uuid__in=factor_for_list)
+            applied_filters.append("factorFor")
+
+        if backlogs_group_list:
+            queryset = queryset.filter(study_backlogs_group__uuid__in=backlogs_group_list)
+            applied_filters.append("backlogsGroup")
+
+        # ----------------------------------------------------
+        # 1. SINGLE DELETE (NO CHANGES)
+        # ----------------------------------------------------
         if uuid:
             try:
                 obj = StudyFactorBacklogs.objects.get(uuid=uuid)
@@ -4696,11 +5394,11 @@ class StudyFactorBacklogsDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-        # ------------------------------
-        # 2. DELETE ALL
-        # ------------------------------
+        # ----------------------------------------------------
+        # 2. DELETE ALL (with filters)
+        # ----------------------------------------------------
         if ids == "all":
-            objs = StudyFactorBacklogs.objects.all()
+            objs = queryset
             count = objs.count()
 
             if count == 0:
@@ -4713,16 +5411,22 @@ class StudyFactorBacklogsDeleteAPIView(APIView):
 
             objs.delete()
 
+            # Smart message
+            if applied_filters:
+                msg = f"All {count} StudyFactorBacklogs deleted based on filters: {', '.join(applied_filters)}."
+            else:
+                msg = f"All {count} StudyFactorBacklogs permanently deleted."
+
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} StudyFactorBacklogs permanently deleted.",
+                "message": msg,
                 "data": None
             }, status=status.HTTP_200_OK)
 
-        # ------------------------------
-        # 3. BULK DELETE (multiple UUIDs)
-        # ------------------------------
+        # ----------------------------------------------------
+        # 3. BULK DELETE (filtered + selected ONLY)
+        # ----------------------------------------------------
         if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
@@ -4748,7 +5452,9 @@ class StudyFactorBacklogsDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        objs = StudyFactorBacklogs.objects.filter(uuid__in=valid_uuids)
+        # IMPORTANT:
+        # DELETE ONLY → filtered queryset ∩ selected UUIDs
+        objs = queryset.filter(uuid__in=valid_uuids)
         count = objs.count()
 
         if count == 0:
@@ -4767,8 +5473,10 @@ class StudyFactorBacklogsDeleteAPIView(APIView):
             "message": f"{count} StudyFactorBacklogs permanently deleted.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
-    
 
+
+
+# ----------------StudyFactorBacklogs Export ----------------
 class StudyFactorBacklogsExportAPIView(APIView):
 
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -4787,7 +5495,7 @@ class StudyFactorBacklogsExportAPIView(APIView):
         field_header_map = {
             "uuid": "UUID",
             "factor_for_name": "Factor For",
-            "backlog_group_name": "Backlog Group",
+            "study_backlogs_group_name": "Study Backlogs Group",
             "backlog_accepted": "Backlog Accepted",
             "max_backlogs": "Max Backlogs",
             "description": "Description",
@@ -4813,7 +5521,7 @@ class StudyFactorBacklogsExportAPIView(APIView):
         # --- Custom Sorting Logic (Exact Department Logic) ---
         sort_field_map = {
             "factor_for_name": "factor_for__name",
-            "backlog_group_name": "backlog_group__name",
+            "study_backlogs_group_name": "study_backlogs_group__name",
             "backlog_accepted": "backlog_accepted",
             "max_backlogs": "max_backlogs",
             "description": "description",
@@ -4836,7 +5544,7 @@ class StudyFactorBacklogsExportAPIView(APIView):
 
                     orm_field = sort_field_map[field]
 
-                    if field in ["factor_for_name", "backlog_group_name", "description"]:
+                    if field in ["factor_for_name", "study_backlogs_group_name", "description"]:
                         f = Lower(orm_field)
                     else:
                         f = F(orm_field)
@@ -4870,7 +5578,7 @@ class StudyFactorBacklogsExportAPIView(APIView):
                 # Handle readable fields
                 if field == "factor_for_name":
                     value = obj.factor_for.name if obj.factor_for else ""
-                elif field == "backlog_group_name":
+                elif field == "study_backlogs_group_name":
                     value = obj.backlog_group.name if obj.backlog_group else ""
                 else:
                     value = getattr(obj, field, "")
@@ -4905,6 +5613,9 @@ class StudyFactorBacklogsExportAPIView(APIView):
         return response
 
 
+
+
+# ----------------StudyFactorBacklogs Import ----------------
 
 class StudyFactorBacklogsImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -5055,11 +5766,15 @@ class StudyFactorBacklogsImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows
+            "duplicates": reversed(duplicates),
+            "skipped_rows": reversed(skipped_rows)
         }, status=200)
-    
 
+
+
+
+
+# ----------------StudyFactorGAP LIST ----------------
 
 class StudyFactorGAPListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -5144,6 +5859,7 @@ class StudyFactorGAPListAPIView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 
+# ----------------StudyFactorGAP CREATE ----------------
 
 class StudyFactorGAPCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -5184,6 +5900,7 @@ class StudyFactorGAPCreateAPIView(APIView):
         }, status=400)
 
 
+# ----------------StudyFactorGAP RETRIEVE ----------------
 class StudyFactorGAPRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -5208,6 +5925,8 @@ class StudyFactorGAPRetrieveAPIView(APIView):
         })
     
 
+
+# ----------------StudyFactorGAP UPDATE ----------------
 class StudyFactorGAPUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -5245,7 +5964,22 @@ class StudyFactorGAPUpdateAPIView(APIView):
             "message": " ".join(messages),
             "data": None
         }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Collect error messages like Department API
+        # errors = serializer.errors
+        # messages = []
+        # for field, msgs in errors.items():
+        #     messages.extend(msgs)
+
+        # return Response({
+        #     "statusCode": 400,
+        #     "status": False,
+        #     "message": " ".join(messages),
+        #     "data": None
+        # }, status=status.HTTP_400_BAD_REQUEST)
     
+
+# ----------------StudyFactorGAP DELETE ----------------
 
 class StudyFactorGAPDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -5254,7 +5988,7 @@ class StudyFactorGAPDeleteAPIView(APIView):
         ids = request.data.get('id', None)
 
         # ----------------------------------
-        # SINGLE DELETE (via /uuid/)
+        # SINGLE DELETE
         # ----------------------------------
         if uuid:
             try:
@@ -5276,30 +6010,64 @@ class StudyFactorGAPDeleteAPIView(APIView):
                 }, status=status.HTTP_404_NOT_FOUND)
 
         # ----------------------------------
-        # DELETE ALL RECORDS
+        # SEARCH + FILTER DELETE
+        # ----------------------------------
+        search = request.GET.get("search", "").strip()
+
+        factor_for = request.GET.get("factor_for")
+        study_gap_group = request.GET.get("study_gap_group")
+        country = request.GET.get("country_for_admission")
+        institute_type = request.GET.get("institute_type")
+        course_level = request.GET.get("course_level")
+
+        queryset = StudyFactorGAP.objects.all()
+
+        # --- SEARCH only on factor_for (istartswith) ---
+        if search:
+            queryset = queryset.filter(
+                factor_for__name__istartswith=search
+            )
+
+        # ---- ONLY ALLOWED FILTERS ----
+        if factor_for:
+            queryset = queryset.filter(factor_for__uuid=factor_for)
+
+        if study_gap_group:
+            queryset = queryset.filter(study_gap_group__uuid=study_gap_group)
+
+        if country:
+            queryset = queryset.filter(country_for_admission__uuid=country)
+
+        if institute_type:
+            queryset = queryset.filter(institute_type__uuid=institute_type)
+
+        if course_level:
+            queryset = queryset.filter(course_level__uuid=course_level)
+
+        # ----------------------------------
+        # DELETE ALL FILTERED RECORDS
         # ----------------------------------
         if ids == "all":
-            objs = StudyFactorGAP.objects.all()
-            count = objs.count()
-
+            count = queryset.count()
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No Study Factor GAP records found to delete.",
+                    "message": "No Study Factor GAP records found for given filters/search.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-            objs.delete()
+            queryset.delete()
+
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} Study Factor GAP record(s) permanently deleted.",
+                "message": f"{count} Study Factor GAP record(s) deleted based on filters/search.",
                 "data": None
             }, status=status.HTTP_200_OK)
 
         # ----------------------------------
-        # VALIDATE BULK UUID LIST
+        # BULK DELETE (selected items only)
         # ----------------------------------
         if not ids or not isinstance(ids, list):
             return Response({
@@ -5326,17 +6094,14 @@ class StudyFactorGAPDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # ----------------------------------
-        # BULK DELETE
-        # ----------------------------------
-        objs = StudyFactorGAP.objects.filter(uuid__in=valid_uuids)
+        objs = queryset.filter(uuid__in=valid_uuids)
         count = objs.count()
 
         if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "No matching Study Factor GAP records found.",
+                "message": "No matching Study Factor GAP records found in filtered result.",
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=status.HTTP_404_NOT_FOUND)
 
@@ -5345,13 +6110,12 @@ class StudyFactorGAPDeleteAPIView(APIView):
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} Study Factor GAP record(s) permanently deleted.",
+            "message": f"{count} Study Factor GAP record(s) deleted.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
-    
 
 
-# ---------------- EXPORT ----------------
+# ----------------StudyFactorGAP EXPORT ----------------
 
 class StudyFactorGAPExportAPIView(APIView):
     """
@@ -5496,8 +6260,9 @@ class StudyFactorGAPExportAPIView(APIView):
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
     
+    
 
-# ---------------- IMPORT ----------------
+# ----------------StudyFactorGAP IMPORT ----------------
 
 class StudyFactorGAPImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -5698,14 +6463,13 @@ class StudyFactorGAPImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows,
+            "duplicates": reversed(duplicates),
+            "skipped_rows":reversed(skipped_rows),
         }, status=status.HTTP_200_OK)
 
 
 
-
-#--------------------LanguageAbility----------------------
+#--------------------StudyFactorLanguageAbility CREATE----------------------
 
 class StudyFactorLanguageAbilityCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -5730,7 +6494,7 @@ class StudyFactorLanguageAbilityCreateAPIView(APIView):
         # Correct FK mapping (UUID → actual model)
         fk_map = {
             "factor_for": FactorFor,
-            "language_ability_group": LanguageAbilityGroup,
+            "study_language_ability_group": LanguageAbilityGroup,
             "language_test_name": LanguageTest,
             "module_name": LanguagetestmoduleName,
             "minimum_overall_score": LanguageTestResult,
@@ -5776,6 +6540,8 @@ class StudyFactorLanguageAbilityCreateAPIView(APIView):
         }, status=400)
     
 
+#--------------------StudyFactorLanguageAbility LIST----------------------
+
 class StudyFactorLanguageAbilityListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -5784,7 +6550,7 @@ class StudyFactorLanguageAbilityListAPIView(APIView):
         search = request.GET.get('search', '').strip()
         custom_sort = request.GET.get('customSort')  # e.g., language_ability_group:asc,created_at:desc
 
-        allowed_sort_fields = ['language_ability_group', 'in_no_of_modules', 'created_at', 'updated_at']
+        allowed_sort_fields = ['study_language_ability_group', 'in_no_of_modules', 'created_at', 'updated_at']
 
         queryset = StudyFactorLanguageAbility.objects.filter(is_deleted=False)
 
@@ -5798,7 +6564,7 @@ class StudyFactorLanguageAbilityListAPIView(APIView):
         # SORTING LOGIC
         # --------------------------
         sort_field_map = {
-            'language_ability_group': 'language_ability_group__name',
+            'study_language_ability_group': 'study_language_ability_group__name',
             'in_no_of_modules': 'in_no_of_modules',
             'created_at': 'created_at',
             'updated_at': 'updated_at',
@@ -5819,7 +6585,7 @@ class StudyFactorLanguageAbilityListAPIView(APIView):
                     orm_field = sort_field_map[field]
 
                     # Case-insensitive ordering for string fields
-                    if field in ['language_ability_group']:
+                    if field in ['study_language_ability_group']:
                         f = Lower(orm_field)
                     else:
                         f = F(orm_field)
@@ -5847,6 +6613,8 @@ class StudyFactorLanguageAbilityListAPIView(APIView):
         return paginator.get_paginated_response(serializer.data)
     
 
+#--------------------StudyFactorLanguageAbility Retrieve---------------------
+
 class StudyFactorLanguageAbilityRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -5869,6 +6637,8 @@ class StudyFactorLanguageAbilityRetrieveAPIView(APIView):
             "data": serializer.data
         })
 
+
+#--------------------StudyFactorLanguageAbility Update----------------------
 
 class StudyFactorLanguageAbilityUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -5895,7 +6665,7 @@ class StudyFactorLanguageAbilityUpdateAPIView(APIView):
         data = request.data.copy()
         fk_map = {
             "factor_for": FactorFor,
-            "language_ability_group": LanguageAbilityGroup,
+            "study_language_ability_group": LanguageAbilityGroup,
             "language_test_name": LanguageTest,
             "module_name": LanguagetestmoduleName,
             "minimum_overall_score": LanguageTestResult,
@@ -5935,13 +6705,17 @@ class StudyFactorLanguageAbilityUpdateAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+#--------------------StudyFactorLanguageAbility Delete----------------------
+
 class StudyFactorLanguageAbilityDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
         ids = request.data.get("id")
 
-        # Single delete via URL parameter
+        # ----------------------------------
+        # SINGLE DELETE VIA URL UUID
+        # ----------------------------------
         if uuid:
             try:
                 obj = StudyFactorLanguageAbility.objects.get(uuid=uuid)
@@ -5952,6 +6726,7 @@ class StudyFactorLanguageAbilityDeleteAPIView(APIView):
                     "message": "Study Factor Language Ability permanently deleted.",
                     "data": None
                 }, status=status.HTTP_204_NO_CONTENT)
+
             except StudyFactorLanguageAbility.DoesNotExist:
                 return Response({
                     "statusCode": 404,
@@ -5960,26 +6735,73 @@ class StudyFactorLanguageAbilityDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-        # Delete all
+        # ----------------------------------
+        # SEARCH + FILTER DELETE
+        # ----------------------------------
+
+        search = request.GET.get("search", "").strip()
+
+        # Allowed filters
+        factor_for = request.GET.get("factor_for")
+        study_group = request.GET.get("study_language_ability_group")
+        language_test = request.GET.get("language_test_name")
+        module_name = request.GET.get("module_name")
+        min_overall = request.GET.get("minimum_overall_score")
+        not_less = request.GET.get("not_less_than")
+
+        queryset = StudyFactorLanguageAbility.objects.all()
+
+        # --- SEARCH only on factor_for name ---
+        if search:
+            queryset = queryset.filter(
+                factor_for__name__istartswith=search
+            )
+
+        # ---- APPLY FILTERS ----
+        if factor_for:
+            queryset = queryset.filter(factor_for__uuid=factor_for)
+
+        if study_group:
+            queryset = queryset.filter(study_language_ability_group__uuid=study_group)
+
+        if language_test:
+            queryset = queryset.filter(language_test_name__uuid=language_test)
+
+        if module_name:
+            queryset = queryset.filter(module_name__uuid=module_name)
+
+        if min_overall:
+            queryset = queryset.filter(minimum_overall_score__uuid=min_overall)
+
+        if not_less:
+            queryset = queryset.filter(not_less_than__uuid=not_less)
+
+        # ----------------------------------
+        # DELETE ALL FILTERED RESULTS
+        # ----------------------------------
         if ids == "all":
-            objs = StudyFactorLanguageAbility.objects.all()
-            count = objs.count()
+            count = queryset.count()
+
             if count == 0:
                 return Response({
                     "statusCode": 404,
                     "status": False,
-                    "message": "No records found to delete.",
+                    "message": "No Study Factor Language Ability records found for given search/filter.",
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
-            objs.delete()
+
+            queryset.delete()
+
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} Study Factor Language Ability record(s) permanently deleted.",
+                "message": f"{count} Study Factor Language Ability record(s) deleted based on filters/search.",
                 "data": None
             }, status=status.HTTP_200_OK)
 
-        # Bulk delete validation
+        # ----------------------------------
+        # VALIDATE BULK UUID LIST
+        # ----------------------------------
         if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
@@ -5990,6 +6812,7 @@ class StudyFactorLanguageAbilityDeleteAPIView(APIView):
 
         valid_uuids = []
         invalid_uuids = []
+
         for u in ids:
             try:
                 valid_uuids.append(UUID(u))
@@ -6004,25 +6827,31 @@ class StudyFactorLanguageAbilityDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        objs = StudyFactorLanguageAbility.objects.filter(uuid__in=valid_uuids)
+        # ----------------------------------
+        # DELETE ONLY SELECTED ITEMS INSIDE FILTERED QUERYSET
+        # ----------------------------------
+        objs = queryset.filter(uuid__in=valid_uuids)
         count = objs.count()
+
         if count == 0:
             return Response({
                 "statusCode": 404,
                 "status": False,
-                "message": "No matching records found.",
+                "message": "No matching Study Factor Language Ability records found in filtered result.",
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=status.HTTP_404_NOT_FOUND)
 
         objs.delete()
+
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} Study Factor Language Ability record(s) permanently deleted.",
+            "message": f"{count} Study Factor Language Ability record(s) deleted.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         }, status=status.HTTP_200_OK)
-    
 
+
+#--------------------StudyFactorLanguageAbility Export----------------------
 
 class StudyFactorLanguageAbilityExportAPIView(APIView):
     permission_classes = []  # Add IsAuthenticated if required
@@ -6041,7 +6870,7 @@ class StudyFactorLanguageAbilityExportAPIView(APIView):
         field_header_map = {
             'uuid': 'UUID',
             'factor_for': 'Factor For',
-            'language_ability_group': 'Language Ability Group',
+            'study_language_ability_group': 'Study Language Ability Group',
             'language_test_name': 'Language Test Name',
             'module_name': 'Module Name',
             'minimum_overall_score': 'Minimum Overall Score',
@@ -6066,7 +6895,7 @@ class StudyFactorLanguageAbilityExportAPIView(APIView):
 
         # --- Custom sorting logic ---
         sort_field_map = {
-            'language_ability_group': 'language_ability_group__name',
+            'study_language_ability_group': 'study_language_ability_group__name',
             'in_no_of_modules': 'in_no_of_modules',
             'created_at': 'created_at',
             'updated_at': 'updated_at',
@@ -6087,7 +6916,7 @@ class StudyFactorLanguageAbilityExportAPIView(APIView):
                     orm_field = sort_field_map[field]
 
                     # Case-insensitive sorting for string fields
-                    if field in ['language_ability_group']:
+                    if field in ['study_language_ability_group']:
                         f = Lower(orm_field)
                     else:
                         f = F(orm_field)
@@ -6114,7 +6943,7 @@ class StudyFactorLanguageAbilityExportAPIView(APIView):
                 value = getattr(obj, field, '')
                 
                 # Handle foreign keys
-                if field in ['factor_for', 'language_ability_group', 'language_test_name', 'module_name', 'minimum_overall_score', 'not_less_than']:
+                if field in ['factor_for', 'study_language_ability_group', 'language_test_name', 'module_name', 'minimum_overall_score', 'not_less_than']:
                     fk_obj = getattr(obj, field, None)
                     value = getattr(fk_obj, 'name', '') if fk_obj else ''
 
@@ -6143,7 +6972,9 @@ class StudyFactorLanguageAbilityExportAPIView(APIView):
         )
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
-    
+
+#--------------------StudyFactorLanguageAbility Import----------------------
+
 class StudyFactorLanguageAbilityImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -6165,7 +6996,7 @@ class StudyFactorLanguageAbilityImportAPIView(APIView):
         format_type = file.name.split(".")[-1].lower()
         required_headers = {
             "factor for",
-            "language ability group",
+            "Study language ability group",
             "language test name",
             "module name",
             "minimum overall score",
@@ -6252,7 +7083,7 @@ class StudyFactorLanguageAbilityImportAPIView(APIView):
 
                 # Read values
                 ff = row.get("factor for")
-                lag = row.get("language ability group")
+                lag = row.get("study language ability group")
                 ltn = row.get("language test name")
                 mn = row.get("module name")
                 msc = row.get("minimum overall score")
@@ -6268,7 +7099,7 @@ class StudyFactorLanguageAbilityImportAPIView(APIView):
                 # Resolve FK
                 resolved = {
                     "factor_for": self.resolve_fk(FactorFor, ff),
-                    "language_ability_group": self.resolve_fk(LanguageAbilityGroup, lag),
+                    "study_language_ability_group": self.resolve_fk(LanguageAbilityGroup, lag),
                     "language_test_name": self.resolve_fk(LanguageTest, ltn),
                     "module_name": self.resolve_fk(LanguagetestmoduleName, mn),
                     "minimum_overall_score": self.resolve_fk(LanguageTestResult, msc),
@@ -6316,124 +7147,12 @@ class StudyFactorLanguageAbilityImportAPIView(APIView):
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": duplicates,
-            "skipped_rows": skipped_rows,
+            "duplicates": reversed(duplicates),
+            "skipped_rows": reversed(skipped_rows),
         }, status=status.HTTP_200_OK)
-    
 
 
-#--------------------EntranctestAbility--------------------
-
-
-
-class StudyFactorEntranceTestAbilityExportAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
-
-    def get(self, request):
-        format_type = request.GET.get("format", "xlsx").lower()
-
-        queryset = StudyFactorEntranceTestAbility.objects.filter(is_deleted=False)
-
-        dataset = Dataset()
-        dataset.headers = [
-            "UUID", "Factor For", "Entrance Test Ability Group",
-            "Entrance Test Name", "Minimum Score Required",
-            "Description", "Created At", "Updated At"
-        ]
-
-        for obj in queryset:
-            dataset.append([
-                obj.uuid,
-                obj.factor_for.name,
-                obj.entrance_test_ability_group.name,
-                obj.entrance_test_name.name,
-                obj.minimum_score_required.name,
-                obj.description,
-                obj.created_at.strftime("%d-%m-%Y %I:%M:%S %p"),
-                obj.updated_at.strftime("%d-%m-%Y %I:%M:%S %p"),
-            ])
-
-        if format_type == "csv":
-            data = dataset.export("csv")
-            content_type = "text/csv"
-            filename = "studyfactorentrancetestability.csv"
-        else:
-            data = dataset.export("xlsx")
-            content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            filename = "studyfactorentrancetestability.xlsx"
-
-        response = HttpResponse(data, content_type)
-        response["Content-Disposition"] = f'attachment; filename="{filename}"'
-        return response
-
-class StudyFactorEntranceTestAbilityImportAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
-
-    def post(self, request):
-        file = request.FILES.get("file")
-        sheet_name = request.data.get("sheet_name")
-
-        if not file:
-            return Response({"error": "No file uploaded"}, status=400)
-
-        format_type = file.name.split(".")[-1].lower()
-
-        required_headers = {
-            "factor for",
-            "entrance test ability group",
-            "entrance test name",
-            "minimum score required"
-        }
-
-        data_rows = []
-
-        try:
-            if format_type == "xlsx":
-                wb = openpyxl.load_workbook(file)
-                sheets = wb.sheetnames
-
-                if sheet_name not in sheets:
-                    return Response({"error": "Invalid sheet name", "sheets": sheets}, status=400)
-
-                ws = wb[sheet_name]
-                headers = [str(c.value).lower().strip() for c in next(ws.rows)]
-
-                if not required_headers.issubset(set(headers)):
-                    return Response({
-                        "error": f"Missing required headers {required_headers}"
-                    }, status=400)
-
-                for row in ws.iter_rows(min_row=2, values_only=True):
-                    data_rows.append(dict(zip(headers, row)))
-
-            else:
-                return Response({"error": "Only xlsx import supported"}, status=400)
-
-            imported = 0
-            for row in data_rows:
-
-                StudyFactorEntranceTestAbility.objects.create(
-                    factor_for=FactorFor.objects.get(name__iexact=row["factor for"]),
-                    entrance_test_ability_group=EntranceTestAbilityGroup.objects.get(name__iexact=row["entrance test ability group"]),
-                    entrance_test_name=EntranceTestName.objects.get(name__iexact=row["entrance test name"]),
-                    minimum_score_required=EntranceTestResult.objects.get(name__iexact=row["minimum score required"]),
-                    description=row.get("description", "")
-                )
-                imported += 1
-
-        except Exception as e:
-            return Response({"error": str(e)}, status=400)
-
-        return Response({
-            "statusCode": 200,
-            "status": True,
-            "message": "Import completed",
-            "imported_count": imported
-        })
-
-
-
-
+#--------------------StudyFactorEntrancTestAbility CREATE--------------------
 
 class StudyFactorEntranceTestAbilityCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -6447,7 +7166,7 @@ class StudyFactorEntranceTestAbilityCreateAPIView(APIView):
             data = serializer.validated_data
             exists = StudyFactorEntranceTestAbility.objects.filter(
                 factor_for=data["factor_for"],
-                entrance_test_ability_group=data["entrance_test_ability_group"],
+                study_entrance_test_ability_group=data["study_entrance_test_ability_group"],
                 entrance_test_name=data["entrance_test_name"],
                 minimum_score_required=data["minimum_score_required"],
                 is_deleted=False
@@ -6473,11 +7192,10 @@ class StudyFactorEntranceTestAbilityCreateAPIView(APIView):
             "status": False,
             "message": " ".join([msg for msgs in serializer.errors.values() for msg in msgs])
         }, status=400)
-    
 
 
 
-
+#--------------------StudyFactorEntrancTestAbility List--------------------
 
 class StudyFactorEntranceTestAbilityListAPIView(APIView):
     def get(self, request):
@@ -6485,7 +7203,7 @@ class StudyFactorEntranceTestAbilityListAPIView(APIView):
         custom_sort = request.GET.get("customSort")  # e.g., name:asc,created_at:desc
 
         allowed_sort_fields = [
-            "entrance_test_ability_group",
+            "study_entrance_test_ability_group",
             "minimum_required_test_ability",
             "description",
             "created_at",
@@ -6497,14 +7215,14 @@ class StudyFactorEntranceTestAbilityListAPIView(APIView):
         #SEARCH — only on EntranceTest Ability Group name
         if search:
             queryset = queryset.filter(
-                Q(entrance_test_ability_group__name__istartswith=search)
+                Q(study_entrance_test_ability_group__name__istartswith=search)
             )
 
         # --------------------------
         # SORTING FIELDS MAP
         # --------------------------
         sort_field_map = {
-            "entrance_test_ability_group": "entrance_test_ability_group__name",
+            "study_entrance_test_ability_group": "study_entrance_test_ability_group__name",
             "minimum_required_test_ability": "minimum_required_test_ability__name",
             "description": "description",
             "created_at": "created_at",
@@ -6530,7 +7248,7 @@ class StudyFactorEntranceTestAbilityListAPIView(APIView):
 
                     # Case-insensitive for string fields
                     if field in [
-                        "entrance_test_ability_group",
+                        "study_entrance_test_ability_group",
                         "minimum_required_test_ability",
                         "description",
                     ]:
@@ -6565,8 +7283,9 @@ class StudyFactorEntranceTestAbilityListAPIView(APIView):
         serializer = StudyFactorEntranceTestAbilitySerializer(result_page, many=True)
 
         return paginator.get_paginated_response(serializer.data)
-    
 
+
+#--------------------StudyFactorEntrancTestAbility Retrieve--------------------
 
 class StudyFactorEntranceTestAbilityRetrieveAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -6588,10 +7307,10 @@ class StudyFactorEntranceTestAbilityRetrieveAPIView(APIView):
             "message": "Record retrieved successfully",
             "data": serializer.data
         })
-    
 
 
 
+#--------------------StudyFactorEntrancTestAbility UPDATE--------------------
 
 class StudyFactorEntranceTestAbilityUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -6630,21 +7349,36 @@ class StudyFactorEntranceTestAbilityUpdateAPIView(APIView):
             "message": message_text,
             "data": None
         }, status=status.HTTP_400_BAD_REQUEST)
-    
 
+
+#--------------------StudyFactorEntrancTestAbility DELETE--------------------
 
 class StudyFactorEntranceTestAbilityDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
         ids = request.data.get("id", None)
+        search = request.GET.get("search", "").strip()
 
-        # ----------------------------
+        # ------------------------------------
+        # APPLY SEARCH FILTER
+        # ------------------------------------
+        queryset = StudyFactorEntranceTestAbility.objects.all()
+
+        if search:
+            queryset = queryset.filter(
+                Q(factor_for__name__icontains=search) |
+                Q(study_entrance_test_ability_group__name__icontains=search) |
+                Q(entrance_test_name__name__icontains=search) |
+                Q(minimum_score_required__name__icontains=search)
+            )
+
+        # ------------------------------------
         # SINGLE DELETE
-        # ----------------------------
+        # ------------------------------------
         if uuid:
             try:
-                ability = StudyFactorEntranceTestAbility.objects.get(uuid=uuid)
+                ability = queryset.get(uuid=uuid)
                 ability.delete()
                 return Response({
                     "statusCode": 204,
@@ -6660,12 +7394,12 @@ class StudyFactorEntranceTestAbilityDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-        # ----------------------------
-        # DELETE ALL
-        # ----------------------------
+        # ------------------------------------
+        # DELETE ALL (ONLY FILTERED ITEMS)
+        # ------------------------------------
         if ids == "all":
-            objects = StudyFactorEntranceTestAbility.objects.all()
-            count = objects.count()
+
+            count = queryset.count()
 
             if count == 0:
                 return Response({
@@ -6675,7 +7409,7 @@ class StudyFactorEntranceTestAbilityDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-            objects.delete()
+            queryset.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
@@ -6683,9 +7417,9 @@ class StudyFactorEntranceTestAbilityDeleteAPIView(APIView):
                 "data": None
             }, status=status.HTTP_200_OK)
 
-        # ----------------------------
-        # BULK DELETE (LIST OF UUIDs)
-        # ----------------------------
+        # ------------------------------------
+        # BULK DELETE (LIST OF UUIDs) — ONLY SELECTED + FILTERED
+        # ------------------------------------
         if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
@@ -6711,8 +7445,7 @@ class StudyFactorEntranceTestAbilityDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids}
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Find matching records
-        objects = StudyFactorEntranceTestAbility.objects.filter(uuid__in=valid_uuids)
+        objects = queryset.filter(uuid__in=valid_uuids)
         count = objects.count()
 
         if count == 0:
@@ -6733,8 +7466,7 @@ class StudyFactorEntranceTestAbilityDeleteAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-
-
+#--------------------StudyFactorEntrancTestAbility Export--------------------
 
 class StudyFactorEntranceTestAbilityExportAPIView(APIView):
 
@@ -6753,7 +7485,7 @@ class StudyFactorEntranceTestAbilityExportAPIView(APIView):
         field_header_map = {
             "uuid": "UUID",
             "factor_for": "Factor For",
-            "entrance_test_ability_group": "Entrance Test Ability Group",
+            "study_entrance_test_ability_group": "Study Entrance Test Ability Group",
             "entrance_test_name": "Entrance Test Name",
             "minimum_score_required": "Minimum Score Required",
             "description": "Description",
@@ -6781,7 +7513,7 @@ class StudyFactorEntranceTestAbilityExportAPIView(APIView):
         # --- Sorting mapping ---
         sort_field_map = {
             "factor_for": "factor_for__name",
-            "entrance_test_ability_group": "entrance_test_ability_group__name",
+            "study_entrance_test_ability_group": "study_entrance_test_ability_group__name",
             "entrance_test_name": "entrance_test_name__fullname",   # FIXED
             "minimum_score_required": "minimum_score_required__numeric_score",  # FIXED
             "description": "description",
@@ -6807,7 +7539,7 @@ class StudyFactorEntranceTestAbilityExportAPIView(APIView):
                     # Case-insensitive sorting for text fields
                     if field in [
                         "factor_for",
-                        "entrance_test_ability_group",
+                        "study_entrance_test_ability_group",
                         "entrance_test_name",
                         "description",
                     ]:
@@ -6830,7 +7562,7 @@ class StudyFactorEntranceTestAbilityExportAPIView(APIView):
         # --- Prepare dataset ---
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = "StudyFactor Entrance Test Ability Data"
+        dataset.title = "StudyFactorEntranceTestAbility"
 
         # --- Row building ---
         for obj in queryset:
@@ -6841,8 +7573,8 @@ class StudyFactorEntranceTestAbilityExportAPIView(APIView):
                 if field == "factor_for":
                     value = getattr(obj.factor_for, "name", "")
 
-                elif field == "entrance_test_ability_group":
-                    value = getattr(obj.entrance_test_ability_group, "name", "")
+                elif field == "study_entrance_test_ability_group":
+                    value = getattr(obj.study_entrance_test_ability_group, "name", "")
 
                 elif field == "entrance_test_name":
                     value = getattr(obj.entrance_test_name, "fullname", "")
@@ -6888,8 +7620,7 @@ class StudyFactorEntranceTestAbilityExportAPIView(APIView):
         response["Content-Disposition"] = f'attachment; filename="{file_name}"'
         return response
 
-
-
+#--------------------StudyFactorEntrancTestAbility IMPORT--------------------
 
 class StudyFactorEntranceTestAbilityImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -6906,7 +7637,7 @@ class StudyFactorEntranceTestAbilityImportAPIView(APIView):
         # Required & Optional Headers
         required_headers = {
             'factor for',
-            'entrance test ability group',
+            'study entrance test ability group',
             'entrance test name',
             'minimum score required',
         }
@@ -6999,7 +7730,7 @@ class StudyFactorEntranceTestAbilityImportAPIView(APIView):
             existing_map = {
                 (
                     obj.factor_for.name.strip().lower(),
-                    obj.entrance_test_ability_group.name.strip().lower(),
+                    obj.study_entrance_test_ability_group.name.strip().lower(),
                     obj.entrance_test_name.fullname.strip().lower(),
                     obj.minimum_score_required.testresult.strip().lower(),
                 ): obj
@@ -7016,7 +7747,7 @@ class StudyFactorEntranceTestAbilityImportAPIView(APIView):
                 row_number = row.get('_row_number')
 
                 factor_for_val = (row.get('factor for') or '').strip().lower()
-                ability_group_val = (row.get('entrance test ability group') or '').strip().lower()
+                ability_group_val = (row.get('study entrance test ability group') or '').strip().lower()
                 test_name_val = (row.get('entrance test name') or '').strip().lower()
                 min_score_val = (row.get('minimum score required') or '').strip().lower()
                 description = (row.get('description') or '').strip()
@@ -7073,7 +7804,7 @@ class StudyFactorEntranceTestAbilityImportAPIView(APIView):
                 to_create.append(
                     StudyFactorEntranceTestAbility(
                         factor_for=factor_obj,
-                        entrance_test_ability_group=group_obj,
+                        study_entrance_test_ability_group=group_obj,
                         entrance_test_name=test_obj,
                         minimum_score_required=min_score_obj,
                         description=description,
@@ -7100,7 +7831,6 @@ class StudyFactorEntranceTestAbilityImportAPIView(APIView):
                 "status": False,
                 "message": str(e)
             }, status=400)
-
 
 
 

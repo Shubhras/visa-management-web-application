@@ -11,11 +11,17 @@ import { formatDateDDMMYYYYTime } from '../../../../helper/utils/commanHelper';
 import { useGlobalSearch } from '../../../../components/comman/GlobalSearchContext';
 import ResetButton from '../../../../components/comman/ResetButton';
 import { countryList } from "../../../../store/master/generalMasters/actions";
+import {
+    stateListByCountry,
+} from "../../../../store/master/generalMasters/actions";
 const RepresentingCountryList = () => {
     const dispatch = useDispatch();
     const { globalSearch, setGlobalSearch } = useGlobalSearch();
     const [columnFilters, setColumnFilters] = useState({
         country: [],
+        largestState: [],
+        smallestState: [],
+
 
     });
     const [activeFilterColumn, setActiveFilterColumn] = useState(null);
@@ -23,7 +29,8 @@ const RepresentingCountryList = () => {
     const [filterSearchTerms, setFilterSearchTerms] = useState({});
     const filterDropdownRef = useRef(null);
     useEffect(() => {
-        fetchCountryDropdown()
+        fetchCountryDropdown();
+        fetchStateNameDropdown("all");
     }, []);
     const fetchCountryDropdown = () => {
         const params = {
@@ -50,6 +57,65 @@ const RepresentingCountryList = () => {
             }
         }));
     };
+    const fetchStateNameDropdown = (countryIds = "all") => {
+        if (!countryIds) {
+            setFilterDropdownData(prev => ({
+                ...prev,
+                largestState: [],
+                smallestState: []
+            }));
+            return;
+        }
+
+        const params = {
+            page: 1,
+            limit: 2000,
+            search: "",
+            sortBy: "name",
+            sortOrder: "asc",
+            countryId: countryIds,
+        };
+
+        dispatch(stateListByCountry(params, (response, error) => {
+            if (response?.statusCode === 200 && response?.status === true) {
+                const options = (response.data || []).map(item => ({
+                    id: item.uuid || item.id,
+                    name: String(item.stateName ?? item.name ?? "")
+                }));
+                const sortedOptions = options.sort((a, b) =>
+                    String(a.name).localeCompare(String(b.name), undefined, { numeric: true })
+                );
+
+                // Update BOTH filter dropdowns with the same state list
+                setFilterDropdownData(prev => ({
+                    ...prev,
+                    largestState: sortedOptions,
+                    smallestState: sortedOptions  // Same list for smallest state
+                }));
+            } else {
+                setFilterDropdownData(prev => ({
+                    ...prev,
+                    largestState: [],
+                    smallestState: []
+                }));
+            }
+        }));
+    };
+
+    useEffect(() => {
+        if (columnFilters.country.length > 0) {
+            const countryIds = columnFilters.country.join(",");
+            fetchStateNameDropdown(countryIds);
+        } else {
+            fetchStateNameDropdown("all");
+        }
+        setColumnFilters(prev => ({
+            ...prev,
+            largestState: [],
+            smallestState: []
+        }));
+    }, [columnFilters.country]);
+
     const toggleFilterDropdown = (e, columnField) => {
         e.stopPropagation()
         setActiveFilterColumn(activeFilterColumn === columnField ? null : columnField)
@@ -82,12 +148,16 @@ const RepresentingCountryList = () => {
         return options.filter(o =>
             String(o.name ?? '').toLowerCase().startsWith(searchTerm)
         )
-        .sort((a, b) => a.name.localeCompare(b.name));
+            .sort((a, b) => a.name.localeCompare(b.name));
     }
 
-    const clearAllOnlyHeaderFilters = () => setColumnFilters({ country: [] })
+    const clearAllOnlyHeaderFilters = () => setColumnFilters({
+        country: [],
+        largestState: [],
+        smallestState: [],
+    })
     const hasActiveFilters = () => Object.values(columnFilters).some(list => list.length > 0)
-    // Close filter when clicking outside
+
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target)) {
@@ -97,7 +167,7 @@ const RepresentingCountryList = () => {
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
-    // Sort ascending (Smallest to Largest)
+
     const applySortAsc = (field) => {
         setTableState(prev => {
             let newSort = [...prev.sort]
@@ -108,7 +178,6 @@ const RepresentingCountryList = () => {
         })
     }
 
-    // Sort descending (Largest to Smallest)
     const applySortDesc = (field) => {
         setTableState(prev => {
             let newSort = [...prev.sort]
@@ -118,11 +187,6 @@ const RepresentingCountryList = () => {
             return { ...prev, sort: newSort, page: 1 }
         })
     }
-
-
-
-
-
 
 
 
@@ -145,7 +209,6 @@ const RepresentingCountryList = () => {
             mode: 'add',
             rowData: null
         });
-        // Only call API when data was successfully added/updated
         if (shouldRefresh) {
             fetchDepartmentList();
         }
@@ -229,8 +292,8 @@ const RepresentingCountryList = () => {
         { id: 'religions', label: 'Religions', field: 'religions', visible: true, required: false },
         { id: 'monthly_living_cost', label: 'Monthly Living Cost', field: 'monthly_living_cost', visible: true, required: false },
 
-        { id: 'largest_state', label: 'Largest State', field: 'largest_state', visible: true, required: false },
-        { id: 'smallest_state', label: 'Smallest State', field: 'smallest_state', visible: true, required: false },
+        { id: 'largest_state', label: 'Largest State', field: 'largestState', visible: true, required: false, filterable: true },
+        { id: 'smallest_state', label: 'Smallest State', field: 'smallestState', visible: true, required: false, filterable: true },
         { id: 'major_cities', label: 'Major Cities', field: 'major_cities', visible: true, required: false },
 
         { id: 'national_animal', label: 'National Animal', field: 'national_animal', visible: true, required: false },
@@ -333,6 +396,9 @@ const RepresentingCountryList = () => {
             sortOrder: tableState.sortOrder || '',
             sort: tableState.sort,
             country: columnFilters.country.length > 0 ? columnFilters.country : null,
+            largestState: columnFilters.largestState.length > 0 ? columnFilters.largestState : null,
+            smallestState: columnFilters.smallestState.length > 0 ? columnFilters.smallestState : null,
+
         };
 
         dispatch(representingCountryData(params, (response, error) => {
@@ -527,10 +593,22 @@ const RepresentingCountryList = () => {
     const confirmDelete = () => {
         const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
         if (!sendPayload || sendPayload.length === 0) {
-            toast.error("No Representing Country selected for deletion.");
+            toast.error("No Study specialisation selected for deletion.");
             return;
         }
-        dispatch(representingCountryDelete(sendPayload, (response, error) => {
+        const deleteAll = selectAllOrNot === "all" && ((tableState.search && tableState.search.trim() !== '') ||
+            columnFilters.country.length > 0 ||
+            columnFilters.largestState.length > 0 ||
+            columnFilters.smallestState.length > 0);
+        const payloadSend = {
+            deleteAll: deleteAll,
+            country: columnFilters.country.length > 0 ? columnFilters.country : '',
+            largestState: columnFilters.largestState.length > 0 ? columnFilters.largestState : '',
+            smallestState: columnFilters.smallestState.length > 0 ? columnFilters.smallestState : '',
+            id: deleteAll == true ? "" : sendPayload,
+            search: tableState.search || '',
+        };
+        dispatch(representingCountryDelete(payloadSend, (response, error) => {
             if (error) {
                 toast.error(error?.response?.data?.message || "server error");
             } else {
@@ -542,7 +620,8 @@ const RepresentingCountryList = () => {
                     setSelectedRows([]);
                     setSelectAllOrNot('');
                     setDeleteId(null);
-                    fetchDepartmentList();
+                    // fetchDepartmentList();
+                     clearAllFilters();
                 } else {
                     toast.error("Something went wrong.");
                 }
@@ -667,6 +746,8 @@ const RepresentingCountryList = () => {
             search: tableState.search || '',
             sort: tableState.sort,
             country: columnFilters.country.length > 0 ? columnFilters.country : null,
+            largestState: columnFilters.largestState.length > 0 ? columnFilters.largestState : null,
+            smallestState: columnFilters.smallestState.length > 0 ? columnFilters.smallestState : null,
         };
         setLoadingExport(true);
         dispatch(representingCountryExportData(sendPayload, (response, error) => {
@@ -1132,7 +1213,7 @@ const RepresentingCountryList = () => {
                                                     </div>
                                                 </td>
                                                 {isColumnVisible('country_name') && (
-                                                    <td><span>{rowItem.country_name}</span></td>
+                                                    <td><span>{rowItem.name}</span></td>
                                                 )}
                                                 {isColumnVisible('official_name') && (
                                                     <td><span>{rowItem.official_name}</span></td>
@@ -1147,7 +1228,7 @@ const RepresentingCountryList = () => {
                                                     <td><span>{rowItem.capital_city}</span></td>
                                                 )}
                                                 {isColumnVisible('calling_code') && (
-                                                    <td><span>{rowItem.calling_code}</span></td>
+                                                    <td><span>{rowItem.dial_codes}</span></td>
                                                 )}
                                                 {isColumnVisible('currency_full_name') && (
                                                     <td><span>{rowItem.currency_full_name}</span></td>
@@ -1165,7 +1246,7 @@ const RepresentingCountryList = () => {
                                                     <td><span>{rowItem.no_of_territories}</span></td>
                                                 )}
                                                 {isColumnVisible('total_states_territories') && (
-                                                    <td><span>{rowItem.total_states_territories}</span></td>
+                                                    <td><span>{rowItem.total_states_and_territories}</span></td>
                                                 )}
                                                 {isColumnVisible('independence_day') && (
                                                     <td><span>{rowItem.independence_day}</span></td>
@@ -1177,13 +1258,13 @@ const RepresentingCountryList = () => {
                                                     <td><span>{rowItem.official_language}</span></td>
                                                 )}
                                                 {isColumnVisible('land_area') && (
-                                                    <td><span>{rowItem.land_area}</span></td>
+                                                    <td><span>{rowItem.land_area_sq_km}</span></td>
                                                 )}
                                                 {isColumnVisible('water_area') && (
-                                                    <td><span>{rowItem.water_area}</span></td>
+                                                    <td><span>{rowItem.water_area_sq_km}</span></td>
                                                 )}
                                                 {isColumnVisible('total_area') && (
-                                                    <td><span>{rowItem.total_area}</span></td>
+                                                    <td><span>{rowItem.total_area_sq_km}</span></td>
                                                 )}
                                                 {isColumnVisible('population') && (
                                                     <td><span>{rowItem.population}</span></td>
@@ -1195,10 +1276,10 @@ const RepresentingCountryList = () => {
                                                     <td><span>{rowItem.monthly_living_cost}</span></td>
                                                 )}
                                                 {isColumnVisible('largest_state') && (
-                                                    <td><span>{rowItem.largest_state}</span></td>
+                                                    <td><span>{rowItem.largest_state_name}</span></td>
                                                 )}
                                                 {isColumnVisible('smallest_state') && (
-                                                    <td><span>{rowItem.smallest_state}</span></td>
+                                                    <td><span>{rowItem.smallest_state_name}</span></td>
                                                 )}
                                                 {isColumnVisible('major_cities') && (
                                                     <td><span>{rowItem.major_cities}</span></td>
@@ -1219,7 +1300,7 @@ const RepresentingCountryList = () => {
                                                     <td><span>{rowItem.skilled_shortages}</span></td>
                                                 )}
                                                 {isColumnVisible('border_countries') && (
-                                                    <td><span>{rowItem.border_countries}</span></td>
+                                                    <td><span>{rowItem.border_countries_and_oceans}</span></td>
                                                 )}
                                                 {isColumnVisible('national_flag') && (
                                                     <td>

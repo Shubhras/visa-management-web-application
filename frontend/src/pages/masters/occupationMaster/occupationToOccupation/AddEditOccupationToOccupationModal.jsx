@@ -223,28 +223,28 @@ const AddEditOccupationToOccupationModal = ({
       const sendPayload =
         mode === "edit"
           ? {
-              uuid: formData.uuid,
-              country: formData.country,
-              occupation_version: formData.occupationVersion,
-              occupation_name: formData.occupationName,
-              occupation_code: formData.occupationCode,
-              compare_country: formData.compareCountry,
-              compare_occupation_version: formData.compareOccupationVersion,
-              compare_occupation_name: formData.compareOccupationName,
-              compare_occupation_code: formData.compareOccupationCode,
-              description: formData.description.trim(),
-            }
+            uuid: formData.uuid,
+            country: formData.country,
+            occupation_version: formData.occupationVersion,
+            occupation_name: formData.occupationName,
+            occupation_code: formData.occupationCode,
+            compare_country: formData.compareCountry,
+            compare_occupation_version: formData.compareOccupationVersion,
+            compare_occupation_name: formData.compareOccupationName,
+            compare_occupation_code: formData.compareOccupationCode,
+            description: formData.description.trim(),
+          }
           : {
-              country: formData.country,
-              occupation_version: formData.occupationVersion,
-              occupation_name: formData.occupationName,
-              occupation_code: formData.occupationCode,
-              compare_country: formData.compareCountry,
-              compare_occupation_version: formData.compareOccupationVersion,
-              compare_occupation_name: formData.compareOccupationName,
-              compare_occupation_code: formData.compareOccupationCode,
-              description: formData.description.trim(),
-            };
+            country: formData.country,
+            occupation_version: formData.occupationVersion,
+            occupation_name: formData.occupationName,
+            occupation_code: formData.occupationCode,
+            compare_country: formData.compareCountry,
+            compare_occupation_version: formData.compareOccupationVersion,
+            compare_occupation_name: formData.compareOccupationName,
+            compare_occupation_code: formData.compareOccupationCode,
+            description: formData.description.trim(),
+          };
 
       setLoading(true);
       const action =
@@ -315,8 +315,8 @@ const AddEditOccupationToOccupationModal = ({
           <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
             <h1 className="modal-title fs-5" id="AddEditStateModalLabel">
               {mode === "edit"
-                ? "Edit Language Ability"
-                : "Add Language Ability"}
+                ? "Edit Compare : Occupation To Occupation"
+                : "Add Compare : Occupation To Occupation"}
             </h1>
             <button
               type="button"
@@ -328,64 +328,64 @@ const AddEditOccupationToOccupationModal = ({
 
           <div className="modal-body p-24">
             <form onSubmit={handleSubmit}>
-              <div className="row">
+              <div className="">
                 {/* Country */}
-                <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Country<span className="text-danger">*</span>
-                  </label>
-                  <Select
-                    options={countryListData.map((option) => ({
-                      value: option.uuid,
-                      label: option.name,
-                    }))}
-                    value={
-                      formData.country
-                        ? countryListData
+                <div className=' row modal-scrollable-content'>
+                  <div className="col-6 mb-20">
+                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                      Country<span className="text-danger">*</span>
+                    </label>
+                    <Select
+                      options={countryListData.map((option) => ({
+                        value: option.uuid,
+                        label: option.name,
+                      }))}
+                      value={
+                        formData.country
+                          ? countryListData
                             .map((option) => ({
                               value: option.uuid,
                               label: option.name,
                             }))
                             .find((opt) => opt.value === formData.country)
-                        : null
-                    }
-                    onChange={(selectedOption) =>
-                      handleChange({
-                        target: {
-                          name: "country",
-                          value: selectedOption ? selectedOption.value : "",
-                        },
-                      })
-                    }
-                    filterOption={customFilterOption}
-                    placeholder="Select Country"
-                    isClearable
-                    isSearchable
-                    className={`custom-select-container ${
-                      errors.country ? "is-invalid" : ""
-                    }`}
-                    classNamePrefix="custom-select"
-                  />
-                  {errors.country && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.country}
-                    </div>
-                  )}
-                </div>
+                          : null
+                      }
+                      onChange={(selectedOption) =>
+                        handleChange({
+                          target: {
+                            name: "country",
+                            value: selectedOption ? selectedOption.value : "",
+                          },
+                        })
+                      }
+                      filterOption={customFilterOption}
+                      placeholder="Select Country"
+                      isClearable
+                      isSearchable
+                      className={`custom-select-container ${errors.country ? "is-invalid" : ""
+                        }`}
+                      classNamePrefix="custom-select"
+                    />
+                    {errors.country && (
+                      <div className="text-danger text-sm mt-1">
+                        {errors.country}
+                      </div>
+                    )}
+                  </div>
 
-                {/* Occupation Version */}
-                <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Occupation Version<span className="text-danger">*</span>
-                  </label>
-                  <Select
-                    options={occupationVersionListData.map((option) => ({
-                      value: option.uuid,
-                      label: option.occupation_version,
-                    }))}
-                    value={
-                      formData.occupationVersion
-                        ? occupationVersionListData
+                  {/* Occupation Version */}
+                  <div className="col-6 mb-20">
+                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                      Occupation Version<span className="text-danger">*</span>
+                    </label>
+                    <Select
+                      options={occupationVersionListData.map((option) => ({
+                        value: option.uuid,
+                        label: option.occupation_version,
+                      }))}
+                      value={
+                        formData.occupationVersion
+                          ? occupationVersionListData
                             .map((option) => ({
                               value: option.uuid,
                               label: option.occupation_version,
@@ -393,45 +393,44 @@ const AddEditOccupationToOccupationModal = ({
                             .find(
                               (opt) => opt.value === formData.occupationVersion
                             )
-                        : null
-                    }
-                    onChange={(selectedOption) =>
-                      handleChange({
-                        target: {
-                          name: "occupationVersion",
-                          value: selectedOption ? selectedOption.value : "",
-                        },
-                      })
-                    }
-                    filterOption={customFilterOption}
-                    placeholder="Select Occupation Version"
-                    isClearable
-                    isSearchable
-                    className={`custom-select-container ${
-                      errors.occupationVersion ? "is-invalid" : ""
-                    }`}
-                    classNamePrefix="custom-select"
-                  />
-                  {errors.occupationVersion && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.occupationVersion}
-                    </div>
-                  )}
-                </div>
+                          : null
+                      }
+                      onChange={(selectedOption) =>
+                        handleChange({
+                          target: {
+                            name: "occupationVersion",
+                            value: selectedOption ? selectedOption.value : "",
+                          },
+                        })
+                      }
+                      filterOption={customFilterOption}
+                      placeholder="Select Occupation Version"
+                      isClearable
+                      isSearchable
+                      className={`custom-select-container ${errors.occupationVersion ? "is-invalid" : ""
+                        }`}
+                      classNamePrefix="custom-select"
+                    />
+                    {errors.occupationVersion && (
+                      <div className="text-danger text-sm mt-1">
+                        {errors.occupationVersion}
+                      </div>
+                    )}
+                  </div>
 
-                {/* Occupation Name */}
-                <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Occupation Name<span className="text-danger">*</span>
-                  </label>
-                  <Select
-                    options={occupationNameListData.map((option) => ({
-                      value: option.uuid,
-                      label: option.occupationname,
-                    }))}
-                    value={
-                      formData.occupationName
-                        ? occupationNameListData
+                  {/* Occupation Name */}
+                  <div className="col-6 mb-20">
+                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                      Occupation Name<span className="text-danger">*</span>
+                    </label>
+                    <Select
+                      options={occupationNameListData.map((option) => ({
+                        value: option.uuid,
+                        label: option.occupationname,
+                      }))}
+                      value={
+                        formData.occupationName
+                          ? occupationNameListData
                             .map((option) => ({
                               value: option.uuid,
                               label: option.occupationname,
@@ -439,45 +438,44 @@ const AddEditOccupationToOccupationModal = ({
                             .find(
                               (opt) => opt.value === formData.occupationName
                             )
-                        : null
-                    }
-                    onChange={(selectedOption) =>
-                      handleChange({
-                        target: {
-                          name: "occupationName",
-                          value: selectedOption ? selectedOption.value : "",
-                        },
-                      })
-                    }
-                    filterOption={customFilterOption}
-                    placeholder="Select Occupation Name"
-                    isClearable
-                    isSearchable
-                    className={`custom-select-container ${
-                      errors.occupationName ? "is-invalid" : ""
-                    }`}
-                    classNamePrefix="custom-select"
-                  />
-                  {errors.occupationName && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.occupationName}
-                    </div>
-                  )}
-                </div>
+                          : null
+                      }
+                      onChange={(selectedOption) =>
+                        handleChange({
+                          target: {
+                            name: "occupationName",
+                            value: selectedOption ? selectedOption.value : "",
+                          },
+                        })
+                      }
+                      filterOption={customFilterOption}
+                      placeholder="Select Occupation Name"
+                      isClearable
+                      isSearchable
+                      className={`custom-select-container ${errors.occupationName ? "is-invalid" : ""
+                        }`}
+                      classNamePrefix="custom-select"
+                    />
+                    {errors.occupationName && (
+                      <div className="text-danger text-sm mt-1">
+                        {errors.occupationName}
+                      </div>
+                    )}
+                  </div>
 
-                {/* Occupation Code */}
-                <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Occupation Code<span className="text-danger">*</span>
-                  </label>
-                  <Select
-                    options={occupationCodeListData.map((option) => ({
-                      value: option.uuid,
-                      label: option.occupationcode,
-                    }))}
-                    value={
-                      formData.occupationCode
-                        ? occupationCodeListData
+                  {/* Occupation Code */}
+                  <div className="col-6 mb-20">
+                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                      Occupation Code<span className="text-danger">*</span>
+                    </label>
+                    <Select
+                      options={occupationCodeListData.map((option) => ({
+                        value: option.uuid,
+                        label: option.occupationcode,
+                      }))}
+                      value={
+                        formData.occupationCode
+                          ? occupationCodeListData
                             .map((option) => ({
                               value: option.uuid,
                               label: option.occupationcode,
@@ -485,45 +483,44 @@ const AddEditOccupationToOccupationModal = ({
                             .find(
                               (opt) => opt.value === formData.occupationCode
                             )
-                        : null
-                    }
-                    onChange={(selectedOption) =>
-                      handleChange({
-                        target: {
-                          name: "occupationCode",
-                          value: selectedOption ? selectedOption.value : "",
-                        },
-                      })
-                    }
-                    filterOption={customFilterOption}
-                    placeholder="Select Occupation Code"
-                    isClearable
-                    isSearchable
-                    className={`custom-select-container ${
-                      errors.occupationCode ? "is-invalid" : ""
-                    }`}
-                    classNamePrefix="custom-select"
-                  />
-                  {errors.occupationCode && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.occupationCode}
-                    </div>
-                  )}
-                </div>
+                          : null
+                      }
+                      onChange={(selectedOption) =>
+                        handleChange({
+                          target: {
+                            name: "occupationCode",
+                            value: selectedOption ? selectedOption.value : "",
+                          },
+                        })
+                      }
+                      filterOption={customFilterOption}
+                      placeholder="Select Occupation Code"
+                      isClearable
+                      isSearchable
+                      className={`custom-select-container ${errors.occupationCode ? "is-invalid" : ""
+                        }`}
+                      classNamePrefix="custom-select"
+                    />
+                    {errors.occupationCode && (
+                      <div className="text-danger text-sm mt-1">
+                        {errors.occupationCode}
+                      </div>
+                    )}
+                  </div>
 
-                {/* Compare Country */}
-                <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Compare Country<span className="text-danger">*</span>
-                  </label>
-                  <Select
-                    options={compareCountryListData.map((option) => ({
-                      value: option.uuid,
-                      label: option.name,
-                    }))}
-                    value={
-                      formData.compareCountry
-                        ? compareCountryListData
+                  {/* Compare Country */}
+                  <div className="col-6 mb-20">
+                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                      Compare Country<span className="text-danger">*</span>
+                    </label>
+                    <Select
+                      options={compareCountryListData.map((option) => ({
+                        value: option.uuid,
+                        label: option.name,
+                      }))}
+                      value={
+                        formData.compareCountry
+                          ? compareCountryListData
                             .map((option) => ({
                               value: option.uuid,
                               label: option.name,
@@ -531,46 +528,45 @@ const AddEditOccupationToOccupationModal = ({
                             .find(
                               (opt) => opt.value === formData.compareCountry
                             )
-                        : null
-                    }
-                    onChange={(selectedOption) =>
-                      handleChange({
-                        target: {
-                          name: "compareCountry",
-                          value: selectedOption ? selectedOption.value : "",
-                        },
-                      })
-                    }
-                    filterOption={customFilterOption}
-                    placeholder="Select Compare Country"
-                    isClearable
-                    isSearchable
-                    className={`custom-select-container ${
-                      errors.compareCountry ? "is-invalid" : ""
-                    }`}
-                    classNamePrefix="custom-select"
-                  />
-                  {errors.compareCountry && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.compareCountry}
-                    </div>
-                  )}
-                </div>
+                          : null
+                      }
+                      onChange={(selectedOption) =>
+                        handleChange({
+                          target: {
+                            name: "compareCountry",
+                            value: selectedOption ? selectedOption.value : "",
+                          },
+                        })
+                      }
+                      filterOption={customFilterOption}
+                      placeholder="Select Compare Country"
+                      isClearable
+                      isSearchable
+                      className={`custom-select-container ${errors.compareCountry ? "is-invalid" : ""
+                        }`}
+                      classNamePrefix="custom-select"
+                    />
+                    {errors.compareCountry && (
+                      <div className="text-danger text-sm mt-1">
+                        {errors.compareCountry}
+                      </div>
+                    )}
+                  </div>
 
-                {/* Compare Occupation Version */}
-                <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Compare Occupation Version
-                    <span className="text-danger">*</span>
-                  </label>
-                  <Select
-                    options={compareOccupationVersionListData.map((option) => ({
-                      value: option.uuid,
-                      label: option.occupation_version,
-                    }))}
-                    value={
-                      formData.compareOccupationVersion
-                        ? compareOccupationVersionListData
+                  {/* Compare Occupation Version */}
+                  <div className="col-6 mb-20">
+                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                      Compare Occupation Version
+                      <span className="text-danger">*</span>
+                    </label>
+                    <Select
+                      options={compareOccupationVersionListData.map((option) => ({
+                        value: option.uuid,
+                        label: option.occupation_version,
+                      }))}
+                      value={
+                        formData.compareOccupationVersion
+                          ? compareOccupationVersionListData
                             .map((option) => ({
                               value: option.uuid,
                               label: option.occupation_version,
@@ -579,46 +575,45 @@ const AddEditOccupationToOccupationModal = ({
                               (opt) =>
                                 opt.value === formData.compareOccupationVersion
                             )
-                        : null
-                    }
-                    onChange={(selectedOption) =>
-                      handleChange({
-                        target: {
-                          name: "compareOccupationVersion",
-                          value: selectedOption ? selectedOption.value : "",
-                        },
-                      })
-                    }
-                    filterOption={customFilterOption}
-                    placeholder="Select Compare Occupation Version"
-                    isClearable
-                    isSearchable
-                    className={`custom-select-container ${
-                      errors.compareOccupationVersion ? "is-invalid" : ""
-                    }`}
-                    classNamePrefix="custom-select"
-                  />
-                  {errors.compareOccupationVersion && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.compareOccupationVersion}
-                    </div>
-                  )}
-                </div>
+                          : null
+                      }
+                      onChange={(selectedOption) =>
+                        handleChange({
+                          target: {
+                            name: "compareOccupationVersion",
+                            value: selectedOption ? selectedOption.value : "",
+                          },
+                        })
+                      }
+                      filterOption={customFilterOption}
+                      placeholder="Select Compare Occupation Version"
+                      isClearable
+                      isSearchable
+                      className={`custom-select-container ${errors.compareOccupationVersion ? "is-invalid" : ""
+                        }`}
+                      classNamePrefix="custom-select"
+                    />
+                    {errors.compareOccupationVersion && (
+                      <div className="text-danger text-sm mt-1">
+                        {errors.compareOccupationVersion}
+                      </div>
+                    )}
+                  </div>
 
-                {/* Compare Occupation Name */}
-                <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Compare Occupation Name
-                    <span className="text-danger">*</span>
-                  </label>
-                  <Select
-                    options={compareOccupationNameListData.map((option) => ({
-                      value: option.uuid,
-                      label: option.occupationname,
-                    }))}
-                    value={
-                      formData.compareOccupationName
-                        ? compareOccupationNameListData
+                  {/* Compare Occupation Name */}
+                  <div className="col-6 mb-20">
+                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                      Compare Occupation Name
+                      <span className="text-danger">*</span>
+                    </label>
+                    <Select
+                      options={compareOccupationNameListData.map((option) => ({
+                        value: option.uuid,
+                        label: option.occupationname,
+                      }))}
+                      value={
+                        formData.compareOccupationName
+                          ? compareOccupationNameListData
                             .map((option) => ({
                               value: option.uuid,
                               label: option.occupationname,
@@ -627,46 +622,45 @@ const AddEditOccupationToOccupationModal = ({
                               (opt) =>
                                 opt.value === formData.compareOccupationName
                             )
-                        : null
-                    }
-                    onChange={(selectedOption) =>
-                      handleChange({
-                        target: {
-                          name: "compareOccupationName",
-                          value: selectedOption ? selectedOption.value : "",
-                        },
-                      })
-                    }
-                    filterOption={customFilterOption}
-                    placeholder="Select Compare Occupation Name"
-                    isClearable
-                    isSearchable
-                    className={`custom-select-container ${
-                      errors.compareOccupationName ? "is-invalid" : ""
-                    }`}
-                    classNamePrefix="custom-select"
-                  />
-                  {errors.compareOccupationName && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.compareOccupationName}
-                    </div>
-                  )}
-                </div>
+                          : null
+                      }
+                      onChange={(selectedOption) =>
+                        handleChange({
+                          target: {
+                            name: "compareOccupationName",
+                            value: selectedOption ? selectedOption.value : "",
+                          },
+                        })
+                      }
+                      filterOption={customFilterOption}
+                      placeholder="Select Compare Occupation Name"
+                      isClearable
+                      isSearchable
+                      className={`custom-select-container ${errors.compareOccupationName ? "is-invalid" : ""
+                        }`}
+                      classNamePrefix="custom-select"
+                    />
+                    {errors.compareOccupationName && (
+                      <div className="text-danger text-sm mt-1">
+                        {errors.compareOccupationName}
+                      </div>
+                    )}
+                  </div>
 
-                {/* Compare Occupation Code */}
-                <div className="col-6 mb-20">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-8">
-                    Compare Occupation Code
-                    <span className="text-danger">*</span>
-                  </label>
-                  <Select
-                    options={compareOccupationCodeListData.map((option) => ({
-                      value: option.uuid,
-                      label: option.occupationcode,
-                    }))}
-                    value={
-                      formData.compareOccupationCode
-                        ? compareOccupationCodeListData
+                  {/* Compare Occupation Code */}
+                  <div className="col-6 mb-20">
+                    <label className="form-label fw-semibold text-primary-light text-sm mb-8">
+                      Compare Occupation Code
+                      <span className="text-danger">*</span>
+                    </label>
+                    <Select
+                      options={compareOccupationCodeListData.map((option) => ({
+                        value: option.uuid,
+                        label: option.occupationcode,
+                      }))}
+                      value={
+                        formData.compareOccupationCode
+                          ? compareOccupationCodeListData
                             .map((option) => ({
                               value: option.uuid,
                               label: option.occupationcode,
@@ -675,49 +669,49 @@ const AddEditOccupationToOccupationModal = ({
                               (opt) =>
                                 opt.value === formData.compareOccupationCode
                             )
-                        : null
-                    }
-                    onChange={(selectedOption) =>
-                      handleChange({
-                        target: {
-                          name: "compareOccupationCode",
-                          value: selectedOption ? selectedOption.value : "",
-                        },
-                      })
-                    }
-                    filterOption={customFilterOption}
-                    placeholder="Select Compare Occupation Code"
-                    isClearable
-                    isSearchable
-                    className={`custom-select-container ${
-                      errors.compareOccupationCode ? "is-invalid" : ""
-                    }`}
-                    classNamePrefix="custom-select"
-                  />
-                  {errors.compareOccupationCode && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.compareOccupationCode}
-                    </div>
-                  )}
-                </div>
+                          : null
+                      }
+                      onChange={(selectedOption) =>
+                        handleChange({
+                          target: {
+                            name: "compareOccupationCode",
+                            value: selectedOption ? selectedOption.value : "",
+                          },
+                        })
+                      }
+                      filterOption={customFilterOption}
+                      placeholder="Select Compare Occupation Code"
+                      isClearable
+                      isSearchable
+                      className={`custom-select-container ${errors.compareOccupationCode ? "is-invalid" : ""
+                        }`}
+                      classNamePrefix="custom-select"
+                    />
+                    {errors.compareOccupationCode && (
+                      <div className="text-danger text-sm mt-1">
+                        {errors.compareOccupationCode}
+                      </div>
+                    )}
+                  </div>
 
-                {/* Description */}
-                <div className="col-12 mb-20">
-                  <label
-                    htmlFor="desc"
-                    className="form-label fw-semibold text-primary-light text-sm mb-8"
-                  >
-                    Description
-                  </label>
-                  <textarea
-                    className="form-control"
-                    id="desc"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    rows={4}
-                    placeholder="Description"
-                  />
+                  {/* Description */}
+                  <div className="col-12 mb-20">
+                    <label
+                      htmlFor="desc"
+                      className="form-label fw-semibold text-primary-light text-sm mb-8"
+                    >
+                      Description
+                    </label>
+                    <textarea
+                      className="form-control"
+                      id="desc"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      rows={4}
+                      placeholder="Description"
+                    />
+                  </div>
                 </div>
                 {/* Buttons */}
                 <div className="d-flex align-items-center justify-content-center gap-3 mt-24">

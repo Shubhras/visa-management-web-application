@@ -330,12 +330,19 @@ const ApplicantTypeList = () => {
     };
 
     const confirmDelete = () => {
-        const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
+        const sendPayload =
+            selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
         if (!sendPayload || sendPayload.length === 0) {
-            toast.error("No Applicant Type selected for deletion.");
+            toast.error("No department selected for deletion.");
             return;
         }
-        dispatch(applicantTypeDelete(sendPayload, (response, error) => {
+        const deleteAll = selectAllOrNot === "all" && Boolean(tableState.search?.trim());
+        const payloadSend = {
+            deleteAll: deleteAll,
+            id: deleteAll == true ? "" : sendPayload,
+            search: tableState.search || '',
+        };
+        dispatch(applicantTypeDelete(payloadSend, (response, error) => {
             if (error) {
                 toast.error(error?.response?.data?.message || "server error");
             } else {
@@ -347,7 +354,8 @@ const ApplicantTypeList = () => {
                     setSelectedRows([]);
                     setSelectAllOrNot('');
                     setDeleteId(null);
-                    fetchDepartmentList();
+                    // fetchDepartmentList();
+                     clearAllFilters();
                 } else {
                     toast.error("Something went wrong.");
                 }

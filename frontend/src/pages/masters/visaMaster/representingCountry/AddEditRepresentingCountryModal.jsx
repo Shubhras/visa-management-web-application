@@ -68,6 +68,8 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
         monthly_living_cost_amount: '',
 
         description: '',
+        national_flag: '',
+        country_map: '',
     });
 
     // Validation errors state
@@ -89,7 +91,39 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
             if (mode === 'edit' && rowData) {
                 setFormData({
                     uuid: rowData.uuid || '',
-                    country_name: rowData.name || '',
+                    country_name: rowData.country || '',
+                    official_name: rowData.official_name || '',
+                    short_name: rowData.short_name || '',
+                    continent: rowData.continent || '',
+                    capital_city: rowData.capital_city || '',
+                    calling_code: rowData.dial_codes || '',
+                    currency_full_name: rowData.currency_full_name || '',
+                    currency_short_name: rowData.currency_short_name || '',
+                    currency_code: rowData.currency_code || '',
+                    no_of_states: rowData.no_of_states || '',
+                    no_of_territories: rowData.no_of_territories || '',
+                    total_states_territories: rowData.total_states_and_territories || '',
+                    independence_day: rowData.independence_day || '',
+                    government_type: rowData.government_type || '',
+                    official_language: rowData.official_language || '',
+                    land_area: rowData.land_area_sq_km || '',
+                    water_area: rowData.water_area_sq_km || '',
+                    total_area: rowData.total_area_sq_km || '',
+                    population: rowData.population || '',
+                    religions: rowData.religions || '',
+
+                    monthly_living_cost_currency: rowData.monthly_living_cost_currency || '',
+                    monthly_living_cost_amount: rowData.monthly_living_cost_amount || '',
+
+                    largest_state: rowData.largest_state || '',
+                    smallest_state: rowData.smallest_state || '',
+                    major_cities: rowData.major_cities || '',
+                    national_animal: rowData.national_animal || '',
+                    national_bird: rowData.national_bird || '',
+                    national_flower: rowData.national_flower || '',
+                    unemployment: rowData.unemployment || '',
+                    skilled_shortages: rowData.skilled_shortages || '',
+                    border_countries: rowData.border_countries_and_oceans || '',
                     description: rowData.description || '',
                     national_flag: rowData.national_flag || '',
                     country_map: rowData.country_map || '',
@@ -210,7 +244,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
     };
     const customFilterOption = (option, inputValue) => {
         if (!inputValue) return true;
-        return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
+        return option.label.toLowerCase().includes(inputValue.toLowerCase());
     };
 
     // Handle input changes
@@ -229,6 +263,35 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
             }));
         }
     };
+    useEffect(() => {
+        return () => {
+            Object.values(filePreviews).forEach(preview => {
+                if (preview && preview.startsWith('blob:')) {
+                    URL.revokeObjectURL(preview);
+                }
+            });
+        };
+    }, [filePreviews]);
+
+    const handleFileChange = (e, fileType) => {
+        const file = e.target.files[0];
+        if (filePreviews[fileType] && filePreviews[fileType].startsWith('blob:')) {
+            URL.revokeObjectURL(filePreviews[fileType]);
+        }
+        if (file) {
+            setFiles(prev => ({ ...prev, [fileType]: file }));
+
+            if (file.type.startsWith('image/')) {
+                setFilePreviews(prev => ({
+                    ...prev,
+                    [fileType]: URL.createObjectURL(file)
+                }));
+            } else {
+                setFilePreviews(prev => ({ ...prev, [fileType]: null }));
+            }
+        }
+    };
+
 
     // Validate form
     const validateForm = () => {
@@ -275,7 +338,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
             formDataToSend.append('short_name', formData.short_name);
             formDataToSend.append('continent', formData.continent);
             formDataToSend.append('capital_city', formData.capital_city);
-            formDataToSend.append('dial_codes', formData.calling_code || [+91]);
+            formDataToSend.append('dial_codes', JSON.stringify(formData.calling_code));
             formDataToSend.append('currency_full_name', formData.currency_full_name);
             formDataToSend.append('currency_short_name', formData.currency_short_name);
             formDataToSend.append('currency_code', formData.currency_code);
@@ -299,15 +362,12 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
             formDataToSend.append('skilled_shortages', formData.skilled_shortages);
             formDataToSend.append('border_countries_and_oceans', formData.border_countries);
             formDataToSend.append('description', formData.description);
-            if (files.national_flag) {
+            if (files.national_flag instanceof File) {
                 formDataToSend.append('national_flag', files.national_flag);
             }
-            if (files.country_map) {
+            if (files.country_map instanceof File) {
                 formDataToSend.append('country_map', files.country_map);
             }
-
-
-
             formDataToSend.append('smallest_state', formData.smallest_state);
             formDataToSend.append('monthly_living_cost_currency', formData.monthly_living_cost_currency);
             formDataToSend.append('monthly_living_cost_amount', formData.monthly_living_cost_amount);
@@ -315,6 +375,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
 
             if (mode === 'edit') {
                 formDataToSend.append('uuid', formData.uuid);
+                
             }
 
             setLoading(true);
@@ -338,7 +399,6 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
         }
     };
 
-    // Reset form
     const resetForm = () => {
         setFormData({
             uuid: '',
@@ -372,8 +432,8 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
             unemployment: '',
             skilled_shortages: '',
             border_countries: '',
-            monthly_living_cost_currency: '',  // Add this
-            monthly_living_cost_amount: '',     // Add this
+            monthly_living_cost_currency: '',
+            monthly_living_cost_amount: '',
             description: '',
         });
         setFiles({ national_flag: null, country_map: null });
@@ -391,35 +451,6 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
 
     // Conditional return after all hooks
     if (!show) return null;
-
-
-    const handleFileChange = (e, fileType) => {
-        const file = e.target.files[0];
-        if (file) {
-            setFiles(prev => ({
-                ...prev,
-                [fileType]: file
-            }));
-
-            // Create preview URL only for images
-            if (file.type.startsWith('image/')) {
-                const previewUrl = URL.createObjectURL(file);
-                setFilePreviews(prev => ({
-                    ...prev,
-                    [fileType]: previewUrl
-                }));
-            } else {
-                // For non-image files, clear any previous preview
-                setFilePreviews(prev => ({
-                    ...prev,
-                    [fileType]: null
-                }));
-            }
-        }
-    };
-
-
-
 
 
     return (
@@ -476,12 +507,6 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                                     (c) => c.uuid === selectedOption?.value
                                                 );
 
-                                                handleChange({
-                                                    target: {
-                                                        name: "country_name",
-                                                        value: selectedOption ? selectedOption.value : "",
-                                                    },
-                                                });
                                                 if (selectedCountry) {
                                                     setFormData((prev) => ({
                                                         ...prev,
@@ -513,7 +538,6 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                                         smallest_state: "",
                                                     }));
                                                 }
-                                                setStateListData([]);
                                             }}
                                             filterOption={customFilterOption}
                                             placeholder="Select country"
@@ -531,7 +555,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                             Country Official Name <span className="text-danger">*</span>
                                         </label>
                                         <input
-                                            disabled
+                                            // disabled
                                             type="text"
                                             name="official_name"
                                             value={formData.official_name}
@@ -548,7 +572,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                             Country Short Name <span className="text-danger">*</span>
                                         </label>
                                         <input
-                                            disabled
+                                            // disabled
                                             type="text"
                                             name="short_name"
                                             value={formData.short_name}
@@ -582,7 +606,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                             Capital City <span className="text-danger">*</span>
                                         </label>
                                         <input
-                                            disabled
+                                            // disabled
                                             type="text"
                                             name="capital_city"
                                             value={formData.capital_city}
@@ -599,13 +623,13 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                             Calling Code <span className="text-danger">*</span>
                                         </label>
                                         <input
-                                            disabled
+                                            // disabled
                                             type="text"
                                             name="calling_code"
                                             value={formData.calling_code}
                                             onChange={handleChange}
                                             className={`form-control radius-8 ${errors.calling_code ? "is-invalid" : ""}`}
-                                            placeholder="+91 etc."
+                                            placeholder="Enter calling code"
                                         />
                                         {errors.calling_code && <div className="text-danger text-sm mt-1">{errors.calling_code}</div>}
                                     </div>
@@ -616,7 +640,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                             Currency Full Name <span className="text-danger">*</span>
                                         </label>
                                         <input
-                                            disabled
+                                            // disabled
                                             type="text"
                                             name="currency_full_name"
                                             value={formData.currency_full_name}
@@ -633,7 +657,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                             Currency Short Name <span className="text-danger">*</span>
                                         </label>
                                         <input
-                                            disabled
+                                            // disabled
                                             type="text"
                                             name="currency_short_name"
                                             value={formData.currency_short_name}
@@ -648,7 +672,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
                                     <div className="col-md-6 mb-10">
                                         <label className="form-label fw-semibold text-sm mb-8">Currency Code</label>
                                         <input
-                                            disabled
+                                            // disabled
                                             type="text"
                                             name="currency_code"
                                             value={formData.currency_code}
