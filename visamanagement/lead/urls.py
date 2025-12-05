@@ -89,4 +89,5 @@ urlpatterns = [
     path('quickassessment/<uuid:uuid>/',QuickAssessmentNewDetailAPIView.as_view(),name='QuickAssessment-get-uuid'),
     path('quickassessment/<uuid:uuid>/update/',QuickAssessmentNewUpdateAPIView.as_view(),name='QuickAssessment-update'),
     path('quickassessment/delete/',QuickAssessmentNewDeleteAPIView.as_view(),name='QuickAssessment-delete'),
+
 ]
