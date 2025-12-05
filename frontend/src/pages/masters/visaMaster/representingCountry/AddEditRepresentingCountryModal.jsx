@@ -244,7 +244,7 @@ const AddEditRepresentingCountryModal = ({ show, handleClose, mode = 'add', rowD
     };
     const customFilterOption = (option, inputValue) => {
         if (!inputValue) return true;
-        return option.label.toLowerCase().includes(inputValue.toLowerCase());
+        return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
     };
 
     // Handle input changes

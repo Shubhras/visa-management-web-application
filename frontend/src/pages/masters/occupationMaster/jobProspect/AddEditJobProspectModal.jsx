@@ -296,6 +296,11 @@ const AddEditJobProspectModal = ({
     handleClose(false);
   };
 
+  const customFilterOption = (option, inputValue) => {
+    if (!inputValue) return true;
+    return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
+  };
+
   // Conditional return after all hooks
   if (!show) return null;
 
@@ -405,6 +410,7 @@ const AddEditJobProspectModal = ({
                           },
                         })
                       }
+                      filterOption={customFilterOption}
                       placeholder="Select Occupation Version"
                       isClearable
                       isSearchable
@@ -447,6 +453,7 @@ const AddEditJobProspectModal = ({
                           },
                         })
                       }
+                      filterOption={customFilterOption}
                       placeholder="Select Occupation Type"
                       isClearable
                       isSearchable
@@ -490,6 +497,7 @@ const AddEditJobProspectModal = ({
                           },
                         })
                       }
+                      filterOption={customFilterOption}
                       placeholder="Select Occupation Level Code"
                       isClearable
                       isSearchable
@@ -530,6 +538,7 @@ const AddEditJobProspectModal = ({
                           },
                         })
                       }
+                      filterOption={customFilterOption}
                       placeholder="Select Job Prospect"
                       isClearable
                       isSearchable
@@ -572,6 +581,7 @@ const AddEditJobProspectModal = ({
                           },
                         })
                       }
+                      filterOption={customFilterOption}
                       placeholder="Select Occupation Code"
                       isClearable
                       isSearchable

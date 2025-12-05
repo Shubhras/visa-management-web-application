@@ -193,6 +193,11 @@ const AddEditProcessSubStatusNameModal = ({ show, handleClose, mode = 'add', row
         handleClose();
     };
 
+    const customFilterOption = (option, inputValue) => {
+        if (!inputValue) return true;
+        return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
+    };
+
     // Conditional return after all hooks
     if (!show) return null;
 
@@ -249,6 +254,7 @@ const AddEditProcessSubStatusNameModal = ({ show, handleClose, mode = 'add', row
                                                 },
                                             })
                                         }
+                                        filterOption={customFilterOption}
                                         placeholder="Select Representing Country"
                                         isClearable
                                         isSearchable
@@ -289,6 +295,7 @@ const AddEditProcessSubStatusNameModal = ({ show, handleClose, mode = 'add', row
                                                 },
                                             })
                                         }
+                                        filterOption={customFilterOption}
                                         placeholder="Select Visa Main Category"
                                         isClearable
                                         isSearchable
@@ -337,6 +344,7 @@ const AddEditProcessSubStatusNameModal = ({ show, handleClose, mode = 'add', row
                                                 },
                                             })
                                         }
+                                        filterOption={customFilterOption}
                                         placeholder="Select ProcessStatus Name"
                                         isClearable
                                         isSearchable

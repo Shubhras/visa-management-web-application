@@ -154,6 +154,11 @@ const AddEditCourseLevelModal = ({ show, handleClose, mode = 'add', rowData = nu
         handleClose(false);
     };
 
+const customFilterOption = (option, inputValue) => {
+    if (!inputValue) return true;
+    return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
+  };
+
     // Conditional return after all hooks
     if (!show) return null;
 
@@ -228,6 +233,7 @@ const AddEditCourseLevelModal = ({ show, handleClose, mode = 'add', rowData = nu
                                                 },
                                             })
                                         }
+                                        filterOption={customFilterOption}
                                         placeholder="Select courseLevelCode"
                                         isClearable
                                         isSearchable

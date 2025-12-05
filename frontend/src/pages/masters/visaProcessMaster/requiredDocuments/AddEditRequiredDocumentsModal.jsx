@@ -234,6 +234,11 @@ const AddEditRequiredDocumentsModal = ({ show, handleClose, mode = 'add', rowDat
         handleClose();
     };
 
+    const customFilterOption = (option, inputValue) => {
+        if (!inputValue) return true;
+        return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
+    };
+
     // Conditional return after all hooks
     if (!show) return null;
 
@@ -290,6 +295,7 @@ const AddEditRequiredDocumentsModal = ({ show, handleClose, mode = 'add', rowDat
                                                 },
                                             })
                                         }
+                                        filterOption={customFilterOption}
                                         placeholder="Select document for"
                                         isClearable
                                         isSearchable
@@ -322,7 +328,15 @@ const AddEditRequiredDocumentsModal = ({ show, handleClose, mode = 'add', rowDat
                                                     .find((opt) => opt.value === formData.country)
                                                 : null
                                         }
-                                        onChange={(selectedOption) => handleSelectChange("country", selectedOption)}
+                                        onChange={(selectedOption) =>
+                                            handleChange({
+                                                target: {
+                                                    name: "country",
+                                                    value: selectedOption ? selectedOption.value : "",
+                                                },
+                                            })
+                                        }
+                                        filterOption={customFilterOption}
                                         placeholder="Select Representing Country"
                                         isClearable
                                         isSearchable
@@ -363,6 +377,7 @@ const AddEditRequiredDocumentsModal = ({ show, handleClose, mode = 'add', rowDat
                                                 },
                                             })
                                         }
+                                        filterOption={customFilterOption}
                                         placeholder="Select Visa Main Category"
                                         isClearable
                                         isSearchable

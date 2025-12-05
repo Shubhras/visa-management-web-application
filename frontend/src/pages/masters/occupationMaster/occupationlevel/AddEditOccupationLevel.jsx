@@ -237,6 +237,11 @@ const AddEditOccupationLevel = ({
     handleClose(false);
   };
 
+  const customFilterOption = (option, inputValue) => {
+    if (!inputValue) return true;
+    return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
+  };
+
   // Conditional return after all hooks
   if (!show) return null;
 
@@ -346,6 +351,7 @@ const AddEditOccupationLevel = ({
                           },
                         })
                       }
+                      filterOption={customFilterOption}
                       placeholder="Select Occupation Version"
                       isClearable
                       isSearchable
@@ -388,6 +394,7 @@ const AddEditOccupationLevel = ({
                           },
                         })
                       }
+                      filterOption={customFilterOption}
                       placeholder="Select Occupation Category"
                       isClearable
                       isSearchable
@@ -431,6 +438,7 @@ const AddEditOccupationLevel = ({
                           },
                         })
                       }
+                      filterOption={customFilterOption}
                       placeholder="Select Occupation Level Code"
                       isClearable
                       isSearchable
