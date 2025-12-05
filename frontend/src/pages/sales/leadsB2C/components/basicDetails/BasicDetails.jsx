@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Select from "react-select";
-import { maritalStatusList, countryList, stateListByCountry } from "../../../../../store/master/generalMasters/actions";
+import { maritalStatusList, countryList, stateListByCountry, districtListByState, cityList } from "../../../../../store/master/generalMasters/actions";
 import { useDispatch } from "react-redux";
 import { visaMainCategoryList } from "../../../../../store/master/visaConditionsMaster/action";
 const BasicDetails = () => {
@@ -23,6 +23,8 @@ const BasicDetails = () => {
   const [country, setCountry] = useState([]);
   const [visaMainCategory, setVisaMainCategory] = useState([]);
   const [state, setState] = useState([]);
+  const [district, setDistrict] = useState([]);
+  const [city, setCity] = useState([]);
 
   const [formData, setFormData] = useState({
     maritalStatus: '',
@@ -47,7 +49,9 @@ const BasicDetails = () => {
   });
   useEffect(() => {
     fetchListData();
-    fetchStateList("all"); 
+    fetchStateList("all");
+    fetchDistrictList("all");
+    fetchCityListByDistrict("all");
   }, [dispatch])
 
   const fetchListData = () => {
@@ -80,23 +84,40 @@ const BasicDetails = () => {
   }
 
   const handleAddressCountryChange = (selectedOption) => {
-  const value = selectedOption ? selectedOption.value : "";
-  
-  // Pass "all" when no country is selected
-  fetchStateList(value || "all");
-  
-  setFormData(prev => ({
-    ...prev,
-    country: value,
-    state: ""
-  }));
-};
+    const value = selectedOption ? selectedOption.value : "";
+    setFormData(prev => ({
+      ...prev,
+      country: value,
+      state: "",
+      district: "",
+      city: ""
+    }));
+    fetchStateList(value || "all");
+  };
+
+  const handleStateChange = (selectedOption) => {
+    const value = selectedOption ? selectedOption.value : "";
+    setFormData(prev => ({
+      ...prev,
+      state: value,
+      district: "",
+      city: ""
+    }));
+    fetchDistrictList(value || "all");
+  };
+
+  const handleDistrictChange = (selectedOption) => {
+    const value = selectedOption ? selectedOption.value : "";
+    setFormData(prev => ({
+      ...prev,
+      district: value,
+      city: ""
+    }));
+
+    fetchCityListByDistrict(value || "all");
+  };
 
   const fetchStateList = (countryId) => {
-    if (!countryId) {
-      setState([]);
-      return;
-    }
     const params = {
       page: 1,
       limit: 2000,
@@ -104,12 +125,9 @@ const BasicDetails = () => {
       status: "",
       sortBy: "name",
       sortOrder: "asc",
-      // countryId,
+      countryId: countryId,
     };
-    if (countryId && countryId !== "all") {
-    params.countryId = countryId;
-  }
-   
+
     dispatch(
       stateListByCountry(params, (response, error) => {
         if (response?.statusCode === 200 && response?.status === true) {
@@ -120,6 +138,54 @@ const BasicDetails = () => {
       })
     );
   };
+  const fetchDistrictList = (stateId) => {
+
+    const params = {
+      page: 1,
+      limit: 2000,
+      search: "",
+      status: "",
+      sortBy: "districtName",
+      sortOrder: "asc",
+      countryId: formData.country || null,
+      stateId: stateId,
+    };
+    dispatch(
+      districtListByState(params, (response, error) => {
+        if (response?.statusCode === 200 && response?.status === true) {
+          setDistrict(response?.data || []);
+        } else {
+          setDistrict([]);
+        }
+      })
+    );
+  };
+
+  const fetchCityListByDistrict = (districtId) => {
+
+
+    const params = {
+      page: 1,
+      limit: 2000,
+      search: "",
+      status: "",
+      sortBy: "cityName",
+      sortOrder: "asc",
+      district: districtId,
+      country: formData.country || null,
+      state: formData.state || null,
+    };
+    dispatch(
+      cityList(params, (response, error) => {
+        if (response?.statusCode === 200 && response?.status === true) {
+          setCity(response?.data || []);
+        } else {
+          setCity([]);
+        }
+      })
+    );
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -495,14 +561,7 @@ const BasicDetails = () => {
                       .find((opt) => opt.value === formData.state)
                     : null
                 }
-                onChange={(selectedOption) =>
-                  handleChange({
-                    target: {
-                      name: "state",
-                      value: selectedOption ? selectedOption.value : "",
-                    },
-                  })
-                }
+                onChange={handleStateChange}
                 placeholder="Select State"
                 isClearable
                 isSearchable
@@ -518,16 +577,54 @@ const BasicDetails = () => {
           <div className="row g-2">
             <div className="col-6">
               <label className="form-label">District</label>
-              <input
-                className="form-control form-control-sm"
-                placeholder="Master"
+              <Select
+                options={district.map((option) => ({
+                  value: option.uuid,
+                  label: option.districtName,
+                }))}
+                value={
+                  formData.district
+                    ? district
+                      .map((option) => ({
+                        value: option.uuid,
+                        label: option.districtName,
+                      }))
+                      .find((opt) => opt.value === formData.district)
+                    : null
+                }
+                onChange={handleDistrictChange}
+                placeholder="Select District"
+                isClearable
+                isSearchable
+                classNamePrefix="custom-select"
+                menuPortalTarget={document.body}
+                menuPosition="fixed"
               />
             </div>
             <div className="col-6">
               <label className="form-label">City / Taluka</label>
-              <input
-                className="form-control form-control-sm"
-                placeholder="Master"
+              <Select
+                options={city.map((option) => ({
+                  value: option.uuid,
+                  label: option.cityName,
+                }))}
+                value={
+                  formData.city
+                    ? city
+                      .map((option) => ({
+                        value: option.uuid,
+                        label: option.cityName,
+                      }))
+                      .find((opt) => opt.value === formData.city)
+                    : null
+                }
+                onChange={(opt) => handleChange({ target: { name: "city", value: opt ? opt.value : "" } })}
+                placeholder="Select City/ Taluka"
+                isClearable
+                isSearchable
+                classNamePrefix="custom-select"
+                menuPortalTarget={document.body}
+                menuPosition="fixed"
               />
             </div>
           </div>
