@@ -2143,4 +2143,190 @@ class SpouseEducationleadDeleteAPIView(APIView):
             "message":f"{count} Spouse Educationlead permanently deleted.",
             "data":{"invalid_uuids": invalid_uuids} if invalid_uuids else None
         },status = status.HTTP_200_OK)
+
+
+class  QuickAssessmentNewCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self,request):
+        serializer = QuickAssessmentNewSerializer(data = request.data)
+        try:
+            if serializer.is_valid():
+                serializer.save()
+                return Response({
+                    "statusCode":201,
+                    "status":True,
+                    "message":" QuickAssessment create successfully. ",
+                    "data":serializer.data
+                },status=status.HTTP_201_CREATED)
+            else:
+                return Response({
+                    "statusCode":400,
+                    "status":False,
+                    "message":"Falidation Fieled. ",
+                    "Error":serializer.errors
+                },status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                "status": "error",
+                "message": "Something went wrong.",
+                "details": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
+
+class QuickAssessmentNewListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self,request):
+        queryset = QuickAssessmentNew.objects.all()
+
+        #filter
+        uuids = request.GET.get("uuids")
+        if uuids:
+            uuid_list = []
+            for u in uuids.split(","):
+                try:
+                    uuid_list.append(UUID(u.strip()))
+                except:
+                    return Response({
+                        "status":False,
+                        "message":f"Invalid UUID:{u}"
+                    },status=status.HTTP_400_BAD_REQUEST)
+            queryset = queryset.filter(uuid_in=uuid_list)
+
+        serializer = QuickAssessmentNewSerializer(queryset,many=True)
+        return Response({
+            "status":True,
+            "message":"QuickAssessment data fatched successfully. ",
+            "data":serializer.data,
+        },status=status.HTTP_200_OK)
+
+class QuickAssessmentNewDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self,request,uuid):
+        try:
+            valid_uuid = UUID(str(uuid))
+        except:
+            return Response({
+                "statusCode":400,
+                "status":False,
+                "message":"Invalide UUID format"
+            },status=status.HTTP_400_BAD_REQUEST)
+        networth = get_object_or_404(QuickAssessmentNew,uuid=valid_uuid)
+        serializer = QuickAssessmentNewSerializer(networth)
+        return Response({
+            "status":True,
+            "message":"QuickAssessment fetched successfully. ",
+            "data":serializer.data
+        },status=status.HTTP_200_OK)
+
+class QuickAssessmentNewUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def put(self,request,uuid):
+        try: 
+           quick = QuickAssessmentNew.objects.get(uuid=uuid)
+        except QuickAssessmentNew.DoesNotExist:
+               return Response({
+                "status": "error",
+                "message": "QuickAssessment not found."
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            serializer = QuickAssessmentNewSerializer(quick,data = request.data, partial = True)
+            serializer.is_valid(raise_exception=True)
+
+            with transaction.atomic():
+               quick = serializer.save()
+            return Response({
+                "status":True,
+                "message":"QuickAssessment updated successfully.",
+                "data":QuickAssessmentNewSerializer(quick).data
+            },status = status.HTTP_200_OK)
+        except serializers.ValidationError as ve:
+            return Response({
+                "status": "error",
+                "message": "Validation failed.",
+                "errors": ve.detail
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        except IntegrityError as ie:
+            return Response({
+                "status": "error",
+                "message": "Database integrity error.",
+                "details": str(ie)
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        except ValidationError as ve:
+            return Response({
+                "status": "error",
+                "message": "Validation failed.",
+                "errors": ve.message_dict
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                "status": "error",
+                "message": "Something went wrong.",
+                "details": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+
+class QuickAssessmentNewDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def delete(self,request,uuid=None):
+        id = request.data.get('id',None)
+        
+        #single delete via url
+        if uuid:
+            try:
+                obj = QuickAssessmentNew.objects.get(uuid=uuid)
+                obj.delete()
+                return Response({
+                    "statusCode":204,
+                    "status":True,
+                    "message":"QuickAssessment deleted.",
+                    "data":None
+                },status=status.HTTP_204_NO_CONTENT)
+            except QuickAssessmentNew.DoesNotExist:
+                return Response({
+                    "statusCode": 404,
+                    "status" :  False,
+                    "message": "QuickAssessment not found. ",
+                    "data":None        
+                        },status=status.HTTP_404_NOT_FOUND)
+        #delete all
+        if id == "all":
+            queryset = QuickAssessmentNew.objects.all()
+            count = queryset.count()
+            queryset.delete()
+            return Response({
+                "statusCode":200,
+                "status":True,
+                "message": f"All {count} QuickAssessment permanently deleted. ",
+                "data":None
+            },status=status.HTTP_200_OK)
+        
+        #Bulk Delete
+        if not id or not isinstance(id,list):
+            return Response({
+                "statusCode":400,
+                "status":False,
+                "message":"Please provide a list of U"
+                "UIDs in 'id' field or 'all'.",
+                "data":None
+            },status= status.HTTP_400_BAD_REQUEST)
+        valid_uuids= []
+        invalid_uuids= []
+        for u in id:
+            try:
+                valid_uuids.append(UUID(u))
+            except ValueError:
+                invalid_uuids.append(UUID(u))
+        queryset = QuickAssessmentNew.objects.filter(uuid__in=valid_uuids)
+        count = queryset.count()
+        queryset.delete()
+        return Response({
+            "statusCode":200,
+            "status":True,
+            "message":f"{count} QuickAssessment permanently deleted.",
+            "data":{"invalid_uuids": invalid_uuids} if invalid_uuids else None
+        },status = status.HTTP_200_OK)
+    
