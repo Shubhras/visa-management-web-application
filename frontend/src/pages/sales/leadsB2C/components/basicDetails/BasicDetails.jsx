@@ -27,6 +27,10 @@ const BasicDetails = () => {
   const [city, setCity] = useState([]);
 
   const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    dateOfBirth: '',
+    gender: '',
     maritalStatus: '',
     alongWith: '',
     countryCitizen: '',
@@ -37,15 +41,15 @@ const BasicDetails = () => {
     whatsappNumber: '',
     residencyStatus: '',
     email: '',
-    address1: '',
-    address2: '',
-    landmarkArea: '',
     country: '',
     state: '',
     district: '',
     city: '',
     village: '',
     pinCode: '',
+    address1: '',
+    address2: '',
+    landmarkArea: '',
   });
   useEffect(() => {
     fetchListData();
@@ -147,7 +151,7 @@ const BasicDetails = () => {
       status: "",
       sortBy: "districtName",
       sortOrder: "asc",
-      countryId: formData.country || null,
+      countryId: "",
       stateId: stateId,
     };
     dispatch(
@@ -162,8 +166,6 @@ const BasicDetails = () => {
   };
 
   const fetchCityListByDistrict = (districtId) => {
-
-
     const params = {
       page: 1,
       limit: 2000,
@@ -228,7 +230,10 @@ const BasicDetails = () => {
               </label>
               <input
                 className="form-control form-control-sm "
-                placeholder="Text"
+                placeholder="First Name"
+                name="firstName"
+                value={formData.firstName || ""}
+                onChange={handleChange}
               />
             </div>
 
@@ -238,7 +243,10 @@ const BasicDetails = () => {
               </label>
               <input
                 className="form-control form-control-sm"
-                placeholder="Text"
+                placeholder="Last Name"
+                name="lastName"                      // Add this
+                value={formData.lastName || ""}      // Add this
+                onChange={handleChange}              // Add this
               />
             </div>
           </div>
@@ -265,7 +273,13 @@ const BasicDetails = () => {
 
             <div className="col-6">
               <label className="form-label">Date of Birth</label>
-              <input type="date" className="form-control form-control-sm" />
+              <input
+                type="date"
+                className="form-control form-control-sm"
+                name="dateOfBirth"                   // Add this
+                value={formData.dateOfBirth || ""}   // Add this
+                onChange={handleChange}              // Add this
+              />
             </div>
           </div>
         </div>
@@ -495,24 +509,45 @@ const BasicDetails = () => {
           <input
             type="email"
             className="form-control form-control-sm"
-            placeholder="Text"
+            placeholder="Enter Email"
+            name="email"
+            value={formData.email || ""}
+            onChange={handleChange}
           />
         </div>
 
         {/* Fourth row */}
         <div className="col-md-4">
           <label className="form-label">Address Line - 01</label>
-          <input className="form-control form-control-sm" placeholder="Text" />
+          <input
+            className="form-control form-control-sm"
+            placeholder="Address Line 1"
+            name="address1"                      // Add this
+            value={formData.address1 || ""}      // Add this
+            onChange={handleChange}              // Add this
+          />
         </div>
 
         <div className="col-md-4">
           <label className="form-label">Address Line - 02</label>
-          <input className="form-control form-control-sm" placeholder="Text" />
+          <input
+            className="form-control form-control-sm"
+            placeholder="Address Line 2"
+            name="address2"                      // Add this
+            value={formData.address2 || ""}      // Add this
+            onChange={handleChange}              // Add this
+          />
         </div>
 
         <div className="col-md-4">
           <label className="form-label">Landmark / Area</label>
-          <input className="form-control form-control-sm" placeholder="Text" />
+          <input
+            className="form-control form-control-sm"
+            placeholder="Landmark / Area"
+            name="landmarkArea"                  // Add this
+            value={formData.landmarkArea || ""}  // Add this
+            onChange={handleChange}              // Add this
+          />
         </div>
 
         {/* Fifth row */}
@@ -636,14 +671,20 @@ const BasicDetails = () => {
               <label className="form-label">Village</label>
               <input
                 className="form-control form-control-sm"
-                placeholder="Text"
+                placeholder="Village"
+                name="village"                       // Add this
+                value={formData.village || ""}       // Add this
+                onChange={handleChange}              // Add this
               />
             </div>
             <div className="col-6">
               <label className="form-label">PIN / ZIP</label>
               <input
                 className="form-control form-control-sm"
-                placeholder="Text"
+                placeholder="PIN/ZIP Code"
+                name="pinCode"                       // Add this
+                value={formData.pinCode || ""}       // Add this
+                onChange={handleChange}              // Add this
               />
             </div>
           </div>
