@@ -2459,6 +2459,7 @@ class CountryUpdateAPIView(APIView):
 
 
 
+
 # class CountryDeleteAPIView(APIView):
 #     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2469,20 +2470,70 @@ class CountryUpdateAPIView(APIView):
 #             search = request.GET.get("search", "").strip()
 #             raw_continents = request.GET.get("continent", "").strip()
 
-#             # Parse continent UUID list from params
+#             #  Parse continent UUIDs from params
 #             continent_uuids, invalid_continents = [], []
 #             if raw_continents:
 #                 for u in raw_continents.split(','):
 #                     try:
 #                         continent_uuids.append(UUID(u.strip()))
-#                     except:
+#                     except ValueError:
 #                         invalid_continents.append(u)
 
-#             # ----------------------------------
-#             # If id == "all" → delete entire table
-#             # ----------------------------------
-#             if ids == "all":
-#                 count = Country.objects.count()
+#             # ---------------------------------------------------
+#             #  CASE 1: deleteAll=false + ID LIST → delete only given UUIDs (ignore filters)
+#             # ---------------------------------------------------
+#             if delete_all is False and isinstance(ids, list):
+#                 valid_uuids, invalid_uuids = [], []
+#                 for u in ids:
+#                     try:
+#                         valid_uuids.append(UUID(u))
+#                     except ValueError:
+#                         invalid_uuids.append(u)
+
+#                 if not valid_uuids:
+#                     return Response({
+#                         "statusCode": 400,
+#                         "status": False,
+#                         "message": "No valid UUIDs provided.",
+#                         "data": {"invalid_uuids": invalid_uuids}
+#                     }, status=400)
+
+#                 bulk_qs = Country.objects.filter(uuid__in=valid_uuids, is_deleted=False)
+#                 count = bulk_qs.count()
+
+#                 if count == 0:
+#                     return Response({
+#                         "statusCode": 404,
+#                         "status": False,
+#                         "message": "No matching countries found for provided UUID(s).",
+#                         "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#                     }, status=404)
+
+#                 try:
+#                     #  FK safe delete check
+#                     with transaction.atomic():
+#                         bulk_qs.delete()
+#                 except IntegrityError:
+#                     return Response({
+#                         "statusCode": 400,
+#                         "status": False,
+#                         "message": "One or more country(s) are used in child tables, cannot delete.",
+#                         "data": None
+#                     }, status=400)
+
+#                 return Response({
+#                     "statusCode": 200,
+#                     "status": True,
+#                     "message": f"{count} country(s) deleted successfully.",
+#                     "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#                 }, status=200)
+
+#             # ---------------------------------------------------
+#             #  CASE 2: id="all" + deleteAll=false → full table delete but FK block safe handling
+#             # ---------------------------------------------------
+#             if ids == "all" and delete_all is False:
+#                 qs_all = Country.objects.filter(is_deleted=False)
+#                 count = qs_all.count()
 #                 if count == 0:
 #                     return Response({
 #                         "statusCode": 404,
@@ -2491,106 +2542,154 @@ class CountryUpdateAPIView(APIView):
 #                         "data": None
 #                     }, status=404)
 
-#                 Country.objects.all().delete()
+#                 #  FK safe delete	(Only delete if not referenced)
+#                 not_used = []
+#                 used = []
+
+#                 for c in qs_all:
+#                     try:
+#                         c.delete()
+#                         not_used.append(str(c.uuid))
+#                     except IntegrityError:
+#                         used.append(c.name)  # store country names that failed
+
 #                 return Response({
 #                     "statusCode": 200,
 #                     "status": True,
-#                     "message": f"All {count} country(s) deleted from the table.",
-#                     "data": None
+#                     "message": f"Delete completed. {len(not_used)} country(s) deleted. {len(used)} country(s) skipped because they are used in child tables.",
 #                 }, status=200)
 
-#             # ----------------------------------
-#             # Base queryset (soft delete safety)
-#             # ----------------------------------
+#             # ---------------------------------------------------
+#             # Filtered delete start only when deleteAll = true and id empty/None
+#             # ---------------------------------------------------
+
 #             queryset = Country.objects.filter(is_deleted=False)
 #             applied_filters = []
 
-#             # ----------------------------------
-#             # Apply SEARCH filter
-#             # ----------------------------------
+#             # ---------------------------------------------------
+#             #  CASE 3,5: Search filter
+#             # ---------------------------------------------------
 #             if search:
 #                 queryset = queryset.filter(Q(name__istartswith=search))
 #                 applied_filters.append("search")
 
-#             # ----------------------------------
-#             # Apply CONTINENT filter (multiple UUIDs)
-#             # ----------------------------------
+#             # ---------------------------------------------------
+#             #  CASE 4,5: continent filter
+#             # ---------------------------------------------------
 #             if continent_uuids:
 #                 queryset = queryset.filter(continent__uuid__in=continent_uuids)
 #                 applied_filters.append("continent")
 
-#             # ----------------------------------
-#             # DELETE ALL FILTERED RESULTS (only if deleteAll: true)
-#             # ----------------------------------
+#             # ---------------------------------------------------
+#             #  Filter delete if deleteAll = true (CASES 3,4,5)
+#             # ---------------------------------------------------
 #             if delete_all and applied_filters:
 #                 count = queryset.count()
+#                 if count == 0:
+#                     filter_msg = " + ".join(applied_filters)
+#                     return Response({
+#                         "statusCode": 404,
+#                         "status": False,
+#                         "message": f"No country(s) found matching the applied {filter_msg} filter(s).",
+#                         "data": None
+#                     }, status=404)
+#                 try:
+#                     with transaction.atomic():
+#                         queryset.delete()
+#                 except IntegrityError:
+#                     return Response({
+#                         "statusCode": 400,
+#                         "status": False,
+#                         "message": "One or more country(s) are used in child tables, cannot delete.",
+#                         "data": None
+#                     }, status=400)
+
+#                 if applied_filters == ["search"]:
+#                     msg = f"{count} country(s) deleted based on search filter."
+#                 elif applied_filters == ["continent"]:
+#                     msg = f"{count} country(s) deleted based on continent filter."
+#                 else:
+#                     msg = f"{count} country(s) deleted based on search and/or continent filter."
+
+#                 return Response({
+#                     "statusCode": 200,
+#                     "status": True,
+#                     "message": msg,
+#                     "data": {"invalid_continent_uuids": invalid_continents} if invalid_continents else None
+#                 }, status=200)
+
+#             # ---------------------------------------------------
+#             #  CASE 1 already handled above | If no filters & deleteAll=false → fallback to ID delete
+#             # ---------------------------------------------------
+#             if not ids:
+#                 return Response({
+#                     "statusCode": 400,
+#                     "status": False,
+#                     "message": "Invalid delete request format. Provide UUID list or 'all' or use deleteAll:true with filters.",
+#                     "data": None
+#                 }, status=400)
+
+#             if ids == "all":
+#                 return Response({
+#                     "statusCode": 400,
+#                     "status": False,
+#                     "message": "For full table delete set → deleteAll:false with id:'all'",
+#                     "data": None
+#                 }, status=400)
+
+#             # ---------------------------------------------------
+#             # BULK DELETE via ID LIST (fallback)
+#             # ---------------------------------------------------
+#             if isinstance(ids, list):
+#                 valid_uuids, invalid_uuids = [], []
+#                 for u in ids:
+#                     try:
+#                         valid_uuids.append(UUID(u))
+#                     except:
+#                         invalid_uuids.append(u)
+
+#                 bulk_qs = queryset.filter(uuid__in=valid_uuids)
+#                 count = bulk_qs.count()
 #                 if count == 0:
 #                     return Response({
 #                         "statusCode": 404,
 #                         "status": False,
-#                         "message": "No country(s) found matching the applied filter(s).",
-#                         "data": {"invalid_continent_uuids": invalid_continents} if invalid_continents else None
+#                         "message": "No matching countries found to delete.",
+#                         "data": None
 #                     }, status=404)
 
-#                 queryset.delete()
+#                 try:
+#                     with transaction.atomic():
+#                         bulk_qs.delete()
+#                 except IntegrityError:
+#                     return Response({
+#                         "statusCode": 400,
+#                         "status": False,
+#                         "message": "One or more country(s) are used in child tables, cannot delete.",
+#                         "data": None
+#                     }, status=400)
+
 #                 return Response({
 #                     "statusCode": 200,
 #                     "status": True,
-#                     "message": f"{count} country(s) deleted based on applied search and/or continent filters.",
-#                     "data": {"invalid_continent_uuids": invalid_continents} if invalid_continents else None
+#                     "message": f"{count} country(s) deleted successfully.",
+#                     "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
 #                 }, status=200)
 
-#             # ----------------------------------
-#             # BULK DELETE BY UUID LIST
-#             # ----------------------------------
-#             if not ids or not isinstance(ids, list):
-#                 return Response({
-#                     "statusCode": 400,
-#                     "status": False,
-#                     "message": "Send UUID list in 'id' or use 'id: all' to delete full table or 'deleteAll: true' for filtered delete.",
-#                     "data": None
-#                 }, status=400)
-
-#             valid_uuids, invalid_uuids = [], []
-#             for u in ids:
-#                 try:
-#                     valid_uuids.append(UUID(u))
-#                 except:
-#                     invalid_uuids.append(u)
-
-#             if not valid_uuids:
-#                 return Response({
-#                     "statusCode": 400,
-#                     "status": False,
-#                     "message": "No valid UUIDs provided.",
-#                     "data": {"invalid_uuids": invalid_uuids}
-#                 }, status=400)
-
-#             bulk_qs = queryset.filter(uuid__in=valid_uuids)
-#             count = bulk_qs.count()
-
-#             if count == 0:
-#                 return Response({
-#                     "statusCode": 404,
-#                     "status": False,
-#                     "message": "No matching countries found to delete.",
-#                     "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-#                 }, status=404)
-
-#             bulk_qs.delete()
-#             return Response({
-#                 "statusCode": 200,
-#                 "status": True,
-#                 "message": f"{count} country(s) deleted successfully.",
-#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-#             }, status=200)
-
-#         except IntegrityError as ie:
-#             # FK constraint fail message
+#             # ❗ No case matched
 #             return Response({
 #                 "statusCode": 400,
 #                 "status": False,
-#                 "message": "You can't delete this country because it is used in one or more related child tables. Delete operation is not allowed.",
+#                 "message": "Invalid delete request format.",
+#                 "data": None
+#             }, status=400)
+
+#         except IntegrityError:
+#             #  FINAL CLEAN FK ERROR
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "You can't delete this country data because it is referenced in one or more child tables. Delete operation is not allowed.",
 #                 "data": None
 #             }, status=400)
 
@@ -2603,249 +2702,211 @@ class CountryUpdateAPIView(APIView):
 #             }, status=500)
 
 
-
 class CountryDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request):
-        try:
-            ids = request.data.get('id', None)
-            delete_all = request.data.get("deleteAll", False)
-            search = request.GET.get("search", "").strip()
-            raw_continents = request.GET.get("continent", "").strip()
+        from master.dependency_report import find_dependencies, generate_dependency_excel
 
-            #  Parse continent UUIDs from params
-            continent_uuids, invalid_continents = [], []
-            if raw_continents:
-                for u in raw_continents.split(','):
-                    try:
-                        continent_uuids.append(UUID(u.strip()))
-                    except ValueError:
-                        invalid_continents.append(u)
+        ids = request.data.get("id", None)
+        delete_all = request.data.get("deleteAll", False)
+        search = request.GET.get("search", "").strip()
+        raw_continents = request.GET.get("continent", "").strip()
 
-            # ---------------------------------------------------
-            #  CASE 1: deleteAll=false + ID LIST → delete only given UUIDs (ignore filters)
-            # ---------------------------------------------------
-            if delete_all is False and isinstance(ids, list):
-                valid_uuids, invalid_uuids = [], []
-                for u in ids:
-                    try:
-                        valid_uuids.append(UUID(u))
-                    except ValueError:
-                        invalid_uuids.append(u)
+        queryset = Country.objects.filter(is_deleted=False)
 
-                if not valid_uuids:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": "No valid UUIDs provided.",
-                        "data": {"invalid_uuids": invalid_uuids}
-                    }, status=400)
-
-                bulk_qs = Country.objects.filter(uuid__in=valid_uuids, is_deleted=False)
-                count = bulk_qs.count()
-
-                if count == 0:
-                    return Response({
-                        "statusCode": 404,
-                        "status": False,
-                        "message": "No matching countries found for provided UUID(s).",
-                        "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-                    }, status=404)
-
+        # Parse continent UUIDs
+        continent_uuids, invalid_continents = [], []
+        if raw_continents:
+            for u in raw_continents.split(','):
                 try:
-                    #  FK safe delete check
-                    with transaction.atomic():
-                        bulk_qs.delete()
-                except IntegrityError:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": "One or more country(s) are used in child tables, cannot delete.",
-                        "data": None
-                    }, status=400)
+                    continent_uuids.append(UUID(u.strip()))
+                except ValueError:
+                    invalid_continents.append(u)
 
+        # Apply filters
+        if search:
+            queryset = queryset.filter(name__istartswith=search)
+        if continent_uuids:
+            queryset = queryset.filter(continent__uuid__in=continent_uuids)
+
+        deleted = []
+        skipped = []
+        report = []
+
+        # ---------------------------------------------------
+        # CASE 3: deleteAll = true + filters → delete with filters
+        # ---------------------------------------------------
+        if delete_all and (search or continent_uuids) and (ids in [None, ""]):
+            if not queryset.exists():
+                filter_msg = []
+                if search:
+                    filter_msg.append("search")
+                if continent_uuids:
+                    filter_msg.append("continent")
                 return Response({
-                    "statusCode": 200,
-                    "status": True,
-                    "message": f"{count} country(s) deleted successfully.",
-                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-                }, status=200)
+                    "statusCode": 404,
+                    "status": False,
+                    "message": f"No countries found matching the applied {' + '.join(filter_msg)} filter(s)",
+                })
 
-            # ---------------------------------------------------
-            #  CASE 2: id="all" + deleteAll=false → full table delete but FK block safe handling
-            # ---------------------------------------------------
-            if ids == "all" and delete_all is False:
-                qs_all = Country.objects.filter(is_deleted=False)
-                count = qs_all.count()
-                if count == 0:
-                    return Response({
-                        "statusCode": 404,
-                        "status": False,
-                        "message": "No countries found to delete.",
-                        "data": None
-                    }, status=404)
-
-                #  FK safe delete	(Only delete if not referenced)
-                not_used = []
-                used = []
-
-                for c in qs_all:
-                    try:
+            for c in queryset:
+                deps = find_dependencies(c)
+                if deps:
+                    skipped.append(str(c.uuid))
+                    for d in deps:
+                        report.append({
+                            "parent_table": "Country",
+                            "parent_field_value": c.name,
+                            "used_in_table": d["used_in_table"],
+                            "field": d["field"]
+                        })
+                    continue
+                try:
+                    with transaction.atomic():
                         c.delete()
-                        not_used.append(str(c.uuid))
-                    except IntegrityError:
-                        used.append(c.name)  # store country names that failed
+                    deleted.append(str(c.uuid))
+                except IntegrityError:
+                    skipped.append(str(c.uuid))
+                    report.append({
+                        "parent_table": "Country",
+                        "parent_field_value": c.name,
+                        "used_in_table": "Unknown (DB FK error)",
+                        "field": "Unknown"
+                    })
 
+            if skipped:
+                return generate_dependency_excel(
+                    report,
+                    filename="country_dependency_report.xlsx"
+                )
+
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": f"{len(deleted)} country(s) deleted based on filters",
+                "data": {"deleted": deleted, "invalid_continent_uuids": invalid_continents} if invalid_continents else {"deleted": deleted}
+            })
+
+        # ---------------------------------------------------
+        # CASE 2: id = "all" → delete full table
+        # ---------------------------------------------------
+        if ids == "all" and not delete_all and not (search or continent_uuids):
+            if not queryset.exists():
                 return Response({
-                    "statusCode": 200,
-                    "status": True,
-                    "message": f"Delete completed. {len(not_used)} country(s) deleted. {len(used)} country(s) skipped because they are used in child tables.",
-                }, status=200)
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "No countries found to delete",
+                })
 
-            # ---------------------------------------------------
-            # Filtered delete start only when deleteAll = true and id empty/None
-            # ---------------------------------------------------
-
-            queryset = Country.objects.filter(is_deleted=False)
-            applied_filters = []
-
-            # ---------------------------------------------------
-            #  CASE 3,5: Search filter
-            # ---------------------------------------------------
-            if search:
-                queryset = queryset.filter(Q(name__istartswith=search))
-                applied_filters.append("search")
-
-            # ---------------------------------------------------
-            #  CASE 4,5: continent filter
-            # ---------------------------------------------------
-            if continent_uuids:
-                queryset = queryset.filter(continent__uuid__in=continent_uuids)
-                applied_filters.append("continent")
-
-            # ---------------------------------------------------
-            #  Filter delete if deleteAll = true (CASES 3,4,5)
-            # ---------------------------------------------------
-            if delete_all and applied_filters:
-                count = queryset.count()
-                if count == 0:
-                    filter_msg = " + ".join(applied_filters)
-                    return Response({
-                        "statusCode": 404,
-                        "status": False,
-                        "message": f"No country(s) found matching the applied {filter_msg} filter(s).",
-                        "data": None
-                    }, status=404)
+            for c in queryset:
+                deps = find_dependencies(c)
+                if deps:
+                    skipped.append(str(c.uuid))
+                    for d in deps:
+                        report.append({
+                            "parent_table": "Country",
+                            "parent_field_value": c.name,
+                            "used_in_table": d["used_in_table"],
+                            "field": d["field"]
+                        })
+                    continue
                 try:
                     with transaction.atomic():
-                        queryset.delete()
+                        c.delete()
+                    deleted.append(str(c.uuid))
                 except IntegrityError:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": "One or more country(s) are used in child tables, cannot delete.",
-                        "data": None
-                    }, status=400)
+                    skipped.append(str(c.uuid))
+                    report.append({
+                        "parent_table": "Country",
+                        "parent_field_value": c.name,
+                        "used_in_table": "Unknown (DB FK error)",
+                        "field": "Unknown"
+                    })
 
-                if applied_filters == ["search"]:
-                    msg = f"{count} country(s) deleted based on search filter."
-                elif applied_filters == ["continent"]:
-                    msg = f"{count} country(s) deleted based on continent filter."
-                else:
-                    msg = f"{count} country(s) deleted based on search and/or continent filter."
+            if skipped:
+                return generate_dependency_excel(
+                    report,
+                    filename="country_dependency_report.xlsx"
+                )
 
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "All deletable countries removed",
+                "data": {"deleted": deleted}
+            })
+
+        # ---------------------------------------------------
+        # CASE 1: id list → bulk delete
+        # ---------------------------------------------------
+        if isinstance(ids, list):
+            deleted = []
+            skipped = []
+            invalid = []
+            report = []
+
+            valid_uuids = []
+            for u in ids:
+                try:
+                    valid_uuids.append(UUID(u))
+                except:
+                    invalid.append(u)
+
+            qs_ids = queryset.filter(uuid__in=valid_uuids)
+            if not qs_ids.exists():
                 return Response({
-                    "statusCode": 200,
-                    "status": True,
-                    "message": msg,
-                    "data": {"invalid_continent_uuids": invalid_continents} if invalid_continents else None
-                }, status=200)
-
-            # ---------------------------------------------------
-            #  CASE 1 already handled above | If no filters & deleteAll=false → fallback to ID delete
-            # ---------------------------------------------------
-            if not ids:
-                return Response({
-                    "statusCode": 400,
+                    "statusCode": 404,
                     "status": False,
-                    "message": "Invalid delete request format. Provide UUID list or 'all' or use deleteAll:true with filters.",
-                    "data": None
-                }, status=400)
+                    "message": "No valid UUIDs found",
+                })
 
-            if ids == "all":
-                return Response({
-                    "statusCode": 400,
-                    "status": False,
-                    "message": "For full table delete set → deleteAll:false with id:'all'",
-                    "data": None
-                }, status=400)
-
-            # ---------------------------------------------------
-            # BULK DELETE via ID LIST (fallback)
-            # ---------------------------------------------------
-            if isinstance(ids, list):
-                valid_uuids, invalid_uuids = [], []
-                for u in ids:
-                    try:
-                        valid_uuids.append(UUID(u))
-                    except:
-                        invalid_uuids.append(u)
-
-                bulk_qs = queryset.filter(uuid__in=valid_uuids)
-                count = bulk_qs.count()
-                if count == 0:
-                    return Response({
-                        "statusCode": 404,
-                        "status": False,
-                        "message": "No matching countries found to delete.",
-                        "data": None
-                    }, status=404)
-
+            for c in qs_ids:
+                deps = find_dependencies(c)
+                if deps:
+                    skipped.append(str(c.uuid))
+                    for d in deps:
+                        report.append({
+                            "parent_table": "Country",
+                            "parent_field_value": c.name,
+                            "used_in_table": d["used_in_table"],
+                            "field": d["field"]
+                        })
+                    continue
                 try:
                     with transaction.atomic():
-                        bulk_qs.delete()
+                        c.delete()
+                    deleted.append(str(c.uuid))
                 except IntegrityError:
-                    return Response({
-                        "statusCode": 400,
-                        "status": False,
-                        "message": "One or more country(s) are used in child tables, cannot delete.",
-                        "data": None
-                    }, status=400)
+                    skipped.append(str(c.uuid))
+                    report.append({
+                        "parent_table": "Country",
+                        "parent_field_value": c.name,
+                        "used_in_table": "Unknown (DB FK error)",
+                        "field": "Unknown"
+                    })
 
-                return Response({
-                    "statusCode": 200,
-                    "status": True,
-                    "message": f"{count} country(s) deleted successfully.",
-                    "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-                }, status=200)
+            if skipped:
+                return generate_dependency_excel(
+                    report,
+                    filename="country_dependency_report.xlsx"
+                )
 
-            # ❗ No case matched
             return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "Invalid delete request format.",
-                "data": None
-            }, status=400)
+                "statusCode": 200,
+                "status": True,
+                "message": f"{len(deleted)} country(s) deleted",
+                "data": {"deleted": deleted, "invalid_uuids": invalid} if invalid else {"deleted": deleted}
+            })
 
-        except IntegrityError:
-            #  FINAL CLEAN FK ERROR
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "You can't delete this country data because it is referenced in one or more child tables. Delete operation is not allowed.",
-                "data": None
-            }, status=400)
-
-        except Exception as e:
-            return Response({
-                "statusCode": 500,
-                "status": False,
-                "message": f"An unexpected error occurred while deleting country(s): {str(e)}",
-                "data": None
-            }, status=500)
-
-            
+        # ---------------------------------------------------
+        # Invalid request fallback
+        # ---------------------------------------------------
+        return Response({
+            "statusCode": 400,
+            "status": False,
+            "message": "Invalid delete request format"
+        })
 
 
 class CountryExportAPIView(APIView):
