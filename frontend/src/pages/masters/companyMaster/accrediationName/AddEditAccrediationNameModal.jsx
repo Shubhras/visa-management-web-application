@@ -1,74 +1,87 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import Select from "react-select";
-import { accreditationNameEdit, accreditationNameAdd, countryDemoList, accreditationCategoryList } from '../../../../store/master/companyMasters/actions';
+import {
+  accreditationNameEdit,
+  accreditationNameAdd,
+  countryDemoList,
+  accreditationCategoryList,
+} from "../../../../store/master/companyMasters/actions";
 import { toast } from "react-toastify";
+import { CalendarBlank } from "@phosphor-icons/react";
+import CommonDatePicker from "../../../../helper/utils/DatePicker";
 
-const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
+const AddEditAccrediationNameModal = ({
+  show,
+  handleClose,
+  mode = "add",
+  rowData = null,
+}) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   // const [countryListData, setCountryListData] = useState([]);
-  const [acccrediationCategoryListData, setAccrediationCategoryListData] = useState([]);
+  const [acccrediationCategoryListData, setAccrediationCategoryListData] =
+    useState([]);
 
   // Form state
   const [formData, setFormData] = useState({
-    uuid: '',
+    uuid: "",
     // country: '',
     category: "",
-    full_name: '',
-    short_name: '',
-    issuing_authority: '',
-    valid_upto: '',
-    valid_upto_type: '', // Permanent/Date/Valid Upto
-    valid_upto_numeric: '',
-    valid_upto_unit: '', // Weeks/Months/Year
-    description: '',
+    full_name: "",
+    short_name: "",
+    issuing_authority: "",
+    valid_upto: "",
+    valid_upto_type: "", // Permanent/Date/Valid Upto
+    valid_upto_numeric: "",
+    valid_upto_unit: "", // Weeks/Months/Year
+    description: "",
   });
 
   // Validation errors state
   const [errors, setErrors] = useState({
     // country: '',
     category: "",
-    full_name: '',
-    short_name: '',
-    issuing_authority: '',
-    valid_upto: '',
-    valid_upto_type: '',
-    valid_upto_numeric: '',
-    valid_upto_unit: '',
-    description: '',
+    full_name: "",
+    short_name: "",
+    issuing_authority: "",
+    valid_upto: "",
+    valid_upto_type: "",
+    valid_upto_numeric: "",
+    valid_upto_unit: "",
+    description: "",
   });
 
   // Populate form data when in edit mode
   useEffect(() => {
-    if (mode === 'edit' && rowData) {
+    if (mode === "edit" && rowData) {
       setFormData({
-        uuid: rowData.uuid || '',
+        uuid: rowData.uuid || "",
         // country: rowData.country || '',
-        category: rowData.category || '',
-        full_name: rowData.full_name || '',
-        short_name: rowData.short_name || '',
-        issuing_authority: rowData.issuing_authority || '',
-        valid_upto_type: rowData.valid_type || '',
-        valid_upto: rowData.valid_date || '',
-        valid_upto_numeric: rowData.valid_duration_value || '',
-        valid_upto_unit: rowData.valid_duration_unit || '',
-        description: rowData.description || '',
+        category: rowData.category || "",
+        full_name: rowData.full_name || "",
+        short_name: rowData.short_name || "",
+        issuing_authority: rowData.issuing_authority || "",
+        valid_upto_type: rowData.valid_type || "",
+        valid_upto: rowData.valid_date || "",
+        valid_upto_numeric: rowData.valid_duration_value || "",
+        valid_upto_unit: rowData.valid_duration_unit || "",
+        description: rowData.description || "",
       });
     } else {
       // Reset form when switching to add mode
       setFormData({
-        uuid: '',
+        uuid: "",
         // country: '',
         category: "",
-        full_name: '',
-        short_name: '',
-        issuing_authority: '',
-        valid_upto: '',
-        valid_upto_type: '',
-        valid_upto_numeric: '',
-        valid_upto_unit: '',
-        description: '',
+        full_name: "",
+        short_name: "",
+        issuing_authority: "",
+        valid_upto: "",
+        valid_upto_type: "",
+        valid_upto_numeric: "",
+        valid_upto_unit: "",
+        description: "",
       });
     }
     // fetchCountryListDemo();
@@ -86,7 +99,6 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
   //     sortOrder: 'asc',
   //   };
 
-
   //   dispatch(countryDemoList(params, (response, error) => {
   //     setLoading(false);
   //     if (response?.statusCode === 200 && response?.status === true) {
@@ -102,20 +114,22 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
     const params = {
       page: 1,
       limit: 2000,
-      search: '',
-      status: '',
-      sortBy: 'name',
-      sortOrder: 'asc',
+      search: "",
+      status: "",
+      sortBy: "name",
+      sortOrder: "asc",
     };
 
-    dispatch(accreditationCategoryList(params, (response, error) => {
-      setLoading(false);
-      if (response?.statusCode === 200 && response?.status === true) {
-        setAccrediationCategoryListData(response?.data || []);
-      } else {
-        toast.error("Failed to load accreditation category list");
-      }
-    }));
+    dispatch(
+      accreditationCategoryList(params, (response, error) => {
+        setLoading(false);
+        if (response?.statusCode === 200 && response?.status === true) {
+          setAccrediationCategoryListData(response?.data || []);
+        } else {
+          toast.error("Failed to load accreditation category list");
+        }
+      })
+    );
   };
 
   // Handle input changes
@@ -123,33 +137,33 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
     const { name, value } = e.target;
 
     // If valid_upto_type changes, reset related fields
-    if (name === 'valid_upto_type') {
-      setFormData(prev => ({
+    if (name === "valid_upto_type") {
+      setFormData((prev) => ({
         ...prev,
         [name]: value,
-        valid_upto: '',
-        valid_upto_numeric: '',
-        valid_upto_unit: ''
+        valid_upto: "",
+        valid_upto_numeric: "",
+        valid_upto_unit: "",
       }));
       // Clear related errors when type changes
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        valid_upto: '',
-        valid_upto_numeric: '',
-        valid_upto_unit: ''
+        valid_upto: "",
+        valid_upto_numeric: "",
+        valid_upto_unit: "",
       }));
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        [name]: value
+        [name]: value,
       }));
     }
 
     // Clear error when user starts typing
     if (errors[name]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [name]: ''
+        [name]: "",
       }));
     }
   };
@@ -171,19 +185,18 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
 
   // Handle Select dropdown change for Category
   const handleCategorySelectChange = (selectedOption) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      category: selectedOption ? selectedOption.value : ''
+      category: selectedOption ? selectedOption.value : "",
     }));
     if (errors.category) {
-      setErrors(prev => ({ ...prev, category: '' }));
+      setErrors((prev) => ({ ...prev, category: "" }));
     }
   };
   const customFilterOptionCategory = (option, inputValue) => {
     if (!inputValue) return true;
     return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
   };
-
 
   // Validate form
   const validateForm = () => {
@@ -198,31 +211,31 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
 
     // Category validation
     if (!formData.category) {
-      newErrors.category = 'Accreditation category is required';
+      newErrors.category = "Accreditation category is required";
       isValid = false;
     }
 
     // Full Name validation
     if (!formData.full_name.trim()) {
-      newErrors.full_name = 'Accreditation full name is required';
+      newErrors.full_name = "Accreditation full name is required";
       isValid = false;
     }
 
     // Valid Upto Type specific validations
-    if (formData.valid_upto_type === 'Date') {
+    if (formData.valid_upto_type === "Date") {
       if (!formData.valid_upto) {
-        newErrors.valid_upto = 'Date is required';
+        newErrors.valid_upto = "Date is required";
         isValid = false;
       }
     }
 
-    if (formData.valid_upto_type === 'Valid Upto') {
+    if (formData.valid_upto_type === "Valid Upto") {
       if (!formData.valid_upto_numeric) {
-        newErrors.valid_upto_numeric = 'Numeric value is required';
+        newErrors.valid_upto_numeric = "Numeric value is required";
         isValid = false;
       }
       if (!formData.valid_upto_unit) {
-        newErrors.valid_upto_unit = 'Period is required';
+        newErrors.valid_upto_unit = "Period is required";
         isValid = false;
       }
     }
@@ -236,68 +249,76 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
     e.preventDefault();
 
     if (validateForm()) {
-      const sendPayload = mode === 'edit'
-        ? {
-          uuid: formData.uuid,
-          country: formData.country,
-          category: formData.category,
-          full_name: formData.full_name,
-          short_name: formData.short_name,
-          issuing_authority: formData.issuing_authority,
-          valid_date: formData.valid_upto || null,
-          valid_type: formData.valid_upto_type || "",
-          valid_duration_value: formData.valid_upto_numeric || null,
-          valid_duration_unit: formData.valid_upto_unit ? formData.valid_upto_unit : null,
-          description: formData.description,
-        }
-        : {
-          country: formData.country,
-          category: formData.category,
-          full_name: formData.full_name,
-          short_name: formData.short_name,
-          issuing_authority: formData.issuing_authority,
-          valid_date: formData.valid_upto || null,
-          valid_type: formData.valid_upto_type || "",
-          valid_duration_value: formData.valid_upto_numeric || null,
-          valid_duration_unit: formData.valid_upto_unit ? formData.valid_upto_unit : null,
-          description: formData.description,
-        };
+      const sendPayload =
+        mode === "edit"
+          ? {
+              uuid: formData.uuid,
+              country: formData.country,
+              category: formData.category,
+              full_name: formData.full_name,
+              short_name: formData.short_name,
+              issuing_authority: formData.issuing_authority,
+              valid_date: formData.valid_upto || null,
+              valid_type: formData.valid_upto_type || "",
+              valid_duration_value: formData.valid_upto_numeric || null,
+              valid_duration_unit: formData.valid_upto_unit
+                ? formData.valid_upto_unit
+                : null,
+              description: formData.description,
+            }
+          : {
+              country: formData.country,
+              category: formData.category,
+              full_name: formData.full_name,
+              short_name: formData.short_name,
+              issuing_authority: formData.issuing_authority,
+              valid_date: formData.valid_upto || null,
+              valid_type: formData.valid_upto_type || "",
+              valid_duration_value: formData.valid_upto_numeric || null,
+              valid_duration_unit: formData.valid_upto_unit
+                ? formData.valid_upto_unit
+                : null,
+              description: formData.description,
+            };
 
       setLoading(true);
 
-      const action = mode === 'edit' ? accreditationNameEdit : accreditationNameAdd;
+      const action =
+        mode === "edit" ? accreditationNameEdit : accreditationNameAdd;
 
-      dispatch(action(sendPayload, (response, error) => {
-        setLoading(false);
-        if (error) {
-          toast.error(error?.response?.data?.message || "Server error");
-        } else {
-          if (response?.statusCode === 200 && response?.status === true) {
-            toast.success(response?.message);
-            resetForm();
-            handleClose(true);
+      dispatch(
+        action(sendPayload, (response, error) => {
+          setLoading(false);
+          if (error) {
+            toast.error(error?.response?.data?.message || "Server error");
           } else {
-            toast.error("Something went wrong.");
+            if (response?.statusCode === 200 && response?.status === true) {
+              toast.success(response?.message);
+              resetForm();
+              handleClose(true);
+            } else {
+              toast.error("Something went wrong.");
+            }
           }
-        }
-      }));
+        })
+      );
     }
   };
 
   // Reset form
   const resetForm = () => {
     setFormData({
-      uuid: '',
-      country: '',
-      category: '',
-      full_name: '',
-      short_name: '',
-      issuing_authority: '',
-      valid_upto: '',
-      valid_upto_type: '',
-      valid_upto_numeric: '',
-      valid_upto_unit: '',
-      description: '',
+      uuid: "",
+      country: "",
+      category: "",
+      full_name: "",
+      short_name: "",
+      issuing_authority: "",
+      valid_upto: "",
+      valid_upto_type: "",
+      valid_upto_numeric: "",
+      valid_upto_unit: "",
+      description: "",
     });
     setErrors({});
   };
@@ -320,11 +341,16 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
       aria-labelledby="AccreditationNameModalLabel"
       aria-hidden={!show}
     >
-      <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
+      <div
+        className="modal-dialog modal-lg modal-dialog-centered"
+        role="document"
+      >
         <div className="modal-content radius-16 bg-base">
           <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
             <h1 className="modal-title fs-5" id="AccreditationNameModalLabel">
-              {mode === 'edit' ? 'Edit Accreditation Name' : 'Add Accreditation Name'}
+              {mode === "edit"
+                ? "Edit Accreditation Name"
+                : "Add Accreditation Name"}
             </h1>
             <button
               type="button"
@@ -337,7 +363,7 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
           <div className="modal-body p-24 pt-10">
             <form onSubmit={handleSubmit}>
               <div className="row">
-                <div className='modal-scrollable-content'>
+                <div className="modal-scrollable-content">
                   {/* Country */}
                   {/* <div className="col-12 mb-10">
                   <label className="form-label fw-semibold text-primary-light text-sm mb-0">
@@ -377,7 +403,8 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
                   {/* Category */}
                   <div className="col-12 mb-10">
                     <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                      Accreditation Category <span className="text-danger">*</span>
+                      Accreditation Category{" "}
+                      <span className="text-danger">*</span>
                     </label>
                     <Select
                       options={acccrediationCategoryListData.map((option) => ({
@@ -387,11 +414,11 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
                       value={
                         formData.category
                           ? acccrediationCategoryListData
-                            .map((option) => ({
-                              value: option.uuid,
-                              label: option.name,
-                            }))
-                            .find((opt) => opt.value === formData.category)
+                              .map((option) => ({
+                                value: option.uuid,
+                                label: option.name,
+                              }))
+                              .find((opt) => opt.value === formData.category)
                           : null
                       }
                       onChange={handleCategorySelectChange}
@@ -399,8 +426,9 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
                       placeholder="Select accreditation category"
                       isClearable
                       isSearchable
-                      className={`custom-select-container ${errors.category ? "is-invalid" : ""
-                        }`}
+                      className={`custom-select-container ${
+                        errors.category ? "is-invalid" : ""
+                      }`}
                       classNamePrefix="custom-select"
                     />
                     {errors.category && (
@@ -413,14 +441,17 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
                   {/* Accreditation Full Name */}
                   <div className="col-12 mb-10">
                     <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                      Accreditation Full Name <span className="text-danger">*</span>
+                      Accreditation Full Name{" "}
+                      <span className="text-danger">*</span>
                     </label>
                     <input
                       type="text"
                       name="full_name"
                       value={formData.full_name}
                       onChange={handleChange}
-                      className={`form-control radius-8 ${errors.full_name ? 'is-invalid' : ''}`}
+                      className={`form-control radius-8 ${
+                        errors.full_name ? "is-invalid" : ""
+                      }`}
                       placeholder="Enter accrediation full name"
                     />
                     {errors.full_name && (
@@ -482,14 +513,36 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
                       </div>
 
                       {/* Show Date Picker if Date is selected */}
-                      {formData.valid_upto_type === 'Date' && (
+                      {formData.valid_upto_type === "Date" && (
                         <div className="col-md-8">
-                          <input
+                          {/* <input
                             type="date"
                             name="valid_upto"
                             value={formData.valid_upto}
                             onChange={handleChange}
                             className={`form-control radius-8 ${errors.valid_upto ? 'is-invalid' : ''}`}
+                          /> */}
+                          <CommonDatePicker
+                            value={formData.valid_upto}
+                            onChange={(val) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                valid_upto: val,
+                              }))
+                            }
+                            error={errors.valid_upto}
+                          />
+                          <CalendarBlank
+                            size={22}
+                            style={{
+                              position: "relative",
+                              right: "30px",
+                              top: "7%",
+                              transform: "translateY(-50%)",
+                              pointerEvents: "none",
+                              color: "#6c757d",
+                              cursor: "pointer !important",
+                            }}
                           />
                           {errors.valid_upto && (
                             <div className="text-danger text-sm mt-1">
@@ -500,7 +553,7 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
                       )}
 
                       {/* Show Numeric and Unit fields if Valid Upto is selected */}
-                      {formData.valid_upto_type === 'Valid Upto' && (
+                      {formData.valid_upto_type === "Valid Upto" && (
                         <>
                           <div className="col-md-4">
                             <input
@@ -508,7 +561,9 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
                               name="valid_upto_numeric"
                               value={formData.valid_upto_numeric}
                               onChange={handleChange}
-                              className={`form-control radius-8 ${errors.valid_upto_numeric ? 'is-invalid' : ''}`}
+                              className={`form-control radius-8 ${
+                                errors.valid_upto_numeric ? "is-invalid" : ""
+                              }`}
                               placeholder="Enter number"
                             />
                             {errors.valid_upto_numeric && (
@@ -522,7 +577,9 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
                               name="valid_upto_unit"
                               value={formData.valid_upto_unit}
                               onChange={handleChange}
-                              className={`form-control form-select radius-8 ${errors.valid_upto_unit ? 'is-invalid' : ''}`}
+                              className={`form-control form-select radius-8 ${
+                                errors.valid_upto_unit ? "is-invalid" : ""
+                              }`}
                             >
                               <option value="">Select Period</option>
                               <option value="Weeks">Weeks</option>
@@ -549,7 +606,9 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
                       Description
                     </label>
                     <textarea
-                      className={`form-control ${errors.description ? 'is-invalid' : ''}`}
+                      className={`form-control ${
+                        errors.description ? "is-invalid" : ""
+                      }`}
                       id="desc"
                       name="description"
                       value={formData.description}
@@ -577,7 +636,11 @@ const AddEditAccrediationNameModal = ({ show, handleClose, mode = 'add', rowData
                   >
                     {loading ? (
                       <>
-                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        <span
+                          className="spinner-border spinner-border-sm me-2"
+                          role="status"
+                          aria-hidden="true"
+                        ></span>
                         Saving...
                       </>
                     ) : (

@@ -370,7 +370,13 @@ const CourseStatusList = () => {
             toast.error("No Course Status selected for deletion.");
             return;
         }
-        dispatch(courseStatusDelete(sendPayload, (response, error) => {
+        const deleteAll = selectAllOrNot === "all" && Boolean(tableState.search?.trim());
+    const payloadSend = {
+      deleteAll: deleteAll,
+      id: deleteAll == true ? "" : sendPayload,
+      search: tableState.search || '',
+    };
+        dispatch(courseStatusDelete(payloadSend, (response, error) => {
             if (error) {
                 toast.error(error?.response?.data?.message || "server error");
             } else {
@@ -382,7 +388,8 @@ const CourseStatusList = () => {
                     setSelectedRows([]);
                     setSelectAllOrNot('');
                     setDeleteId(null);
-                    fetchDepartmentList();
+                    // fetchDepartmentList();
+                    clearAllFilters();
                 } else {
                     toast.error("Something went wrong.");
                 }

@@ -100,11 +100,10 @@ const AddImportStudyFactorAcademicResultModal = ({ show, handleClose }) => {
                 headers: [
                   "Factor For",
                   "Study : Academic Result Group",
-                  "Minimum Academic Result Type",
-                  "Minimum Academic Result",
+                  "Minimum Academic Result Required",
                 ],
-                sheetName: "Study Factor : Academic Result",
-                fileName: "Study Factor : Academic Result",
+                sheetName: "StudyFactor:AcademicResult",
+                fileName: "StudyFactor:AcademicResult",
               };
               exportToExcelDuplicate(
                 prepareData.data,
@@ -119,12 +118,11 @@ const AddImportStudyFactorAcademicResultModal = ({ show, handleClose }) => {
                 headers: [
                   "Factor For",
                   "Study : Academic Result Group",
-                  "Minimum Academic Result Type",
-                  "Minimum Academic Result",
+                  "Minimum Academic Result Required",
                   "Reason",
                 ],
-                sheetName: "Study Factor : Academic Result",
-                fileName: "Study Factor : Academic Result",
+                sheetName: "StudyFactor:AcademicResult",
+                fileName: "StudyFactor:AcademicResult",
               };
               exportToExcelWrongData(
                 prepareData.data,
@@ -206,9 +204,8 @@ const AddImportStudyFactorAcademicResultModal = ({ show, handleClose }) => {
                     </label>
                     <input
                       type="file"
-                      className={`form-control radius-8 ${
-                        error && !selectedSheet ? "is-invalid" : ""
-                      }`}
+                      className={`form-control radius-8 ${error && !selectedSheet ? "is-invalid" : ""
+                        }`}
                       onChange={handleFileChange}
                       accept=".csv,.xlsx,.xls,.pdf,.docx"
                       style={{ height: "auto" }}
@@ -295,25 +292,22 @@ const AddImportStudyFactorAcademicResultModal = ({ show, handleClose }) => {
           show={showSampleExcelDownload}
           handleClose={handleCloseSampleExcelDownload}
           prepareData={{
-            downloadFileName: "Study Factor : Academic Result",
+            downloadFileName: "StudyFactor:AcademicResult",
             items: [
               "Factor For",
               "Study : Academic Result Group",
-              "Minimum Academic Result Type",
-              "Minimum Academic Result",
+              "Minimum Academic Result Required",
               "Description",
             ],
             selectedItems: [
               "Factor For",
               "Study : Academic Result Group",
-              "Minimum Academic Result Type",
-              "Minimum Academic Result",
+              "Minimum Academic Result Required",
             ],
             ItemsRequired: [
               "Factor For",
               "Study : Academic Result Group",
-              "Minimum Academic Result Type",
-              "Minimum Academic Result",
+              "Minimum Academic Result Required",
             ],
           }}
         />

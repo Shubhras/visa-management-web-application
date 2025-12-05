@@ -1020,42 +1020,42 @@ urlpatterns = [
 
 
 
-    path('backlogs-group/list/', BacklogsGroupListAPIView.as_view(), name='backlogsgroup-list'),
+    path('backlogs-group/', BacklogsGroupListAPIView.as_view(), name='backlogsgroup-list'),
     path('backlogs-group/create/', BacklogsGroupCreateAPIView.as_view(), name='backlogsgroup-create'),
     path('backlogs-group/<uuid:uuid>/', BacklogsGroupRetrieveAPIView.as_view(), name='backlogsgroup-retrieve'),
     path('backlogs-group/<uuid:uuid>/update/', BacklogsGroupUpdateAPIView.as_view(), name='backlogsgroup-update'),
     path('backlogs-group/delete/', BacklogsGroupDeleteAPIView.as_view(), name='backlogsgroup-delete'),
-    path('backlogs-group/<uuid:uuid>/delete/', BacklogsGroupDeleteAPIView.as_view(), name='backlogsgroup-delete-single'),
+    # path('backlogs-group/<uuid:uuid>/delete/', BacklogsGroupDeleteAPIView.as_view(), name='backlogsgroup-delete-single'),
     path('backlogs-group/export/', BacklogsGroupExportAPIView.as_view(), name='backlogsgroup-export'),
     path('backlogs-group/import/', BacklogsGroupImportAPIView.as_view(), name='backlogsgroup-import'),
 
     # ---------------- GAPGroup ----------------
-    path('gap-group/list/', GAPGroupListAPIView.as_view(), name='gapgroup-list'),
+    path('gap-group/', GAPGroupListAPIView.as_view(), name='gapgroup-list'),
     path('gap-group/create/', GAPGroupCreateAPIView.as_view(), name='gapgroup-create'),
     path('gap-group/<uuid:uuid>/', GAPGroupRetrieveAPIView.as_view(), name='gapgroup-retrieve'),
     path('gap-group/<uuid:uuid>/update/', GAPGroupUpdateAPIView.as_view(), name='gapgroup-update'),
     path('gap-group/delete/', GAPGroupDeleteAPIView.as_view(), name='gapgroup-delete'),
-    path('gap-group/<uuid:uuid>/delete/', GAPGroupDeleteAPIView.as_view(), name='gapgroup-delete-single'),
+    # path('gap-group/<uuid:uuid>/delete/', GAPGroupDeleteAPIView.as_view(), name='gapgroup-delete-single'),
     path('gap-group/export/', GAPGroupExportAPIView.as_view(), name='gapgroup-export'),
     path('gap-group/import/', GAPGroupImportAPIView.as_view(), name='gapgroup-import'),
 
     # ---------------- LanguageAbilityGroup ----------------
-    path('language-ability-group/list/', LanguageAbilityGroupListAPIView.as_view(), name='languageabilitygroup-list'),
+    path('language-ability-group/', LanguageAbilityGroupListAPIView.as_view(), name='languageabilitygroup-list'),
     path('language-ability-group/create/', LanguageAbilityGroupCreateAPIView.as_view(), name='languageabilitygroup-create'),
     path('language-ability-group/<uuid:uuid>/', LanguageAbilityGroupRetrieveAPIView.as_view(), name='languageabilitygroup-retrieve'),
     path('language-ability-group/<uuid:uuid>/update/', LanguageAbilityGroupUpdateAPIView.as_view(), name='languageabilitygroup-update'),
     path('language-ability-group/delete/', LanguageAbilityGroupDeleteAPIView.as_view(), name='languageabilitygroup-delete'),
-    path('language-ability-group/<uuid:uuid>/delete/', LanguageAbilityGroupDeleteAPIView.as_view(), name='languageabilitygroup-delete-single'),
+    # path('language-ability-group/<uuid:uuid>/delete/', LanguageAbilityGroupDeleteAPIView.as_view(), name='languageabilitygroup-delete-single'),
     path('language-ability-group/export/', LanguageAbilityGroupExportAPIView.as_view(), name='languageabilitygroup-export'),
     path('language-ability-group/import/', LanguageAbilityGroupImportAPIView.as_view(), name='languageabilitygroup-import'),
 
     # ---------------- EntranceTestAbilityGroup ----------------
-    path('entrance-test-ability-group/list/', EntranceTestAbilityGroupListAPIView.as_view(), name='entrancetestabilitygroup-list'),
+    path('entrance-test-ability-group/', EntranceTestAbilityGroupListAPIView.as_view(), name='entrancetestabilitygroup-list'),
     path('entrance-test-ability-group/create/', EntranceTestAbilityGroupCreateAPIView.as_view(), name='entrancetestabilitygroup-create'),
     path('entrance-test-ability-group/<uuid:uuid>/', EntranceTestAbilityGroupRetrieveAPIView.as_view(), name='entrancetestabilitygroup-retrieve'),
     path('entrance-test-ability-group/<uuid:uuid>/update/', EntranceTestAbilityGroupUpdateAPIView.as_view(), name='entrancetestabilitygroup-update'),
     path('entrance-test-ability-group/delete/', EntranceTestAbilityGroupDeleteAPIView.as_view(), name='entrancetestabilitygroup-delete'),
-    path('entrance-test-ability-group/<uuid:uuid>/delete/', EntranceTestAbilityGroupDeleteAPIView.as_view(), name='entrancetestabilitygroup-delete-single'),
+    # path('entrance-test-ability-group/<uuid:uuid>/delete/', EntranceTestAbilityGroupDeleteAPIView.as_view(), name='entrancetestabilitygroup-delete-single'),
     path('entrance-test-ability-group/export/', EntranceTestAbilityGroupExportAPIView.as_view(), name='entrancetestabilitygroup-export'),
     path('entrance-test-ability-group/import/', EntranceTestAbilityGroupImportAPIView.as_view(), name='entrancetestabilitygroup-import'),
 
@@ -1078,13 +1078,6 @@ urlpatterns = [
     path('children-visacategory/import/', ChildrenVisaCategoryImportAPIView.as_view()),
 
     
-    # path('study-factor-age/create/', StudyFactorAgeCreateAPIView.as_view(),name='age-create'),
-    # path('study-factor-age/list/', StudyFactorAgeListAPIView.as_view(),name='age-list'),
-    # path('study-factor-age/<uuid:uuid>/', StudyFactorAgeRetrieveAPIView.as_view(),name='age-retrieve'),
-    # path('study-factor-age/<uuid:uuid>/update/', StudyFactorAgeUpdateAPIView.as_view(),name='age-update'),
-    # path('study-factor-age/<uuid:uuid>/delete/', StudyFactorAgeDeleteAPIView.as_view(),name='age-delete'),
-    # path('study-factor-age/export/', StudyFactorAgeExportAPIView.as_view(),name='age-export'),
-    # path('study-factor-age/import/', StudyFactorAgeImportAPIView.as_view(),name='age-import'),
 
 
     path('study-factor-age/create/', StudyFactorAgeCreateAPIView.as_view(),name='age-create'),

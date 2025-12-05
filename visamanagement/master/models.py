@@ -1380,7 +1380,7 @@ class RepresentingCountry(models.Model):
     official_language = models.CharField(max_length=255, blank=True, null=True)
     largest_state = models.ForeignKey('State', on_delete=models.PROTECT, related_name='representations')
     smallest_state = models.ForeignKey('State', on_delete=models.PROTECT, related_name='representations_small_state',blank=True, null=True)
-    largest_city = models.ForeignKey('City', on_delete=models.PROTECT, related_name='representations',blank=True, null=True)
+    # largest_city = models.ForeignKey('City', on_delete=models.PROTECT, related_name='representations',blank=True, null=True)
     major_cities = models.TextField(blank=True, null=True)
     national_animal = models.CharField(max_length=255, blank=True, null=True)
     national_bird = models.CharField(max_length=255, blank=True, null=True)

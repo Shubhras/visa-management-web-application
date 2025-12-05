@@ -368,7 +368,13 @@ const InstituteGroupNameList = () => {
             toast.error("No institute group name selected for deletion.");
             return;
         }
-        dispatch(instituteGroupNameDelete(sendPayload, (response, error) => {
+        const deleteAll = selectAllOrNot === "all" && Boolean(tableState.search?.trim());
+    const payloadSend = {
+      deleteAll: deleteAll,
+      id: deleteAll == true ? "" : sendPayload,
+      search: tableState.search || '',
+    };
+        dispatch(instituteGroupNameDelete(payloadSend, (response, error) => {
             if (error) {
                 toast.error(error?.response?.data?.message || "server error");
             } else {
@@ -380,7 +386,8 @@ const InstituteGroupNameList = () => {
                     setSelectedRows([]);
                     setSelectAllOrNot('');
                     setDeleteId(null);
-                    fetchDepartmentList();
+                    // fetchDepartmentList();
+                    clearAllFilters();
                 } else {
                     toast.error("Something went wrong.");
                 }

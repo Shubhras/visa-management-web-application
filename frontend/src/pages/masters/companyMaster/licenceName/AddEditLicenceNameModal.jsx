@@ -1,93 +1,104 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
-import { licenceNameEdit, licenceNameAdd, countryDemoList } from '../../../../store/master/companyMasters/actions';
+import {
+  licenceNameEdit,
+  licenceNameAdd,
+  countryDemoList,
+} from "../../../../store/master/companyMasters/actions";
 import { toast } from "react-toastify";
 import Select from "react-select";
-const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
+import { CalendarBlank } from "@phosphor-icons/react";
+import CommonDatePicker from "../../../../helper/utils/DatePicker";
+const AddEditLicenceNameModal = ({
+  show,
+  handleClose,
+  mode = "add",
+  rowData = null,
+}) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [countryListData, setCountryListData] = useState([]);
 
   // Form state
   const [formData, setFormData] = useState({
-    uuid: '',
-    country: '',
-    full_name: '',
-    short_name: '',
-    issuing_authority: '',
-    valid_upto: '',
-    valid_upto_type: '', // Permanent/Date/Valid Upto
-    valid_upto_numeric: '',
-    valid_upto_unit: '', // Weeks/Months/Year
-    description: '',
+    uuid: "",
+    country: "",
+    full_name: "",
+    short_name: "",
+    issuing_authority: "",
+    valid_upto: "",
+    valid_upto_type: "", // Permanent/Date/Valid Upto
+    valid_upto_numeric: "",
+    valid_upto_unit: "", // Weeks/Months/Year
+    description: "",
   });
 
   // Validation errors state
   const [errors, setErrors] = useState({
-    country: '',
-    full_name: '',
-    short_name: '',
-    issuing_authority: '',
-    valid_upto: '',
-    valid_upto_type: '',
-    valid_upto_numeric: '',
-    valid_upto_unit: '',
-    description: '',
+    country: "",
+    full_name: "",
+    short_name: "",
+    issuing_authority: "",
+    valid_upto: "",
+    valid_upto_type: "",
+    valid_upto_numeric: "",
+    valid_upto_unit: "",
+    description: "",
   });
 
   // Populate form data when in edit mode
   useEffect(() => {
-    if (mode === 'edit' && rowData) {
+    if (mode === "edit" && rowData) {
       setFormData({
-        uuid: rowData.uuid || '',
-        country: rowData.country || '',
-        full_name: rowData.full_name || '',
-        short_name: rowData.short_name || '',
-        issuing_authority: rowData.issuing_authority || '',
-        valid_upto_type: rowData.valid_type || '',
-        valid_upto: rowData.valid_date || '',
-        valid_upto_numeric: rowData.valid_duration_value || '',
-        valid_upto_unit: rowData.valid_duration_unit || '',
-        description: rowData.description || '',
+        uuid: rowData.uuid || "",
+        country: rowData.country || "",
+        full_name: rowData.full_name || "",
+        short_name: rowData.short_name || "",
+        issuing_authority: rowData.issuing_authority || "",
+        valid_upto_type: rowData.valid_type || "",
+        valid_upto: rowData.valid_date || "",
+        valid_upto_numeric: rowData.valid_duration_value || "",
+        valid_upto_unit: rowData.valid_duration_unit || "",
+        description: rowData.description || "",
       });
     } else {
       // Reset form when switching to add mode
       setFormData({
-        uuid: '',
-        country: '',
-        full_name: '',
-        short_name: '',
-        issuing_authority: '',
-        valid_upto: '',
-        valid_upto_type: '',
-        valid_upto_numeric: '',
-        valid_upto_unit: '',
-        description: '',
+        uuid: "",
+        country: "",
+        full_name: "",
+        short_name: "",
+        issuing_authority: "",
+        valid_upto: "",
+        valid_upto_type: "",
+        valid_upto_numeric: "",
+        valid_upto_unit: "",
+        description: "",
       });
     }
     fetchCountryList();
   }, [mode, rowData, show]);
-
 
   const fetchCountryList = () => {
     //setLoading(true);
     const params = {
       page: 1,
       limit: 2000,
-      search: '',
-      status: '',
-      sortBy: 'name',
-      sortOrder: 'asc',
+      search: "",
+      status: "",
+      sortBy: "name",
+      sortOrder: "asc",
     };
 
-    dispatch(countryDemoList(params, (response, error) => {
-      setLoading(false);
-      if (response?.statusCode === 200 && response?.status === true) {
-        setCountryListData(response?.data || []);
-      } else {
-
-      }
-    }));
+    dispatch(
+      countryDemoList(params, (response, error) => {
+        setLoading(false);
+        if (response?.statusCode === 200 && response?.status === true) {
+          setCountryListData(response?.data || []);
+        } else {
+        }
+      })
+    );
   };
 
   // Handle input changes
@@ -95,33 +106,33 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
     const { name, value } = e.target;
 
     // If valid_upto_type changes, reset related fields
-    if (name === 'valid_upto_type') {
-      setFormData(prev => ({
+    if (name === "valid_upto_type") {
+      setFormData((prev) => ({
         ...prev,
         [name]: value,
-        valid_upto: '',
-        valid_upto_numeric: '',
-        valid_upto_unit: ''
+        valid_upto: "",
+        valid_upto_numeric: "",
+        valid_upto_unit: "",
       }));
       // Clear related errors when type changes
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        valid_upto: '',
-        valid_upto_numeric: '',
-        valid_upto_unit: ''
+        valid_upto: "",
+        valid_upto_numeric: "",
+        valid_upto_unit: "",
       }));
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        [name]: value
+        [name]: value,
       }));
     }
 
     // Clear error when user starts typing
     if (errors[name]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [name]: ''
+        [name]: "",
       }));
     }
   };
@@ -129,7 +140,7 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
   const handleSelectChange = (selectedOption) => {
     setFormData((prev) => ({
       ...prev,
-      country: selectedOption ? selectedOption.value : ""
+      country: selectedOption ? selectedOption.value : "",
     }));
     if (errors.country) {
       setErrors((prev) => ({ ...prev, country: "" }));
@@ -141,7 +152,6 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
     return option.label.toLowerCase().startsWith(inputValue.toLowerCase());
   };
 
-
   // Validate form
   const validateForm = () => {
     const newErrors = {};
@@ -149,37 +159,37 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
 
     // country validation
     if (!formData.country) {
-      newErrors.country = 'Country is required';
+      newErrors.country = "Country is required";
       isValid = false;
     }
 
     // Full Name validation
     if (!formData.full_name.trim()) {
-      newErrors.full_name = 'License full name is required';
+      newErrors.full_name = "License full name is required";
       isValid = false;
     }
 
     // short Name validation
     if (!formData.short_name.trim()) {
-      newErrors.short_name = 'License short name is required';
+      newErrors.short_name = "License short name is required";
       isValid = false;
     }
 
     // Valid Upto Type specific validations
-    if (formData.valid_upto_type === 'Date') {
+    if (formData.valid_upto_type === "Date") {
       if (!formData.valid_upto) {
-        newErrors.valid_upto = 'Date is required';
+        newErrors.valid_upto = "Date is required";
         isValid = false;
       }
     }
 
-    if (formData.valid_upto_type === 'Valid Upto') {
+    if (formData.valid_upto_type === "Valid Upto") {
       if (!formData.valid_upto_numeric) {
-        newErrors.valid_upto_numeric = 'Numeric value is required';
+        newErrors.valid_upto_numeric = "Numeric value is required";
         isValid = false;
       }
       if (!formData.valid_upto_unit) {
-        newErrors.valid_upto_unit = 'Period is required';
+        newErrors.valid_upto_unit = "Period is required";
         isValid = false;
       }
     }
@@ -193,66 +203,73 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
     e.preventDefault();
 
     if (validateForm()) {
-      const sendPayload = mode === 'edit'
-        ? {
-          uuid: formData.uuid,
-          country: formData.country,
-          full_name: formData.full_name,
-          short_name: formData.short_name,
-          issuing_authority: formData.issuing_authority,
+      const sendPayload =
+        mode === "edit"
+          ? {
+              uuid: formData.uuid,
+              country: formData.country,
+              full_name: formData.full_name,
+              short_name: formData.short_name,
+              issuing_authority: formData.issuing_authority,
 
-          valid_date: formData.valid_upto || null,
-          valid_type: formData.valid_upto_type || "",
-          valid_duration_value: formData.valid_upto_numeric || null,
-          valid_duration_unit: formData.valid_upto_unit ? formData.valid_upto_unit : null,
-          description: formData.description,
-        }
-        : {
-          country: formData.country,
-          full_name: formData.full_name,
-          short_name: formData.short_name,
-          issuing_authority: formData.issuing_authority,
-          valid_date: formData.valid_upto || null,
-          valid_type: formData.valid_upto_type || "",
-          valid_duration_value: formData.valid_upto_numeric || null,
-          valid_duration_unit: formData.valid_upto_unit ? formData.valid_upto_unit : null,
-          description: formData.description,
-        };
+              valid_date: formData.valid_upto || null,
+              valid_type: formData.valid_upto_type || "",
+              valid_duration_value: formData.valid_upto_numeric || null,
+              valid_duration_unit: formData.valid_upto_unit
+                ? formData.valid_upto_unit
+                : null,
+              description: formData.description,
+            }
+          : {
+              country: formData.country,
+              full_name: formData.full_name,
+              short_name: formData.short_name,
+              issuing_authority: formData.issuing_authority,
+              valid_date: formData.valid_upto || null,
+              valid_type: formData.valid_upto_type || "",
+              valid_duration_value: formData.valid_upto_numeric || null,
+              valid_duration_unit: formData.valid_upto_unit
+                ? formData.valid_upto_unit
+                : null,
+              description: formData.description,
+            };
 
       setLoading(true);
 
-      const action = mode === 'edit' ? licenceNameEdit : licenceNameAdd;
+      const action = mode === "edit" ? licenceNameEdit : licenceNameAdd;
 
-      dispatch(action(sendPayload, (response, error) => {
-        setLoading(false);
-        if (error) {
-          toast.error(error?.response?.data?.message || "Server error");
-        } else {
-          if (response?.statusCode === 200 && response?.status === true) {
-            toast.success(response?.message);
-            resetForm();
-            handleClose(true);
+      dispatch(
+        action(sendPayload, (response, error) => {
+          setLoading(false);
+          if (error) {
+            toast.error(error?.response?.data?.message || "Server error");
           } else {
-            toast.error("Something went wrong.");
+            if (response?.statusCode === 200 && response?.status === true) {
+              toast.success(response?.message);
+              resetForm();
+              handleClose(true);
+            } else {
+              toast.error("Something went wrong.");
+            }
           }
-        }
-      }));
+        })
+      );
     }
   };
 
   // Reset form
   const resetForm = () => {
     setFormData({
-      uuid: '',
-      country: '',
-      full_name: '',
-      short_name: '',
-      issuing_authority: '',
-      valid_upto: '',
-      valid_upto_type: '',
-      valid_upto_numeric: '',
-      valid_upto_unit: '',
-      description: '',
+      uuid: "",
+      country: "",
+      full_name: "",
+      short_name: "",
+      issuing_authority: "",
+      valid_upto: "",
+      valid_upto_type: "",
+      valid_upto_numeric: "",
+      valid_upto_unit: "",
+      description: "",
     });
     setErrors({});
   };
@@ -275,11 +292,14 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
       aria-labelledby="LicenceNameModalLabel"
       aria-hidden={!show}
     >
-      <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
+      <div
+        className="modal-dialog modal-lg modal-dialog-centered"
+        role="document"
+      >
         <div className="modal-content radius-16 bg-base">
           <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
             <h1 className="modal-title fs-5" id="LicenceNameModalLabel">
-              {mode === 'edit' ? 'Edit Licence Name' : 'Add Licence Name'}
+              {mode === "edit" ? "Edit Licence Name" : "Add Licence Name"}
             </h1>
             <button
               type="button"
@@ -292,7 +312,7 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
           <div className="modal-body p-24 pt-10">
             <form onSubmit={handleSubmit}>
               <div className="row">
-                <div className='modal-scrollable-content'>
+                <div className="modal-scrollable-content">
                   {/* Country */}
                   <div className="col-12 mb-10">
                     <label className="form-label fw-semibold text-primary-light text-sm mb-0">
@@ -319,8 +339,11 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                       value={
                         formData.country
                           ? countryListData
-                            .map((option) => ({ value: option.uuid, label: option.name }))
-                            .find((opt) => opt.value === formData.country)
+                              .map((option) => ({
+                                value: option.uuid,
+                                label: option.name,
+                              }))
+                              .find((opt) => opt.value === formData.country)
                           : null
                       }
                       onChange={handleSelectChange}
@@ -346,7 +369,9 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                       name="full_name"
                       value={formData.full_name}
                       onChange={handleChange}
-                      className={`form-control radius-8 ${errors.full_name ? 'is-invalid' : ''}`}
+                      className={`form-control radius-8 ${
+                        errors.full_name ? "is-invalid" : ""
+                      }`}
                       placeholder="Enter licence full name"
                     />
                     {errors.full_name && (
@@ -365,7 +390,9 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                       name="short_name"
                       value={formData.short_name}
                       onChange={handleChange}
-                      className={`form-control radius-8 ${errors.short_name ? 'is-invalid' : ''}`}
+                      className={`form-control radius-8 ${
+                        errors.short_name ? "is-invalid" : ""
+                      }`}
                       placeholder="Enter licence short name"
                     />
                     {errors.short_name && (
@@ -407,14 +434,36 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                         </select>
                       </div>
                       {/* Show Date Picker if Date is selected */}
-                      {formData.valid_upto_type === 'Date' && (
+                      {formData.valid_upto_type === "Date" && (
                         <div className="col-md-8">
-                          <input
+                          {/* <input
                             type="date"
                             name="valid_upto"
                             value={formData.valid_upto}
                             onChange={handleChange}
                             className={`form-control radius-8 ${errors.valid_upto ? 'is-invalid' : ''}`}
+                          /> */}
+                          <CommonDatePicker
+                            value={formData.valid_upto}
+                            onChange={(val) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                valid_upto: val,
+                              }))
+                            }
+                            error={errors.valid_upto}
+                          />
+                          <CalendarBlank
+                            size={22}
+                            style={{
+                              position: "relative",
+                              right: "30px",
+                              top: "7%",
+                              transform: "translateY(-50%)",
+                              pointerEvents: "none",
+                              color: "#6c757d",
+                              cursor: "pointer !important",
+                            }}
                           />
                           {errors.valid_upto && (
                             <div className="text-danger text-sm mt-1">
@@ -424,7 +473,7 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                         </div>
                       )}
                       {/* Show Numeric and Unit fields if Valid Upto is selected */}
-                      {(formData.valid_upto_type === 'Valid Upto') && (
+                      {formData.valid_upto_type === "Valid Upto" && (
                         <>
                           <div className="col-md-4">
                             <input
@@ -432,7 +481,9 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                               name="valid_upto_numeric"
                               value={formData.valid_upto_numeric}
                               onChange={handleChange}
-                              className={`form-control radius-8 ${errors.valid_upto_numeric ? 'is-invalid' : ''}`}
+                              className={`form-control radius-8 ${
+                                errors.valid_upto_numeric ? "is-invalid" : ""
+                              }`}
                               placeholder="Enter number"
                             />
                             {errors.valid_upto_numeric && (
@@ -446,7 +497,9 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                               name="valid_upto_unit"
                               value={formData.valid_upto_unit}
                               onChange={handleChange}
-                              className={`form-control form-select radius-8 ${errors.valid_upto_unit ? 'is-invalid' : ''}`}
+                              className={`form-control form-select radius-8 ${
+                                errors.valid_upto_unit ? "is-invalid" : ""
+                              }`}
                             >
                               <option value="">Select Period</option>
                               <option value="Weeks">Weeks</option>
@@ -473,7 +526,9 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                       Description
                     </label>
                     <textarea
-                      className={`form-control ${errors.description ? 'is-invalid' : ''}`}
+                      className={`form-control ${
+                        errors.description ? "is-invalid" : ""
+                      }`}
                       id="desc"
                       name="description"
                       value={formData.description}
@@ -501,7 +556,11 @@ const AddEditLicenceNameModal = ({ show, handleClose, mode = 'add', rowData = nu
                   >
                     {loading ? (
                       <>
-                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        <span
+                          className="spinner-border spinner-border-sm me-2"
+                          role="status"
+                          aria-hidden="true"
+                        ></span>
                         Saving...
                       </>
                     ) : (

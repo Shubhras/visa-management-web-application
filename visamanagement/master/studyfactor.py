@@ -35,7 +35,7 @@ from uuid import UUID
 from django.db import transaction
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from master.studyfactor import find_dependencies, generate_dependency_excel
+from master.dependency_report import find_dependencies, generate_dependency_excel
 
 
 
@@ -175,7 +175,6 @@ class FactorForUpdateAPIView(APIView):
 
 # ----------------FactorFor DELETE ----------------
 
-
 class FactorForDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -193,15 +192,31 @@ class FactorForDeleteAPIView(APIView):
 
                 deletable = []
                 non_deletable = []
+                report = []
 
                 for obj in queryset:
                     if self._is_connected(obj):
                         non_deletable.append(obj)
+
+                        # Excel report row
+                        report.append({
+                            "parent_table": "FactorFor",
+                            "parent_field_value": obj.name,
+                            "used_in_table": "Related Table",
+                            "field": "factor_for"
+                        })
                     else:
                         deletable.append(obj)
 
                 deleted_count = len(deletable)
                 not_deleted_count = len(non_deletable)
+
+                # If any failed, return Excel sheet
+                if non_deletable:
+                    return generate_dependency_excel(
+                        report,
+                        filename="factorfor_dependency_report.xlsx"
+                    )
 
                 FactorFor.objects.filter(id__in=[o.id for o in deletable]).delete()
 
@@ -230,15 +245,30 @@ class FactorForDeleteAPIView(APIView):
 
                 deletable = []
                 non_deletable = []
+                report = []
 
                 for obj in queryset:
                     if self._is_connected(obj):
                         non_deletable.append(obj)
+
+                        report.append({
+                            "parent_table": "FactorFor",
+                            "parent_field_value": obj.name,
+                            "used_in_table": "Related Table",
+                            "field": "factor_for"
+                        })
                     else:
                         deletable.append(obj)
 
                 deleted_count = len(deletable)
                 not_deleted_count = len(non_deletable)
+
+                # If any failed, return Excel
+                if non_deletable:
+                    return generate_dependency_excel(
+                        report,
+                        filename="factorfor_dependency_report.xlsx"
+                    )
 
                 FactorFor.objects.filter(id__in=[o.id for o in deletable]).delete()
 
@@ -272,12 +302,26 @@ class FactorForDeleteAPIView(APIView):
 
             deletable = []
             non_deletable = []
+            report = []
 
             for obj in filtered_objects:
                 if self._is_connected(obj):
                     non_deletable.append(obj)
+                    report.append({
+                        "parent_table": "FactorFor",
+                        "parent_field_value": obj.name,
+                        "used_in_table": "Related Table",
+                        "field": "factor_for"
+                    })
                 else:
                     deletable.append(obj)
+
+            # If non deletable exists → return Excel
+            if non_deletable:
+                return generate_dependency_excel(
+                    report,
+                    filename="factorfor_dependency_report.xlsx"
+                )
 
             FactorFor.objects.filter(id__in=[o.id for o in deletable]).delete()
 
@@ -328,6 +372,7 @@ class FactorForDeleteAPIView(APIView):
             StudyFactorLanguageAbility.objects.filter(factor_for=factor_for_obj).exists() or
             StudyFactorEntranceTestAbility.objects.filter(factor_for=factor_for_obj).exists()
         )
+
 
 
 # ----------------FactorFor EXPORT ----------------
@@ -482,50 +527,59 @@ class FactorForImportAPIView(APIView):
                 }, status=400)
 
             # ---------- IMPORT LOGIC ----------
-            from master.models import FactorFor  # adjust import path as needed
+            from master.models import FactorFor
 
-            # preload existing DB records (case-insensitive name map)
             existing_map = {f.name.lower(): f for f in FactorFor.objects.all()}
 
-            for row in reversed(data):  # follow PRPossibility pattern
+            # process rows in reverse to maintain input order in final output
+            for row in reversed(data):
                 row_no = row.get("_row_number", "Unknown")
-
-                # raw values
                 name_raw = row.get("factor for")
                 desc_raw = row.get("description")
 
-                # normalized values
-                name = str(name_raw).strip() if name_raw is not None else None
+                name = str(name_raw).strip() if name_raw is not None else ""
                 description = str(desc_raw).strip() if desc_raw is not None else ""
 
-                # build ordered skipped dict (Option D): keys must follow export order
-                row_skipped = {}
+                # -----------------------
+                # VALIDATION BLOCK
+                # -----------------------
+                row_errors = {}
 
-                # Validate "Factor For" (required)
+                # 1. Validate Factor For
                 if not name:
-                    row_skipped["Factor For"] = {"value": name_raw if name_raw is not None else "", "reason": "Missing required value"}
+                    row_errors["Factor For"] = {
+                        "value": name_raw if name_raw else "",
+                        "reason": "Missing required value"
+                    }
                 else:
-                    # simple validation: must contain at least one alphabetic char
                     if isinstance(name_raw, (int, float)) or not any(c.isalpha() for c in name):
-                        row_skipped["Factor For"] = {"value": name_raw, "reason": "Invalid Input: Factor For"}
+                        row_errors["Factor For"] = {
+                            "value": name_raw,
+                            "reason": "Invalid Input: Factor For"
+                        }
 
-                # Validate description datatype if present
+                # 2. Validate Description datatype
                 if desc_raw is not None and not isinstance(desc_raw, (str, int, float, bool)):
-                    # include Description error after Factor For in order
-                    row_skipped["Description"] = {"value": desc_raw, "reason": "Invalid description data"}
+                    row_errors["Description"] = {
+                        "value": desc_raw,
+                        "reason": "Invalid description data"
+                    }
 
-                # If any validation failed, append skipped row preserving order
-                if row_skipped:
-                    # assemble final dict with Row first, then ordered keys as per export headers
-                    final_skipped = {"Row": row_no}
-                    # ensure order: Factor For then Description
+                # If validation failed → send to skipped_rows
+                if row_errors:
+                    skipped_item = {"Row": row_no}
+
+                    # FOLLOW EXPORT ORDER: Factor For → Description
                     for key in ("Factor For", "Description"):
-                        if key in row_skipped:
-                            final_skipped[key] = row_skipped[key]
-                    skipped_rows.append(final_skipped)
+                        if key in row_errors:
+                            skipped_item[key] = row_errors[key]
+
+                    skipped_rows.append(skipped_item)
                     continue
 
-                # duplicate in file (case-insensitive)
+                # -----------------------
+                # DUPLICATES IN FILE
+                # -----------------------
                 key = name.lower()
                 if key in seen_in_file:
                     duplicates.append({
@@ -537,7 +591,9 @@ class FactorForImportAPIView(APIView):
                     continue
                 seen_in_file.add(key)
 
-                # check existing in DB
+                # -----------------------
+                # EXISTING IN DATABASE
+                # -----------------------
                 existing = existing_map.get(key)
                 if existing:
                     if not existing.is_deleted:
@@ -548,17 +604,18 @@ class FactorForImportAPIView(APIView):
                             "Reason": "Already exists in database"
                         })
                         continue
-                    # reactivate soft-deleted
+                    # Reactivate soft deleted record
                     existing.description = description
                     existing.is_deleted = False
                     existing.save()
                     imported_count += 1
                     continue
 
-                # prepare for bulk create
+                # -----------------------
+                # BULK CREATE
+                # -----------------------
                 to_create.append(FactorFor(name=name, description=description, is_deleted=False))
 
-            # ---------------- Bulk Create ----------------
             if to_create:
                 batch_size = 500
                 for i in range(0, len(to_create), batch_size):
@@ -572,7 +629,7 @@ class FactorForImportAPIView(APIView):
                 "message": str(e)
             }, status=400)
 
-        # final response - reversed to restore file order for output
+        # restore file order for response
         return Response({
             "statusCode": 200,
             "status": True,
@@ -581,10 +638,6 @@ class FactorForImportAPIView(APIView):
             "duplicates": list(reversed(duplicates)),
             "skipped_rows": list(reversed(skipped_rows))
         }, status=200)
-
-
-
-
 
 
 # ----------------Study AgeGroup LIST ----------------
@@ -710,271 +763,6 @@ class AgeGroupUpdateAPIView(APIView):
 
 
 # ----------------AgeGroup DELETE ----------------
-
-# class AgeGroupDeleteAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
-
-#     def delete(self, request, uuid=None):
-#         search = request.GET.get("search", "").strip()   # SEARCH ONLY on age_group
-#         ids = request.data.get('id', None)
-
-#         # -------------------------
-#         #  SINGLE DELETE
-#         # -------------------------
-#         if uuid:
-#             try:
-#                 obj = AgeGroup.objects.get(uuid=uuid)
-#                 obj.delete()
-#                 return Response({
-#                     "statusCode": 204,
-#                     "status": True,
-#                     "message": "AgeGroup permanently deleted.",
-#                     "data": None
-#                 }, status=204)
-#             except AgeGroup.DoesNotExist:
-#                 return Response({
-#                     "statusCode": 404,
-#                     "status": False,
-#                     "message": "AgeGroup not found.",
-#                     "data": None
-#                 }, status=404)
-
-#         # -------------------------
-#         #  BULK DELETE (ALL) — BUT ONLY MATCHING SEARCH
-#         # -------------------------
-#         if ids == "all":
-#             objs = AgeGroup.objects.all()
-
-#             # APPLY SEARCH FILTER (ONLY AGE GROUP)
-#             if search:
-#                 objs = objs.filter(age_group__icontains=search)
-
-#             count = objs.count()
-#             if count == 0:
-#                 return Response({
-#                     "statusCode": 404,
-#                     "status": False,
-#                     "message": "No AgeGroup found to delete.",
-#                     "data": None
-#                 }, status=404)
-
-#             objs.delete()
-#             return Response({
-#                 "statusCode": 200,
-#                 "status": True,
-#                 "message": f"All {count} AgeGroup permanently deleted.",
-#                 "data": None
-#             })
-
-#         # -------------------------
-#         #  MULTIPLE DELETE (Selected Rows)
-#         # -------------------------
-#         if not ids or not isinstance(ids, list):
-#             return Response({
-#                 "statusCode": 400,
-#                 "status": False,
-#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
-#                 "data": None
-#             }, status=400)
-
-#         valid_uuids = []
-#         invalid_uuids = []
-#         for u in ids:
-#             try:
-#                 valid_uuids.append(UUID(u))
-#             except ValueError:
-#                 invalid_uuids.append(u)
-
-#         if not valid_uuids:
-#             return Response({
-#                 "statusCode": 400,
-#                 "status": False,
-#                 "message": "No valid UUIDs provided.",
-#                 "data": {"invalid_uuids": invalid_uuids}
-#             }, status=400)
-
-#         objs = AgeGroup.objects.filter(uuid__in=valid_uuids)
-
-#         # APPLY SEARCH FILTER — ONLY ON age_group FIELD
-#         if search:
-#             objs = objs.filter(age_group__icontains=search)
-
-#         count = objs.count()
-#         if count == 0:
-#             return Response({
-#                 "statusCode": 404,
-#                 "status": False,
-#                 "message": "No matching AgeGroup found.",
-#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-#             }, status=404)
-
-#         objs.delete()
-#         return Response({
-#             "statusCode": 200,
-#             "status": True,
-#             "message": f"{count} AgeGroup(s) permanently deleted.",
-#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-#         })
-
-
-# class AgeGroupDeleteAPIView(APIView):
-#     permission_classes = [IsAuthenticated, IsAdminUser]
-
-#     def delete(self, request, uuid=None):
-#         search = request.GET.get("search", "").strip()   # SEARCH ONLY on age_group
-#         ids = request.data.get('id', None)
-
-#         # -------------------------------------------------------------------
-#         #  SINGLE DELETE
-#         # -------------------------------------------------------------------
-#         if uuid:
-#             try:
-#                 obj = AgeGroup.objects.get(uuid=uuid)
-
-#                 # CHECK IF CONNECTED TO CHILD TABLE
-#                 if StudyFactorAge.objects.filter(age_group=obj).exists():
-#                     return Response({
-#                         "statusCode": 400,
-#                         "status": False,
-#                         "message": "Could not delete the data ,it is connected to another table",
-#                     }, status=400)
-
-#                 obj.delete()
-#                 return Response({
-#                     "statusCode": 204,
-#                     "status": True,
-#                     "message": "AgeGroup permanently deleted.",
-#                     "data": None
-#                 }, status=204)
-
-#             except AgeGroup.DoesNotExist:
-#                 return Response({
-#                     "statusCode": 404,
-#                     "status": False,
-#                     "message": "AgeGroup not found.",
-#                     "data": None
-#                 }, status=404)
-
-#         # -------------------------------------------------------------------
-#         #  BULK DELETE (ALL) — ONLY MATCHING SEARCH
-#         # -------------------------------------------------------------------
-#         if ids == "all":
-#             objs = AgeGroup.objects.all()
-
-#             # APPLY SEARCH
-#             if search:
-#                 objs = objs.filter(age_group__icontains=search)
-
-#             if objs.count() == 0:
-#                 return Response({
-#                     "statusCode": 404,
-#                     "status": False,
-#                     "message": "No AgeGroup found to delete.",
-#                     "data": None
-#                 }, status=404)
-
-#             deletable = []
-#             non_deletable = []
-
-#             # CHECK CONNECTIONS
-#             for obj in objs:
-#                 if StudyFactorAge.objects.filter(age_group=obj).exists():
-#                     non_deletable.append(obj)
-#                 else:
-#                     deletable.append(obj)
-
-#             # DELETE SAFE ONES
-#             AgeGroup.objects.filter(id__in=[o.id for o in deletable]).delete()
-
-#             return Response({
-#                 "statusCode": 200,
-#                 "status": True,
-#                 "message": f"{len(deletable)} data is deleted ; {len(non_deletable)} data is not deleted ,they are connected to another table",
-#             })
-
-#         # -------------------------------------------------------------------
-#         #  MULTIPLE DELETE (Selected Rows)
-#         # -------------------------------------------------------------------
-#         if not ids or not isinstance(ids, list):
-#             return Response({
-#                 "statusCode": 400,
-#                 "status": False,
-#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
-#                 "data": None
-#             }, status=400)
-
-#         valid_uuids = []
-#         invalid_uuids = []
-#         for u in ids:
-#             try:
-#                 valid_uuids.append(UUID(u))
-#             except ValueError:
-#                 invalid_uuids.append(u)
-
-#         if not valid_uuids:
-#             return Response({
-#                 "statusCode": 400,
-#                 "status": False,
-#                 "message": "No valid UUIDs provided.",
-#                 "data": {"invalid_uuids": invalid_uuids}
-#             }, status=400)
-
-#         objs = AgeGroup.objects.filter(uuid__in=valid_uuids)
-
-#         if search:
-#             objs = objs.filter(age_group__icontains=search)
-
-#         if objs.count() == 0:
-#             return Response({
-#                 "statusCode": 404,
-#                 "status": False,
-#                 "message": "No matching AgeGroup found.",
-#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
-#             }, status=404)
-
-#         deletable = []
-#         non_deletable = []
-
-#         # CHECK CONNECTIONS
-#         for obj in objs:
-#             if StudyFactorAge.objects.filter(age_group=obj).exists():
-#                 non_deletable.append(obj)
-#             else:
-#                 deletable.append(obj)
-
-#         # DELETE ONLY SAFE RECORDS
-#         AgeGroup.objects.filter(id__in=[o.id for o in deletable]).delete()
-
-#         # --------------------------------------------------------------
-#         # SINGLE DELETE MESSAGE (one UUID given)
-#         # --------------------------------------------------------------
-#         if len(valid_uuids) == 1:
-#             if len(non_deletable) == 1:
-#                 return Response({
-#                     "statusCode": 400,
-#                     "status": False,
-#                     "message": "Could not delete the data ,it is connected to another table"
-#                 })
-#             else:
-#                 return Response({
-#                     "statusCode": 200,
-#                     "status": True,
-#                     "message": "1 data deleted successfully."
-#                 })
-
-#         # --------------------------------------------------------------
-#         # MULTIPLE DELETE MESSAGE
-#         # --------------------------------------------------------------
-#         return Response({
-#             "statusCode": 200,
-#             "status": True,
-#             "message": f"{len(deletable)} data is deleted ; {len(non_deletable)} data is not deleted ,they are connected to another table",
-#             "invalid_uuids": invalid_uuids if invalid_uuids else None
-#         })
-
-
-
-
 class AgeGroupDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -989,7 +777,7 @@ class AgeGroupDeleteAPIView(APIView):
             # -------------------------------------------
             # CASE A: deleteAll = true + search
             # -------------------------------------------
-            if delete_all and search and (ids in [None, ""]):
+            if delete_all and search and (ids in [None, "",[]]):
                 qs_search = queryset.filter(name__istartswith=search)
 
                 if not qs_search.exists():
@@ -1214,6 +1002,7 @@ class AgeGroupExportAPIView(APIView):
 
 
 # ----------------AgeGroup IMPORT ----------------
+
 class AgeGroupImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -1222,31 +1011,46 @@ class AgeGroupImportAPIView(APIView):
         sheet_name = request.data.get("sheet_name")
 
         if not file:
-            return Response({"error": "No file uploaded"}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No file uploaded"
+            }, status=400)
 
         format_type = file.name.split(".")[-1].lower()
-        duplicates = []
-        skipped_rows = []
+
+        # Export API headers (ORDER MATTERS)
+        export_headers = ["Age Group", "Description"]
+
         required_headers = {"age group"}
         optional_headers = {"description"}
 
-        try:
-            data = []
+        data = []
+        duplicates = []
+        skipped_rows = []
+        to_create = []
+        seen_in_file = set()
 
+        try:
+            # ---------------- XLSX Handling ----------------
             if format_type == "xlsx":
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
                 if not sheet_name:
                     return Response({
-                        "error": "Please provide sheet_name",
-                        "available_sheets": available_sheets,
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Please provide sheet_name",
+                        "available_sheets": available_sheets
                     }, status=400)
 
                 if sheet_name not in available_sheets:
                     return Response({
-                        "error": f'Sheet "{sheet_name}" not found',
-                        "available_sheets": available_sheets,
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Sheet "{sheet_name}" not found',
+                        "available_sheets": available_sheets
                     }, status=400)
 
                 ws = wb[sheet_name]
@@ -1257,7 +1061,9 @@ class AgeGroupImportAPIView(APIView):
                         "message": f'Sheet "{sheet_name}" is empty.'
                     }, status=400)
 
-                headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                headers = [str(c.value).strip().lower() if c.value else "" 
+                           for c in next(ws.iter_rows(min_row=1, max_row=1))]
+
                 if not required_headers.issubset(set(headers)):
                     return Response({
                         "statusCode": 400,
@@ -1272,62 +1078,142 @@ class AgeGroupImportAPIView(APIView):
                     row_dict["_row_number"] = idx
                     data.append(row_dict)
 
+            # ---------------- CSV Handling ----------------
             elif format_type == "csv":
                 decoded_file = file.read().decode("utf-8")
                 dataset = Dataset()
                 dataset.load(decoded_file, format="csv")
+
                 for idx, row in enumerate(dataset.dict, start=2):
                     row_lower = {k.strip().lower(): v for k, v in row.items()}
                     row_lower["_row_number"] = idx
+
                     if not required_headers.issubset(set(row_lower.keys())):
                         return Response({
                             "statusCode": 400,
                             "status": False,
                             "message": f"Missing required headers. Required: {', '.join(required_headers)}. Found: {', '.join(row_lower.keys())}."
                         }, status=400)
+
                     data.append(row_lower)
 
             else:
                 return Response({
                     "statusCode": 400,
                     "status": False,
-                    "message": "Unsupported file format. Use .xlsx or .csv",
+                    "message": "Unsupported file format. Use .xlsx or .csv"
                 }, status=400)
 
-            imported_count = 0
-            for row in reversed(data):
-                row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("age group")).strip() if row.get("age group") else None
-                description = str(row.get("description")).strip() if row.get("description") else ""
+            # preload existing AgeGroup
+            existing_map = {ag.name.lower(): ag for ag in AgeGroup.objects.all()}
 
+            imported_count = 0
+
+            # ---------------- Process Rows ----------------
+            for row in reversed(data):
+                row_no = row.get("_row_number", "Unknown")
+
+                name = str(row.get("age group") or "").strip()
+                description = str(row.get("description") or "").strip()
+
+                # -----------------------------------------------------
+                # NEW VALIDATION RULES ADDED HERE (as requested)
+                # -----------------------------------------------------
+
+                # Missing Age Group
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing name"})
+                    skipped_rows.append({
+                        "Row": row_no,
+                        "Age Group": name,
+                        "Description": description,
+                        "Reason": "Age Group is missing"
+                    })
                     continue
 
-                existing = AgeGroup.objects.filter(name__iexact=name).first()
+                # Length validation
+                if len(name) > 100:
+                    skipped_rows.append({
+                        "Row": row_no,
+                        "Age Group": name,
+                        "Description": description,
+                        "Reason": "Age Group exceeds 100 characters"
+                    })
+                    continue
+
+                # Description missing
+                if description is None or description == "":
+                    skipped_rows.append({
+                        "Row": row_no,
+                        "Age Group": name,
+                        "Description": description,
+                        "Reason": "Description is missing"
+                    })
+                    continue
+
+                # -----------------------------------------------------
+                # END OF NEW VALIDATION RULES
+                # (Existing logic below is untouched)
+                # -----------------------------------------------------
+
+                key = name.lower()
+
+                # Duplicate inside file
+                if key in seen_in_file:
+                    duplicates.append({
+                        "Row": row_no,
+                        "Age Group": name,
+                        "Description": description,
+                        "Reason": "Duplicate in uploaded file"
+                    })
+                    continue
+                seen_in_file.add(key)
+
+                # Duplicate in database
+                existing = existing_map.get(key)
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Age  Group": name, "Reason": "Already exists"})
+                        duplicates.append({
+                            "Row": row_no,
+                            "Age Group": name,
+                            "Description": description,
+                            "Reason": "Already exists in database"
+                        })
                         continue
-                    else:
-                        existing.description = description
-                        existing.is_deleted = False
-                        existing.save()
-                        imported_count += 1
-                else:
-                    AgeGroup.objects.create(name=name, description=description, is_deleted=False)
+
+                    # Reactivate record
+                    existing.description = description
+                    existing.is_deleted = False
+                    existing.save()
                     imported_count += 1
+                    continue
+
+                # Add for bulk create
+                to_create.append(
+                    AgeGroup(name=name, description=description, is_deleted=False)
+                )
+
+            # ---------------- Bulk Create ----------------
+            if to_create:
+                batch_size = 500
+                for i in range(0, len(to_create), batch_size):
+                    AgeGroup.objects.bulk_create(to_create[i:i + batch_size])
+                imported_count += len(to_create)
 
         except Exception as e:
-            return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": str(e)
+            }, status=400)
 
+        # ---------------- SUCCESS RESPONSE -----------------
         return Response({
             "statusCode": 200,
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": reversed(duplicates),
-            "skipped_rows": reversed(skipped_rows)
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows))
         }, status=200)
 
 
@@ -1454,11 +1340,14 @@ class AcademicResultGroupUpdateAPIView(APIView):
 
 
 # ----------------AcademicResultGroup DELETE ----------------
+
 class AcademicResultGroupDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
-        search = request.GET.get("search", "").strip()  # SEARCH ONLY on academic_result_group
+        from master.dependency_report import find_dependencies, generate_dependency_excel
+
+        search = request.GET.get("search","").strip()
         ids = request.data.get('id', None)
 
         # -------------------------
@@ -1467,6 +1356,25 @@ class AcademicResultGroupDeleteAPIView(APIView):
         if uuid:
             try:
                 obj = AcademicResultGroup.objects.get(uuid=uuid)
+
+                deps = find_dependencies(obj)
+                if deps:
+                    # Build excel report
+                    report = []
+                    for d in deps:
+                        report.append({
+                            "parent_table": "AcademicResultGroup",
+                            "parent_field_value": obj.name,
+                            "used_in_table": d["used_in_table"],
+                            "field": d["field"]
+                        })
+
+                    return generate_dependency_excel(
+                        report,
+                        filename="academicresultgroup_dependency_report.xlsx"
+                    )
+
+                # no dependency → delete
                 obj.delete()
                 return Response({
                     "statusCode": 204,
@@ -1474,6 +1382,7 @@ class AcademicResultGroupDeleteAPIView(APIView):
                     "message": "AcademicResultGroup permanently deleted.",
                     "data": None
                 }, status=204)
+
             except AcademicResultGroup.DoesNotExist:
                 return Response({
                     "statusCode": 404,
@@ -1483,15 +1392,14 @@ class AcademicResultGroupDeleteAPIView(APIView):
                 }, status=404)
 
         # -------------------------
-        #  BULK DELETE (ALL) — APPLY SEARCH FILTER
+        #  ALL DELETE (ids="all")
         # -------------------------
         if ids == "all":
             objs = AcademicResultGroup.objects.all()
             if search:
-                objs = objs.filter(academic_result_group__icontains=search)
+                objs = objs.filter(name__istartswith=search)
 
-            count = objs.count()
-            if count == 0:
+            if not objs.exists():
                 return Response({
                     "statusCode": 404,
                     "status": False,
@@ -1499,16 +1407,45 @@ class AcademicResultGroupDeleteAPIView(APIView):
                     "data": None
                 }, status=404)
 
-            objs.delete()
+            deleted = []
+            skipped = []
+            report = []
+
+            for obj in objs:
+                deps = find_dependencies(obj)
+
+                if deps:
+                    skipped.append(str(obj.uuid))
+                    for d in deps:
+                        report.append({
+                            "parent_table": "AcademicResultGroup",
+                            "parent_field_value": obj.name,
+                            "used_in_table": d["used_in_table"],
+                            "field": d["field"]
+                        })
+                    continue
+
+                obj.delete()
+                deleted.append(str(obj.uuid))
+
+            # if some skipped → return excel
+            if skipped:
+                message = f"{len(deleted)} data is deleted ; {len(skipped)} data is not deleted, they are connected to another table"
+
+                return generate_dependency_excel(
+                    report,
+                    filename="academicresultgroup_dependency_report.xlsx"
+                )
+
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} AcademicResultGroup permanently deleted.",
+                "message": f"All {len(deleted)} AcademicResultGroup permanently deleted.",
                 "data": None
             })
 
         # -------------------------
-        #  MULTIPLE DELETE (Selected UUIDs)
+        #  MULTIPLE DELETE
         # -------------------------
         if not ids or not isinstance(ids, list):
             return Response({
@@ -1536,22 +1473,50 @@ class AcademicResultGroupDeleteAPIView(APIView):
 
         objs = AcademicResultGroup.objects.filter(uuid__in=valid_uuids)
         if search:
-            objs = objs.filter(academic_result_group__icontains=search)
+            objs = objs.filter(name__istartswith=search)
 
-        count = objs.count()
-        if count == 0:
+        if not objs.exists():
             return Response({
                 "statusCode": 404,
                 "status": False,
                 "message": "No matching AcademicResultGroup found.",
-                "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+                "data": None
             }, status=404)
 
-        objs.delete()
+        deleted = []
+        skipped = []
+        report = []
+
+        for obj in objs:
+            deps = find_dependencies(obj)
+
+            if deps:
+                skipped.append(str(obj.uuid))
+                for d in deps:
+                    report.append({
+                        "parent_table": "AcademicResultGroup",
+                        "parent_field_value": obj.name,
+                        "used_in_table": d["used_in_table"],
+                        "field": d["field"]
+                    })
+                continue
+
+            obj.delete()
+            deleted.append(str(obj.uuid))
+
+        # If some skipped → return Excel
+        if skipped:
+            message = f"{len(deleted)} data is deleted ; {len(skipped)} data is not deleted, they are connected to another table"
+
+            return generate_dependency_excel(
+                report,
+                filename="academicresultgroup_dependency_report.xlsx"
+            )
+
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} AcademicResultGroup(s) permanently deleted.",
+            "message": f"{len(deleted)} AcademicResultGroup(s) permanently deleted.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         })
 
@@ -1599,11 +1564,11 @@ class AcademicResultGroupExportAPIView(APIView):
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
-            file_name = 'academicresultgroup.csv'
+            file_name = 'AcademicResultGroup.csv'
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'academicresultgroup.xlsx'
+            file_name = 'AcademicResultGroup.xlsx'
 
         response = HttpResponse(
             file_data if format_type == 'csv' else file_data.getvalue(),
@@ -1614,6 +1579,8 @@ class AcademicResultGroupExportAPIView(APIView):
 
 
 # ----------------AcademicResultGroup IMPORT ----------------
+
+
 class AcademicResultGroupImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -1622,31 +1589,42 @@ class AcademicResultGroupImportAPIView(APIView):
         sheet_name = request.data.get("sheet_name")
 
         if not file:
-            return Response({"error": "No file uploaded"}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No file uploaded"
+            }, status=400)
 
         format_type = file.name.split(".")[-1].lower()
-        duplicates = []
-        skipped_rows = []
         required_headers = {"academic result"}
         optional_headers = {"description"}
 
-        try:
-            data = []
+        data = []
+        duplicates = []
+        skipped_rows = []
+        to_create = []
+        seen_in_file = set()
 
+        try:
+            # ---------------- XLSX Handling ----------------
             if format_type == "xlsx":
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
                 if not sheet_name:
                     return Response({
-                        "error": "Please provide sheet_name",
-                        "available_sheets": available_sheets,
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Please provide sheet_name",
+                        "available_sheets": available_sheets
                     }, status=400)
 
                 if sheet_name not in available_sheets:
                     return Response({
-                        "error": f'Sheet "{sheet_name}" not found',
-                        "available_sheets": available_sheets,
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Sheet "{sheet_name}" not found',
+                        "available_sheets": available_sheets
                     }, status=400)
 
                 ws = wb[sheet_name]
@@ -1657,7 +1635,8 @@ class AcademicResultGroupImportAPIView(APIView):
                         "message": f'Sheet "{sheet_name}" is empty.'
                     }, status=400)
 
-                headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                headers = [str(c.value).strip().lower() if c.value else "" for c in next(ws.iter_rows(min_row=1, max_row=1))]
+
                 if not required_headers.issubset(set(headers)):
                     return Response({
                         "statusCode": 400,
@@ -1672,6 +1651,7 @@ class AcademicResultGroupImportAPIView(APIView):
                     row_dict["_row_number"] = idx
                     data.append(row_dict)
 
+            # ---------------- CSV Handling ----------------
             elif format_type == "csv":
                 decoded_file = file.read().decode("utf-8")
                 dataset = Dataset()
@@ -1694,33 +1674,274 @@ class AcademicResultGroupImportAPIView(APIView):
                     "message": "Unsupported file format. Use .xlsx or .csv",
                 }, status=400)
 
+            # Preload existing records
+            existing_map = {pr.name.lower(): pr for pr in AcademicResultGroup.objects.all()}
             imported_count = 0
-            for row in reversed(data):
-                row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("academic result")).strip() if row.get("academic result") else None
-                description = str(row.get("description")).strip() if row.get("description") else ""
 
+            # ---------------- Process Rows ----------------
+            for row in reversed(data):
+                row_no = row.get("_row_number", "Unknown")
+                name = str(row.get("academic result") or "").strip()
+                description = str(row.get("description") or "").strip()
+
+                # Check for missing name
                 if not name:
-                    skipped_rows.append({"Row": row_number,"Academic Result": name or "","Description":description, "Reason": "Missing name"})
+                    skipped_rows.append({
+                        "Row": row_no,
+                        "Academic Result": name,
+                        "Description": description,
+                        "Reason": "Missing Academic Result"
+                    })
                     continue
 
-                existing = AcademicResultGroup.objects.filter(name__iexact=name).first()
+                # Check for invalid values (letters and spaces only)
+                if not all(c.isalpha() or c.isspace() for c in name):
+                    skipped_rows.append({
+                        "Row": row_no,
+                        "Academic Result": name,
+                        "Description": description,
+                        "Reason": "Invalid Academic Result"
+                    })
+                    continue
+
+                key = name.lower()
+
+                # Duplicate in file
+                if key in seen_in_file:
+                    duplicates.append({
+                        "Row": row_no,
+                        "Academic Result": name,
+                        "Description": description,
+                        "Reason": "Duplicate in uploaded file"
+                    })
+                    continue
+                seen_in_file.add(key)
+
+                # Existing in database
+                existing = existing_map.get(key)
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Academic Result": name, "Reason": "Already exists"})
+                        duplicates.append({
+                            "Row": row_no,
+                            "Academic Result": name,
+                            "Description": description,
+                            "Reason": "Already exists"
+                        })
                         continue
-                    else:
-                        existing.description = description
-                        existing.is_deleted = False
-                        existing.save()
-                        imported_count += 1
-                else:
-                    AcademicResultGroup.objects.create(name=name, description=description, is_deleted=False)
+                    # Reactivate deleted record
+                    existing.description = description
+                    existing.is_deleted = False
+                    existing.save()
                     imported_count += 1
+                    continue
+
+                # Prepare for bulk create
+                to_create.append(AcademicResultGroup(name=name, description=description, is_deleted=False))
+
+            # ---------------- Bulk Create ----------------
+            if to_create:
+                batch_size = 500
+                for i in range(0, len(to_create), batch_size):
+                    AcademicResultGroup.objects.bulk_create(to_create[i:i + batch_size])
+                imported_count += len(to_create)
 
         except Exception as e:
-            return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": str(e)
+            }, status=400)
 
+        # ---------------- SUCCESS RESPONSE -----------------
+        return Response({
+            "statusCode": 200,
+            "status": True,
+            "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+            "imported_count": imported_count,
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows))
+        }, status=200)
+
+
+
+
+
+class AcademicResultGroupImportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        file = request.FILES.get("file")
+        sheet_name = request.data.get("sheet_name")
+
+        if not file:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No file uploaded"
+            }, status=400)
+
+        format_type = file.name.split(".")[-1].lower()
+        required_headers = {"academic result"}
+        optional_headers = {"description"}
+
+        data = []
+        duplicates = []
+        skipped_rows = []
+        to_create = []
+        seen_in_file = set()
+
+        try:
+            # ---------------- XLSX Handling ----------------
+            if format_type == "xlsx":
+                wb = openpyxl.load_workbook(file, read_only=True)
+                available_sheets = wb.sheetnames
+
+                if not sheet_name:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Please provide sheet_name",
+                        "available_sheets": available_sheets
+                    }, status=400)
+
+                if sheet_name not in available_sheets:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Sheet "{sheet_name}" not found',
+                        "available_sheets": available_sheets
+                    }, status=400)
+
+                ws = wb[sheet_name]
+                if ws.max_row <= 1:
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Sheet "{sheet_name}" is empty.'
+                    }, status=400)
+
+                headers = [str(c.value).strip().lower() if c.value else "" 
+                           for c in next(ws.iter_rows(min_row=1, max_row=1))]
+
+                if not required_headers.issubset(set(headers)):
+                    return Response({
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f"Missing required headers. Required: {required_headers}, Found: {set(headers)}"
+                    }, status=400)
+
+                for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                    if not any(row):
+                        continue
+                    row_dict = dict(zip(headers, row))
+                    row_dict["_row_number"] = idx
+                    data.append(row_dict)
+
+            # ---------------- CSV Handling ----------------
+            elif format_type == "csv":
+                decoded_file = file.read().decode("utf-8")
+                dataset = Dataset()
+                dataset.load(decoded_file, format="csv")
+
+                for idx, row in enumerate(dataset.dict, start=2):
+                    row_lower = {k.strip().lower(): v for k, v in row.items()}
+                    row_lower["_row_number"] = idx
+
+                    if not required_headers.issubset(set(row_lower.keys())):
+                        return Response({
+                            "statusCode": 400,
+                            "status": False,
+                            "message": f"Missing required headers. Required: {', '.join(required_headers)}. "
+                                       f"Found: {', '.join(row_lower.keys())}."
+                        }, status=400)
+
+                    data.append(row_lower)
+
+            else:
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "Unsupported file format. Use .xlsx or .csv",
+                }, status=400)
+
+            # Load existing data
+            existing_map = {obj.name.lower(): obj for obj in AcademicResultGroup.objects.all()}
+            imported_count = 0
+
+            # ---------------- PROCESS ROWS ----------------
+            for row in reversed(data):
+                row_no = row.get("_row_number", "Unknown")
+
+                name = str(row.get("academic result") or "").strip()
+                description = str(row.get("description") or "").strip()
+
+                #  Missing / wrong name → skipped
+                if not name or len(name) < 2:
+                    skipped_rows.append({
+                        "Row": row_no,
+                        "Academic Result": name,
+                        "Description": description,
+                        "Reason": "Invalid or missing Academic Result name"
+                    })
+                    continue
+
+                key = name.lower()
+
+                #  Duplicate inside uploaded file
+                if key in seen_in_file:
+                    duplicates.append({
+                        "Row": row_no,
+                        "Academic Result": name,
+                        "Description": description,
+                        "Reason": "Duplicate in uploaded file"
+                    })
+                    continue
+                seen_in_file.add(key)
+
+                #  Already exists in database
+                existing = existing_map.get(key)
+                if existing:
+                    if not existing.is_deleted:
+                        duplicates.append({
+                            "Row": row_no,
+                            "Academic Result": name,
+                            "Description": description,
+                            "Reason": "Already exists in database"
+                        })
+                        continue
+
+                    # Reactivate deleted record
+                    existing.description = description
+                    existing.is_deleted = False
+                    existing.save()
+                    imported_count += 1
+                    continue
+
+                # Prepare for bulk create
+                to_create.append(
+                    AcademicResultGroup(
+                        name=name,
+                        description=description,
+                        is_deleted=False,
+                    )
+                )
+
+            # ---------------- BULK CREATE ----------------
+            if to_create:
+                batch = 500
+                for i in range(0, len(to_create), batch):
+                    AcademicResultGroup.objects.bulk_create(to_create[i:i + batch])
+
+                imported_count += len(to_create)
+
+        except Exception as e:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": str(e)
+            }, status=400)
+
+        # ---------------- SUCCESS RESPONSE ----------------
         return Response({
             "statusCode": 200,
             "status": True,
@@ -1853,19 +2074,144 @@ class BacklogsGroupUpdateAPIView(APIView):
 
 
 # --------------------BacklogsGroup Delete API --------------------
+# class BacklogsGroupDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def delete(self, request, uuid=None):
+#         search = request.GET.get("search", "").strip()  # SEARCH ONLY on 'name' field
+#         ids = request.data.get('id', None)
+
+#         # -------------------------
+#         #  SINGLE DELETE
+#         # -------------------------
+#         if uuid:
+#             try:
+#                 group = BacklogsGroup.objects.get(uuid=uuid)
+#                 group.delete()
+#                 return Response({
+#                     "statusCode": 204,
+#                     "status": True,
+#                     "message": "BacklogsGroup permanently deleted.",
+#                     "data": None
+#                 }, status=status.HTTP_204_NO_CONTENT)
+#             except BacklogsGroup.DoesNotExist:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "BacklogsGroup not found.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#         # -------------------------
+#         #  BULK DELETE (ALL) — APPLY SEARCH FILTER
+#         # -------------------------
+#         if ids == "all":
+#             groups = BacklogsGroup.objects.all()
+#             if search:
+#                 groups = groups.filter(name__icontains=search)
+
+#             count = groups.count()
+#             if count == 0:
+#                 return Response({
+#                     "statusCode": 404,
+#                     "status": False,
+#                     "message": "No BacklogsGroups found to delete.",
+#                     "data": None
+#                 }, status=status.HTTP_404_NOT_FOUND)
+
+#             groups.delete()
+#             return Response({
+#                 "statusCode": 200,
+#                 "status": True,
+#                 "message": f"All {count} BacklogsGroups permanently deleted.",
+#                 "data": None
+#             })
+
+#         # -------------------------
+#         #  MULTIPLE DELETE (Selected UUIDs)
+#         # -------------------------
+#         if not ids or not isinstance(ids, list):
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "Please provide a list of UUIDs in 'id' field or 'all'.",
+#                 "data": None
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         valid_uuids = []
+#         invalid_uuids = []
+#         for u in ids:
+#             try:
+#                 valid_uuids.append(UUID(u))
+#             except ValueError:
+#                 invalid_uuids.append(u)
+
+#         if not valid_uuids:
+#             return Response({
+#                 "statusCode": 400,
+#                 "status": False,
+#                 "message": "No valid UUIDs provided.",
+#                 "data": {"invalid_uuids": invalid_uuids}
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         groups = BacklogsGroup.objects.filter(uuid__in=valid_uuids)
+#         if search:
+#             groups = groups.filter(name__icontains=search)
+
+#         count = groups.count()
+#         if count == 0:
+#             return Response({
+#                 "statusCode": 404,
+#                 "status": False,
+#                 "message": "No matching BacklogsGroups found.",
+#                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         groups.delete()
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f"{count} BacklogsGroup(s) permanently deleted.",
+#             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
+#         })
+
+
 class BacklogsGroupDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, uuid=None):
-        search = request.GET.get("search", "").strip()  # SEARCH ONLY on 'name' field
+        from master.dependency_report import find_dependencies, generate_dependency_excel
+
+        search = request.GET.get("search", "").strip()
         ids = request.data.get('id', None)
 
-        # -------------------------
-        #  SINGLE DELETE
-        # -------------------------
+        # ---------------------------------------------------------
+        # SINGLE DELETE
+        # ---------------------------------------------------------
         if uuid:
             try:
                 group = BacklogsGroup.objects.get(uuid=uuid)
+
+                # check dependency
+                deps = find_dependencies(group)
+                if deps:
+                    # build excel data
+                    report = []
+                    for d in deps:
+                        report.append({
+                            "parent_table": "BacklogsGroup",
+                            "parent_field_value": group.name,
+                            "used_in_table": d["used_in_table"],
+                            "field": d["field"]
+                        })
+
+                    # return Excel + message
+                    return generate_dependency_excel(
+                        report,
+                        filename="backlogsgroup_dependency_report.xlsx"
+                    )
+
+                # No dependency → delete
                 group.delete()
                 return Response({
                     "statusCode": 204,
@@ -1873,6 +2219,7 @@ class BacklogsGroupDeleteAPIView(APIView):
                     "message": "BacklogsGroup permanently deleted.",
                     "data": None
                 }, status=status.HTTP_204_NO_CONTENT)
+
             except BacklogsGroup.DoesNotExist:
                 return Response({
                     "statusCode": 404,
@@ -1881,16 +2228,15 @@ class BacklogsGroupDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-        # -------------------------
-        #  BULK DELETE (ALL) — APPLY SEARCH FILTER
-        # -------------------------
+        # ---------------------------------------------------------
+        # BULK DELETE (ALL)
+        # ---------------------------------------------------------
         if ids == "all":
             groups = BacklogsGroup.objects.all()
             if search:
-                groups = groups.filter(name__icontains=search)
+                groups = groups.filter(name__istartswith=search)
 
-            count = groups.count()
-            if count == 0:
+            if not groups.exists():
                 return Response({
                     "statusCode": 404,
                     "status": False,
@@ -1898,17 +2244,47 @@ class BacklogsGroupDeleteAPIView(APIView):
                     "data": None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-            groups.delete()
+            deleted = []
+            skipped = []
+            report = []
+
+            for obj in groups:
+                deps = find_dependencies(obj)
+
+                if deps:
+                    skipped.append(str(obj.uuid))
+                    for d in deps:
+                        report.append({
+                            "parent_table": "BacklogsGroup",
+                            "parent_field_value": obj.name,
+                            "used_in_table": d["used_in_table"],
+                            "field": d["field"]
+                        })
+                    continue
+
+                obj.delete()
+                deleted.append(str(obj.uuid))
+
+            # if any skipped → return excel
+            if skipped:
+                message = f"{len(deleted)} data is deleted ;{len(skipped)} data is not deleted ,they are connected to another table"
+
+                return generate_dependency_excel(
+                    report,
+                    filename="backlogsgroup_dependency_report.xlsx"
+                )
+
+            # all deleted successfully
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": f"All {count} BacklogsGroups permanently deleted.",
+                "message": f"All {len(deleted)} BacklogsGroups permanently deleted.",
                 "data": None
             })
 
-        # -------------------------
-        #  MULTIPLE DELETE (Selected UUIDs)
-        # -------------------------
+        # ---------------------------------------------------------
+        # MULTIPLE DELETE (Selected IDs)
+        # ---------------------------------------------------------
         if not ids or not isinstance(ids, list):
             return Response({
                 "statusCode": 400,
@@ -1925,20 +2301,11 @@ class BacklogsGroupDeleteAPIView(APIView):
             except ValueError:
                 invalid_uuids.append(u)
 
-        if not valid_uuids:
-            return Response({
-                "statusCode": 400,
-                "status": False,
-                "message": "No valid UUIDs provided.",
-                "data": {"invalid_uuids": invalid_uuids}
-            }, status=status.HTTP_400_BAD_REQUEST)
-
         groups = BacklogsGroup.objects.filter(uuid__in=valid_uuids)
         if search:
-            groups = groups.filter(name__icontains=search)
+            groups = groups.filter(name__istartswith=search)
 
-        count = groups.count()
-        if count == 0:
+        if not groups.exists():
             return Response({
                 "statusCode": 404,
                 "status": False,
@@ -1946,13 +2313,44 @@ class BacklogsGroupDeleteAPIView(APIView):
                 "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
             }, status=status.HTTP_404_NOT_FOUND)
 
-        groups.delete()
+        deleted = []
+        skipped = []
+        report = []
+
+        for obj in groups:
+            deps = find_dependencies(obj)
+
+            if deps:
+                skipped.append(str(obj.uuid))
+                for d in deps:
+                    report.append({
+                        "parent_table": "BacklogsGroup",
+                        "parent_field_value": obj.name,
+                        "used_in_table": d["used_in_table"],
+                        "field": d["field"]
+                    })
+                continue
+
+            obj.delete()
+            deleted.append(str(obj.uuid))
+
+        # if dependency exists → return excel
+        if skipped:
+            message = f"{len(deleted)} data is deleted ;{len(skipped)} data is not deleted ,they are connected to another table"
+
+            return generate_dependency_excel(
+                report,
+                filename="backlogsgroup_dependency_report.xlsx"
+            )
+
+        # All deleted
         return Response({
             "statusCode": 200,
             "status": True,
-            "message": f"{count} BacklogsGroup(s) permanently deleted.",
+            "message": f"{len(deleted)} BacklogsGroup(s) permanently deleted.",
             "data": {"invalid_uuids": invalid_uuids} if invalid_uuids else None
         })
+
 
 
 # --------------------BacklogsGroup Export API --------------------
@@ -2002,11 +2400,11 @@ class BacklogsGroupExportAPIView(APIView):
         if format_type == 'csv':
             file_data = dataset.export('csv')
             content_type = 'text/csv'
-            file_name = 'backlogsgroups.csv'
+            file_name = 'BacklogsGroup.csv'
         else:
             file_data = io.BytesIO(dataset.export('xlsx'))
             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'backlogsgroups.xlsx'
+            file_name = 'BacklogsGroup.xlsx'
 
         response = HttpResponse(
             file_data if format_type == 'csv' else file_data.getvalue(),
@@ -2017,6 +2415,124 @@ class BacklogsGroupExportAPIView(APIView):
 
 
 # --------------------BacklogsGroup Import API --------------------
+# class BacklogsGroupImportAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def post(self, request):
+#         file = request.FILES.get("file")
+#         sheet_name = request.data.get("sheet_name")
+
+#         if not file:
+#             return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+
+#         format_type = file.name.split(".")[-1].lower()
+#         duplicates = []
+#         skipped_rows = []
+#         required_headers = {"backlogs"}  # adjust as needed
+#         optional_headers = {"description"}
+
+#         try:
+#             data = []
+
+#             if format_type == "xlsx":
+#                 wb = openpyxl.load_workbook(file, read_only=True)
+#                 available_sheets = wb.sheetnames
+
+#                 if not sheet_name:
+#                     return Response({
+#                         "error": "Please provide sheet_name",
+#                         "available_sheets": available_sheets,
+#                     }, status=400)
+
+#                 if sheet_name not in available_sheets:
+#                     return Response({
+#                         "error": f'Sheet "{sheet_name}" not found',
+#                         "available_sheets": available_sheets,
+#                     }, status=400)
+
+#                 ws = wb[sheet_name]
+#                 if ws.max_row <= 1:
+#                     return Response({
+#                         "statusCode": 400,
+#                         "status": False,
+#                         "message": f'Sheet "{sheet_name}" is empty.'
+#                     }, status=400)
+
+#                 headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+
+#                 if not required_headers.issubset(set(headers)):
+#                     return Response({
+#                         "statusCode": 400,
+#                         "status": False,
+#                         "message": f"Missing required headers. Required: {required_headers}, Found: {set(headers)}"
+#                     }, status=400)
+
+#                 for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+#                     if not any(row):
+#                         continue
+#                     row_dict = dict(zip(headers, row))
+#                     row_dict["_row_number"] = idx
+#                     data.append(row_dict)
+
+#             elif format_type == "csv":
+#                 decoded_file = file.read().decode("utf-8")
+#                 dataset = Dataset()
+#                 dataset.load(decoded_file, format="csv")
+#                 for idx, row in enumerate(dataset.dict, start=2):
+#                     row_lower = {k.strip().lower(): v for k, v in row.items()}
+#                     row_lower["_row_number"] = idx
+#                     if not required_headers.issubset(set(row_lower.keys())):
+#                         return Response({
+#                             "statusCode": 400,
+#                             "status": False,
+#                             "message": f"Missing required headers. Required: {', '.join(required_headers)}. Found: {', '.join(row_lower.keys())}."
+#                         }, status=400)
+#                     data.append(row_lower)
+#             else:
+#                 return Response({
+#                     "statusCode": 400,
+#                     "status": False,
+#                     "message": "Unsupported file format. Use .xlsx or .csv",
+#                 }, status=400)
+
+#             imported_count = 0
+#             for row in reversed(data):
+#                 row_number = row.get("_row_number", "Unknown")
+#                 name = str(row.get("backlogs")) if row.get("backlogs") else None
+#                 description = str(row.get("description")).strip() if row.get("description") else ""
+
+#                 if not name:
+#                     skipped_rows.append({"Row": row_number, "Reason": "Missing name"})
+#                     continue
+
+#                 existing = BacklogsGroup.objects.filter(name__iexact=name).first()
+#                 if existing:
+#                     if not existing.is_deleted:
+#                         duplicates.append({"Row": row_number, "Backlogs": name, "Reason": "Already exists"})
+#                         continue
+#                     else:
+#                         existing.description = description
+#                         existing.is_deleted = False
+#                         existing.save()
+#                         imported_count += 1
+#                 else:
+#                     BacklogsGroup.objects.create(name=name, description=description, is_deleted=False)
+#                     imported_count += 1
+
+#         except Exception as e:
+#             return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
+
+#         return Response({
+#             "statusCode": 200,
+#             "status": True,
+#             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
+#             "imported_count": imported_count,
+#             "duplicates": reversed(duplicates),
+#             "skipped_rows": reversed(skipped_rows)
+#         }, status=200)
+
+
+
 class BacklogsGroupImportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -2025,31 +2541,42 @@ class BacklogsGroupImportAPIView(APIView):
         sheet_name = request.data.get("sheet_name")
 
         if not file:
-            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": "No file uploaded"
+            }, status=400)
 
         format_type = file.name.split(".")[-1].lower()
-        duplicates = []
-        skipped_rows = []
-        required_headers = {"backlogs"}  # adjust as needed
+        required_headers = {"backlogs"}
         optional_headers = {"description"}
 
-        try:
-            data = []
+        data = []
+        duplicates = []
+        skipped_rows = []
+        to_create = []
+        seen_in_file = set()
 
+        try:
+            # ---------------- XLSX Handling ----------------
             if format_type == "xlsx":
                 wb = openpyxl.load_workbook(file, read_only=True)
                 available_sheets = wb.sheetnames
 
                 if not sheet_name:
                     return Response({
-                        "error": "Please provide sheet_name",
-                        "available_sheets": available_sheets,
+                        "statusCode": 400,
+                        "status": False,
+                        "message": "Please provide sheet_name",
+                        "available_sheets": available_sheets
                     }, status=400)
 
                 if sheet_name not in available_sheets:
                     return Response({
-                        "error": f'Sheet "{sheet_name}" not found',
-                        "available_sheets": available_sheets,
+                        "statusCode": 400,
+                        "status": False,
+                        "message": f'Sheet "{sheet_name}" not found',
+                        "available_sheets": available_sheets
                     }, status=400)
 
                 ws = wb[sheet_name]
@@ -2060,7 +2587,7 @@ class BacklogsGroupImportAPIView(APIView):
                         "message": f'Sheet "{sheet_name}" is empty.'
                     }, status=400)
 
-                headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                headers = [str(c.value).strip().lower() if c.value else "" for c in next(ws.iter_rows(min_row=1, max_row=1))]
 
                 if not required_headers.issubset(set(headers)):
                     return Response({
@@ -2076,6 +2603,7 @@ class BacklogsGroupImportAPIView(APIView):
                     row_dict["_row_number"] = idx
                     data.append(row_dict)
 
+            # ---------------- CSV Handling ----------------
             elif format_type == "csv":
                 decoded_file = file.read().decode("utf-8")
                 dataset = Dataset()
@@ -2090,6 +2618,7 @@ class BacklogsGroupImportAPIView(APIView):
                             "message": f"Missing required headers. Required: {', '.join(required_headers)}. Found: {', '.join(row_lower.keys())}."
                         }, status=400)
                     data.append(row_lower)
+
             else:
                 return Response({
                     "statusCode": 400,
@@ -2097,42 +2626,80 @@ class BacklogsGroupImportAPIView(APIView):
                     "message": "Unsupported file format. Use .xlsx or .csv",
                 }, status=400)
 
+            # Preload existing records
+            existing_map = {bg.name.lower(): bg for bg in BacklogsGroup.objects.all()}
             imported_count = 0
+
+            # ---------------- Process Rows ----------------
             for row in reversed(data):
-                row_number = row.get("_row_number", "Unknown")
-                name = str(row.get("backlogs")) if row.get("backlogs") else None
-                description = str(row.get("description")).strip() if row.get("description") else ""
+                row_no = row.get("_row_number", "Unknown")
+                name = str(row.get("backlogs") or "").strip()
+                description = str(row.get("description") or "").strip()
 
                 if not name:
-                    skipped_rows.append({"Row": row_number, "Reason": "Missing name"})
+                    skipped_rows.append({
+                        "Row": row_no,
+                        "Backlogs": name,
+                        "Description": description or "",
+                        "Reason": "Missing name"
+                    })
                     continue
 
-                existing = BacklogsGroup.objects.filter(name__iexact=name).first()
+                key = name.lower()
+                # Duplicate in file
+                if key in seen_in_file:
+                    duplicates.append({
+                        "Row": row_no,
+                        "Backlogs": name,
+                        "Description": description or "",
+                        "Reason": "Duplicate in uploaded file"
+                    })
+                    continue
+                seen_in_file.add(key)
+
+                existing = existing_map.get(key)
                 if existing:
                     if not existing.is_deleted:
-                        duplicates.append({"Row": row_number, "Backlogs": name, "Reason": "Already exists"})
+                        duplicates.append({
+                            "Row": row_no,
+                            "Backlogs": name,
+                            "Description": description or "",
+                            "Reason": "Already exists"
+                        })
                         continue
-                    else:
-                        existing.description = description
-                        existing.is_deleted = False
-                        existing.save()
-                        imported_count += 1
-                else:
-                    BacklogsGroup.objects.create(name=name, description=description, is_deleted=False)
+                    # Reactivate deleted record
+                    existing.description = description
+                    existing.is_deleted = False
+                    existing.save()
                     imported_count += 1
+                    continue
+
+                # Prepare for bulk create
+                to_create.append(BacklogsGroup(name=name, description=description, is_deleted=False))
+
+            # ---------------- Bulk Create ----------------
+            if to_create:
+                batch_size = 500
+                for i in range(0, len(to_create), batch_size):
+                    BacklogsGroup.objects.bulk_create(to_create[i:i + batch_size])
+                imported_count += len(to_create)
 
         except Exception as e:
-            return Response({"statusCode": 400, "status": False, "message": str(e)}, status=400)
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "message": str(e)
+            }, status=400)
 
+        # ---------------- SUCCESS RESPONSE -----------------
         return Response({
             "statusCode": 200,
             "status": True,
             "message": f'Sheet "{sheet_name}" imported successfully' if sheet_name else "Import successful",
             "imported_count": imported_count,
-            "duplicates": reversed(duplicates),
-            "skipped_rows": reversed(skipped_rows)
+            "duplicates": list(reversed(duplicates)),
+            "skipped_rows": list(reversed(skipped_rows))
         }, status=200)
-
 
 
 

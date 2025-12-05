@@ -369,7 +369,13 @@ const BankAccountForList = () => {
             toast.error("No Bank Account For selected for deletion.");
             return;
         }
-        dispatch(bankAccountForDelete(sendPayload, (response, error) => {
+        const deleteAll = selectAllOrNot === "all" && Boolean(tableState.search?.trim());
+    const payloadSend = {
+      deleteAll: deleteAll,
+      id: deleteAll == true ? "" : sendPayload,
+      search: tableState.search || '',
+    };
+        dispatch(bankAccountForDelete(payloadSend, (response, error) => {
             if (error) {
                 toast.error(error?.response?.data?.message || "server error");
             } else {
@@ -381,7 +387,8 @@ const BankAccountForList = () => {
                     setSelectedRows([]);
                     setSelectAllOrNot('');
                     setDeleteId(null);
-                    fetchDepartmentList();
+                    // fetchDepartmentList();
+                    clearAllFilters();
                 } else {
                     toast.error("Something went wrong.");
                 }

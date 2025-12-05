@@ -359,7 +359,8 @@ const AcademicResultGroupList = () => {
           setSelectedRows([]);
           setSelectAllOrNot('');
           setDeleteId(null);
-          fetchAcademicResultGroupList();
+          // fetchAcademicResultGroupList();
+            clearAllFilters();
         } else {
           toast.error("Something went wrong.");
         }
