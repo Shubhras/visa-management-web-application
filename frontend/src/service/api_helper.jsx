@@ -3160,7 +3160,18 @@ export const getLanguageNameTestIDAPI = (params) => {
 
 // Job Type
 export const getJobTypeListDataAPI = (data) => {
-  const apiUrl = `${url.GET_JOB_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_JOB_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -3185,7 +3196,18 @@ export const deleteJobTypeDataAPI = (payload) => {
 };
 
 export const exportJobTypeDataAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_JOB_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_JOB_TYPE_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -3195,7 +3217,18 @@ export const importJobTypeDataAPI = (payload) => {
 };
 // Mode of Salary
 export const getModeOfSalaryDataAPI = (data) => {
-  const apiUrl = `${url.GET_MODE_OF_SALARY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_MODE_OF_SALARY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -3219,7 +3252,18 @@ export const deleteModeOfSalaryDataAPI = (payload) => {
 };
 
 export const exportModeOfSalaryDataAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_MODE_OF_SALARY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_MODE_OF_SALARY_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -3230,7 +3274,18 @@ export const importModeOfSalaryDataAPI = (payload) => {
 
 // IT Return Status
 export const getItReturnStatusListDataAPI = (data) => {
-  const apiUrl = `${url.GET_IT_RETURN_STATUS_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_IT_RETURN_STATUS_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -3264,7 +3319,18 @@ export const importItReturnStatusDataAPI = (payload) => {
 };
 // Occupation Type
 export const getOccupationTypeListDataAPI = (data) => {
-  const apiUrl = `${url.GET_OCCUPATION_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_OCCUPATION_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -3288,7 +3354,18 @@ export const deleteOccupationTypeDataAPI = (payload) => {
 };
 
 export const exportOccupationTypeDataAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_OCCUPATION_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+ let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_OCCUPATION_TYPE_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -3299,7 +3376,18 @@ export const importOccupationTypeDataAPI = (payload) => {
 
 // Occupation Prospect
 export const getOccupationProspectListDataAPI = (data) => {
-  const apiUrl = `${url.GET_OCCUPATION_PROSPECT_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_OCCUPATION_PROSPECT_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -3323,7 +3411,18 @@ export const deleteOccupationProspectDataAPI = (payload) => {
 };
 
 export const exportOccupationProspectDataAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_OCCUPATION_PROSPECT_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_OCCUPATION_PROSPECT_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -3334,7 +3433,18 @@ export const importOccupationProspectDataAPI = (payload) => {
 
 // --- OCCUPATION CATEGORY API FUNCTIONS ---
 export const getOccupationCategoryListDataAPI = (data) => {
-  const apiUrl = `${url.GET_OCCUPATION_CATEGORY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_OCCUPATION_CATEGORY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&occupationVersion=${data?.occupationVersion}&representingCountry=${data?.representingCountry}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -3360,7 +3470,18 @@ export const deleteOccupationCategoryDataAPI = (payload) => {
 };
 
 export const exportOccupationCategoryDataAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_OCCUPATION_CATEGORY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+   let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_OCCUPATION_CATEGORY_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&occupationVersion=${payload?.occupationVersion}&representingCountry=${payload?.representingCountry}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -3406,7 +3527,18 @@ export const importOccupationVersionDataAPI = (payload) => {
 
 // Occupation Level Code
 export const getOccupationLevelCodeListAPI = (data) => {
-  const apiUrl = `${url.GET_OCCUPATION_LEVEL_CODE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_OCCUPATION_LEVEL_CODE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&occupationVersion=${data?.occupationVersion}&representingCountry=${data?.representingCountry}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -3430,7 +3562,18 @@ export const deleteOccupationLevelCodeAPI = (payload) => {
 };
 
 export const exportOccupationLevelCodeAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_OCCUPATION_LEVEL_CODE}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_OCCUPATION_LEVEL_CODE}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&occupationVersion=${payload?.occupationVersion}&representingCountry=${payload?.representingCountry}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -3441,7 +3584,18 @@ export const importOccupationLevelCodeAPI = (payload) => {
 
 // Occupation Level
 export const getOccupationLevelListAPI = (data) => {
-  const apiUrl = `${url.GET_OCCUPATION_LEVEL_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_OCCUPATION_LEVEL_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&occupationVersion=${data?.occupationVersion}&representingCountry=${data?.representingCountry}&occupationCategory=${data?.occupationCategory}&occupationLevelCode=${data?.occupationLevelCode}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -3468,7 +3622,18 @@ export const deleteOccupationLevelAPI = (payload) => {
 };
 
 export const exportOccupationLevelAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_OCCUPATION_LEVEL_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+   let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_OCCUPATION_LEVEL_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&occupationVersion=${payload?.occupationVersion}&representingCountry=${payload?.representingCountry}&occupationCategory=${payload?.occupationCategory}&occupationLevelCode=${payload?.occupationLevelCode}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -3479,7 +3644,18 @@ export const importOccupationLevelAPI = (payload) => {
 
 //  Occupation Code
 export const getOccupationCodeListAPI = (data) => {
-  const apiUrl = `${url.GET_OCCUPATION_CODE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_OCCUPATION_CODE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&occupationVersion=${data?.occupationVersion}&representingCountry=${data?.representingCountry}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -3503,7 +3679,18 @@ export const deleteOccupationCodeAPI = (payload) => {
 };
 
 export const exportOccupationCodeAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_OCCUPATION_CODE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+   let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_OCCUPATION_CODE_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&occupationVersion=${payload?.occupationVersion}&representingCountry=${payload?.representingCountry}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -3514,7 +3701,18 @@ export const importOccupationCodeAPI = (payload) => {
 
 //  Occupation Name
 export const getOccupationNameListAPI = (data) => {
-  const apiUrl = `${url.GET_OCCUPATION_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+   let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_OCCUPATION_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&occupationVersion=${data?.occupationVersion}&representingCountry=${data?.representingCountry}&occupationLevelCode=${data?.occupationLevelCode}&occupationCategory=${data?.occupationCategory}&occupationLevel=${data?.occupationLevel}&occupationCode=${data?.occupationCode}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -3538,7 +3736,18 @@ export const deleteOccupationNameAPI = (payload) => {
 };
 
 export const exportOccupationNameAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_OCCUPATION_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+   let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_OCCUPATION_NAME_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&occupationVersion=${payload?.occupationVersion}&representingCountry=${payload?.representingCountry}&occupationLevelCode=${payload?.occupationLevelCode}&occupationCategory=${payload?.occupationCategory}&occupationLevel=${payload?.occupationLevel}&occupationCode=${payload?.occupationCode}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -3549,7 +3758,18 @@ export const importOccupationNameAPI = (payload) => {
 
 //  Designation
 export const getDesignationListAPI = (data) => {
-  const apiUrl = `${url.GET_DESIGNATION_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_DESIGNATION_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&occupationVersion=${data?.occupationVersion}&representingCountry=${data?.representingCountry}&occupationName=${data?.occupationName}&occupationCode=${data?.occupationCode}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -3573,7 +3793,18 @@ export const deleteDesignationAPI = (payload) => {
 };
 
 export const exportDesignationAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_DESIGNATION_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_DESIGNATION_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&occupationVersion=${payload?.occupationVersion}&representingCountry=${payload?.representingCountry}&occupationName=${payload?.occupationName}&occupationCode=${payload?.occupationCode}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -3584,7 +3815,18 @@ export const importDesignationAPI = (payload) => {
 
 // Job Prospect
 export const getJobProspectListAPI = (data) => {
-  const apiUrl = `${url.GET_JOB_PROSPECT_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_JOB_PROSPECT_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&occupationVersion=${data?.occupationVersion}&representingCountry=${data?.representingCountry}&occupationLevelCode=${data?.occupationLevelCode}&occupationCode=${data?.occupationCode}&occupationType=${data?.occupationType}&occupationProspect=${data?.occupationProspect}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -3611,7 +3853,18 @@ export const deleteJobProspectAPI = (payload) => {
 };
 
 export const exportJobProspectAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_JOB_PROSPECT_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_JOB_PROSPECT_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&occupationVersion=${payload?.occupationVersion}&representingCountry=${payload?.representingCountry}&occupationLevelCode=${payload?.occupationLevelCode}&occupationCode=${payload?.occupationCode}&occupationType=${payload?.occupationType}&occupationProspect=${payload?.occupationProspect}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -3624,25 +3877,33 @@ export const importJobProspectAPI = (payload) => {
 export const getRepresentingCountryListAPI = (data) => {
    let customSort = "";
     if (Array.isArray(data?.sort)) {
-        // Case 1: Only created_at is present → keep it
         const isOnlyCreatedAt =
             data.sort.length === 1 && data.sort[0].field === "created_at";
-        // Case 2: More fields exist → remove created_at
         const finalSortArray = isOnlyCreatedAt
             ? data.sort
             : data.sort.filter(item => item.field !== "created_at");
-        // Map fields into customSort string
         customSort = finalSortArray
             .map(item => `${item.field}:${item.order}`)
             .join(",");
     }
-  const apiUrl = `${url.GET_REPRESENTING_COUNTRY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&country=${data?.country}&customSort=${customSort}`;
+  const apiUrl = `${url.GET_REPRESENTING_COUNTRY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&country=${data?.country}&largestState=${data?.largestState}&smallestState=${data?.smallestState}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
 // Related Occupation
 export const getRelatedOccupationListAPI = (data) => {
-  const apiUrl = `${url.GET_RELATED_OCCUPATION_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_RELATED_OCCUPATION_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&occupationVersion=${data?.occupationVersion}&representingCountry=${data?.representingCountry}&occupationName=${data?.occupationName}&occupationCode=${data?.occupationCode}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -3668,7 +3929,18 @@ export const deleteRelatedOccupationAPI = (payload) => {
 };
 
 export const exportRelatedOccupationAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_RELATED_OCCUPATION_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_RELATED_OCCUPATION_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&occupationVersion=${payload?.occupationVersion}&representingCountry=${payload?.representingCountry}&occupationName=${payload?.occupationName}&occupationCode=${payload?.occupationCode}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -3678,9 +3950,20 @@ export const importRelatedOccupationAPI = (payload) => {
 };
 
 export const getOccupationToOccupationListAPI = (data) => {
+  let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
   const apiUrl = `${url.GET_OCCUPATION_TO_OCCUPATION_LIST}?search=${data?.search}&page=${
     data?.page
-  }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&occupationVersion=${data?.occupationVersion}&representingCountry=${data?.representingCountry}&occupationName=${data?.occupationName}&occupationCode=${data?.occupationCode}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -3704,7 +3987,18 @@ export const deleteOccupationToOccupationAPI = (payload) => {
 };
 
 export const exportOccupationToOccupationAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_OCCUPATION_TO_OCCUPATION_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_OCCUPATION_TO_OCCUPATION_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&occupationVersion=${payload?.occupationVersion}&representingCountry=${payload?.representingCountry}&occupationName=${payload?.occupationName}&occupationCode=${payload?.occupationCode}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -3714,9 +4008,20 @@ export const importOccupationToOccupationAPI = (payload) => {
 };
 
 export const getEligibilityOccupationNameListAPI = (data) => {
+   let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
   const apiUrl = `${url.GET_ELIGIBILITY_OCCUPATION_NAME_LIST}?search=${data?.search}&page=${
     data?.page
-  }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  }&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&occupationVersion=${data?.occupationVersion}&representingCountry=${data?.representingCountry}&occupationName=${data?.occupationName}&occupationCode=${data?.occupationCode}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -3740,7 +4045,18 @@ export const deleteEligibilityOccupationNameAPI = (payload) => {
 };
 
 export const exportEligibilityOccupationNameAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_ELIGIBILITY_OCCUPATION_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_ELIGIBILITY_OCCUPATION_NAME_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&occupationVersion=${payload?.occupationVersion}&representingCountry=${payload?.representingCountry}&occupationName=${payload?.occupationName}&occupationCode=${payload?.occupationCode}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -4118,8 +4434,13 @@ export const editWhenCommissionIssueDataAPI = (payload) => {
 };
 
 export const deleteWhenCommissionIssueDataAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_WHEN_COMMISSION_ISSUE_API}delete/`;
+  // const prepareDATA = { id: payload };
+  // const apiUrl = `${url.DELETE_WHEN_COMMISSION_ISSUE_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_WHEN_COMMISSION_ISSUE_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -4595,7 +4916,18 @@ export const importCourseDurationDataAPI = (payload) => {
 
 // Work Rights
 export const getWorkRightsListAPI = (data) => {
-  const apiUrl = `${url.GET_WORK_RIGHTS_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+   let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_WORK_RIGHTS_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -4610,13 +4942,29 @@ export const editWorkRightsAPI = (payload) => {
 };
 
 export const deleteWorkRightsAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_WORK_RIGHTS_API}delete/`;
+  // const prepareDATA = { id: payload };
+  // const apiUrl = `${url.DELETE_WORK_RIGHTS_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_WORK_RIGHTS_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
 export const exportWorkRightsAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_WORK_RIGHTS_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+   let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_WORK_RIGHTS_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -4626,7 +4974,18 @@ export const importWorkRightsAPI = (payload) => {
 };
 // Work Rights During Study
 export const getWorkRightsDuringStudyListAPI = (data) => {
-  const apiUrl = `${url.GET_WORK_RIGHTS_DURING_STUDY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_WORK_RIGHTS_DURING_STUDY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -4641,13 +5000,27 @@ export const editWorkRightsDuringStudyAPI = (payload) => {
 };
 
 export const deleteWorkRightsDuringStudyAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_WORK_RIGHTS_DURING_STUDY_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_WORK_RIGHTS_DURING_STUDY_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
 export const exportWorkRightsDuringStudyAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_WORK_RIGHTS_DURING_STUDY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+   let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_WORK_RIGHTS_DURING_STUDY_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -4658,7 +5031,18 @@ export const importWorkRightsDuringStudyAPI = (payload) => {
 
 // Work Rights During Vacation
 export const getWorkRightsDuringVacationListAPI = (data) => {
-  const apiUrl = `${url.GET_WORK_RIGHTS_DURING_VACATION_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_WORK_RIGHTS_DURING_VACATION_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -4673,13 +5057,29 @@ export const editWorkRightsDuringVacationAPI = (payload) => {
 };
 
 export const deleteWorkRightsDuringVacationAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_WORK_RIGHTS_DURING_VACATION_API}delete/`;
+  // const prepareDATA = { id: payload };
+  // const apiUrl = `${url.DELETE_WORK_RIGHTS_DURING_VACATION_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_WORK_RIGHTS_DURING_VACATION_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
 export const exportWorkRightsDuringVacationAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_WORK_RIGHTS_DURING_VACATION_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+   let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_WORK_RIGHTS_DURING_VACATION_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -4689,7 +5089,18 @@ export const importWorkRightsDuringVacationAPI = (payload) => {
 };
 // Work Rights After Study
 export const getWorkRightsAfterStudyAPI = (data) => {
-  const apiUrl = `${url.GET_WORK_RIGHTS_AFTER_STUDY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+   let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_WORK_RIGHTS_AFTER_STUDY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -4705,13 +5116,28 @@ export const editWorkRightsAfterStudyAPI = (payload) => {
 };
 
 export const deleteWorkRightsAfterStudyAPI = (payload) => {
-  return delWithPayload(`${url.DELETE_WORK_RIGHTS_AFTER_STUDY_API}delete/`, {
-    id: payload,
-  });
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_WORK_RIGHTS_AFTER_STUDY_API}delete/?search=${payload?.search}`;
+  return delWithPayload(apiUrl, prepareDATA);
+  
 };
 
 export const exportWorkRightsAfterStudyAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_WORK_RIGHTS_AFTER_STUDY_API}?fields=${payload.fields}&uuids=${payload.uuids}`;
+   let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_WORK_RIGHTS_AFTER_STUDY_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -4721,7 +5147,18 @@ export const importWorkRightsAfterStudyAPI = (payload) => {
 
 // PR Possibility
 export const getPRPossibilityAPI = (data) => {
-  const apiUrl = `${url.GET_PR_POSSIBILITY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_PR_POSSIBILITY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -4734,13 +5171,30 @@ export const editPRPossibilityAPI = (payload) => {
 };
 
 export const deletePRPossibilityAPI = (payload) => {
-  return delWithPayload(`${url.DELETE_PR_POSSIBILITY_API}delete/`, {
-    id: payload,
-  });
+  // return delWithPayload(`${url.DELETE_PR_POSSIBILITY_API}delete/`, {
+  //   id: payload,
+  // });
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_PR_POSSIBILITY_API}delete/?search=${payload?.search}`;
+  return delWithPayload(apiUrl, prepareDATA);
 };
 
 export const exportPRPossibilityAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_PR_POSSIBILITY_API}?fields=${payload.fields}&uuids=${payload.uuids}`;
+   let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_PR_POSSIBILITY_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -4750,7 +5204,18 @@ export const importPRPossibilityAPI = (payload) => {
 
 // Spouse Apply With Candidate
 export const getSpouseApplyWithCandidateAPI = (data) => {
-  const apiUrl = `${url.GET_SPOUSE_APPLY_WITH_CANDIDATE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+   let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_SPOUSE_APPLY_WITH_CANDIDATE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -4766,14 +5231,31 @@ export const editSpouseApplyWithCandidateAPI = (payload) => {
 };
 
 export const deleteSpouseApplyWithCandidateAPI = (payload) => {
-  return delWithPayload(
-    `${url.DELETE_SPOUSE_APPLY_WITH_CANDIDATE_API}delete/`,
-    { id: payload }
-  );
+  // return delWithPayload(
+  //   `${url.DELETE_SPOUSE_APPLY_WITH_CANDIDATE_API}delete/`,
+  //   { id: payload }
+  // );
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_SPOUSE_APPLY_WITH_CANDIDATE_API}delete/?search=${payload?.search}`;
+   return delWithPayload(apiUrl, prepareDATA);
 };
 
 export const exportSpouseApplyWithCandidateAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_SPOUSE_APPLY_WITH_CANDIDATE_API}?fields=${payload.fields}&uuids=${payload.uuids}`;
+  let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_SPOUSE_APPLY_WITH_CANDIDATE_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -4782,7 +5264,18 @@ export const importSpouseApplyWithCandidateAPI = (payload) => {
 };
 // Spouse Visa Category
 export const getSpouseVisaCategoryListAPI = (data) => {
-  const apiUrl = `${url.GET_SPOUSE_VISA_CATEGORY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+   let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_SPOUSE_VISA_CATEGORY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -4797,13 +5290,29 @@ export const editSpouseVisaCategoryAPI = (payload) => {
 };
 
 export const deleteSpouseVisaCategoryAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_SPOUSE_VISA_CATEGORY_API}delete/`;
+  // const prepareDATA = { id: payload };
+  // const apiUrl = `${url.DELETE_SPOUSE_VISA_CATEGORY_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_SPOUSE_VISA_CATEGORY_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
 export const exportSpouseVisaCategoryAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_SPOUSE_VISA_CATEGORY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_SPOUSE_VISA_CATEGORY_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -4813,7 +5322,18 @@ export const importSpouseVisaCategoryAPI = (payload) => {
 };
 // SPOUSE WORK RIGHTS
 export const getSpouseWorkRightsListAPI = (data) => {
-  const apiUrl = `${url.GET_SPOUSE_WORK_RIGHTS_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_SPOUSE_WORK_RIGHTS_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -4827,12 +5347,28 @@ export const editSpouseWorkRightsAPI = (payload) => {
 };
 
 export const deleteSpouseWorkRightsAPI = (payload) => {
-  const apiUrl = `${url.DELETE_SPOUSE_WORK_RIGHTS_API}delete/`;
-  return delWithPayload(apiUrl, { id: payload });
+  // const apiUrl = `${url.DELETE_SPOUSE_WORK_RIGHTS_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_SPOUSE_WORK_RIGHTS_API}delete/?search=${payload?.search}`;
+  return delWithPayload(apiUrl, prepareDATA);
 };
 
 export const exportSpouseWorkRightsAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_SPOUSE_WORK_RIGHTS_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_SPOUSE_WORK_RIGHTS_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -4842,7 +5378,18 @@ export const importSpouseWorkRightsAPI = (payload) => {
 
 // CHILDREN APPLY WITH CANDIDATE
 export const getChildrenApplyWithCandidateListAPI = (data) => {
-  const apiUrl = `${url.GET_CHILDREN_APPLY_WITH_CANDIDATE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_CHILDREN_APPLY_WITH_CANDIDATE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -4856,12 +5403,28 @@ export const editChildrenApplyWithCandidateAPI = (payload) => {
 };
 
 export const deleteChildrenApplyWithCandidateAPI = (payload) => {
-  const apiUrl = `${url.DELETE_CHILDREN_APPLY_WITH_CANDIDATE_API}delete/`;
-  return delWithPayload(apiUrl, { id: payload });
+  // const apiUrl = `${url.DELETE_CHILDREN_APPLY_WITH_CANDIDATE_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_CHILDREN_APPLY_WITH_CANDIDATE_API}delete/?search=${payload?.search}`;
+  return delWithPayload(apiUrl, prepareDATA);
 };
 
 export const exportChildrenApplyWithCandidateAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_CHILDREN_APPLY_WITH_CANDIDATE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+   let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_CHILDREN_APPLY_WITH_CANDIDATE_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -4870,7 +5433,18 @@ export const importChildrenApplyWithCandidateAPI = (payload) => {
 };
 // CHILDREN VISA CATEGORY
 export const getChildrenVisaCategoryListAPI = (data) => {
-  const apiUrl = `${url.GET_CHILDREN_VISA_CATEGORY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_CHILDREN_VISA_CATEGORY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -4884,12 +5458,28 @@ export const editChildrenVisaCategoryAPI = (payload) => {
 };
 
 export const deleteChildrenVisaCategoryAPI = (payload) => {
-  const apiUrl = `${url.DELETE_CHILDREN_VISA_CATEGORY_API}delete/`;
-  return delWithPayload(apiUrl, { id: payload });
+  // const apiUrl = `${url.DELETE_CHILDREN_VISA_CATEGORY_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_CHILDREN_VISA_CATEGORY_API}delete/?search=${payload?.search}`;
+  return delWithPayload(apiUrl, prepareDATA);
 };
 
 export const exportChildrenVisaCategoryAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_CHILDREN_VISA_CATEGORY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_CHILDREN_VISA_CATEGORY_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -4898,7 +5488,18 @@ export const importChildrenVisaCategoryAPI = (payload) => {
 };
 // CHILDREN STUDY / WORK RIGHTS
 export const getChildrenStudyWorkRightsListAPI = (data) => {
-  const apiUrl = `${url.GET_CHILDREN_STUDY_WORK_RIGHTS_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_CHILDREN_STUDY_WORK_RIGHTS_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -4912,12 +5513,28 @@ export const editChildrenStudyWorkRightsAPI = (payload) => {
 };
 
 export const deleteChildrenStudyWorkRightsAPI = (payload) => {
-  const apiUrl = `${url.DELETE_CHILDREN_STUDY_WORK_RIGHTS_API}delete/`;
-  return delWithPayload(apiUrl, { id: payload });
+  // const apiUrl = `${url.DELETE_CHILDREN_STUDY_WORK_RIGHTS_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_CHILDREN_STUDY_WORK_RIGHTS_API}delete/?search=${payload?.search}`;
+  return delWithPayload(apiUrl, prepareDATA);
 };
 
 export const exportChildrenStudyWorkRightsAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_CHILDREN_STUDY_WORK_RIGHTS_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_CHILDREN_STUDY_WORK_RIGHTS_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -4952,8 +5569,13 @@ export const editVisaMainCategoryAPI = (payload) => {
 };
 
 export const deleteVisaMainCategoryAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_VISA_MAIN_CATEGORY_API}delete/`;
+  // const prepareDATA = { id: payload };
+  // const apiUrl = `${url.DELETE_VISA_MAIN_CATEGORY_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_VISA_MAIN_CATEGORY_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -4980,7 +5602,18 @@ export const importVisaMainCategoryAPI = (payload) => {
 
 // Document Category
 export const getDocumentCategoryListAPI = (data) => {
-  const apiUrl = `${url.GET_DOCUMENT_CATEGORY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_DOCUMENT_CATEGORY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -5006,7 +5639,18 @@ export const deleteDocumentCategoryAPI = (payload) => {
 };
 
 export const exportDocumentCategoryAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_DOCUMENT_CATEGORY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_DOCUMENT_CATEGORY_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -5017,7 +5661,18 @@ export const importDocumentCategoryAPI = (payload) => {
 
 // Document Name
 export const getDocumentNameListAPI = (data) => {
-  const apiUrl = `${url.GET_DOCUMENT_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+   let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_DOCUMENT_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&documentCategory=${data?.documentCategory}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -5033,14 +5688,26 @@ export const editDocumentNameAPI = (payload) => {
 
 export const deleteDocumentNameAPI = (payload) => {
   const prepareDATA = {
-    id: payload,
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
   };
-  const apiUrl = `${url.DELETE_DOCUMENT_NAME_API}delete/`;
+  const apiUrl = `${url.DELETE_DOCUMENT_NAME_API}delete/?search=${payload?.search}&documentCategory=${payload?.documentCategory}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
 export const exportDocumentNameAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_DOCUMENT_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_DOCUMENT_NAME_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&documentCategory=${payload?.documentCategory}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -5050,7 +5717,18 @@ export const importDocumentNameAPI = (payload) => {
 };
 // Document Type
 export const getDocumentTypeListAPI = (data) => {
-  const apiUrl = `${url.GET_DOCUMENT_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+   let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_DOCUMENT_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -5065,13 +5743,29 @@ export const editDocumentTypeAPI = (payload) => {
 };
 
 export const deleteDocumentTypeAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_DOCUMENT_TYPE_API}delete/`;
+  // const prepareDATA = { id: payload };
+  // const apiUrl = `${url.DELETE_DOCUMENT_TYPE_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+    const apiUrl = `${url.DELETE_DOCUMENT_TYPE_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
 export const exportDocumentTypeAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_DOCUMENT_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+   let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_DOCUMENT_TYPE_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -5081,7 +5775,18 @@ export const importDocumentTypeAPI = (payload) => {
 };
 // Purpose of Visit
 export const getPurposeOfVisitListAPI = (data) => {
-  const apiUrl = `${url.GET_PURPOSE_OF_VISIT_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_PURPOSE_OF_VISIT_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -5096,13 +5801,29 @@ export const editPurposeOfVisitAPI = (payload) => {
 };
 
 export const deletePurposeOfVisitAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_PURPOSE_OF_VISIT_API}delete/`;
+  // const prepareDATA = { id: payload };
+  // const apiUrl = `${url.DELETE_PURPOSE_OF_VISIT_API}delete/`;
+   const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+    const apiUrl = `${url.DELETE_PURPOSE_OF_VISIT_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
 export const exportPurposeOfVisitAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_PURPOSE_OF_VISIT_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_PURPOSE_OF_VISIT_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -5112,7 +5833,18 @@ export const importPurposeOfVisitAPI = (payload) => {
 };
 // Documents For
 export const getDocumentsForListAPI = (data) => {
-  const apiUrl = `${url.GET_DOCUMENTS_FOR_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+   let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_DOCUMENTS_FOR_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -5127,13 +5859,29 @@ export const editDocumentsForAPI = (payload) => {
 };
 
 export const deleteDocumentsForAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_DOCUMENTS_FOR_API}delete/`;
+  // const prepareDATA = { id: payload };
+  // const apiUrl = `${url.DELETE_DOCUMENTS_FOR_API}delete/`;
+    const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+    const apiUrl = `${url.DELETE_DOCUMENTS_FOR_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
 export const exportDocumentsForAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_DOCUMENTS_FOR_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_DOCUMENTS_FOR_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -5143,7 +5891,18 @@ export const importDocumentsForAPI = (payload) => {
 };
 // Required Documents (General)
 export const getRequiredDocumentGeneralListAPI = (data) => {
-  const apiUrl = `${url.GET_REQUIRED_DOCUMENT_GENERAL_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+   let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_REQUIRED_DOCUMENT_GENERAL_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&documentFor=${data?.documentFor}&representingCountry=${data?.representingCountry}&visaMainArea=${data?.visaMainArea}&visaMajorArea=${data?.visaMajorArea}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -5158,13 +5917,29 @@ export const editRequiredDocumentGeneralAPI = (payload) => {
 };
 
 export const deleteRequiredDocumentGeneralAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_REQUIRED_DOCUMENT_GENERAL_API}delete/`;
+  // const prepareDATA = { id: payload };
+  // const apiUrl = `${url.DELETE_REQUIRED_DOCUMENT_GENERAL_API}delete/`;
+   const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+    const apiUrl = `${url.DELETE_REQUIRED_DOCUMENT_GENERAL_API}delete/?search=${payload?.search}&documentFor=${payload?.documentFor}&representingCountry=${payload?.representingCountry}&visaMainArea=${payload?.visaMainArea}&visaMajorArea=${payload?.visaMajorArea}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
 export const exportRequiredDocumentGeneralAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_REQUIRED_DOCUMENT_GENERAL_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_REQUIRED_DOCUMENT_GENERAL_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&documentFor=${payload?.documentFor}&representingCountry=${payload?.representingCountry}&visaMainArea=${payload?.visaMainArea}&visaMajorArea=${payload?.visaMajorArea}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -5175,7 +5950,18 @@ export const importRequiredDocumentGeneralAPI = (payload) => {
 
 // Process Status Name
 export const getProcessStatusNameListAPI = (data) => {
-  const apiUrl = `${url.GET_PROCESS_STATUS_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+   let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_PROCESS_STATUS_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&representingCountry=${data?.representingCountry}&visaMainArea=${data?.visaMainArea}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -5190,13 +5976,29 @@ export const editProcessStatusNameAPI = (payload) => {
 };
 
 export const deleteProcessStatusNameAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_PROCESS_STATUS_NAME_API}delete/`;
+  // const prepareDATA = { id: payload };
+  // const apiUrl = `${url.DELETE_PROCESS_STATUS_NAME_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_PROCESS_STATUS_NAME_API}delete/?search=${payload?.search}&representingCountry=${payload?.representingCountry}&visaMainArea=${payload?.visaMainArea}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
 export const exportProcessStatusNameAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_PROCESS_STATUS_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_PROCESS_STATUS_NAME_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&representingCountry=${payload?.representingCountry}&visaMainArea=${payload?.visaMainArea}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -5206,7 +6008,18 @@ export const importProcessStatusNameAPI = (payload) => {
 };
 // Process Sub-Status Name
 export const getProcessSubStatusNameListAPI = (data) => {
-  const apiUrl = `${url.GET_PROCESS_SUB_STATUS_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_PROCESS_SUB_STATUS_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&visaMainArea=${data?.visaMainArea}&representingCountry=${data?.representingCountry}&processStatusName=${data?.processStatusName}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -5221,13 +6034,29 @@ export const editProcessSubStatusNameAPI = (payload) => {
 };
 
 export const deleteProcessSubStatusNameAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_PROCESS_SUB_STATUS_NAME_API}delete/`;
+  // const prepareDATA = { id: payload };
+  // const apiUrl = `${url.DELETE_PROCESS_SUB_STATUS_NAME_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_PROCESS_SUB_STATUS_NAME_API}delete/?search=${payload?.search}&visaMainArea=${payload?.visaMainArea}&representingCountry=${payload?.representingCountry}&processStatusName=${payload?.processStatusName}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
 export const exportProcessSubStatusNameAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_PROCESS_SUB_STATUS_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+   let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_PROCESS_SUB_STATUS_NAME_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&visaMainArea=${payload?.visaMainArea}&representingCountry=${payload?.representingCountry}&processStatusName=${payload?.processStatusName}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -5237,7 +6066,18 @@ export const importProcessSubStatusNameAPI = (payload) => {
 };
 // Process Type
 export const getProcessTypeListAPI = (data) => {
-  const apiUrl = `${url.GET_PROCESS_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+   let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_PROCESS_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -5252,13 +6092,29 @@ export const editProcessTypeAPI = (payload) => {
 };
 
 export const deleteProcessTypeAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_PROCESS_TYPE_API}delete/`;
+  // const prepareDATA = { id: payload };
+  // const apiUrl = `${url.DELETE_PROCESS_TYPE_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_PROCESS_TYPE_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
 export const exportProcessTypeAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_PROCESS_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_PROCESS_TYPE_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -5268,7 +6124,18 @@ export const importProcessTypeAPI = (payload) => {
 };
 // Payment To
 export const getPaymentToListAPI = (data) => {
-  const apiUrl = `${url.GET_PAYMENT_TO_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+   let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_PAYMENT_TO_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -5283,13 +6150,29 @@ export const editPaymentToAPI = (payload) => {
 };
 
 export const deletePaymentToAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_PAYMENT_TO_API}delete/`;
+  // const prepareDATA = { id: payload };
+  // const apiUrl = `${url.DELETE_PAYMENT_TO_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_PAYMENT_TO_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
 export const exportPaymentToAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_PAYMENT_TO_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_PAYMENT_TO_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -5299,7 +6182,18 @@ export const importPaymentToAPI = (payload) => {
 };
 // Payment Category
 export const getPaymentCategoryListAPI = (data) => {
-  const apiUrl = `${url.GET_PAYMENT_CATEGORY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_PAYMENT_CATEGORY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&paymentTo=${data?.paymentTo}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -5314,13 +6208,29 @@ export const editPaymentCategoryAPI = (payload) => {
 };
 
 export const deletePaymentCategoryAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_PAYMENT_CATEGORY_API}delete/`;
+  // const prepareDATA = { id: payload };
+  // const apiUrl = `${url.DELETE_PAYMENT_CATEGORY_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_PAYMENT_CATEGORY_API}delete/?search=${payload?.search}&paymentTo=${payload?.paymentTo}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
 export const exportPaymentCategoryAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_PAYMENT_CATEGORY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_PAYMENT_CATEGORY_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&paymentTo=${payload?.paymentTo}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -5656,13 +6566,19 @@ export const addRepresentingCountryAPI = (payload) => {
 };
 
 export const editRepresentingCountryAPI = (payload) => {
+// console.log("paylaod",payload);
   const apiUrl = `${url.EDIT_REPRESENTING_COUNTRY_API}${payload?.uuid}/update/`;
   return put(apiUrl, payload);
 };
 
 export const deleteRepresentingCountryAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_REPRESENTING_COUNTRY_API}delete/`;
+  // const prepareDATA = { id: payload };
+  // const apiUrl = `${url.DELETE_REPRESENTING_COUNTRY_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_REPRESENTING_COUNTRY_API}delete/?search=${payload?.search}&country=${payload?.country}&largestState=${payload?.largestState}&smallestState=${payload?.smallestState}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
@@ -5681,7 +6597,7 @@ export const exportRepresentingCountryAPI = (payload) => {
             .map(item => `${item.field}:${item.order}`)
             .join(",");
     }
-  const apiUrl = `${url.EXPORT_REPRESENTING_COUNTRY_API}??search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&country=${payload?.country}&customSort=${customSort}`;
+  const apiUrl = `${url.EXPORT_REPRESENTING_COUNTRY_API}??search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&country=${payload?.country}&largestState=${payload?.largestState}&smallestState=${payload?.smallestState}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -5691,7 +6607,18 @@ export const importRepresentingCountryAPI = (payload) => {
 };
 // Visa Major Category
 export const getVisaMajorCategoryListAPI = (data) => {
-  const apiUrl = `${url.GET_VISA_MAJOR_CATEGORY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_VISA_MAJOR_CATEGORY_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&representingCountry=${data?.representingCountry}&visaMainCategory=${data?.visaMainCategory}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -5710,16 +6637,28 @@ export const editVisaMajorCategoryAPI = (payload) => {
 
 // Delete
 export const deleteVisaMajorCategoryAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  return delWithPayload(
-    `${url.DELETE_VISA_MAJOR_CATEGORY_API}delete/`,
-    prepareDATA
-  );
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_VISA_MAJOR_CATEGORY_API}delete/?search=${payload?.search}&representingCountry=${payload?.representingCountry}&visaMainCategory=${payload?.visaMainCategory}`;
+  return delWithPayload(apiUrl, prepareDATA);
 };
 
 // Export
 export const exportVisaMajorCategoryAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_VISA_MAJOR_CATEGORY_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_VISA_MAJOR_CATEGORY_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&representingCountry=${payload?.representingCountry}&visaMainCategory=${payload?.visaMainCategory}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -5729,7 +6668,18 @@ export const importVisaMajorCategoryAPI = (payload) => {
 };
 // Applicant Type
 export const getApplicantTypeListAPI = (data) => {
-  const apiUrl = `${url.GET_APPLICANT_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+   let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_APPLICANT_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -5744,13 +6694,29 @@ export const editApplicantTypeAPI = (payload) => {
 };
 
 export const deleteApplicantTypeAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_APPLICANT_TYPE_API}delete/`;
+  // const prepareDATA = { id: payload };
+  // const apiUrl = `${url.DELETE_APPLICANT_TYPE_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_APPLICANT_TYPE_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
 export const exportApplicantTypeAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_APPLICANT_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_APPLICANT_TYPE_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -5760,7 +6726,18 @@ export const importApplicantTypeAPI = (payload) => {
 };
 // VISA ELIGIBILITY TYPE
 export const getVisaEligibilityTypeListAPI = (data) => {
-  const apiUrl = `${url.GET_VISA_ELIGIBILITY_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+   let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_VISA_ELIGIBILITY_TYPE_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -5775,13 +6752,29 @@ export const editVisaEligibilityTypeAPI = (payload) => {
 };
 
 export const deleteVisaEligibilityTypeAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_VISA_ELIGIBILITY_TYPE_API}delete/`;
+  // const prepareDATA = { id: payload };
+  // const apiUrl = `${url.DELETE_VISA_ELIGIBILITY_TYPE_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_VISA_ELIGIBILITY_TYPE_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
 export const exportVisaEligibilityTypeAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_VISA_ELIGIBILITY_TYPE_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+   let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_VISA_ELIGIBILITY_TYPE_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -5791,7 +6784,18 @@ export const importVisaEligibilityTypeAPI = (payload) => {
 };
 // VISA STATUS
 export const getVisaStatusListAPI = (data) => {
-  const apiUrl = `${url.GET_VISA_STATUS_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_VISA_STATUS_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -5806,13 +6810,29 @@ export const editVisaStatusAPI = (payload) => {
 };
 
 export const deleteVisaStatusAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_VISA_STATUS_API}delete/`;
+  // const prepareDATA = { id: payload };
+  // const apiUrl = `${url.DELETE_VISA_STATUS_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_VISA_STATUS_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
 export const exportVisaStatusAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_VISA_STATUS_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_VISA_STATUS_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -5822,7 +6842,18 @@ export const importVisaStatusAPI = (payload) => {
 };
 // POSSIBILITY LEVEL
 export const getPossibilityLevelListAPI = (data) => {
-  const apiUrl = `${url.GET_POSSIBILITY_LEVEL_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_POSSIBILITY_LEVEL_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -5837,13 +6868,29 @@ export const editPossibilityLevelAPI = (payload) => {
 };
 
 export const deletePossibilityLevelAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_POSSIBILITY_LEVEL_API}delete/`;
+  // const prepareDATA = { id: payload };
+  // const apiUrl = `${url.DELETE_POSSIBILITY_LEVEL_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_POSSIBILITY_LEVEL_API}delete/?search=${payload?.search}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
 export const exportPossibilityLevelAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_POSSIBILITY_LEVEL_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_POSSIBILITY_LEVEL_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 
@@ -5854,7 +6901,18 @@ export const importPossibilityLevelAPI = (payload) => {
 
 // ---------------- VISA NAME ----------------
 export const getVisaNameListAPI = (data) => {
-  const apiUrl = `${url.GET_VISA_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}`;
+  let customSort = "";
+    if (Array.isArray(data?.sort)) {
+        const isOnlyCreatedAt =
+            data.sort.length === 1 && data.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? data.sort
+            : data.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.GET_VISA_NAME_LIST}?search=${data?.search}&page=${data?.page}&limit=${data?.limit}&sortBy=${data?.sortBy}&sortOrder=${data?.sortOrder}&representingCountry=${data?.representingCountry}&visaMainCategory=${data?.visaMainCategory}&visaMajorCategory=${data?.visaMajorCategory}&customSort=${customSort}`;
   return get(apiUrl);
 };
 
@@ -5869,13 +6927,29 @@ export const editVisaNameAPI = (payload) => {
 };
 
 export const deleteVisaNameAPI = (payload) => {
-  const prepareDATA = { id: payload };
-  const apiUrl = `${url.DELETE_VISA_NAME_API}delete/`;
+  // const prepareDATA = { id: payload };
+  // const apiUrl = `${url.DELETE_VISA_NAME_API}delete/`;
+  const prepareDATA = {
+    id: payload?.id,
+    deleteAll:payload?.deleteAll
+  };
+  const apiUrl = `${url.DELETE_VISA_NAME_API}delete/?search=${payload?.search}&representingCountry=${payload?.representingCountry}&visaMainCategory=${payload?.visaMainCategory}&visaMajorCategory=${payload?.visaMajorCategory}`;
   return delWithPayload(apiUrl, prepareDATA);
 };
 
 export const exportVisaNameAPI = (payload) => {
-  const apiUrl = `${url.EXPORT_VISA_NAME_API}?fields=${payload?.fields}&uuids=${payload?.uuids}`;
+  let customSort = "";
+    if (Array.isArray(payload?.sort)) {
+        const isOnlyCreatedAt =
+            payload.sort.length === 1 && payload.sort[0].field === "created_at";
+        const finalSortArray = isOnlyCreatedAt
+            ? payload.sort
+            : payload.sort.filter(item => item.field !== "created_at");
+        customSort = finalSortArray
+            .map(item => `${item.field}:${item.order}`)
+            .join(",");
+    }
+  const apiUrl = `${url.EXPORT_VISA_NAME_API}?search=${payload?.search}&fields=${payload?.fields}&uuids=${payload?.uuids}&representingCountry=${payload?.representingCountry}&visaMainCategory=${payload?.visaMainCategory}&visaMajorCategory=${payload?.visaMajorCategory}&customSort=${customSort}`;
   return getExportData(apiUrl, payload);
 };
 

@@ -125,3 +125,19 @@ export async function delWithPayload(url, data = {}, config = {}) {
     .delete(url, { data: data, ...config })
     .then((response) => response?.data);
 }
+
+// export async function delWithPayloadNew(url, data = {}, config = {}) {
+//   try {
+//     const response = await axiosApi.delete(url, {
+//       data: data,
+//       ...config,
+//     });
+
+//     console.log('response', response);
+//     return response?.data;
+
+//   } catch (error) {
+//     console.error('Delete API Error:', error);
+//     throw error;
+//   }
+// }

@@ -5,15 +5,18 @@ import ThemeToggleButton from "../helper/ThemeToggleButton";
 // import Header from "./Header";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { useGlobalSearch } from '../components/comman/GlobalSearchContext';
+import { useGlobalSearch } from "../components/comman/GlobalSearchContext";
 const MasterLayout = ({ children }) => {
   const navigate = useNavigate();
   let [sidebarActive, seSidebarActive] = useState(false);
   let [mobileMenu, setMobileMenu] = useState(false);
   const location = useLocation();
   const [selectedItemName, setSelectedItemName] = useState("Dashboard");
+   const [getUrlPath, setGetUrlPath] = useState("");
   const [openSubmenu, setOpenSubmenu] = useState(null);
   const [openChildMenu, setOpenChildMenu] = useState(null);
+  const [leftSidebarHideShow, setLeftSidebarHideShow] = useState(false);
+
 
   const [searchAllowedModules] = useState([
     "City",
@@ -143,10 +146,11 @@ const MasterLayout = ({ children }) => {
     "Job Prospect",
     "Related Occupation",
     "Compare : Occupation To Occupation",
-    "Eligibility for Occupation Name"
-
+    "Eligibility for Occupation Name",
   ]);
-
+  const toggleSidebar = () => {
+    setLeftSidebarHideShow((prev) => !prev);
+  };
 
 
   // Global Search State - Har page pe same rahega
@@ -161,9 +165,8 @@ const MasterLayout = ({ children }) => {
       name: "Sales",
       submenu: [
         { name: "Leads B2C", path: "/leads-B2C" },
-        { name: "Inquiry B2C", path: "/inquiry-B2C" },
+        { name: "Inquiry B2C", path: "/" },
       ],
-
     },
     {
       name: "Clients",
@@ -308,7 +311,7 @@ const MasterLayout = ({ children }) => {
             { name: "Job Prospect", path: "/job-prospect" },
             { name: "Related Occupation", path: "/related-occupation" },
             { name: "Compare : Occupation To Occupation", path: "/occupation-to-occupation" },
-            {name: "Eligibility for Occupation Name",path: "/eligibility-for-occupation-name"},
+            { name: "Eligibility for Occupation Name", path: "/eligibility-for-occupation-name" },
           ],
         },
         {
@@ -344,26 +347,42 @@ const MasterLayout = ({ children }) => {
             { name: "Visa Eligibility Type", path: "/visa-eligibility-type" },
             { name: "Visa Status", path: "/visa-status" },
             { name: "Possibility Level", path: "/possibility-level" },
-            { name: "Visa Name", path: "/visa-name" }
-
+            { name: "Visa Name", path: "/visa-name" },
           ],
         },
         {
           name: "Visa Conditions",
           children: [
             { name: "Work Rights", path: "/work-rights" },
-            { name: "Work Rights During Study", path: "/work-rights-during-study" },
-            { name: "Work Rights During Vacation", path: "/work-rights-during-vacation" },
-            { name: "Work Rights After Study", path: "/work-rights-after-study" },
+            {
+              name: "Work Rights During Study",
+              path: "/work-rights-during-study",
+            },
+            {
+              name: "Work Rights During Vacation",
+              path: "/work-rights-during-vacation",
+            },
+            {
+              name: "Work Rights After Study",
+              path: "/work-rights-after-study",
+            },
             { name: "PR Possibility", path: "/pr-possibility" },
-            { name: "Spouse Can Apply with Candidate?", path: "/spouse-can-apply-with-candidate" },
+            {
+              name: "Spouse Can Apply with Candidate?",
+              path: "/spouse-can-apply-with-candidate",
+            },
             // { name: "Visa Main Category", path: "/visa-main-category" },
-            { name: "Spouse Visa Category", path: '/spouse-visa-category' },
+            { name: "Spouse Visa Category", path: "/spouse-visa-category" },
             { name: "Spouse Work Rights", path: "/spouse-work-rights" },
-            { name: "Children Can Apply with Candidate?", path: "/children-can-apply-with-candidate" },
+            {
+              name: "Children Can Apply with Candidate?",
+              path: "/children-can-apply-with-candidate",
+            },
             { name: "Children Visa Category", path: "/children-visa-category" },
-            { name: "Children Study / Work Rights", path: "/children-study-work-rights" },
-
+            {
+              name: "Children Study / Work Rights",
+              path: "/children-study-work-rights",
+            },
           ],
         },
         {
@@ -374,9 +393,15 @@ const MasterLayout = ({ children }) => {
             { name: "Document Type", path: "/document-type" },
             { name: "Purpose of Visit", path: "/purpose-of-visit" },
             { name: "Documents For", path: "/documents-for" },
-            { name: "Required Documents (General)", path: "/required-documents-general" },
+            {
+              name: "Required Documents (General)",
+              path: "/required-documents-general",
+            },
             { name: "Process Status Name", path: "/process-status-name" },
-            { name: "Process Sub Status Name", path: "/process-sub-status-name" },
+            {
+              name: "Process Sub Status Name",
+              path: "/process-sub-status-name",
+            },
             { name: "Process Type", path: "/process-type" },
             { name: "Payment To", path: "/payment-to" },
             { name: "Payment Category", path: "/payment-category" },
@@ -388,18 +413,35 @@ const MasterLayout = ({ children }) => {
           children: [
             { name: "Factor For", path: "/factor-for" },
             { name: "Study : Age Group", path: "/age-group" },
-            { name: "Study : Academic Result Group", path: "/academic-result-group" },
+            {
+              name: "Study : Academic Result Group",
+              path: "/academic-result-group",
+            },
             { name: "Study : Gap Group", path: "/gap-group" },
             { name: "Study : Backlogs Group", path: "/backlogs-group" },
-            { name: "Study : Language Ability Group", path: "/language-ability-group" },
-            { name: "Study : Entrance Test Ability Group", path: "/entrance-test-ability-group" },
+            {
+              name: "Study : Language Ability Group",
+              path: "/language-ability-group",
+            },
+            {
+              name: "Study : Entrance Test Ability Group",
+              path: "/entrance-test-ability-group",
+            },
             { name: "Study Factor : Age", path: "/age" },
-            { name: "Study Factor : Academic Result", path: "/study-factor-academic-result" },
+            {
+              name: "Study Factor : Academic Result",
+              path: "/study-factor-academic-result",
+            },
             { name: "Study Factor : Backlogs", path: "/study-factor-backlogs" },
             { name: "Study Factor : Gap", path: "/study-factor-gap" },
-            { name: "Study Factor : Language Ability", path: "/study-factor-language-ability" },
-            { name: "Study Factor : Entrance Test Ability", path: "/study-factor-entrance-test-ability" },
-
+            {
+              name: "Study Factor : Language Ability",
+              path: "/study-factor-language-ability",
+            },
+            {
+              name: "Study Factor : Entrance Test Ability",
+              path: "/study-factor-entrance-test-ability",
+            },
           ],
         },
 
@@ -417,7 +459,6 @@ const MasterLayout = ({ children }) => {
 
         //   ],
         // },
-
 
         // { name: 'Education', path: '/' },
         // { name: 'Test', path: '/' },
@@ -469,18 +510,20 @@ const MasterLayout = ({ children }) => {
   };
 
   // // Page title set karne ke liye (optional improvement)
-  // useEffect(() => {
-  //   const path = location.pathname;
+  useEffect(() => {
+    const path = location.pathname;
+    console.log('pathpathpathpathpath',path);
+    setGetUrlPath(path)
   //   if (path === "/") setSelectedItemName("Dashboard");
   //   else if (path.includes("city-list")) setSelectedItemName("City");
   //   else if (path.includes("country-list")) setSelectedItemName("Country");
   //   // ... aur baki pages ke liye add kar sakte ho
   //   else setSelectedItemName("Dashboard");
-  // }, [location.pathname]);
+  }, [location.pathname]);
 
   useEffect(() => {
     // when changes pathname than blank GlobalSearch
-    setGlobalSearch('');
+    setGlobalSearch("");
     // Current path के basis पर menu item ढूंढो
     const findMenuItemByPath = (items, currentPath) => {
       for (const item of items) {
@@ -585,8 +628,8 @@ const MasterLayout = ({ children }) => {
           sidebarActive
             ? "sidebar active "
             : mobileMenu
-              ? "sidebar sidebar-open"
-              : "sidebar"
+            ? "sidebar sidebar-open"
+            : "sidebar"
         }
         style={{ display: "none" }}
       >
@@ -1867,6 +1910,8 @@ const MasterLayout = ({ children }) => {
                       <li>
                         <Link
                           className='dropdown-item text-black px-0 py-8 hover-bg-transparent hover-text-primary d-flex align-items-center gap-3'
+                   \
+                   
                           to='/'
                         >
                           <Icon
@@ -2208,10 +2253,60 @@ const MasterLayout = ({ children }) => {
                 </div>
               )}
 
+
+             
+              {getUrlPath == "/leads-form" && (
+                
+                <div className="d-flex align-items-center gap-3 flex-wrap h-100">
+                <div className="d-flex align-items-center ">
+                  <button type="button">
+                    <Icon icon="mdi:chevron-left" width="25" height="25" />
+                  </button>
+                  <p className="mb-0">02/30</p>
+                  <button type="button">
+                    <Icon icon="mdi:chevron-right" width="25" height="25" />
+                  </button>
+                </div>
+                <div className="d-flex align-items-center gap-2">
+                  <Icon
+                    icon="mdi:whatsapp"
+                    className="cursor-pointer"
+                    width="30"
+                  />
+                  <Icon
+                    icon="material-symbols:mail-outline"
+                    className="cursor-pointer"
+                    width="30"
+                  />
+                  <Icon
+                    icon="material-symbols:sms-outline"
+                    className="cursor-pointer"
+                    width="30"
+                  />
+                </div>
+                {/* <div style={{ cursor: "pointer" }} onClick={toggleSidebar}> */}
+                 <div style={{ cursor: "pointer" }}>
+                  <Icon icon="material-symbols:menu" width="30" />
+                </div>
+              </div>
+             )}
+
+
+
+
+
             </div>
           </div>
         </div>
-        <div className="dashboard-main-body">{children}</div>
+        {/* <div className="dashboard-main-body">{children}</div> */}
+
+        <div style={{ display: "flex" }}>
+          <div className="dashboard-main-body" style={{ width: leftSidebarHideShow ? "80%" : "100%" }}>{children}</div>
+          <div className="left-sidebar-main-body" style={{ width: leftSidebarHideShow ? "20%" : "0%", overflow: "hidden" }}>
+            {/* Ghanshya Nagar */}
+          </div>
+
+        </div>
 
         <footer className="d-footer main-footer">
           <div className="row align-items-center justify-content-between">

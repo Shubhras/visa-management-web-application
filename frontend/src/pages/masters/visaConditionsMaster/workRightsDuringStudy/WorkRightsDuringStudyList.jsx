@@ -13,7 +13,7 @@ import { useGlobalSearch } from '../../../../components/comman/GlobalSearchConte
 import ResetButton from '../../../../components/comman/ResetButton';
 const WorkRightsDuringStudyList = () => {
     const dispatch = useDispatch();
-     const { globalSearch, setGlobalSearch } = useGlobalSearch();
+    const { globalSearch, setGlobalSearch } = useGlobalSearch();
     const [modalState, setModalState] = useState({
         show: false,
         mode: 'add', // 'add' or 'edit'
@@ -362,13 +362,19 @@ const WorkRightsDuringStudyList = () => {
     };
 
     const confirmDelete = () => {
-        // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
-        const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
+        const sendPayload =
+            selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
         if (!sendPayload || sendPayload.length === 0) {
-            toast.error("No Work Rights During Study selected for deletion.");
+            toast.error("No department selected for deletion.");
             return;
         }
-        dispatch(workRightsDuringStudyDelete(sendPayload, (response, error) => {
+        const deleteAll = selectAllOrNot === "all" && Boolean(tableState.search?.trim());
+        const payloadSend = {
+            deleteAll: deleteAll,
+            id: deleteAll == true ? "" : sendPayload,
+            search: tableState.search || '',
+        };
+        dispatch(workRightsDuringStudyDelete(payloadSend, (response, error) => {
             if (error) {
                 toast.error(error?.response?.data?.message || "server error");
             } else {
@@ -380,7 +386,8 @@ const WorkRightsDuringStudyList = () => {
                     setSelectedRows([]);
                     setSelectAllOrNot('');
                     setDeleteId(null);
-                    fetchDepartmentList();
+                    // fetchDepartmentList();
+                     clearAllFilters();
                 } else {
                     toast.error("Something went wrong.");
                 }

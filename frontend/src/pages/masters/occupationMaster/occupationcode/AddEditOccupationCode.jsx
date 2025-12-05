@@ -139,18 +139,18 @@ const AddEditOccupationCode = ({
       const sendPayload =
         mode === "edit"
           ? {
-              uuid: formData.uuid,
-              country_id: formData.country,
-              occupationversion_id: formData.occupationVersion,
-              occupationcode: formData.occupationCode,
-              description: formData.description,
-            }
+            uuid: formData.uuid,
+            country_id: formData.country,
+            occupationversion_id: formData.occupationVersion,
+            occupationcode: formData.occupationCode,
+            description: formData.description,
+          }
           : {
-              country_id: formData.country,
-              occupationversion_id: formData.occupationVersion,
-              occupationcode: formData.occupationCode,
-              description: formData.description,
-            };
+            country_id: formData.country,
+            occupationversion_id: formData.occupationVersion,
+            occupationcode: formData.occupationCode,
+            description: formData.description,
+          };
 
       setLoading(true);
 
@@ -213,8 +213,8 @@ const AddEditOccupationCode = ({
           <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
             <h1 className="modal-title fs-5" id="departmentModalLabel">
               {mode === "edit"
-                ? "Edit Occupation Level"
-                : "Add Occupation Level"}
+                ? "Edit Occupation Code"
+                : "Add Occupation Code"}
             </h1>
             <button
               type="button"
@@ -224,22 +224,23 @@ const AddEditOccupationCode = ({
             />
           </div>
 
-          <div className="modal-body p-24 pt-10">
+          <div className="modal-body ">
             <form onSubmit={handleSubmit}>
-              <div className="row">
-                {/* Department Name */}
-                <div className="col-12 mb-10">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Country<span className="text-danger">*</span>
-                  </label>
-                  <Select
-                    options={countryData.map((option) => ({
-                      value: option.uuid,
-                      label: option.name + " (" + option?.continent?.name + ")",
-                    }))}
-                    value={
-                      formData.country
-                        ? countryData
+              <div className="">
+                <div className='row modal-scrollable-content'>
+                  {/* Department Name */}
+                  <div className="col-12 mb-10">
+                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                      Country<span className="text-danger">*</span>
+                    </label>
+                    <Select
+                      options={countryData.map((option) => ({
+                        value: option.uuid,
+                        label: option.name + " (" + option?.continent?.name + ")",
+                      }))}
+                      value={
+                        formData.country
+                          ? countryData
                             .map((option) => ({
                               value: option.uuid,
                               label:
@@ -249,43 +250,42 @@ const AddEditOccupationCode = ({
                                 ")",
                             }))
                             .find((opt) => opt.value === formData.country)
-                        : null
-                    }
-                    onChange={(selectedOption) =>
-                      handleChange({
-                        target: {
-                          name: "country",
-                          value: selectedOption ? selectedOption.value : "",
-                        },
-                      })
-                    }
-                    placeholder="Select country"
-                    filterOption={customFilterOptionCountry}
-                    isClearable
-                    isSearchable
-                    className={`custom-select-container ${
-                      errors.country ? "is-invalid" : ""
-                    }`}
-                    classNamePrefix="custom-select"
-                  />
-                  {errors.country && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.country}
-                    </div>
-                  )}
-                </div>
-                <div className="col-12 mb-10">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Occupation Version<span className="text-danger">*</span>
-                  </label>
-                  <Select
-                    options={occupationversiondata.map((option) => ({
-                      value: option.uuid,
-                      label: option.occupation_version,
-                    }))}
-                    value={
-                      formData.occupationVersion
-                        ? occupationversiondata
+                          : null
+                      }
+                      onChange={(selectedOption) =>
+                        handleChange({
+                          target: {
+                            name: "country",
+                            value: selectedOption ? selectedOption.value : "",
+                          },
+                        })
+                      }
+                      placeholder="Select country"
+                      filterOption={customFilterOptionCountry}
+                      isClearable
+                      isSearchable
+                      className={`custom-select-container ${errors.country ? "is-invalid" : ""
+                        }`}
+                      classNamePrefix="custom-select"
+                    />
+                    {errors.country && (
+                      <div className="text-danger text-sm mt-1">
+                        {errors.country}
+                      </div>
+                    )}
+                  </div>
+                  <div className="col-12 mb-10">
+                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                      Occupation Version<span className="text-danger">*</span>
+                    </label>
+                    <Select
+                      options={occupationversiondata.map((option) => ({
+                        value: option.uuid,
+                        label: option.occupation_version,
+                      }))}
+                      value={
+                        formData.occupationVersion
+                          ? occupationversiondata
                             .map((option) => ({
                               value: option.uuid,
                               label: option.occupation_version,
@@ -293,71 +293,69 @@ const AddEditOccupationCode = ({
                             .find(
                               (opt) => opt.value === formData.occupationVersion
                             )
-                        : null
-                    }
-                    onChange={(selectedOption) =>
-                      handleChange({
-                        target: {
-                          name: "occupationVersion",
-                          value: selectedOption ? selectedOption.value : "",
-                        },
-                      })
-                    }
-                    placeholder="Select Occupation Version"
-                    isClearable
-                    isSearchable
-                    className={`custom-select-container ${
-                      errors.country ? "is-invalid" : ""
-                    }`}
-                    classNamePrefix="custom-select"
-                  />
-                  {errors.occupationVersion && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.occupationVersion}
-                    </div>
-                  )}
-                </div>
+                          : null
+                      }
+                      onChange={(selectedOption) =>
+                        handleChange({
+                          target: {
+                            name: "occupationVersion",
+                            value: selectedOption ? selectedOption.value : "",
+                          },
+                        })
+                      }
+                      placeholder="Select Occupation Version"
+                      isClearable
+                      isSearchable
+                      className={`custom-select-container ${errors.country ? "is-invalid" : ""
+                        }`}
+                      classNamePrefix="custom-select"
+                    />
+                    {errors.occupationVersion && (
+                      <div className="text-danger text-sm mt-1">
+                        {errors.occupationVersion}
+                      </div>
+                    )}
+                  </div>
 
-                <div className="col-12 mb-10">
-                  <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                    Occupation Code <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="occupationCode"
-                    value={formData.occupationLevelName}
-                    onChange={handleChange}
-                    className={`form-control radius-8 ${
-                      errors.occupationCode ? "is-invalid" : ""
-                    }`}
-                    placeholder="Enter Occupation Code"
-                  />
-                  {errors.occupationLevelName && (
-                    <div className="text-danger text-sm mt-1">
-                      {errors.occupationCode}
-                    </div>
-                  )}
-                </div>
-                {/* Description */}
-                <div className="col-12 mb-10">
-                  <label
-                    htmlFor="desc"
-                    className="form-label fw-semibold text-primary-light text-sm mb-0"
-                  >
-                    Description
-                  </label>
-                  <textarea
-                    className={`form-control ${
-                      errors.description ? "is-invalid" : ""
-                    }`}
-                    id="desc"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    rows={4}
-                    cols={50}
-                    placeholder="Description"
-                  />
+                  <div className="col-12 mb-10">
+                    <label className="form-label fw-semibold text-primary-light text-sm mb-0">
+                      Occupation Code <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="occupationCode"
+                      value={formData.occupationLevelName}
+                      onChange={handleChange}
+                      className={`form-control radius-8 ${errors.occupationCode ? "is-invalid" : ""
+                        }`}
+                      placeholder="Enter Occupation Code"
+                    />
+                    {errors.occupationLevelName && (
+                      <div className="text-danger text-sm mt-1">
+                        {errors.occupationCode}
+                      </div>
+                    )}
+                  </div>
+                  {/* Description */}
+                  <div className="col-12 mb-10">
+                    <label
+                      htmlFor="desc"
+                      className="form-label fw-semibold text-primary-light text-sm mb-0"
+                    >
+                      Description
+                    </label>
+                    <textarea
+                      className={`form-control ${errors.description ? "is-invalid" : ""
+                        }`}
+                      id="desc"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      rows={4}
+                      cols={50}
+                      placeholder="Description"
+                    />
+                  </div>
                 </div>
                 {/* Buttons */}
                 <div className="d-flex align-items-center justify-content-center gap-3 mt-24">

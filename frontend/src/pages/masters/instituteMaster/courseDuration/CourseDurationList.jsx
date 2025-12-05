@@ -674,7 +674,7 @@ const CourseDurationList = () => {
       "Course Duration Value": "valid_duration_value",
       "Course Duration Unit": "valid_duration_unit",
       "Modified On": "updated_at",
-      Description: "description",
+      "Description": "description",
     };
 
     const mappedFields = selectedItems.map(

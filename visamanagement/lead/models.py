@@ -416,3 +416,67 @@ class documents(models.Model):
 
 
 
+class Networth(models.Model):
+    uuid = models.UUIDField(primary_key=True,default=uuid.uuid4, editable=False, unique=True)
+
+    applicant = models.ForeignKey(
+        Applicant,
+        on_delete=models.CASCADE,
+        related_name="networth"
+    )
+
+    applicant_type = models.ForeignKey(ApplicantType, on_delete=models.SET_NULL, null=True, related_name="networth")
+
+    country = models.ForeignKey(Country, on_delete=models.SET_NULL, null=True, related_name="networths_as_country")
+    currency = models.ForeignKey(Country, on_delete=models.SET_NULL, null=True, related_name="networths_as_currency")
+
+    immovable_property = models.DecimalField(max_digits=12, decimal_places=2)
+    movable_property = models.DecimalField(max_digits=12, decimal_places=2)
+    liquid_amount = models.DecimalField(max_digits=12, decimal_places=2)
+
+    total_networth = models.DecimalField(max_digits=12, decimal_places=2)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.applicant}"
+
+
+class EligibilityFlags(models.Model):
+    uuid = models.UUIDField(primary_key=True,default=uuid.uuid4, editable=False, unique=True)
+    applicant = models.OneToOneField(
+        Applicant,
+        on_delete=models.CASCADE,
+        related_name="eligibility_flags"
+    )
+
+    trade_certificate = models.BooleanField(default=False)
+    educational_credential_assessment = models.BooleanField(default=False)
+    ita_province = models.BooleanField(default=False)
+    tech_startup_founder = models.BooleanField(default=False)
+    reside_outside_greater_city = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.applicant}"
+ 
+
+class SpouseEducationlead(models.Model):
+    uuid = models.UUIDField(primary_key=True,default=uuid.uuid4, editable=False, unique=True)
+    applicant = models.ForeignKey(Applicant,on_delete=models.CASCADE,related_name='spio')
+    education_level = models.ForeignKey(EducationLevel,on_delete=models.SET_NULL, null=True, related_name='education_level')
+    duration = models.ForeignKey(EducationDuration,on_delete=models.SET_NULL,null=True,related_name='duration')
+    study_main_area = models.ForeignKey(Studymainarea,on_delete=models.SET_NULL,null=True,related_name='study_main_area')
+    edu_type = models.ForeignKey(EducationType,on_delete=models.SET_NULL,null=True,related_name='education_type')
+
+    start_date = models.DateField(null=True,blank=True)
+    end_date = models.DateField(null=True,blank=True)
+    result = models.CharField(max_length=50,null=True,blank=True)
+    
+    def __str__(self):
+        return f"{self.applicant}"
+        
+        

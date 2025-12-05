@@ -362,13 +362,19 @@ const SpouseWorkRightsList = () => {
     };
 
     const confirmDelete = () => {
-        // const sendPayload = isAllSelected ? "all" : deleteId ? [deleteId] : selectedRows;
-        const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
+        const sendPayload =
+            selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
         if (!sendPayload || sendPayload.length === 0) {
-            toast.error("No Spouse Work Rights selected for deletion.");
+            toast.error("No department selected for deletion.");
             return;
         }
-        dispatch(spouseWorkRightsDelete(sendPayload, (response, error) => {
+        const deleteAll = selectAllOrNot === "all" && Boolean(tableState.search?.trim());
+        const payloadSend = {
+            deleteAll: deleteAll,
+            id: deleteAll == true ? "" : sendPayload,
+            search: tableState.search || '',
+        };
+        dispatch(spouseWorkRightsDelete(payloadSend, (response, error) => {
             if (error) {
                 toast.error(error?.response?.data?.message || "server error");
             } else {
@@ -380,7 +386,8 @@ const SpouseWorkRightsList = () => {
                     setSelectedRows([]);
                     setSelectAllOrNot('');
                     setDeleteId(null);
-                    fetchDepartmentList();
+                    // fetchDepartmentList();
+                     clearAllFilters();
                 } else {
                     toast.error("Something went wrong.");
                 }
@@ -805,7 +812,7 @@ const SpouseWorkRightsList = () => {
                                 </tbody>
                             </table>
 
-                         
+
                         </div>
                     </div>
                 </div>

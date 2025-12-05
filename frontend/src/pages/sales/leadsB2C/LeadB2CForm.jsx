@@ -32,11 +32,11 @@ const LeadB2CForm = () => {
   };
 
   const mainTabBtnClass = (tab) =>
-  `btn btn-sm px-3 py-1 fw-medium ${
-    activeMainTab === tab
-      ? "comman-btn-color text-white"
-      : "bg-white text-primary-600 border border-primary-600"
-  }`;
+    `btn btn-sm px-3 py-1 fw-medium ${
+      activeMainTab === tab
+        ? "comman-btn-color text-white"
+        : "bg-white text-primary-600 border border-primary-600"
+    }`;
 
   const renderActiveTab = () => {
     switch (activeMainTab) {
@@ -223,17 +223,14 @@ const LeadB2CForm = () => {
     <MasterLayout>
       <style jsx>{`
         .lead-stat-box {
-          border: 1px solid #d5d5d5;
-          padding: 8px 12px;
           display: flex;
           align-items: center;
           gap: 8px;
           background: white;
-          border-radius: 4px;
         }
 
         .section-block {
-          padding: 10px 12px;
+          padding: 35px;
         }
       `}</style>
 
@@ -254,28 +251,57 @@ const LeadB2CForm = () => {
               </button>
             </div>
 
-            <div className="d-flex align-items-center gap-3 flex-wrap">
-              <div className="lead-stat-box d-flex gap-2 align-items-center px-3 py-2 rounded-3 shadow-sm bg-white">
-                <p className=" fw-medium mb-0">04</p>
+            <div className="d-flex align-items-center gap-3 flex-wrap h-100">
+              <div className="lead-stat-box d-flex gap-2 align-items-center px-3 bg-white">
+                <p className=" fw-bold fs-5 mb-0">04</p>
                 <span className="">Quick Assessment</span>
               </div>
 
-              <div className=" lead-stat-box d-flex gap-2 align-items-center px-3 py-2 rounded-3 shadow-sm bg-white">
-                <p className=" fw-medium mb-0">12</p>
+              <div className="lead-stat-box d-flex gap-2 align-items-center px-3 bg-white">
+                <p className=" fw-bold fs-5 mb-0">24</p>
                 <span className="">Schedule Meeting</span>
               </div>
 
-              <div className=" lead-stat-box d-flex gap-2 align-items-center px-3 py-2 rounded-3 shadow-sm bg-white">
-                <p className=" fw-medium mb-0">20</p>
+              <div className="lead-stat-box d-flex gap-2 align-items-center px-3 bg-white">
+                <p className=" fw-bold fs-5 mb-0">12</p>
                 <span className="">Follow Ups</span>
               </div>
-              <div
+
+              {/* <div className="d-flex align-items-center ">
+                <button type="button">
+                  <Icon icon="mdi:chevron-left" width="25" height="25" />
+                </button>
+
+                <p className="mb-0">02/30</p>
+
+                <button type="button">
+                  <Icon icon="mdi:chevron-right" width="25" height="25" />
+                </button>
+              </div>
+              <div className="d-flex align-items-center gap-2">
+                <Icon
+                  icon="mdi:whatsapp"
+                  className="cursor-pointer"
+                  width="30"
+                />
+                <Icon
+                  icon="material-symbols:mail-outline"
+                  className="cursor-pointer"
+                  width="30"
+                />
+                <Icon
+                  icon="material-symbols:sms-outline"
+                  className="cursor-pointer"
+                  width="30"
+                />
+              </div> */}
+              {/* <div
                 style={{ cursor: "pointer" }}
                 data-bs-toggle="offcanvas"
                 data-bs-target="#leadSidebar"
               >
                 <Icon icon="material-symbols:menu" width="30" />
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
@@ -620,7 +646,7 @@ const LeadB2CForm = () => {
         <div className="card-body pt-0 container-table">
           <div className="container-table-div ">
             {activeMainTab === "basic" && (
-              <div className="section-block mb-3 no-overflow compact-inputs">
+              <div className="section-block  no-overflow compact-inputs">
                 <div className="row gx-5">
                   <div className="col-md-4">
                     <label className="form-label">Lead Date &amp; Time</label>
@@ -649,7 +675,6 @@ const LeadB2CForm = () => {
 
                   <div className="col-md-4">
                     <label className="form-label">Lead For</label>
-
                     <Select
                       options={leadForOptions}
                       value={leadForOptions.find((o) => o.value === leadFor)}
@@ -657,7 +682,8 @@ const LeadB2CForm = () => {
                       placeholder="Select"
                       isClearable
                       classNamePrefix="custom-select"
-                      className={`custom-select-container`}
+                      menuPortalTarget={document.body}
+                      className="custom-select-portal"
                     />
                   </div>
                 </div>

@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from "react-redux";
-import { processSubStatusNameAdd, processSubStatusNameEdit } from "../../../../store/master/visaProcessMaster/action";
+import { processSubStatusNameAdd, processSubStatusNameEdit, processStatusNameList } from "../../../../store/master/visaProcessMaster/action";
 import { toast } from "react-toastify";
 import Select from "react-select";
 import { representingCountryList } from "../../../../store/master/occupationMaster/action";
+import { visaMainCategoryList } from "../../../../store/master/visaConditionsMaster/action";
 const AddEditProcessSubStatusNameModal = ({ show, handleClose, mode = 'add', rowData = null }) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
     const [representinfCountry, setRepresentingCountry] = useState([]);
+    const [visaMainCategory, setVisaMainCategory] = useState([]);
+    const [processStatusName, setProcessStatusName] = useState([]);
     // Form state
     const [formData, setFormData] = useState({
         uuid: '',
@@ -59,12 +62,24 @@ const AddEditProcessSubStatusNameModal = ({ show, handleClose, mode = 'add', row
             limit: 2000,
             search: '',
             status: '',
-            sortBy: 'updated_at', // Field to sort by
-            sortOrder: 'desc', // 'asc' or 'desc'
+            sortBy: 'name', // Field to sort by
+            sortOrder: 'asc', // 'asc' or 'desc'
         };
         dispatch(representingCountryList(params, (response, error) => {
             if (response?.statusCode === 200 && response?.status === true) {
                 setRepresentingCountry(response?.data || []);
+
+            }
+        }));
+        dispatch(visaMainCategoryList(params, (response, error) => {
+            if (response?.statusCode === 200 && response?.status === true) {
+                setVisaMainCategory(response?.data || []);
+
+            }
+        }));
+        dispatch(processStatusNameList(params, (response, error) => {
+            if (response?.statusCode === 200 && response?.status === true) {
+                setProcessStatusName(response?.data || []);
 
             }
         }));
@@ -193,7 +208,7 @@ const AddEditProcessSubStatusNameModal = ({ show, handleClose, mode = 'add', row
                 <div className="modal-content radius-16 bg-base">
                     <div className="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
                         <h1 className="modal-title fs-5" id="departmentModalLabel">
-                            {mode === 'edit' ? 'Edit Required Documents(General)' : 'Add Required Documents(General)'}
+                            {mode === 'edit' ? 'Edit Process Sub Status Name' : 'Add Process Sub Status Name'}
                         </h1>
                         <button
                             type="button"
@@ -209,7 +224,7 @@ const AddEditProcessSubStatusNameModal = ({ show, handleClose, mode = 'add', row
                                 {/* Department Name */}
                                 <div className="col-12 mb-10">
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                                        Country
+                                        Country <span className="text-danger">*</span>
                                     </label>
                                     <Select
                                         options={representinfCountry.map((option) => ({
@@ -249,15 +264,37 @@ const AddEditProcessSubStatusNameModal = ({ show, handleClose, mode = 'add', row
                                 </div>
                                 <div className="col-12 mb-10">
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                                        Visa Main Category
+                                        Visa Main Category <span className="text-danger">*</span>
                                     </label>
-                                    <input
-                                        type="text"
-                                        name="visaMain"
-                                        value={formData.visaMain}
-                                        onChange={handleChange}
-                                        className={`form-control radius-8 ${errors.visaMain ? 'is-invalid' : ''}`}
-                                        placeholder="Enter visa main category"
+                                    <Select
+                                        options={visaMainCategory.map((option) => ({
+                                            value: option.uuid,
+                                            label: option.name,
+                                        }))}
+                                        value={
+                                            formData.visaMain
+                                                ? visaMainCategory
+                                                    .map((option) => ({
+                                                        value: option.uuid,
+                                                        label: option.name,
+                                                    }))
+                                                    .find((opt) => opt.value === formData.visaMain)
+                                                : null
+                                        }
+                                        onChange={(selectedOption) =>
+                                            handleChange({
+                                                target: {
+                                                    name: "visaMain",
+                                                    value: selectedOption ? selectedOption.value : "",
+                                                },
+                                            })
+                                        }
+                                        placeholder="Select Visa Main Category"
+                                        isClearable
+                                        isSearchable
+                                        className={`custom-select-container ${errors.visaMain ? "is-invalid" : ""
+                                            }`}
+                                        classNamePrefix="custom-select"
                                     />
                                     {errors.visaMain && (
                                         <div className="text-danger text-sm mt-1">
@@ -267,15 +304,45 @@ const AddEditProcessSubStatusNameModal = ({ show, handleClose, mode = 'add', row
                                 </div>
                                 <div className="col-12 mb-10">
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                                        Process Status Name
+                                        Process Status Name <span className="text-danger">*</span>
                                     </label>
-                                    <input
+                                    {/* <input
                                         type="text"
                                         name="processStatus"
                                         value={formData.processStatus}
                                         onChange={handleChange}
                                         className={`form-control radius-8 ${errors.processStatus ? 'is-invalid' : ''}`}
                                         placeholder="Enter process status name"
+                                    /> */}
+                                    <Select
+                                        options={processStatusName.map((option) => ({
+                                            value: option.uuid,
+                                            label: option.name,
+                                        }))}
+                                        value={
+                                            formData.processStatus
+                                                ? processStatusName
+                                                    .map((option) => ({
+                                                        value: option.uuid,
+                                                        label: option.name,
+                                                    }))
+                                                    .find((opt) => opt.value === formData.processStatus)
+                                                : null
+                                        }
+                                        onChange={(selectedOption) =>
+                                            handleChange({
+                                                target: {
+                                                    name: "processStatus",
+                                                    value: selectedOption ? selectedOption.value : "",
+                                                },
+                                            })
+                                        }
+                                        placeholder="Select ProcessStatus Name"
+                                        isClearable
+                                        isSearchable
+                                        className={`custom-select-container ${errors.processStatus ? "is-invalid" : ""
+                                            }`}
+                                        classNamePrefix="custom-select"
                                     />
                                     {errors.processStatus && (
                                         <div className="text-danger text-sm mt-1">
@@ -285,7 +352,7 @@ const AddEditProcessSubStatusNameModal = ({ show, handleClose, mode = 'add', row
                                 </div>
                                 <div className="col-12 mb-10">
                                     <label className="form-label fw-semibold text-primary-light text-sm mb-0">
-                                        Process Sub-Status Name
+                                        Process Sub-Status Name <span className="text-danger">*</span>
                                     </label>
                                     <input
                                         type="text"

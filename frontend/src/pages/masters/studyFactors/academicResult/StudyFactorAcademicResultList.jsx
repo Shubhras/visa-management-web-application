@@ -575,7 +575,7 @@ const StudyFactorAcademicResultList = () => {
           setSelectAllOrNot('');
           setDeleteId(null);
           // fetchDepartmentList();
-            clearAllFilters();
+          clearAllFilters();
         } else {
           toast.error("Something went wrong.");
         }

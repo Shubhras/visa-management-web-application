@@ -113,7 +113,7 @@ const VisaMajorCategoryList = () => {
     return options.filter(o =>
       String(o.name ?? '').toLowerCase().startsWith(searchTerm)
     )
-    .sort((a, b) => a.name.localeCompare(b.name));
+      .sort((a, b) => a.name.localeCompare(b.name));
   }
 
   const clearAllOnlyHeaderFilters = () => setColumnFilters({ representingCountry: [], visaMainCategory: [], })
@@ -474,10 +474,20 @@ const VisaMajorCategoryList = () => {
   const confirmDelete = () => {
     const sendPayload = selectAllOrNot === "all" ? "all" : deleteId ? [deleteId] : selectedRows;
     if (!sendPayload || sendPayload.length === 0) {
-      toast.error("No Visa Major Category selected for deletion.");
+      toast.error("No Study specialisation selected for deletion.");
       return;
     }
-    dispatch(visaMajorCategoryDelete(sendPayload, (response, error) => {
+    const deleteAll = selectAllOrNot === "all" && ((tableState.search && tableState.search.trim() !== '') ||
+      columnFilters.representingCountry.length > 0 ||
+      columnFilters.visaMainCategory.length > 0);
+    const payloadSend = {
+      deleteAll: deleteAll,
+      representingCountry: columnFilters.representingCountry.length > 0 ? columnFilters.representingCountry : '',
+      visaMainCategory: columnFilters.visaMainCategory.length > 0 ? columnFilters.visaMainCategory : '',
+      id: deleteAll == true ? "" : sendPayload,
+      search: tableState.search || '',
+    };
+    dispatch(visaMajorCategoryDelete(payloadSend, (response, error) => {
       if (error) {
         toast.error(error?.response?.data?.message || "server error");
       } else {
@@ -489,7 +499,8 @@ const VisaMajorCategoryList = () => {
           setSelectedRows([]);
           setSelectAllOrNot('');
           setDeleteId(null);
-          fetchDepartmentList();
+          // fetchDepartmentList();
+           clearAllFilters();
         } else {
           toast.error("Something went wrong.");
         }

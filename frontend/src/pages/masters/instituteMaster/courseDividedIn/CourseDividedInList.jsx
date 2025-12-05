@@ -13,7 +13,7 @@ import { useGlobalSearch } from '../../../../components/comman/GlobalSearchConte
 import ResetButton from '../../../../components/comman/ResetButton';
 const CourseDividedInList = () => {
     const dispatch = useDispatch();
-     const { globalSearch, setGlobalSearch } = useGlobalSearch();
+    const { globalSearch, setGlobalSearch } = useGlobalSearch();
     const [modalState, setModalState] = useState({
         show: false,
         mode: 'add', // 'add' or 'edit'
@@ -371,11 +371,11 @@ const CourseDividedInList = () => {
             return;
         }
         const deleteAll = selectAllOrNot === "all" && Boolean(tableState.search?.trim());
-    const payloadSend = {
-      deleteAll: deleteAll,
-      id: deleteAll == true ? "" : sendPayload,
-      search: tableState.search || '',
-    };
+        const payloadSend = {
+            deleteAll: deleteAll,
+            id: deleteAll == true ? "" : sendPayload,
+            search: tableState.search || '',
+        };
         dispatch(courseDividedInDelete(payloadSend, (response, error) => {
             if (error) {
                 toast.error(error?.response?.data?.message || "server error");
