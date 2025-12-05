@@ -1609,8 +1609,8 @@ class JobProspectSerializer(serializers.ModelSerializer):
 
 class RepresentingCountrySerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='country.name', read_only=True)
-    largest_state_name = serializers.CharField(source='largest_state.stateName', read_only=True)
-    smallest_state_name = serializers.CharField(source='smallest_state.stateName', read_only=True)
+    largest_state_name = serializers.CharField(source='largest_state.stateName', read_only=True, required=False)
+    smallest_state_name = serializers.CharField(source='smallest_state.stateName', read_only=True, required=False)
     # largest_city_name = serializers.CharField(source='largest_city.name', read_only=True)
 
     class Meta:

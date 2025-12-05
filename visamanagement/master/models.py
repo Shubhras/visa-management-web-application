@@ -1155,6 +1155,8 @@ class OccupationCategory(models.Model):
     def __str__(self):
         return self.occupationcategory
     
+
+
 class OccupationLevelCode(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -1378,7 +1380,7 @@ class RepresentingCountry(models.Model):
     independence_day = models.DateField(blank=True, null=True)
     government_type = models.CharField(max_length=255, blank=True, null=True)
     official_language = models.CharField(max_length=255, blank=True, null=True)
-    largest_state = models.ForeignKey('State', on_delete=models.PROTECT, related_name='representations')
+    largest_state = models.ForeignKey('State', on_delete=models.PROTECT, related_name='representations',blank=True, null=True)
     smallest_state = models.ForeignKey('State', on_delete=models.PROTECT, related_name='representations_small_state',blank=True, null=True)
     # largest_city = models.ForeignKey('City', on_delete=models.PROTECT, related_name='representations',blank=True, null=True)
     major_cities = models.TextField(blank=True, null=True)

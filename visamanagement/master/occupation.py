@@ -72,7 +72,7 @@ class JobTypeListAPIView(APIView):
         queryset = JobType.objects.filter(is_deleted=False)
 
         # ----------------------------------------
-        # 🔍 Search filter
+        #  Search filter
         # ----------------------------------------
         if search:
             queryset = queryset.filter(Q(name__istartswith=search))
@@ -654,7 +654,7 @@ class ModeofSalaryListAPIView(APIView):
         queryset = ModeofSalary.objects.filter(is_deleted=False)
 
         # ----------------------------------------
-        # 🔍 Search filter
+        #  Search filter
         # ----------------------------------------
         if search:
             queryset = queryset.filter(Q(name__istartswith=search))
@@ -1280,7 +1280,7 @@ class ITReturnStatusListAPIView(APIView):
         queryset = ITReturnStatus.objects.filter(is_deleted=False)
 
         # ----------------------------------------
-        # 🔍 Search filter
+        #  Search filter
         # ----------------------------------------
         if search:
             queryset = queryset.filter(Q(name__istartswith=search))
@@ -2393,30 +2393,134 @@ class OccupationVersionImportAPIView(APIView):
         }, status=200)
 
 
+# class OccupationCategoryListAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')
+#         allowed_sort_fields = ['occupationcategory', 'occupationcategorycode', 'created_at']
+
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = 'created_at'
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
+
+#         queryset = OccupationCategory.objects.filter(is_deleted=False)
+#         if search:
+#             queryset = queryset.filter(
+#                 Q(occupationcategory__istartswith=search) |
+#                 Q(occupationcategorycode__istartswith=search) |
+#                 Q(country__country_name__istartswith=search) |
+#                 Q(occupation_version__occupation_version__istartswith=search)
+#             )
+
+#         queryset = queryset.order_by(sort_by)
+#         paginator = CustomPagination()
+#         result_page = paginator.paginate_queryset(queryset, request)
+#         serializer = OccupationCategorySerializer(result_page, many=True)
+#         return paginator.get_paginated_response(serializer.data)
+
+
 class OccupationCategoryListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
+        custom_sort = request.GET.get('customSort')
         sort_by = request.GET.get('sortBy', 'created_at')
         sort_order = request.GET.get('sortOrder', 'desc')
-        allowed_sort_fields = ['occupationcategory', 'occupationcategorycode', 'created_at']
 
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        # Allowed sortable fields
+        allowed_sort_fields = [
+            'occupationcategory', 'occupationcategorycode', 'created_at', 'updated_at', 'occupation_version'
+        ]
 
         queryset = OccupationCategory.objects.filter(is_deleted=False)
+
+        # ---------------------------
+        # UUID Filtering (optional)
+        # ---------------------------
+
+        def parse_uuid_list(param):
+            raw = request.GET.get(param, "")
+            final = []
+            if raw:
+                for x in raw.split(","):
+                    try:
+                        final.append(UUID(x.strip()))
+                    except:
+                        pass
+            return final
+
+        occupationVersion_uuid_list = parse_uuid_list("occupationVersion")
+        representing_country_uuids = parse_uuid_list("representingCountry")
+
+        if occupationVersion_uuid_list:
+            queryset = queryset.filter(occupationversion__uuid__in=occupationVersion_uuid_list)
+        
+        if representing_country_uuids:
+            queryset = queryset.filter(country__uuid__in=representing_country_uuids)
+        
+        # ---------------------------
+        # Search Filter
+        # ---------------------------
         if search:
             queryset = queryset.filter(
-                Q(occupationcategory__istartswith=search) |
-                Q(occupationcategorycode__istartswith=search) |
-                Q(country__country_name__istartswith=search) |
-                Q(occupation_version__occupation_version__istartswith=search)
+                Q(occupationcategory__istartswith=search)
             )
 
-        queryset = queryset.order_by(sort_by)
+        # ---------------------------
+        # Sorting
+        # ---------------------------
+        sort_field_map = {
+            'name': 'occupationcategory',
+            'occupationcategorycode': 'occupationcategorycode',
+            'representingCountry': 'country__full_name',
+            'description':'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+            'occupationVersion': 'occupationversion__occupation_version'
+        }
+
+        sort_fields = []
+
+        # Custom multi-column sort
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive for string fields
+                    if field in ['name', 'occupationcategorycode', 'representingCountry', 'description', 'occupationVersion']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True))
+                except ValueError:
+                    continue
+        else:
+            # Default fallback sort
+            if sort_by not in sort_field_map:
+                sort_by = 'created_at'
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+            sort_fields = [f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ---------------------------
+        # Pagination
+        # ---------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = OccupationCategorySerializer(result_page, many=True)
@@ -2772,67 +2876,261 @@ class OccupationCategoryDeleteAPIView(APIView):
 
 
 # -------------------- Export -------------------- #
+# class OccupationCategoryExportAPIView(APIView):
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def get(self, request):
+#         format_type = request.GET.get('format', 'xlsx').lower()
+#         fields = request.GET.get('fields')
+#         uuids_param = request.GET.get('uuids', '')
+#         uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+#         field_header_map = {
+#             'uuid': 'UUID',
+#             'country': 'Country',
+#             'occupation_version': 'Occupation Version',
+#             'occupationcategory': 'Occupation Category',
+#             'occupationcategorycode': 'Category Code',
+#             'description': 'Description',
+#             'is_deleted': 'Deleted',
+#             'created_at': 'Created On',
+#             'updated_at': 'Modified On',
+#         }
+
+#         field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
+#         queryset = OccupationCategory.objects.filter(is_deleted=False)
+#         if uuids:
+#             queryset = queryset.filter(uuid__in=uuids)
+#         queryset = queryset.order_by('-created_at')
+
+#         dataset = Dataset()
+#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+#         dataset.title = 'Occupation Categories'
+
+#         for obj in queryset:
+#             row = []
+#             for field in field_list:
+#                 value = getattr(obj, field, '')
+#                 if field == 'country' and value:
+#                         value = value.full_name 
+#                 elif field == 'occupation_version' and value:
+#                     value = value.occupation_version
+#                 elif field in ['created_at', 'updated_at'] and value:
+#                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+#                 elif isinstance(value, bool):
+#                     value = int(value)
+#                 row.append(value if value is not None else '')
+#             dataset.append(row)
+
+#         if format_type == 'csv':
+#             file_data = dataset.export('csv')
+#             content_type = 'text/csv'
+#             file_name = 'occupation_categories.csv'
+#         else:
+#             file_data = io.BytesIO(dataset.export('xlsx'))
+#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+#             file_name = 'occupation_categories.xlsx'
+
+#         response = HttpResponse(
+#             file_data if format_type == 'csv' else file_data.getvalue(),
+#             content_type=content_type
+#         )
+#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+#         return response
+
+
 class OccupationCategoryExportAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
-        format_type = request.GET.get('format', 'xlsx').lower()
-        fields = request.GET.get('fields')
-        uuids_param = request.GET.get('uuids', '')
-        uuids = [u.strip() for u in uuids_param.split(',') if u]
+        format_type = request.GET.get("format", "xlsx").lower()
+        fields = request.GET.get("fields")
+        search = request.GET.get("search", "").strip()
+        custom_sort = request.GET.get("customSort")
 
+        # ------------------ Field Header Mapping ------------------
         field_header_map = {
-            'uuid': 'UUID',
-            'country': 'Country',
-            'occupation_version': 'Occupation Version',
-            'occupationcategory': 'Occupation Category',
-            'occupationcategorycode': 'Category Code',
-            'description': 'Description',
-            'is_deleted': 'Deleted',
-            'created_at': 'Created On',
-            'updated_at': 'Modified On',
+            "uuid": "UUID",
+            "country": "Country",
+            "occupation_version": "Occupation Version",
+            "occupationcategory": "Occupation Category",
+            "occupationcategorycode": "Category Code",
+            "description": "Description",
+            "is_deleted": "Deleted",
+            "created_at": "Created On",
+            "updated_at": "Modified On",
         }
 
-        field_list = [f.strip() for f in fields.split(',')] if fields else list(field_header_map.keys())
-        queryset = OccupationCategory.objects.filter(is_deleted=False)
-        if uuids:
-            queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
+        # ------------------ Allowed Sorting Fields ------------------
+        allowed_sort_fields = {
+            "uuid": "uuid",
+            "representingCountry": "country__full_name",
+            "occupationVersion": "occupationversion__occupation_version",
+            "name": "occupationcategory",
+            "occupationcategorycode": "occupationcategorycode",
+            "description": "description",
+            "created_at": "created_at",
+            "updated_at": "updated_at",
+        }
 
+        # dataset fields
+        field_list = (
+            [f.strip() for f in fields.split(",")]
+            if fields else list(field_header_map.keys())
+        )
+
+        # --------------------------- UUID Helper ---------------------------
+        def parse_ids(param_name):
+            raw = request.GET.get(param_name, "")
+            if raw:
+                items = [x.strip() for x in raw.split(",") if x.strip()]
+            else:
+                items = request.GET.getlist(param_name)
+            return items
+
+        def validate_uuid_list(uuid_list):
+            final = []
+            for u in uuid_list:
+                try:
+                    final.append(UUID(u))
+                except:
+                    pass
+            return final
+
+        try:
+            representing_country_list = validate_uuid_list(parse_ids("representingCountry"))
+            occupation_version_list = validate_uuid_list(parse_ids("occupationVersion"))
+            uuids_list = validate_uuid_list(parse_ids("uuids"))
+        except ValueError as e:
+            return Response(
+                {"status": False, "statusCode": 400, "message": str(e)}, status=400
+            )
+
+        # ------------------ Queryset ------------------
+        queryset = (
+            OccupationCategory.objects.select_related("country", "occupationversion")
+            .filter(is_deleted=False)
+        )
+
+        # --------- Filter by UUIDs ---------
+        if uuids_list:
+            queryset = queryset.filter(uuid__in=uuids_list)
+
+        # --------- Filter by representing country ---------
+        if representing_country_list:
+            queryset = queryset.filter(country__uuid__in=representing_country_list)
+
+        # --------- Filter by occupation version ---------
+        if occupation_version_list:
+            queryset = queryset.filter(occupationversion__uuid__in=occupation_version_list)
+
+        # --------- Search ---------
+        if search:
+            queryset = queryset.filter(
+                Q(occupationcategory__icontains=search)
+            )
+
+        # ------------------ Custom Sort Logic ------------------
+        sort_fields = []
+
+        if custom_sort:
+            for rule in custom_sort.split(","):
+                try:
+                    field, order = rule.split(":")
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in allowed_sort_fields:
+                        continue
+
+                    orm_field = allowed_sort_fields[field]
+
+                    text_fields = [
+                        "representingCountry",
+                        "occupationVersion",
+                        "name",
+                        "occupationcategorycode",
+                        "description",
+                    ]
+
+                    is_text = field in text_fields
+
+                    sort_expr = Lower(orm_field) if is_text else F(orm_field)
+
+                    sort_fields.append(
+                        sort_expr.asc(nulls_last=True)
+                        if order == "asc"
+                        else sort_expr.desc(nulls_last=True)
+                    )
+
+                except ValueError:
+                    continue
+        else:
+            # Default sorting
+            sort_fields = [F("created_at").desc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ------------------ Dataset ------------------
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'Occupation Categories'
+        dataset.title = "OccupationCategories"
+
+        india_tz = pytz.timezone("Asia/Kolkata")
 
         for obj in queryset:
             row = []
+
             for field in field_list:
-                value = getattr(obj, field, '')
-                if field == 'country' and value:
-                        value = value.full_name 
-                elif field == 'occupation_version' and value:
-                    value = value.occupation_version
-                elif field in ['created_at', 'updated_at'] and value:
-                    value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
-                elif isinstance(value, bool):
+                if field == "country":
+                    value = obj.country.full_name if obj.country else ""
+
+                elif field == "occupation_version":
+                    value = (
+                        obj.occupation_version.occupation_version
+                        if obj.occupation_version
+                        else ""
+                    )
+
+                elif field in ["created_at", "updated_at"]:
+                    dt = getattr(obj, field)
+                    value = (
+                        timezone.localtime(dt, india_tz).strftime(
+                            "%d-%m-%Y %I:%M:%S %p"
+                        )
+                        if dt
+                        else ""
+                    )
+
+                else:
+                    value = getattr(obj, field, "")
+
+                # convert boolean to int for is_deleted
+                if isinstance(value, bool):
                     value = int(value)
-                row.append(value if value is not None else '')
+
+                row.append(value if value is not None else "")
+
             dataset.append(row)
 
-        if format_type == 'csv':
-            file_data = dataset.export('csv')
-            content_type = 'text/csv'
-            file_name = 'occupation_categories.csv'
+        # ------------------ Export ------------------
+        if format_type == "csv":
+            content_type = "text/csv"
+            file_data = dataset.export("csv")
+            filename = "occupation_categories.csv"
+            response_data = file_data
         else:
-            file_data = io.BytesIO(dataset.export('xlsx'))
-            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'occupation_categories.xlsx'
+            content_type = (
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+            file_data = io.BytesIO(dataset.export("xlsx"))
+            filename = "occupation_categories.xlsx"
+            response_data = file_data.getvalue()
 
-        response = HttpResponse(
-            file_data if format_type == 'csv' else file_data.getvalue(),
-            content_type=content_type
-        )
-        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        response = HttpResponse(response_data, content_type=content_type)
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
         return response
+
 
 
 # -------------------- Import -------------------- #
@@ -4338,7 +4636,7 @@ class OccupationTypeListAPIView(APIView):
         queryset = OccupationType.objects.filter(is_deleted=False)
 
         # ----------------------------------------
-        # 🔍 Search filter
+        #  Search filter
         # ----------------------------------------
         if search:
             queryset = queryset.filter(
@@ -4981,33 +5279,108 @@ class OccupationTypeImportAPIView(APIView):
     
 
 
+# class OccupationProspectListAPIView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def get(self, request):
+#         search = request.GET.get('search', '').strip()
+#         sort_by = request.GET.get('sortBy', 'created_at')
+#         sort_order = request.GET.get('sortOrder', 'desc')
+
+#         allowed_sort_fields = ['name', 'description', 'updated_at']
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = 'created_at'
+
+#         if sort_order == 'desc':
+#             sort_by = f'-{sort_by}'
+
+#         queryset = OccupationProspect.objects.filter(is_deleted=False)
+
+#         if search:
+#             queryset = queryset.filter(Q(name__istartswith=search))
+
+#         queryset = queryset.order_by(sort_by)
+
+#         paginator = CustomPagination()
+#         result_page = paginator.paginate_queryset(queryset, request)
+#         serializer = OccupationProspectSerializer(result_page, many=True)
+
+#         return paginator.get_paginated_response(serializer.data)
+
+
+
 class OccupationProspectListAPIView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]  # Add IsAdminUser if needed
 
     def get(self, request):
         search = request.GET.get('search', '').strip()
-        sort_by = request.GET.get('sortBy', 'created_at')
-        sort_order = request.GET.get('sortOrder', 'desc')
-
-        allowed_sort_fields = ['name', 'description', 'updated_at']
-        if sort_by not in allowed_sort_fields:
-            sort_by = 'created_at'
-
-        if sort_order == 'desc':
-            sort_by = f'-{sort_by}'
+        custom_sort = request.GET.get('customSort')
+        
+        allowed_sort_fields = ['name', 'description', 'created_at', 'updated_at']
 
         queryset = OccupationProspect.objects.filter(is_deleted=False)
 
+        # ---------------------------
+        # 🔍 Search filter
+        # ---------------------------
         if search:
             queryset = queryset.filter(Q(name__istartswith=search))
 
-        queryset = queryset.order_by(sort_by)
+        # ---------------------------
+        # 🔽 Sorting logic
+        # ---------------------------
+        sort_field_map = {
+            'name': 'name',
+            'description': 'description',
+            'created_at': 'created_at',
+            'updated_at': 'updated_at',
+        }
 
+        sort_fields = []
+
+        if custom_sort:
+            for rule in custom_sort.split(','):
+                try:
+                    field, order = rule.split(':')
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+
+                    # Case-insensitive sorting for string fields
+                    if field in ['name', 'description']:
+                        f = Lower(orm_field)
+                    else:
+                        f = F(orm_field)
+
+                    sort_fields.append(
+                        f.asc(nulls_last=True) if order == 'asc' else f.desc(nulls_last=True)
+                    )
+
+                except ValueError:
+                    continue
+        else:
+            # Fallback sorting
+            sort_by = request.GET.get('sortBy', 'created_at')
+            sort_order = request.GET.get('sortOrder', 'asc')
+            orm_field = sort_field_map.get(sort_by, 'created_at')
+            f = F(orm_field)
+            sort_fields = [f.asc(nulls_last=True) if sort_order == 'asc' else f.desc(nulls_last=True)]
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # ---------------------------
+        # 📄 Pagination
+        # ---------------------------
         paginator = CustomPagination()
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = OccupationProspectSerializer(result_page, many=True)
-
         return paginator.get_paginated_response(serializer.data)
+    
+
 
 
 # -------------------- CREATE API --------------------
@@ -5255,64 +5628,186 @@ class OccupationProspectDeleteAPIView(APIView):
 
 
 # -------------------- EXPORT API --------------------
+# class OccupationProspectExportAPIView(APIView):
+
+#     def get(self, request):
+#         format_type = request.GET.get('format', 'xlsx').lower()
+#         fields = request.GET.get('fields')
+#         uuids_param = request.GET.get('uuids', '')
+
+#         uuids = [u.strip() for u in uuids_param.split(',') if u]
+
+#         field_header_map = {
+#             'uuid': 'UUID',
+#             'name': 'Occupation Prospect',
+#             'description': 'Description',
+#             'is_deleted': 'Deleted',
+#             'updated_at': 'Modified On',
+#         }
+
+#         if fields:
+#             field_list = [f.strip() for f in fields.split(',')]
+#         else:
+#             field_list = list(field_header_map.keys())
+
+#         queryset = OccupationProspect.objects.filter(is_deleted=False)
+#         if uuids:
+#             queryset = queryset.filter(uuid__in=uuids)
+#         queryset = queryset.order_by('-created_at')
+
+#         dataset = Dataset()
+#         dataset.headers = [field_header_map.get(f, f) for f in field_list]
+#         dataset.title = 'OccupationProspect'
+
+#         for obj in queryset:
+#             row = []
+#             for field in field_list:
+#                 value = getattr(obj, field, '')
+#                 if field in ['created_at', 'updated_at'] and value:
+#                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+#                 elif isinstance(value, bool):
+#                     value = int(value)
+#                 row.append(value if value is not None else '')
+#             dataset.append(row)
+
+#         if format_type == 'csv':
+#             file_data = dataset.export('csv')
+#             content_type = 'text/csv'
+#             file_name = 'occupation_prospects.csv'
+#         else:
+#             file_data = io.BytesIO(dataset.export('xlsx'))
+#             content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+#             file_name = 'occupation_prospects.xlsx'
+
+#         response = HttpResponse(
+#             file_data if format_type == 'csv' else file_data.getvalue(),
+#             content_type=content_type
+#         )
+#         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+#         return response
+
+
 class OccupationProspectExportAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
-        format_type = request.GET.get('format', 'xlsx').lower()
-        fields = request.GET.get('fields')
-        uuids_param = request.GET.get('uuids', '')
+        format_type = request.GET.get("format", "xlsx").lower()
+        fields = request.GET.get("fields")
+        uuids_param = request.GET.get("uuids", "").strip()
+        search = request.GET.get("search", "").strip()
+        custom_sort = request.GET.get("customSort")  # e.g., name:asc,created_at:desc
+        sort_by = request.GET.get("sortBy", "created_at")
+        sort_order = request.GET.get("sortOrder", "desc")
 
-        uuids = [u.strip() for u in uuids_param.split(',') if u]
+        uuids = [u.strip() for u in uuids_param.split(",") if u]
 
+        # -----------------------------
+        # Field header mapping
+        # -----------------------------
         field_header_map = {
-            'uuid': 'UUID',
-            'name': 'Occupation Prospect',
-            'description': 'Description',
-            'is_deleted': 'Deleted',
-            'updated_at': 'Modified On',
+            "uuid": "UUID",
+            "name": "Occupation Prospect",
+            "description": "Description",
+            "is_deleted": "Deleted",
+            "created_at": "Created On",
+            "updated_at": "Modified On",
         }
 
-        if fields:
-            field_list = [f.strip() for f in fields.split(',')]
-        else:
-            field_list = list(field_header_map.keys())
+        # Export field list
+        field_list = [f.strip() for f in fields.split(",")] if fields else list(field_header_map.keys())
 
+        # -----------------------------
+        # Queryset
+        # -----------------------------
         queryset = OccupationProspect.objects.filter(is_deleted=False)
+
+        # Search filter
+        if search:
+            queryset = queryset.filter(Q(name__icontains=search))
+
+        # UUID filter
         if uuids:
             queryset = queryset.filter(uuid__in=uuids)
-        queryset = queryset.order_by('-created_at')
 
+        # -----------------------------
+        # Sorting logic
+        # -----------------------------
+        sort_field_map = {
+            "name": "name",
+            "description": "description",
+            "created_at": "created_at",
+            "updated_at": "updated_at",
+        }
+
+        sort_fields = []
+
+        if custom_sort:
+            for rule in custom_sort.split(","):
+                try:
+                    field, order = rule.split(":")
+                    field = field.strip()
+                    order = order.strip().lower()
+
+                    if field not in sort_field_map:
+                        continue
+
+                    orm_field = sort_field_map[field]
+                    f_expr = Lower(orm_field) if field in ["name", "description"] else F(orm_field)
+
+                    sort_fields.append(f_expr.asc(nulls_last=True) if order == "asc" else f_expr.desc(nulls_last=True))
+                except ValueError:
+                    continue
+        else:
+            # fallback to sortBy/sortOrder
+            if sort_by not in sort_field_map:
+                sort_by = "created_at"
+            f_expr = Lower(sort_by) if sort_by in ["name", "description"] else F(sort_by)
+            sort_fields.append(f_expr.desc(nulls_last=True) if sort_order == "desc" else f_expr.asc(nulls_last=True))
+
+        queryset = queryset.order_by(*sort_fields)
+
+        # -----------------------------
+        # Build dataset
+        # -----------------------------
         dataset = Dataset()
         dataset.headers = [field_header_map.get(f, f) for f in field_list]
-        dataset.title = 'OccupationProspect'
+        dataset.title = "OccupationProspect"
 
         for obj in queryset:
             row = []
             for field in field_list:
-                value = getattr(obj, field, '')
-                if field in ['created_at', 'updated_at'] and value:
+                value = getattr(obj, field, "")
+
+                # Date formatting
+                if field in ["created_at", "updated_at"] and value:
                     value = timezone.localtime(value, india_tz).strftime("%d-%m-%Y %I:%M:%S %p")
+
+                # Boolean formatting
                 elif isinstance(value, bool):
                     value = int(value)
-                row.append(value if value is not None else '')
+
+                row.append(value if value is not None else "")
             dataset.append(row)
 
-        if format_type == 'csv':
-            file_data = dataset.export('csv')
-            content_type = 'text/csv'
-            file_name = 'occupation_prospects.csv'
+        # -----------------------------
+        # Export file
+        # -----------------------------
+        if format_type == "csv":
+            file_data = dataset.export("csv")
+            content_type = "text/csv"
+            file_name = "occupation_prospects.csv"
         else:
-            file_data = io.BytesIO(dataset.export('xlsx'))
-            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            file_name = 'occupation_prospects.xlsx'
+            file_data = io.BytesIO(dataset.export("xlsx"))
+            content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            file_name = "occupation_prospects.xlsx"
 
         response = HttpResponse(
-            file_data if format_type == 'csv' else file_data.getvalue(),
+            file_data if format_type == "csv" else file_data.getvalue(),
             content_type=content_type
         )
-        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        response["Content-Disposition"] = f'attachment; filename="{file_name}"'
         return response
-
+    
 
 # -------------------- IMPORT API --------------------
 
